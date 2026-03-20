@@ -1,265 +1,341 @@
 import urdhva_base
+import os
 import sys
-import time
+import jinja2
 import asyncio
-import traceback
-import numpy as np
 import pandas as pd
-from zoneinfo import ZoneInfo
-sys.path.append("/opt/ceg/algo")
-from datetime import datetime, timedelta
-from utilities.helpers import get_location_details
-from orchestrator.dbconnector.widget_actions import lpg_plant_operations
-from api_manager.hpcl_ceg_model import LpgPlantOperations, LpgPlantOperationsCreate
+import hpcl_ceg_model
+import email_report_model
+import urdhva_base.utilities
+from types import SimpleNamespace
+import utilities.helpers as helpers
+import utilities.connection_mapping as connection_mapping
+from charts_actions import charts_connection_vault_routing
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+import orchestrator.notification_manager.notification_factory as notification_factory
+from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness
 
-logger = urdhva_base.logger.Logger.getInstance("generate_lpg_summary")
 
-class GenerateLPGSummary():
-    def __init__(self, sap_id, from_date, to_date):
-        self.params = {
-            "sap_id": sap_id,
-            "from_date": from_date,
-            "to_date": to_date
-        }
-    
-    async def calculate_productivity(self):
-        try:
-            productivity = await lpg_plant_operations.LPGOperationsActions.get_productivity(self.params)
-            rows = []
-            for carousal, phases in productivity.items():
-                row = {"carousal": int(carousal)}
-                for phase, metrics in phases.items():
-                    for key, value in metrics.items():
-                        row[f"{phase}_{key}"] = value
-                rows.append(row)
-            df = pd.DataFrame(rows)
+WRITE_TO_DB = False
 
-            net_hours_column = ["normal_net_hours", "break_net_hours", "overtime_net_hours"]
-            production_columns = ["normal_total_production", "break_total_production", "overtime_total_production"]
-            
-            for col in net_hours_column + production_columns:
-                if col in df.columns:
-                    df[col] = df[col].fillna(0).astype(np.float64).abs()
 
-            df["total_net_hours"] = df["normal_net_hours"] + df["break_net_hours"] + df["overtime_net_hours"]
-            df["total_production"] = df["normal_total_production"] + df["break_total_production"] + df["overtime_total_production"]
-            df["total_productivity"] = df["total_production"] / df["total_net_hours"]
-            print("*"*20)
-            print("--- productivity ---")
-            print(df[["carousal", "total_production", "total_net_hours", "total_productivity"]])
-            print("*"*20)
-            return df
-        except Exception as e:
-            logger.error(f"--- Error In Calculating Productivity {e}---")
-            logger.error(f"Traceback : {traceback.format_exc()}")
-            return pd.DataFrame()
-        
-    async def calculate_rejections(self):
-        try:
-            df = pd.DataFrame()
-            cs_rejection = await lpg_plant_operations.LPGOperationsActions.get_cs_rejection(self.params)
-            gd_rejection = await lpg_plant_operations.LPGOperationsActions.get_gd_rejection(self.params)
-            pt_rejection = await lpg_plant_operations.LPGOperationsActions.get_pt_rejection(self.params)
-            
-            #### CS REJECTION ####
-            cs_rejection = pd.DataFrame.from_dict(cs_rejection, orient="index").reset_index()
-            cs_rejection.rename(columns={"index": "carousal"}, inplace=True)
-            cs_rejection.rename(columns={"handled": "cs_handled", "sortout": "cs_sortout", 
-                                         "rejection_rate": "cs_rejection"}, inplace=True)
-            if not cs_rejection.empty:
-                cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
-
-            #### GD REJECTION ####
-            gd_rejection = pd.DataFrame.from_dict(gd_rejection, orient="index").reset_index()
-            gd_rejection.rename(columns={"index": "carousal"}, inplace=True)
-            gd_rejection.rename(columns={"handled": "gd_handled", "sortout": "gd_sortout", 
-                                         "rejection_rate": "gd_rejection"}, inplace=True)
-            if not gd_rejection.empty:
-                gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
-            
-            #### PT REJECTION ####
-            pt_rejection = pd.DataFrame.from_dict(pt_rejection, orient="index").reset_index()
-            pt_rejection.rename(columns={"index": "carousal"}, inplace=True)
-            pt_rejection.rename(columns={"handled": "pt_handled", "sortout": "pt_sortout", 
-                                         "rejection_rate": "pt_rejection"}, inplace=True)
-            if not pt_rejection.empty:
-                pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
-
-            df = pd.concat([cs_rejection, gd_rejection, pt_rejection])
-            df = df.fillna(0)
-            df = df.groupby("carousal").sum().reset_index()
-            print("*"*20)
-            print("--- Rejections ---")
-            print(df)
-            print("*"*20)
-            return df
-        except Exception as e:
-            print("traceback :", traceback.format_exc())
-            logger.error("--- Error In Calculating Rejections ---")
-            logger.error(f"Traceback : {traceback.format_exc()}")
-            return pd.DataFrame()
-        
-    async def calculate_bottling_summary(self):
-        try:
-            bottling_summary = await lpg_plant_operations.LPGOperationsActions.get_bottling_summary(self.params)
-            rows = []
-            for carousal, metrics in bottling_summary.items():
-                row = {"carousal": int(carousal)}
-                row.update(metrics)
-                rows.append(row)
-            df = pd.DataFrame(rows)
-            print("*"*20)
-            print("--- Bottling Summary ---")
-            print(df)
-            print("*"*20)
-            return df
-        except Exception as e:
-            logger.error("--- Error In Calculating Rejections ---")
-            logger.error(f"Traceback : {traceback.format_exc()}")
-            return pd.DataFrame()
+def dict_to_object(d):
+    """Convert dictionary to object (recursively for nested dictionaries)."""
+    if isinstance(d, list):
+        return [dict_to_object(i) for i in d]
+    if isinstance(d, dict):
+        return SimpleNamespace(**{k: dict_to_object(v) for k, v in d.items()})
+    return d
     
 
-    async def generate_summary(self):
-        try:
-            productivity = await self.calculate_productivity()
-            rejections = await self.calculate_rejections()
-            bottling_summary = await self.calculate_bottling_summary()
-            summary = pd.concat([productivity, rejections, bottling_summary])
-            if summary.empty or summary['total_production'].sum() == 0:
-                print(f"--- No Data Found for {self.params['sap_id']} ---")
-                logger.info(f"--- No Data Found for {self.params['sap_id']} ---")
-                return
-            summary = summary.fillna(0)
-            summary = summary.groupby("carousal").sum().reset_index()
+async def publish_daily_novex_status_email():
+    global WRITE_TO_DB
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                       date_time_format=None)
+    report_generated_time = date.strftime('%I:%M %p')
+    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
+        print("datde inside if",date)
+        status_yes_date = date
+        tmp_date = urdhva_base.utilities.get_present_time()
+        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
+                                               date_time_format=None)
 
-            status, location_data = await get_location_details("LPG", self.params["sap_id"])
-            summary["zone"] = location_data["zone"]
-            summary["region"] = location_data["region"]
-            summary["sales_area"] = location_data["sales_area"]
-            summary["location_name"] = location_data["name"]
+        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                               date_time_format='%d-%B-%Y'),
+                   'today_week': date.strftime('%A'), 'yesterday_week':
+                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                 date_time_format='%A'),
+                   'today': date.strftime('%d-%B-%Y'),
+                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                          date_time_format='%d-%B-%Y'),
+                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+    else:
+         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                               date_time_format='%d-%B-%Y'),
+                   'today_week': date.strftime('%A'), 'yesterday_week':
+                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                 date_time_format='%A'),
+                   'today': date.strftime('%d-%B-%Y'),
+                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                          date_time_format='%d-%B-%Y'),
+                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+                   'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
 
-            carousals = await lpg_plant_operations.LPGOperationsActions.get_carousals('full', self.params["sap_id"])
-            for carousal, data in carousals.items():
-                summary.loc[summary["carousal"].astype(int) == int(carousal), "filling_head"] = str(int(data["heads"])) + "H"
-            
-            for col in summary.columns:
-                try:
-                    summary[col] = summary[col].fillna(0).astype(np.float64).abs().round(2)
-                except Exception:
-                    continue
-            summary["carousal"] = summary["carousal"].astype(int).astype(str)
-            summary.rename(columns={"carousal": "carousel", 
-                                    "production_19": "production_19kg", 
-                                    "production_14_2": "production_14_2kg"}, inplace=True)
-            summary["process_date"] = datetime.strptime(self.params["to_date"], "%Y-%m-%d")
-            summary["sap_id"] = self.params["sap_id"]
+    status_data.update(await sales_data.fetch_sales_data())
+    # print("status_data before :", status_data)
+    status_data.update(await retail_data.fetch_dryout_data(WRITE_TO_DB))
+    status_data.update(await lpg_data.get_lpg_rejection())
+    status_data.update(await retail_data.get_ro_alerts())
+    status_data.update(await sod_data.get_tas_alerts())
+    #status_data.update(await get_vts_route_deviation())
+    status_data.update(await lpg_data.lpg_top_bottom_score_plants())
+    status_data.update(await lpg_data.get_vts_lpg_blocked_counts())
+    status_data.update(await sod_data.get_vts_sod_blocked_counts())
+    #status_data.update(await sod_data.get_vts_tas_blocked_counts())
+    status_data.update(await sod_data.sod_percentage())
+    status_data.update(await sod_data.get_va_path())
+    status_data.update(await sod_data.get_emlock_path())
+    status_data.update(await sod_data.get_tas_path())
+    status_data.update(await sod_data.get_fault_and_maintenance())
+    status_data.update(await sod_data.get_parameters_summary())
+    #status_data.update(await retail_data.get_ro_ratings())
+    status_data.update(ro_va_cleanliness.main())
+    status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
+    status_data.update(await retail_data.sales_tmt_excel())
 
-            print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
-            for data in summary.to_dict(orient="records"):
-                await LpgPlantOperationsCreate(**data).create()
-
-            return True
-        except Exception as e:
-            print("traceback :", traceback.format_exc())
-            logger.error("--- Error in Generating Summary ---")
-            logger.error(f"Traceback : {traceback.format_exc()}")
-            return False
-
-async def process_plant_concurrent(plant, semaphore):
-    """Process a single plant with concurrency control"""
-    async with semaphore:  # Limit concurrent operations
-        try:
-            print(f"Starting processing for {plant['plant_name']}")
-            
-            # Get the last processed date
-            query = f"""
-                SELECT MAX(DATE(process_date)) AS max_date
-                FROM lpg_plant_operations
-                WHERE sap_id='{plant["erp_id"]}'
-            """
-            res = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
-
-            if res.get("data", None) and res["data"][0]["max_date"]:
-                from_date = res["data"][0]["max_date"]
-            else:
-                print(f"No records found in summary for {plant['plant_name']}, Checking data in production_log...")
-                query = f"""
-                        SELECT MAX(DATE(process_date)) AS max_date
-                        FROM production_log
-                        WHERE sap_id='{plant["erp_id"]}'
-                    """
-                raw_availability = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
-                if raw_availability.get("data", None) and raw_availability["data"][0]["max_date"]:
-                    from_date = raw_availability["data"][0]["max_date"]
-                else:
-                    print(f"No records found in production_log for {plant['plant_name']}, skipping...")
-                    return
-            
-            to_date = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-            current_date = from_date
-            count = 1
-            old_summary = {}
-            while current_date <= to_date:            
-                print(f"Processing plant={plant['plant_name']} date={current_date}")
-                
-                if count == 1:
-                    # Delete existing records for the first date
-                    query = f"""
-                            SELECT id FROM lpg_plant_operations 
-                            WHERE sap_id='{plant["erp_id"]}' AND DATE(process_date)='{from_date.strftime("%Y-%m-%d")}' 
-                            """
-                    old_summary = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)                    
-
-                params = {
-                    "sap_id": str(plant["erp_id"]),
-                    "from_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d"),
-                    "to_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d")
-                }
-                
-                ins = GenerateLPGSummary(**params)
-                await ins.generate_summary()
-
-                if count == 1:
-                    if old_summary.get("data", None):
-                        print(f"Deleting {len(old_summary['data'])} existing records for {plant['plant_name']}")
-                        for x in old_summary["data"]:
-                            await LpgPlantOperations.delete(x["id"])
-                current_date += timedelta(days=1)
-                count += 1
-                
-            print(f"Completed processing for {plant['plant_name']}")
-            
-        except Exception as e:
-            print(f"Error processing plant {plant['plant_name']}: {e}")
-            logger.error(f"Error processing plant {plant['plant_name']}: {traceback.format_exc()}")
-
-
-async def main_concurrent():
-    """Main function using concurrent processing"""
-
-    reset_id_query = """ SELECT setval(
-                        pg_get_serial_sequence('lpg_plant_operations', 'id'),
-                        (SELECT MAX(id) FROM lpg_plant_operations) + 1); """
-    await urdhva_base.BasePostgresModel.execute_query(reset_id_query)
-
-    plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-    print(f"Processing {len(plants)} plants concurrently...")
+    for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
+        status_data.update(await get_alert_data.get_alert_data(alert_section))
     
-    # Create semaphore to limit concurrent operations (adjust based on your system capacity)
-    # Start with 10-15 concurrent operations, adjust based on database/API limits
-    semaphore = asyncio.Semaphore(7)
+    if WRITE_TO_DB:
+        await insert_status_data_to_db(status_data)
+        # print("-" * 50)
+    # print("status_data :", json.dumps(status_data))
+    # print("-" * 50)
+    # print("-------->status_data",status_data)
+    await send_notification(
+        template_name="seg1.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report",
+        # cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        # bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+        #                 "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{status_data.get('chart_path')}",
+            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
+            "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
+        },
+        attachments = [status_data.get('zone_wise_pdf_path'), status_data.get('retail_sales_report')]
+    )
+    await send_notification(
+        template_name="seg2.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report: Retail",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{status_data.get('chart_path')}",
+            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
+            "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
+        },
+        attachments = [status_data.get('zone_wise_pdf_path')]
+    )
+    await send_notification(
+        template_name="seg3.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report: LPG",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
+            "plant_wise_score_path": f"{status_data.get('plant_wise_score_df_path')}"
+        },
+        attachments= [status_data.get('lpg_day_wise_trend_exl_path'), status_data.get('lpg_va_path'),status_data.get('lpg_pq_path')]
+    )
+    await send_notification(
+        template_name="seg4.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report: SOD",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
+            "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}"
+        },
+        attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('tas_day_wise_trend_exl_path'),
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
+    )
+
+    await send_notification(
+        template_name="ro_va_cleanliness.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data
+    )
+
+    await send_notification(
+        template_name="seg5.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "vamsi.c@algofusiontech.com", "pawann.k@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{status_data.get('chart_path')}",
+            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
+            "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
+            "plant_wise_score_path": f"{status_data.get('plant_wise_score_df_path')}",
+            "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}",
+            "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
+            "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}"
+        },
+        attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('lpg_day_wise_trend_exl_path'), 
+                       status_data.get('lpg_va_path'),status_data.get('lpg_pq_path'),status_data.get('tas_day_wise_trend_exl_path'),
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
+    )
+
+
+async def send_notification(template_name, to_recipients, subject, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None, attachments=None):
+    template_path = os.path.join(
+        os.path.dirname(hpcl_ceg_model.__file__),
+        '..', 'orchestrator', 'reporting_services',
+        'templates', template_name
+        )
+    with open(template_path, 'r') as f:
+        template_data = jinja2.Template(f.read())
+    final_data = template_data.render(**notification_data)
+
+    tmp_file = f"/tmp/{template_name}"
+    with open(tmp_file, 'w') as f:
+        f.write(final_data)
+    # Send email
+    ins = await notification_factory.get_notification_module("email")
+    await ins.publish_message(
+        subject=subject,
+        recipients=to_recipients,
+        cc_recipients=cc_recipients or [],
+        bcc_recipients=bcc_recipients or [],
+        html_content=True,
+        body=final_data,
+        force_send=True,
+        inline_images=inline_images or {},
+        attachments=attachments or []
+    )
+
+async def insert_status_data_to_db(status_data):
+
+    # ---------------- SALES DATA ----------------
+    retail_sales = status_data.get("retail_sales", [])
+
+    ms_sales = None
+    hsd_sales = None
+
+    for item in retail_sales:
+        if item.get("Product Group") == "MS":
+            ms_sales = item
+        elif item.get("Product Group") == "HSD":
+            hsd_sales = item
+
+    sales_payload = {
+        "report_date": status_data.get("today_date"),
+        "report_time": status_data.get("report_generated_time"),
+        "sales_data": status_data.get("sales_data"),
+        "sales_data_retail": status_data.get("sales_data_retail"),
+        "sales_data_lpg": status_data.get("sales_data_lpg"),
+        "sales_data_i_c": status_data.get("sales_data_i_c"),
+        "sales_data_lubes": status_data.get("sales_data_lubes"),
+        "sales_data_aviation": status_data.get("sales_data_aviation"),
+        "sales_data_petchem": status_data.get("sales_data_petchem"),
+        "sales_data_gas": status_data.get("sales_data_gas"),
+        "ms_sales": ms_sales,
+        "hsd_sales": hsd_sales
+    }
+    # sales_obj = email_report_model.SalesReportDataCreate(**sales_payload)
+    await email_report_model.SalesReportDataCreate.bulk_update([sales_payload], upsert=True)
+
+    # ---------------- DRY OUT DATA ----------------
+    dryout_payload = {
+        "report_date": status_data.get("today_date"),
+        "report_time": status_data.get("report_generated_time"),
+        "dry_out_cf": status_data.get("dry_out_cf"),
+        "dry_out": status_data.get("dry_out"),
+        "dry_out_details": status_data.get("dry_out_details"),
+        "dry_out_trends": status_data.get("dry_out_trends"),
+
+        # NEW CHART DATA
+        "last_30_days_trends": status_data.get("last_30_days_trends"),
+        "grouped_nozzle_sales_data": status_data.get("grouped_nozzle_sales_data")
+    }
+
+    # dryout_obj = email_report_model.DryOutReportDataCreate(**dryout_payload)
+    await email_report_model.DryOutReportDataCreate.bulk_update([dryout_payload], upsert=True)
     
-    # Create tasks for all plants
-    tasks = [process_plant_concurrent(plant, semaphore) for plant in plants.to_dict(orient="records")]
+    # ---------------- LPG DATA ----------------
+    lpg_payload = {
+        "report_date": status_data.get("today_date"),
+        "report_time": status_data.get("report_generated_time"),
+        "lpg_blocked_data_resp": status_data.get("lpg_blocked_data_resp"),
+        "lpg_day_wise_trends": status_data.get("lpg_day_wise_trends"),
+        "lpg_va_alerts": status_data.get("lpg_va_alerts"),
+        "lpg_pq_alerts": status_data.get("lpg_pq_alerts")
+    }
+
+    # lpg_obj = email_report_model.LPGReportDataCreate(**lpg_payload)
+    await email_report_model.LPGReportDataCreate.bulk_update([lpg_payload], upsert=True)
     
-    # Run all tasks concurrently
-    await asyncio.gather(*tasks, return_exceptions=True)
-    print("All plants processed!")
+    # # ---------------- TAS DATA ----------------
+    tas_payload = {
+        "report_date": status_data.get("today_date"),
+        "report_time": status_data.get("report_generated_time"),
+        "tas_fault_maintenance_resp": status_data.get("tas_fault_maintenance_resp"),
+        "tas_fault_maintenance_columns": status_data.get("tas_fault_maintenance_columns"),
+        "tas_parameters_query_resp": status_data.get("tas_parameters_query_resp"),
+        "tas_parameters_query_resp_columns": status_data.get("tas_parameters_query_resp_columns"),
+
+        # NEW TAS KEYS
+        "tas_day_wise_trends": status_data.get("tas_day_wise_trends"),
+        "tas_va_alerts": status_data.get("tas_va_alerts"),
+        "tas_emlock_alerts": status_data.get("tas_emlock_alerts"),
+        "tas_sod_alerts": status_data.get("tas_sod_alerts")
+    }
+
+    # tas_obj = email_report_model.TasReportDataCreate(**tas_payload)
+    await email_report_model.TasReportDataCreate.bulk_update([tas_payload], upsert=True)
+
+    # # ---------------- ALERT SUMMARY ----------------
+    alert_payload = {
+        "report_date": status_data.get("today_date"),
+        "report_generated_at": status_data.get("report_generated_time"),
+        "va_critical_lpg": status_data.get("va_critical_lpg"),
+        "va_critical_ro": status_data.get("va_critical_ro"),
+        "va_critical_tas": status_data.get("va_critical_tas"),
+        "va_high_lpg": status_data.get("va_high_lpg"),
+        "va_high_ro": status_data.get("va_high_ro"),
+        "va_high_tas": status_data.get("va_high_tas"),
+        "vts_critical_lpg": status_data.get("vts_critical_lpg"),
+        "vts_critical_tas": status_data.get("vts_critical_tas"),
+        "vts_high_lpg": status_data.get("vts_high_lpg"),
+        "vts_high_tas": status_data.get("vts_high_tas"),
+        "emlock_critical_tas": status_data.get("emlock_critical_tas"),
+        "emlock_high_tas": status_data.get("emlock_high_tas"),
+        "tas_critical_tas": status_data.get("tas_critical_tas"),
+        "tas_high_tas": status_data.get("tas_high_tas"),
+        "pq_critical_lpg": status_data.get("pq_critical_lpg"),
+        "pq_high_lpg": status_data.get("pq_high_lpg"),
+        "automation_high_ro": status_data.get("automation_high_ro"),
+        "automation_critical_ro": status_data.get("automation_critical_ro"),
+        "tas_high_sod": status_data.get("tas_high_sod"),
+        "tas_critical_sod": status_data.get("tas_critical_sod"),
+        "nozzle_previous_day_count": (
+            status_data.get("nozzel_previous_day", [{}])[0].get("count")
+            if status_data.get("nozzel_previous_day") else None
+        ),
+
+        "nozzle_sales_percentage": status_data.get("nozzle_sales_percentage")
+    }
+
+    # alert_obj = email_report_model.AlertReportDataCreate(**alert_payload)
+    await email_report_model.AlertReportDataCreate.bulk_update([alert_payload], upsert=True)
+
+    print("Email report data inserted into DB successfully")
 
 if __name__ == "__main__":
-    start_time = time.time()
-    asyncio.run(main_concurrent())
-    
-    end_time = time.time()
-    total_time = end_time - start_time    
-    print(f"Total time taken: {total_time/60:.2f} minutes")
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "true":
+        WRITE_TO_DB = True
+    asyncio.run(publish_daily_novex_status_email())
