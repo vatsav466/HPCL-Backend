@@ -16,7 +16,89 @@ import numpy as np
 import traceback
 import polars as pl
 import os
+from collections import defaultdict
 
+
+def build_plant_monthly_aggregated(data):
+
+    month_order = []
+    seen = set()
+
+    for row in data:
+        m = row["Month"]
+        if m not in seen:
+            seen.add(m)
+            month_order.append(m)
+
+    plant_dict = defaultdict(dict)
+
+    for row in data:
+        plant = row["Plant"]
+        month = row["Month"]
+        plant_dict[plant][month] = row
+
+    result = []
+
+    for plant, month_data in plant_dict.items():
+
+        ordered_months = []
+        for m in month_order:
+            if m in month_data:
+                ordered_months.append(month_data[m])
+
+        result.append({
+            "plant": plant,
+            "zone": ordered_months[0]["Zone"] if ordered_months else None,
+            "months": ordered_months
+        })
+
+    return result
+
+
+def build_zone_monthly_aggregated(data):
+
+    month_order = []
+    seen = set()
+
+    for row in data:
+        m = row["Month"]
+        if m not in seen:
+            seen.add(m)
+            month_order.append(m)
+
+    zone_dict = defaultdict(lambda: defaultdict(dict))
+
+    for row in data:
+        zone = row["Zone"]
+        plant = row["Plant"]
+        month = row["Month"]
+
+        zone_dict[zone][plant][month] = row
+
+    result = []
+
+    for zone, plants in zone_dict.items():
+
+        plant_list = []
+
+        for plant, month_data in plants.items():
+
+            ordered_months = []
+            for m in month_order:
+                if m in month_data:
+                    ordered_months.append(month_data[m])
+
+            plant_list.append({
+                "plant": plant,
+                "months": ordered_months
+            })
+
+        result.append({
+            "zone": zone,
+            "plants": plant_list
+        })
+
+    return result
 
 class LPGOperationsActions:
     # async def plants_dropdown(data: dict):
@@ -2344,8 +2426,18 @@ class LPGOperationsActions:
                         "sap_id": "All"
                     })
 
+        # return {
+        #     "data": final_results,
+        #     "overall": overall_row,
+        #     "monthly_aggregated": monthly_aggregated
+        # }
+        plant_monthly_aggregated = build_plant_monthly_aggregated(final_results)
+        zone_monthly_aggregated = build_zone_monthly_aggregated(final_results)
+
         return {
             "data": final_results,
             "overall": overall_row,
-            "monthly_aggregated": monthly_aggregated
+            "monthly_aggregated": monthly_aggregated,
+            "plant_monthly_aggregated": plant_monthly_aggregated,
+            "zone_monthly_aggregated": zone_monthly_aggregated
         }
