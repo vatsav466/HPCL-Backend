@@ -2,8 +2,7 @@ import mysql.connector
 import psycopg2
 import polars as pl
 import sys
-
-sys.path.append("/opt/ceg/algo")
+import urdhva_base
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 
