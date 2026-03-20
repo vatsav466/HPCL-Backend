@@ -1460,7 +1460,21 @@ async def nozzle_sales(
 async def sales_tmt_excel():
     """
     Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
-    Steps:
+    
+    This function:
+    - Fetches daily nozzle sales data
+    - Fetches month-to-date (MTD) nozzle and SAP sales data
+    - Maps sales areas to states
+    - Aggregates all data at state level
+    - Calculates MTD percentage (Nozzle vs SAP)
+    - Adds total row
+    - Generates a formatted Excel file
+
+    Output:
+    - Excel file saved at: /tmp/primary_&_secondary_sales.xlsx
+
+    Returns:
+    - Dictionary with file path of the generated report
     
     """
 
