@@ -119,6 +119,17 @@ class Indentmanagement_Get_Indents_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentmanagement_Get_R3_R1_DetailsParams(pydantic.BaseModel):
+    action: str
+    drill_state: str
+    filters: typing.List[WidgetFiltersCreate]
+    cross_filters: typing.List[WidgetFiltersCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Dryoutmanagement_Get_Dry_Out_LocationsParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     by_product: typing.Optional[bool] = pydantic.Field(False, )
