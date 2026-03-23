@@ -27,7 +27,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Attach_File_To_CommentParams,
     Ticketing_Delete_File_From_CommentParams,
     Ticketing_Get_Location_DataParams,
-    Ticketing_Vts_Block_TrucksParams
+    Ticketing_Vts_Block_TrucksParams,
+    Ticketing_Pm_OrdersParams
 
 )
 import os, uuid
@@ -174,6 +175,7 @@ async def _fetch_role_emails(
     return zonal_functionary_emails, zonal_head_emails, hqo_emails
 
 
+        
 async def send_ticket_mail(ticket_data: dict) -> None:
     ticket_state: str = ticket_data.get("ticket_state", "")
     try:
@@ -2222,3 +2224,50 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
     except Exception as e:
         logger.warning(f"Error sending escalation mail for ticket {ticket.get('ticket_id')}: {e}")
         logger.warning(traceback.format_exc())
+
+
+# Action pm_orders
+@router.post('/pm_orders', tags=['Ticketing'])
+async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
+    try:
+
+        where_clause = ""
+
+        if data.start_date and data.end_date:
+            where_clause = f"""
+                WHERE planned_date::date
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """
+
+        query = f"""
+            SELECT
+                order_no,
+                order_type,
+                order_description,
+                planner_group_desc,
+                system_status_desc,
+                equipment_description,
+                planning_plant,
+                planning_plant_desc,
+                planned_date
+            FROM pm_orders
+            {where_clause}
+            ORDER BY planned_date
+        """
+
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        rows = result.get("data", [])
+
+        return {
+            "status": True,
+            "message": "PM Orders fetched successfully",
+            "data": rows
+        }
+
+    except Exception as e:
+        print(f"Error fetching PM orders: {e}")
+        return {
+            "status": False,
+            "message": f"Error fetching PM orders: {e}",
+            "data": []
+        }
