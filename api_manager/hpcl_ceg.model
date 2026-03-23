@@ -4143,5 +4143,18 @@ Model NonReportingDevices {
     Config=> {
         crud_operations='read'
     }
+ }
+  
+Model TasHelpDeskVendorMails {
+    sap_id index_field str
+    location_name index_field str
+    zone index_field str
+    vendor_name index_field str
+    level1 str
+    level2 str
+    level3 str
 
+    Config=> {
+        crud_operations='read'
+    }
 }

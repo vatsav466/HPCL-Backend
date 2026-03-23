@@ -11341,3 +11341,59 @@ class NonReportingDevicesGetResp(pydantic.BaseModel):
     data: typing.List[NonReportingDevices]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TasHelpDeskVendorMailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    level1: Mapped[str] = mapped_column("level1", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    level2: Mapped[str] = mapped_column("level2", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    level3: Mapped[str] = mapped_column("level3", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class TasHelpDeskVendorMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: str
+    location_name: str
+    zone: str
+    vendor_name: str
+    level1: str
+    level2: str
+    level3: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasHelpDeskVendorMailsSchema
+        upsert_keys = []
+
+
+class TasHelpDeskVendorMails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    vendor_name: typing.Optional[str] | None = None
+    level1: typing.Optional[str] | None = None
+    level2: typing.Optional[str] | None = None
+    level3: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasHelpDeskVendorMailsSchema
+        upsert_keys = []
+
+
+class TasHelpDeskVendorMailsGetResp(pydantic.BaseModel):
+    data: typing.List[TasHelpDeskVendorMails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
