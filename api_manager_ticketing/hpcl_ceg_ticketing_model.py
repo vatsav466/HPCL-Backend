@@ -510,6 +510,15 @@ class Ticketing_Process_EscalationsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketing_Pm_OrdersParams(pydantic.BaseModel):
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TicketCommentSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_comment'
     
@@ -594,6 +603,15 @@ class Ticketcomment_Attach_File_To_CommentParams(pydantic.BaseModel):
     ticket_id: str
     comment_id: str
     file_path: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketcomment_Download_AttachmentParams(pydantic.BaseModel):
+    ticket_id: str
+    file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

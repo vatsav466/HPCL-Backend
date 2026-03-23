@@ -6646,7 +6646,7 @@ class GlobalAnalytics:
                 graph_dict = {
                     str(row["created_date"]): {
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_qty"]
+                        "total_fan_qty": row["total_fan_qty"]
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
@@ -6654,7 +6654,7 @@ class GlobalAnalytics:
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_quantity"),
+                    pl.sum("total_required_qty").alias("total_fan_qty"),
                     pl.first("indent_breakup").alias("indent_breakup")
                 ])
 
@@ -6670,7 +6670,7 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_fan_qty": row["total_required_quantity"],
+                        "total_fan_qty": row["total_fan_qty"],
                         "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
                     result.setdefault(created_date, []).append(entry)
@@ -6691,13 +6691,13 @@ class GlobalAnalytics:
 
                 graph_data = resp_df.group_by(["month_year", "month_sort"]).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_qty")
+                    pl.sum("total_required_qty").alias("total_fan_qty")
                 ]).sort("month_sort", descending=False)
 
                 graph_dict = {
                     row["month_year"]: {
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_qty"]
+                        "total_fan_qty": row["total_fan_qty"]
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
@@ -6718,7 +6718,7 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_fan_qty": row["total_required_quantity"],
+                        "total_fan_qty": row["total_fan_qty"],
                         "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
 
@@ -7390,7 +7390,8 @@ class GlobalAnalytics:
                 "        DATE(created_at) AS created_date,",
                 "        zone, location_name, sap_id, bcu_number, mfm_number",
                 "    FROM host_mfm_factor",
-                "    WHERE 1=1"
+                "    WHERE 1=1",
+                "    AND last_k_factor IS NOT NULL"
             ]
             if zone_filter:
                 query_parts.append(f" AND zone = '{zone_filter}'")
@@ -7402,16 +7403,11 @@ class GlobalAnalytics:
 
             query_parts.extend([
                 "SELECT",
-                "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number,",
-                "    COALESCE(COUNT(a.id), 0) AS alert_count",
-                "FROM mfmfactor h",
-                "LEFT JOIN alerts a ON (a.device_name = h.mfm_number OR a.device_name = h.bcu_number OR a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number))",
-                "    AND a.interlock_name = 'MFM K Factor Change'",
-                "     AND a.sap_id = h.sap_id",
-               # "    AND DATE(a.created_at) = h.created_date",
-                "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
-                "HAVING COUNT(a.id) > 0",
-                "ORDER BY h.created_date DESC, alert_count DESC"
+                "    created_date, zone, location_name, sap_id, bcu_number, mfm_number,",
+                "    COUNT(*) AS alert_count",          # ← counts rows in host_mfm_factor
+                "FROM mfmfactor",
+                "GROUP BY created_date, zone, location_name, sap_id, bcu_number, mfm_number",
+                "ORDER BY created_date DESC, alert_count DESC"
             ])
 
             query = "\n".join(query_parts)

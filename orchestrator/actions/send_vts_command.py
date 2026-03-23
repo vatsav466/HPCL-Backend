@@ -206,7 +206,7 @@ class SendVtsCommand:
                 if (
                     unblocking_status 
                     and unblocking_status.get("Response", {}).get("Status") not in ['S']
-                    and unblocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID']
+                    and unblocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID','Vehicle is already unblocked in SAP']
                 ):
                     logger.error(f"UnBlocking Payload Not posted to SAP {alert_data['unique_id']} {alert_data['id']}")
                     alert_message = (

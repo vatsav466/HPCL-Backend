@@ -42,6 +42,11 @@ class VAAlertManager(alert_factory.AlertFactory):
             # Getting location_id in this form from payload example "location_id": "ACC, Bandra, 11073010, 11073010",
             location_id = alert_data['location_id'].split(",")[-1].strip()
 
+            if not location_id:
+                logger.info("Invalid data format: location_id is missing")
+                return {"status": False, "message": "Invalid data format: location_id is missing", "alert_data": alert_data}
+
+
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'],
                                                                      sap_id=location_id)

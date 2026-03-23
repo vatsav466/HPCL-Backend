@@ -1,7 +1,8 @@
 import urdhva_base
 from hpcl_ceg_ticketing_enum import *
 from hpcl_ceg_ticketing_model import *
-from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
 import uuid
 import traceback
 import datetime
@@ -104,3 +105,55 @@ async def attach_file_common(
         "message": "Files attached successfully",
         attachment_field: existing_attachments
     }
+async def download_attachment_common(
+    model_class,
+    record_id: str,
+    requested_file_name: str,
+    attachment_field: str
+):
+    # ---------------- FETCH RECORD ----------------
+    params = urdhva_base.queryparams.QueryParams(
+        q=f"ticket_id='{record_id}'",
+        limit=1
+    )
+
+    resp = await model_class.get_all(params, resp_type="plain")
+
+    if not resp or not resp.get("data"):
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    record = resp["data"][0]
+
+    file_paths = record.get(attachment_field) or []
+
+    if isinstance(file_paths, str):
+        try:
+            import json
+            file_paths = json.loads(file_paths)
+        except:
+            file_paths = []
+
+    if not file_paths:
+        raise HTTPException(status_code=404, detail="No attachments found")
+
+    # ---------------- FIND FILE ----------------
+    matched_path = None
+    for path in file_paths:
+        if requested_file_name in path:
+            matched_path = path
+            break
+
+    if not matched_path:
+        raise HTTPException(status_code=404, detail="Requested file not found")
+
+    # ---------------- DOWNLOAD ----------------
+    success, local_file_path = minio_connector.download_from_minio(matched_path)
+
+    if not success:
+        raise HTTPException(status_code=500, detail=local_file_path)
+
+    return FileResponse(
+        path=local_file_path,
+        filename=requested_file_name,
+        media_type="application/octet-stream"
+    )

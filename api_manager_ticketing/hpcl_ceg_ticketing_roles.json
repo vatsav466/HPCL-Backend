@@ -90,6 +90,9 @@
                 },
                 {
                     "name": "process_escalations"
+                },
+                {
+                    "name": "pm_orders"
                 }
             ]
         },
@@ -201,6 +204,9 @@
                 },
                 {
                     "name": "process_escalations"
+                },
+                {
+                    "name": "pm_orders"
                 }
             ]
         },
@@ -237,6 +243,9 @@
                 },
                 {
                     "name": "attach_file_to_comment"
+                },
+                {
+                    "name": "download_attachment"
                 }
             ]
         },
@@ -288,6 +297,9 @@
                 },
                 {
                     "name": "attach_file_to_comment"
+                },
+                {
+                    "name": "download_attachment"
                 }
             ]
         },
@@ -616,6 +628,10 @@
             "displayName": "process_escalations"
         },
         {
+            "name": "pm_orders",
+            "displayName": "pm_orders"
+        },
+        {
             "name": "add_comment_to_ticket",
             "displayName": "add_comment_to_ticket"
         },
@@ -630,6 +646,10 @@
         {
             "name": "attach_file_to_comment",
             "displayName": "attach_file_to_comment"
+        },
+        {
+            "name": "download_attachment",
+            "displayName": "download_attachment"
         },
         {
             "name": "get_ticket_mails",
