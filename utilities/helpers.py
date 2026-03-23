@@ -256,6 +256,9 @@ async def get_location_details(bu, sap_id, from_db=False):
             print(f"Error in getting location details: {e}, BU: {bu}, Location ID: {sap_id}")
         if attempt < MAX_RETRIES - 1:
             time.sleep(RETRY_DELAY * (2 ** attempt))
+        else:
+            return False, {}
+    return False, {}
 
 async def get_alert_camunda_url(alert_id, base_url):
     """
