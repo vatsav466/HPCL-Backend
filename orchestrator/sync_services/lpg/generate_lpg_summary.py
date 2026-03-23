@@ -8,9 +8,10 @@ import pandas as pd
 from zoneinfo import ZoneInfo
 sys.path.append("/opt/ceg/algo")
 from datetime import datetime, timedelta
-from utilities.helpers import get_location_details
-from orchestrator.dbconnector.widget_actions import lpg_plant_operations
-from api_manager.hpcl_ceg_model import LpgPlantOperations, LpgPlantOperationsCreate
+import utilities.helpers as helpers
+import orchestrator.dbconnector.widget_actions.lpg_plant_operations as lpg_plant_operations
+import orchestrator.dbconnector.widget_actions as widget_actions
+import hpcl_ceg_model as hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("generate_lpg_summary")
 
@@ -133,7 +134,9 @@ class GenerateLPGSummary():
             summary = summary.fillna(0)
             summary = summary.groupby("carousal").sum().reset_index()
 
-            status, location_data = await get_location_details("LPG", self.params["sap_id"])
+            status, location_data = await helpers.get_location_details("LPG", self.params["sap_id"], from_db = True)
+            print("status---location_data---->", status, location_data)
+            
             summary["zone"] = location_data["zone"]
             summary["region"] = location_data["region"]
             summary["sales_area"] = location_data["sales_area"]
@@ -157,7 +160,7 @@ class GenerateLPGSummary():
 
             print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
             for data in summary.to_dict(orient="records"):
-                await LpgPlantOperationsCreate(**data).create()
+                await hpcl_ceg_model.LpgPlantOperationsCreate(**data).create()
 
             return True
         except Exception as e:
@@ -225,7 +228,7 @@ async def process_plant_concurrent(plant, semaphore):
                     if old_summary.get("data", None):
                         print(f"Deleting {len(old_summary['data'])} existing records for {plant['plant_name']}")
                         for x in old_summary["data"]:
-                            await LpgPlantOperations.delete(x["id"])
+                            await hpcl_ceg_model.LpgPlantOperations.delete(x["id"])
                 current_date += timedelta(days=1)
                 count += 1
                 

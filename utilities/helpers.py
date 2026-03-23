@@ -18,10 +18,9 @@ try:
     from secrets import choice
 except ImportError:
     from random import choice
-from utilities import sales_mapping
 from collections import defaultdict
 from dateutil.relativedelta import relativedelta
-from utilities import interlock_category_mapping
+import utilities
 import Thingsboard.bu_asset_master_new as tb_master
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 import hpcl_ceg_model
@@ -221,6 +220,7 @@ async def get_location_details(bu, sap_id, from_db=False):
     if from_db:
          # Direct database fetch using SQL query
         try:
+            print("bu and sap id ->", bu, sap_id)
             if not bu or not sap_id:
                 return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
             
@@ -365,7 +365,7 @@ async def get_doc_link(file_name: str):
     return f"http://{server_ip}:8080/api/alerts/stored_document?file_name={file_name}"
 
 def map_device_category(interlock_name):
-    for category, interlocks in interlock_category_mapping.interlock_to_category.items():
+    for category, interlocks in utilities.interlock_category_mapping.interlock_to_category.items():
         if interlock_name in interlocks:
             return category
     return "Unknown"
@@ -605,7 +605,7 @@ def get_user_details(where_clause):
     user_region = rpt.get("region", [])
     user_sales_area = rpt.get("sales_area", [])
 
-    user_zone = [sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
+    user_zone = [utilities.sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
 
     if not user_region:
         user_region = [x['value'] for x in where_clause if x.get('key') == 'Region_Name']   
