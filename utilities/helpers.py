@@ -204,7 +204,7 @@ async def generate_filter_query(filters, query, where_clause=False):
         return query
 
 
-async def get_location_details(bu, sap_id):
+async def get_location_details(bu, sap_id, from_db=False):
     """
     Retrieves location details based on the provided business unit and SAP ID.
     Fetches directly from database to avoid Redis load issues.
@@ -218,48 +218,44 @@ async def get_location_details(bu, sap_id):
         - status: True if location found, False otherwise
         - location_data: Location details including name, address, coordinates, etc., or error message dict
     """
-    # Commented out Redis/cache gateway API logic due to load issues
-    # MAX_RETRIES = 5
-    # RETRY_DELAY = 2
-    # for attempt in range(MAX_RETRIES):
-    #     try:
-    #         if not bu or not sap_id:
-    #             return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
-    #         async with httpx.AsyncClient(verify=False) as client:
-    #             base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
-    #             resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
-    #                                                                                         'location_id': sap_id})
-    #             if resp.status_code // 100 == 2:
-    #                 return resp.json()
-    #             else:
-    #                 print(resp.status_code, resp.text)
-    #     except Exception as e:
-    #         print(f"Error in getting location details: {e}, BU: {bu}, Location ID: {sap_id}")
-    #     if attempt < MAX_RETRIES - 1:
-    #         time.sleep(RETRY_DELAY * (2 ** attempt))
-    #     else:
-    #         return False, {}
-    # return False, {}
-    
-    # Direct database fetch using SQL query
-    try:
-        if not bu or not sap_id:
-            return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
-        
-        # Query database directly using SQL
-        query = f"SELECT * FROM location_master WHERE bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
-        locdata = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
-        
-        if locdata.get('data', []):
-            location_data = locdata.get('data')[0]
-            return True, location_data
-        
-        return False, {"msg": "Data not available"}
-    except Exception as e:
-        print(f"Error in getting location details from database: {e}, BU: {bu}, Location ID: {sap_id}")
-        print(traceback.format_exc())
-        return False, {"msg": f"Error fetching location details: {str(e)}"}
+    if from_db:
+         # Direct database fetch using SQL query
+        try:
+            if not bu or not sap_id:
+                return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+            
+            # Query database directly using SQL
+            query = f"SELECT * FROM location_master WHERE bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
+            locdata = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
+            
+            if locdata.get('data', []):
+                location_data = locdata.get('data')[0]
+                return True, location_data
+            
+            return False, {"msg": "Data not available"}
+        except Exception as e:
+            print(f"Error in getting location details from database: {e}, BU: {bu}, Location ID: {sap_id}")
+            print(traceback.format_exc())
+            return False, {"msg": f"Error fetching location details: {str(e)}"}
 
+    MAX_RETRIES = 5
+    RETRY_DELAY = 2
+    for attempt in range(MAX_RETRIES):
+        try:
+            if not bu or not sap_id:
+                return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
+                                                                                            'location_id': sap_id})
+                if resp.status_code // 100 == 2:
+                    return resp.json()
+                else:
+                    print(resp.status_code, resp.text)
+        except Exception as e:
+            print(f"Error in getting location details: {e}, BU: {bu}, Location ID: {sap_id}")
+        if attempt < MAX_RETRIES - 1:
+            time.sleep(RETRY_DELAY * (2 ** attempt))
 
 async def get_alert_camunda_url(alert_id, base_url):
     """
