@@ -8,6 +8,7 @@ import polars as pl
 import pandas as pd
 import charts_actions
 import dashboard_studio_model
+import hpcl_ceg_model as ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 logger = urdhva_base.Logger.getInstance("nrd_data")
@@ -148,6 +149,13 @@ async def non_reporting_devices_data():
             vts_device_df = vts_device_df.with_columns(
                 pl.lit("open").alias("completed_trip_auto_dc")
             )
+
+            # convert longitutde and latitude to string
+            df = df.with_columns([
+                pl.col("latitude").cast(pl.Utf8),
+                pl.col("longitude").cast(pl.Utf8)
+            ])
+
             print("device data -->", vts_device_df)
             if not vts_device_df.is_empty():
                 vts_device_df = vts_device_df.join(
@@ -177,13 +185,19 @@ async def non_reporting_devices_data():
                     on="location",
                     how='left'
                     )
-                print("final vts_device -->", vts_device_df['card_date'])
+                try:
+                    logger.info("Inserting data into non_reporting_devices")
+                    await ceg_model.NonReportingDevices.bulk_update(vts_device_df, upsert=True)
+                    return
+                except Exception as e:
+                    logger.error(f"error while inserting data to non_reporting_devices {e}")
+                    return
             else:
+                logger.info("no trucks found for non reporting devices")
                 return
-            print("trucks with non reporting devices", vts_device_df)
-            return vts_device_df
         except Exception as e:
-            logger.error("ERROR while retreiving trucks with non reporting devices")
+            logger.error(f"ERROR while retreiving trucks with non reporting devices {e}")
+            return
     except Exception as e:
         logger.error(f"ERROR while retreving non reporting devices data {e}")
         return
@@ -255,7 +269,6 @@ async def update_trip_status():
                 on='truck_regno',
                 how='left'
             )
-
             # clause with truck name, r3 swipe datetime, loadno and ship_to(dealer code)
             truck_data_clause = ",".join(
                 f"('{truck_regno}', '{card_datetime.strftime('%Y-%m-%d %H:%M:%S')}', '{loadno}', '{dealer_code}')"
@@ -381,33 +394,8 @@ async def update_trip_status():
         logger.error(f"ERROR While updating trip status")
 
 async def main():
-    data = await non_reporting_devices_data()
-    data = data.select([
-     "truck_regno",
-    "last_check_date",
-    "last_check_time",
-    "latitude",        
-    "longitude",
-    "location",
-    "location_name",
-    "device_working",
-    "completed_trip",
-    "completed_trip_auto_dc",
-    "card_date",
-    "card_time",
-    "card_datetime",
-    "reader_id",
-    "loaded_on",
-    "zone",
-    "bu"
-    ])
-    if isinstance(data, pl.DataFrame) and not data.is_empty():
-        await db_insert(data)
-        logger.info("SUCCESFULLY INSERTED DATA TO TABLE")
-    else:
-        logger.info("NO DATA INSERTED TO DB")
-    status = await update_trip_status()
-    print(status)
+    await non_reporting_devices_data()
+    await update_trip_status()
 
 if __name__ == '__main__':
     asyncio.run(main())
