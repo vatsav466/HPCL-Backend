@@ -4122,12 +4122,12 @@ Model TerminalWiseDryoutCounts {
 }
 
 Model NonReportingDevices {
-    truck_regno	str
-    last_check_date	date
-    last_check_time	str
-    latitude int
-    longitude int
-    location str
+    truck_regno	unique_field str
+    last_check_date	unique_field date
+    last_check_time	unique_field str
+    latitude optional str
+    longitude optional str
+    location unique_field str
     location_name str
     device_working str
     completed_trip	str
