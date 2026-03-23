@@ -582,6 +582,10 @@ async def tas_severity_summary(data):
                 SELECT
                     interlock_name,
                     equipment_name,
+                    device_name,
+                    sap_id,
+                    location_name,
+                    closed_at,
                     TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
                     CASE
                         WHEN {maintenance_condition} THEN 'maintenance'
@@ -624,6 +628,9 @@ async def tas_severity_summary(data):
                 SELECT
                     zone,
                     location_name,
+                    device_name,
+                    sap_id,
+                    closed_at,
                     CASE
                         WHEN {maintenance_condition} THEN 'maintenance'
                         WHEN {fault_condition} THEN 'fault'
