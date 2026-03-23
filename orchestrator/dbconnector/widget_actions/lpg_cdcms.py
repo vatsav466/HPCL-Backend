@@ -421,7 +421,11 @@ class LPGCDCMSActions:
     # Bookings vs Sales vs Pendings
     @staticmethod
     async def lpg_cdcms_booking_vs_sales_vs_pending(filters, cross_filters, drill_state,payload):
-        type = payload.get("type",'')
+        if isinstance(payload,dict):
+            type = payload.get("type",'')
+        else:
+            type = ''
+
         
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'

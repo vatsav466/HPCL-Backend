@@ -228,6 +228,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
@@ -260,6 +261,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number']
 
 
 class UsersGetResp(pydantic.BaseModel):
@@ -11249,5 +11251,91 @@ class TerminalWiseDryoutCounts(urdhva_base.postgresmodel.PostgresModel):
 
 class TerminalWiseDryoutCountsGetResp(pydantic.BaseModel):
     data: typing.List[TerminalWiseDryoutCounts]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class NonReportingDevicesSchema(UrdhvaPostgresBase):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: Mapped[str] = mapped_column("truck_regno", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_check_date: Mapped[datetime.date] = mapped_column("last_check_date", DATE, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_check_time: Mapped[str] = mapped_column("last_check_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    latitude: Mapped[int] = mapped_column("latitude", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    longitude: Mapped[int] = mapped_column("longitude", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location: Mapped[str] = mapped_column("location", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    device_working: Mapped[str] = mapped_column("device_working", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    completed_trip: Mapped[str] = mapped_column("completed_trip", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    completed_trip_auto_dc: Mapped[str] = mapped_column("completed_trip_auto_dc", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_date: Mapped[datetime.datetime] = mapped_column("card_date", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_time: Mapped[str] = mapped_column("card_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_datetime: Mapped[datetime.datetime] = mapped_column("card_datetime", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    reader_id: Mapped[str] = mapped_column("reader_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    loaded_on: Mapped[datetime.datetime] = mapped_column("loaded_on", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class NonReportingDevicesCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: str
+    last_check_date: datetime.date
+    last_check_time: str
+    latitude: int
+    longitude: int
+    location: str
+    location_name: str
+    device_working: str
+    completed_trip: str
+    completed_trip_auto_dc: str
+    card_date: datetime.datetime
+    card_time: str
+    card_datetime: datetime.datetime
+    reader_id: str
+    loaded_on: datetime.datetime
+    bu: str
+    zone: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NonReportingDevicesSchema
+        upsert_keys = []
+
+
+class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: typing.Optional[str] | None = None
+    last_check_date: typing.Optional[datetime.date] | None = None
+    last_check_time: typing.Optional[str] | None = None
+    latitude: typing.Optional[int] | None = None
+    longitude: typing.Optional[int] | None = None
+    location: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    device_working: typing.Optional[str] | None = None
+    completed_trip: typing.Optional[str] | None = None
+    completed_trip_auto_dc: typing.Optional[str] | None = None
+    card_date: typing.Optional[datetime.datetime] | None = None
+    card_time: typing.Optional[str] | None = None
+    card_datetime: typing.Optional[datetime.datetime] | None = None
+    reader_id: typing.Optional[str] | None = None
+    loaded_on: typing.Optional[datetime.datetime] | None = None
+    bu: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NonReportingDevicesSchema
+        upsert_keys = []
+
+
+class NonReportingDevicesGetResp(pydantic.BaseModel):
+    data: typing.List[NonReportingDevices]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)

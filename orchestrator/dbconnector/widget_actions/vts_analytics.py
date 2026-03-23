@@ -2,6 +2,7 @@ import urdhva_base
 import io
 import os
 import json
+import psycopg2
 import asyncio
 import traceback
 import numpy as np
@@ -884,12 +885,18 @@ class VTSAnalyticsActions:
         if "completed_trips_risk_score" in query.lower():
             return f"insert_datetime BETWEEN '{start}' AND '{end}'"
         
+        if "merged_shortage_vts" in query.lower():
+            return f"invoice_date BETWEEN '{start}' AND '{end}'"
+        
         if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score","clusterwise_event"]):
             return f"version_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
             return f"event_date BETWEEN '{start}' AND '{end}'"
+
+        if "non_reporting_devices" in query.lower():
+            return f"last_check_date BETWEEN '{start}' AND '{end_date}'"
         
         
         return f"created_at BETWEEN '{start}' AND '{end}'"
@@ -2143,7 +2150,31 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
    
-    
+    @staticmethod
+    async def non_reporting_devices(filters, cross_filters, drill_state, payload):
+        try:
+            query = """SELECT zone, location, location_name, truck_regno, loaded_on, (last_check_date || ' ' || last_check_time)::timestamp as last_check,
+                       (longitude, latitude) as "longitude/latitude" FROM non_reporting_devices"""
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            
+            status_filter = payload.get("status")
+            if status_filter == "live":
+                conditions.append("completed_trip = 'open' AND completed_trip_auto_dc = 'open'")
+            elif status_filter == "closed":
+                # conditions.append("'closed' IN (completed_trip, completed_trip_auto_dc)")
+                conditions.append("completed_trip='closed' OR completed_trip_auto_dc='closed'")
+
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            df = await VTSAnalyticsActions.execute_query(query)
+            if payload.get("total_count") == "true":
+                return {"status": True, "total_records":len(df)}
+            return {"status": True, "message": "successfull", "data": df.to_dict(orient="records") }
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+
+
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
