@@ -11261,8 +11261,8 @@ class NonReportingDevicesSchema(UrdhvaPostgresBase):
     truck_regno: Mapped[str] = mapped_column("truck_regno", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     last_check_date: Mapped[datetime.date] = mapped_column("last_check_date", DATE, index=False, nullable=False, default=None, primary_key=False, unique=False)
     last_check_time: Mapped[str] = mapped_column("last_check_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    latitude: Mapped[int] = mapped_column("latitude", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    longitude: Mapped[int] = mapped_column("longitude", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location: Mapped[str] = mapped_column("location", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     device_working: Mapped[str] = mapped_column("device_working", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -11276,6 +11276,8 @@ class NonReportingDevicesSchema(UrdhvaPostgresBase):
     bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(truck_regno, last_check_date, last_check_time, location, name="non_reporting_devices_truck_lastc_lastc_locat"),)
+
 
 class NonReportingDevicesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'non_reporting_devices'
@@ -11283,8 +11285,8 @@ class NonReportingDevicesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     truck_regno: str
     last_check_date: datetime.date
     last_check_time: str
-    latitude: int
-    longitude: int
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
     location: str
     location_name: str
     device_working: str
@@ -11303,7 +11305,7 @@ class NonReportingDevicesCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = NonReportingDevicesSchema
-        upsert_keys = []
+        upsert_keys = ['truck_regno', 'last_check_date', 'last_check_time', 'location']
 
 
 class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
@@ -11312,8 +11314,8 @@ class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
     truck_regno: typing.Optional[str] | None = None
     last_check_date: typing.Optional[datetime.date] | None = None
     last_check_time: typing.Optional[str] | None = None
-    latitude: typing.Optional[int] | None = None
-    longitude: typing.Optional[int] | None = None
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
     location: typing.Optional[str] | None = None
     location_name: typing.Optional[str] | None = None
     device_working: typing.Optional[str] | None = None
@@ -11332,7 +11334,7 @@ class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = NonReportingDevicesSchema
-        upsert_keys = []
+        upsert_keys = ['truck_regno', 'last_check_date', 'last_check_time', 'location']
 
 
 class NonReportingDevicesGetResp(pydantic.BaseModel):
