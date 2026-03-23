@@ -222,7 +222,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
 
     if zones_seen and functional_area:
         zonal_functionary_roles = [f"{z}-{functional_area}" for z in zones_seen]
-        zonal_head_roles = [f"{z}-ZonalHead" for z in zones_seen]
+        zonal_head_roles = [f"{z}-Zonal Head" for z in zones_seen]
 
     zonal_functionary_emails, zonal_head_emails, hqo_emails = (
         await _fetch_role_emails(zonal_functionary_roles, zonal_head_roles, hqo_roles))
