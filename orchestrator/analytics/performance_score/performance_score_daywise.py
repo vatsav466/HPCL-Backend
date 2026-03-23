@@ -74,10 +74,10 @@ async def performance_score_daywise_action(data):
     query_str = f"bu = '{data.bu}'"
 
     if data.start_date:
-        query_str += f" AND created_at >= '{data.start_date}'"
+        query_str += f" AND created_at::date >= '{data.start_date}'"
 
     if data.end_date:
-        query_str += f" AND created_at <= '{data.end_date}'"
+        query_str += f" AND created_at::date <= '{data.end_date}'"
 
     if data.zone:
         query_str = add_filters(query_str, "zone", data.zone)
