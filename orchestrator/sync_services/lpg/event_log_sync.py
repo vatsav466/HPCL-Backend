@@ -10,6 +10,7 @@ import polars as pl
 import mysql.connector
 import concurrent.futures
 sys.path.append("/opt/ceg/algo")
+import utilities.helpers as helpers
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 logger = urdhva_base.logger.Logger.getInstance("event_log_sync")
@@ -205,6 +206,10 @@ def insertToDB(data, table_name):
     for col in data.columns:
         if data[col].dtype in [pl.Utf8]:
             data = data.with_columns(pl.col(col).str.replace_all("\x00", "").alias(col))
+            
+    unique_id = helpers.password_generator(password_length=8, special_characters_allowed=False, case_sensitive=False)
+    csv_file = f'/tmp/{table_name}_{unique_id}.csv'
+    
     try:
         if data.is_empty():
             logger.info(f"No data to insert into {table_name}")
@@ -215,8 +220,7 @@ def insertToDB(data, table_name):
         CSV HEADER DELIMITER '~';
         '''
         batch_size = 100000  # Process in smaller batches
-        for g, split_df in data.group_by(len(data)// batch_size):
-            csv_file = f'/tmp/{table_name}_{g}.csv'
+        for _, split_df in data.group_by(len(data)// batch_size):
             split_df.write_csv(csv_file, separator='~')
             with open(csv_file, 'r') as f:
                 cur.copy_expert(query, f)
@@ -235,6 +239,8 @@ def insertToDB(data, table_name):
         pg_conn.rollback()  # Rollback on error
         cur.close()
         pg_conn.close()
+        if os.path.exists(csv_file):
+            os.remove(csv_file)
         raise Exception(e)
 
 def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, chunk_size=50000):

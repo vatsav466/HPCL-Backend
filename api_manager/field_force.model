@@ -77,6 +77,14 @@ Model IndentManagement crud_disable {
         level_filter optional LevelFilter
         drill_filter optional DrillFilter
     }
+
+    // Average R3 - R1 data; plant wise
+    Action=> get_r3_r1_details {
+       action str
+       drill_state str
+       filters list WidgetFilters
+       cross_filters list WidgetFilters
+    }
 }
 
 // ========== Dry-Out (Novex) - Dev Phase 1 ==========

@@ -1034,64 +1034,90 @@ async def tas_alerts_exception_report(data):
     )
 
     # ---- Bay reassignment
-    bay_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostBayReAssignment.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", [])
+    bay_raw = (await hpcl_ceg_model.HostBayReAssignment.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if bay_raw:
+        bay_df = (
+            pl.DataFrame(bay_raw)
+            .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+            .group_by(["truck_number", "created_date"])
+            .agg([
+                pl.col("load_number").drop_nulls().first(),
+                pl.col("assigned_bay").drop_nulls().first(),
+                pl.col("reassigned_bay").drop_nulls().first(),
+            ])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
-        .agg([
-            pl.col("load_number").drop_nulls().first(),
-            pl.col("assigned_bay").drop_nulls().first(),
-            pl.col("reassigned_bay").drop_nulls().first(),
-        ])
-    )
+    else:
+        bay_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "load_number": pl.Series([], dtype=pl.Utf8),
+            "assigned_bay": pl.Series([], dtype=pl.Utf8),
+            "reassigned_bay": pl.Series([], dtype=pl.Utf8),
+        })
 
     # ---- Local loading
-    local_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostLocalLoadedTts.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", [])
+    local_raw = (await hpcl_ceg_model.HostLocalLoadedTts.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if local_raw:
+        local_df = (
+            pl.DataFrame(local_raw)
+            .with_columns([
+                pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
+                pl.col("created_at").dt.date().alias("created_date")
+            ])
+            .with_columns([
+                create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
+            ])
+            .filter(pl.col("is_valid_truck") == True)
+            .group_by(["truck_number_clean", "created_date"])
+            .agg([
+                pl.col("bcu_number").drop_nulls().first(),
+                pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),
+                pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
+            ])
+            .rename({"truck_number_clean": "truck_number"})
         )
-        .with_columns([
-            pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
-            pl.col("created_at").dt.date().alias("created_date")
-        ])
-        .with_columns([
-            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
-        ])
-        .filter(pl.col("is_valid_truck") == True)
-        .group_by(["truck_number_clean", "created_date"])
-        .agg([
-            pl.col("bcu_number").drop_nulls().first(),
-            pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),  # SUM the loaded_qty
-            pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
-        ])
-        .rename({"truck_number_clean": "truck_number"})
-    )
+    else:
+        local_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "bcu_number": pl.Series([], dtype=pl.Utf8),
+            "loaded_qty": pl.Series([], dtype=pl.Float64),
+            "recipe_name": pl.Series([], dtype=pl.Utf8),
+        })
 
     # ---- Cancel TT
-    cancel_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostCancelledTts.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", []),
-            infer_schema_length=None
+    cancel_raw = (await hpcl_ceg_model.HostCancelledTts.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if cancel_raw:
+        cancel_df = (
+            pl.DataFrame(cancel_raw, infer_schema_length=None)
+            .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+            .group_by(["truck_number", "created_date"])
+            .agg([
+                pl.col("load_number").drop_nulls().first(),
+                pl.col("required_qty").drop_nulls().first(),
+                pl.col("product_name").drop_nulls().first(),
+            ])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
-        .agg([
-            pl.col("load_number").drop_nulls().first(),
-            pl.col("required_qty").drop_nulls().first(),
-            pl.col("product_name").drop_nulls().first(),
-        ])
-    )
+    else:
+        cancel_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "load_number": pl.Series([], dtype=pl.Utf8),
+            "required_qty": pl.Series([], dtype=pl.Float64),
+            "product_name": pl.Series([], dtype=pl.Utf8),
+        })
     result = []
 
     for loc in df.select("location_name").unique().to_series():
