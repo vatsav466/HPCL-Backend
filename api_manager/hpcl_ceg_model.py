@@ -11032,14 +11032,18 @@ class TasFaultySchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_faulty'
     
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     device_type: Mapped[str] = mapped_column("device_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    device_category: Mapped[str] = mapped_column("device_category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[str] = mapped_column("equipment_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    device_name: Mapped[str] = mapped_column("device_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     user_remarks: Mapped[typing.Optional[str]] = mapped_column("user_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vendor_remarks: Mapped[typing.Optional[str]] = mapped_column("vendor_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    faulty: Mapped[datetime.datetime] = mapped_column("faulty", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    faulty_date: Mapped[datetime.datetime] = mapped_column("faulty_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     status: Mapped[str] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
 
@@ -11048,14 +11052,18 @@ class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'tas_faulty'
     
     sap_id: str
-    name: str
+    location_name: str
     device_type: str
+    device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    device_name: str
+    alert_id: str
+    vendor_name: str
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
-    faulty: datetime.datetime
+    faulty_date: datetime.datetime
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: str
 
@@ -11071,14 +11079,18 @@ class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'tas_faulty'
     
     sap_id: typing.Optional[str] | None = None
-    name: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
     device_type: typing.Optional[str] | None = None
+    device_category: typing.Optional[str] | None = None
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] | None = None
+    device_name: typing.Optional[str] | None = None
+    alert_id: typing.Optional[str] | None = None
+    vendor_name: typing.Optional[str] | None = None
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
-    faulty: typing.Optional[datetime.datetime] | None = None
+    faulty_date: typing.Optional[datetime.datetime] | None = None
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] | None = None
 
@@ -11098,12 +11110,16 @@ class TasFaultyGetResp(pydantic.BaseModel):
 
 class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
     sap_id: str
-    name: str
+    location_name: str
     device_type: str
+    device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    device_name: str
+    alert_id: str
+    vendor_name: str
     user_remarks: str
-    faulty: datetime.datetime
+    faulty_date: datetime.datetime
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
 

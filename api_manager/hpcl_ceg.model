@@ -4054,25 +4054,33 @@ Model NozzleSales {
 
 Model TasFaulty {
     sap_id index_field str
-    name  index_field  str
+    location_name  index_field  str
     device_type index_field str
+    device_category str
     zone index_field optional str
     equipment_name index_field str
+    device_name index_field str
+    alert_id index_field str
+    vendor_name index_field str
     user_remarks optional str
     vendor_remarks optional str
     workflow_instance_id optional str
-    faulty  datetime
+    faulty_date datetime
     certificate optional str
     status index_field str
 
     Action=> tas_faulty_create {
         sap_id  str
-        name  str
-        device_type  str
+        location_name str
+        device_type str
+        device_category str
         zone optional str
-        equipment_name  str
-        user_remarks  str
-        faulty  datetime
+        equipment_name str
+        device_name str
+        alert_id str
+        vendor_name str
+        user_remarks str
+        faulty_date datetime
         certificate optional str
         status optional str
     }

@@ -117,11 +117,12 @@ async def create_tas_faulty(data, certificate_file=None):
         device_type = data['device_type']
         equipment_name = data['equipment_name']
         zone = data['zone']
-        location_name = data['name']
+        device_name = data['device_name']
+        location_name = data['location_name']
         user_remarks = data['user_remarks']
-        faulty = data['faulty']
+        faulty_date = data['faulty_date']
+        vendor_name = data['vendor_name']
 
-        print("sap_id:", sap_id)
 
         # Set default status
         data['status'] = "Open"
@@ -132,6 +133,7 @@ async def create_tas_faulty(data, certificate_file=None):
             f"sap_id='{sap_id}' "
             f"AND device_type='{device_type}' "
             f"AND equipment_name='{equipment_name}'"
+            f"AND device_name='{device_name}'"
         )
 
         existing = await hpcl_ceg_model.TasFaulty.get_all(
@@ -154,8 +156,9 @@ async def create_tas_faulty(data, certificate_file=None):
                 "sap_id": {"value": sap_id, "type": "String"},
                 "location_name": {"value": location_name, "type": "String"},
                 "device_type": {"value": device_type, "type": "String"},
-                "equipment_name": {"value": equipment_name, "type": "String"},
+                "device_name": {"value": device_name, "type": "String"},
                 "zone": {"value": zone, "type": "String"},
+                "vendor_name": {"value":vendor_name, "type": "String"},
                 "remarks": {"value": user_remarks, "type": "String"},
                 "status": {"value": data['status'], "type": "String"},
             }
@@ -178,7 +181,7 @@ async def create_tas_faulty(data, certificate_file=None):
             )
             os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-            faulty_val = faulty
+            faulty_val = faulty_date
             if isinstance(faulty_val, datetime):
                 faulty_val = faulty_val.strftime("%Y%m%d_%H%M%S")
 
