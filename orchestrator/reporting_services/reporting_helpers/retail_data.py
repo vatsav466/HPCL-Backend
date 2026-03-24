@@ -1460,17 +1460,25 @@ async def nozzle_sales(
 async def sales_tmt_excel():
     """
     Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
-    Steps:
-    1. Fetch nozzle sales data by state for yesterday (or specified date) using nozzle_sales function.
-    2. Fetch location master data for RO to get state and sales area mapping.
-    3. Fetch sales details from CSV for expected site counts.
-    4. Fetch SAP sales TMT data by state for yesterday (or specified date).
-    5. Merge nozzle sales with location master to get state-level aggregation.
-    6. Merge sales details with location master to get expected site counts by state.
-    7. Merge nozzle sales and SAP sales by state.
-    8. Calculate total rows and percentages.
-    9. Generate Excel report with formatted headers and data.
+    
+    This function:
+    - Fetches daily nozzle sales data
+    - Fetches month-to-date (MTD) nozzle and SAP sales data
+    - Maps sales areas to states
+    - Aggregates all data at state level
+    - Calculates MTD percentage (Nozzle vs SAP)
+    - Adds total row
+    - Generates a formatted Excel file
+
+    Output:
+    - Excel file saved at: /tmp/primary_&_secondary_sales.xlsx
+
+    Returns:
+    - Dictionary with file path of the generated report
+    
     """
+
+    # daily sales data
     nozzle_sales_df = await nozzle_sales()
     nozzle_sales_df = pl.DataFrame(nozzle_sales_df["daily_zone_product_nozzle_sales"])
     nozzle_sales_df = nozzle_sales_df.filter(pl.col("sales_area") != "Total")
@@ -1478,30 +1486,90 @@ async def sales_tmt_excel():
     location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
     location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
     location_master_df = pl.DataFrame(location_master_details['data'])
-    
+
     merge_with_lm = nozzle_sales_df.join(location_master_df, on="sales_area", how="left")
-    
-    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
-    sales_details_df = pl.DataFrame(sales_details)
-
-    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
-    
-    sap_sales_df = await sales_data.get_sales_tmt(date_filter= 'day')
-    sap_sales_df = pl.DataFrame(sap_sales_df)
-    sap_sales_df = sap_sales_df.filter(pl.col("sales_area") != "GRAND TOTAL")
-    sap_sales_df = sap_sales_df.with_columns([
-        pl.col("MS_SALES_TMT").fill_null(0),
-        pl.col("HSD_SALES_TMT").fill_null(0)
-    ])
-
-    
-    merged_data = sap_sales_df.join(location_master_df, on ="sales_area", how = "left")
     merge_with_lm = (merge_with_lm
         .group_by("state")
         .agg([
             pl.col("connected_sites").sum(),
             pl.col("MS_volume(TMT)").sum(),
             pl.col("HSD_volume(TMT)").sum(),
+        ])
+    )
+
+    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details_df = pl.DataFrame(sales_details)
+
+    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
+    merged_sales_location = (merged_sales_location
+        .group_by("state")
+        .agg([pl.col("outlets").sum().alias("total_sites")])
+    )
+   
+    final_df = merge_with_lm.join(merged_sales_location,on ='state',how = "left")
+
+    total_rows = final_df.select([
+        pl.lit("Total").alias("state"),
+        pl.sum("connected_sites"),
+        pl.sum("MS_volume(TMT)"),
+        pl.sum("HSD_volume(TMT)"),
+        pl.sum("total_sites")
+    ])
+    final_data = pl.concat([final_df,total_rows])
+    
+    # monthly sales data
+    start_of_month = datetime.date.today().replace(day=1)
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+
+    nozzle_sales_monthly = await nozzle_sales(date_spec=(start_of_month, yesterday))
+
+    nozzle_sales_monthly = pl.DataFrame(nozzle_sales_monthly["daily_zone_product_nozzle_sales"])
+    nozzle_sales_monthly = nozzle_sales_monthly.filter(pl.col("sales_area") != "Total")
+
+    nozzle_sales_monthly = (nozzle_sales_monthly
+        .group_by("sales_area")
+        .agg([
+            pl.col("connected_sites").unique().max().alias("monthly_connected_sites"),
+            pl.col("MS_volume(TMT)").sum().alias("monthly_MS_volume(TMT)"),
+            pl.col("HSD_volume(TMT)").sum().alias("monthly_HSD_volume(TMT)"),
+        ])
+    )
+
+    location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
+    location_master_df = pl.DataFrame(location_master_details['data'])
+
+    merge_with_lm_monthly = nozzle_sales_monthly.join(location_master_df, on="sales_area", how="left")
+    
+
+    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details_df = pl.DataFrame(sales_details)
+
+    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
+
+    sap_sales_monthly = await sales_data.get_sales_tmt(date_filter= 'month')
+    sap_sales_monthly = pl.DataFrame(sap_sales_monthly)
+    sap_sales_monthly = sap_sales_monthly.filter(pl.col("sales_area") != "GRAND TOTAL")
+    sap_sales_monthly = sap_sales_monthly.with_columns([
+        pl.col("MS_SALES_TMT").fill_null(0),
+        pl.col("HSD_SALES_TMT").fill_null(0)
+    ])
+    sap_sales_monthly = (
+        sap_sales_monthly
+        .group_by("sales_area")
+        .agg([
+            pl.col("MS_SALES_TMT").sum().alias("monthly_MS_SALES_TMT"),
+            pl.col("HSD_SALES_TMT").sum().alias("monthly_HSD_SALES_TMT")
+        ])
+    )
+
+    merged_data = sap_sales_monthly.join(location_master_df, on ="sales_area", how = "left")
+    merge_with_lm_monthly = (merge_with_lm_monthly
+        .group_by("state")
+        .agg([
+            pl.col("monthly_connected_sites").sum(),
+            pl.col("monthly_MS_volume(TMT)").sum(),
+            pl.col("monthly_HSD_volume(TMT)").sum(),
         ])
     )
 
@@ -1513,36 +1581,39 @@ async def sales_tmt_excel():
     merged_data = (merged_data
         .group_by("state")
         .agg([
-            pl.col("MS_SALES_TMT").sum(),
-            pl.col("HSD_SALES_TMT").sum()
+            pl.col("monthly_MS_SALES_TMT").sum(),
+            pl.col("monthly_HSD_SALES_TMT").sum()
         ])
     )
 
-    final_df = merge_with_lm.join(merged_data,on ='state',how = "left")
-    final_df = final_df.join(merged_sales_location, on="state", how="left")
+    final_data_monthly = merge_with_lm_monthly.join(merged_data,on ='state',how = "left")
+    final_data_monthly = final_data_monthly.join(merged_sales_location, on="state", how="left")
 
-    total_rows = final_df.select([
+    total_rows = final_data_monthly.select([
         pl.lit("Total").alias("state"),
-        pl.sum("connected_sites"),
-        pl.sum("MS_volume(TMT)"),
-        pl.sum("HSD_volume(TMT)"),
-        pl.sum("MS_SALES_TMT"),
-        pl.sum("HSD_SALES_TMT"),
+        pl.sum("monthly_connected_sites"),
+        pl.sum("monthly_MS_volume(TMT)"),
+        pl.sum("monthly_HSD_volume(TMT)"),
+        pl.sum("monthly_MS_SALES_TMT"),
+        pl.sum("monthly_HSD_SALES_TMT"),
         pl.sum("total_sites")
     ])
+    
+    final_data_monthly = pl.concat([final_data_monthly,total_rows])
 
-    print("total rows ---->\n", total_rows)
+    final_data_monthly = final_data_monthly.with_columns([
+        (100 * (pl.col("monthly_MS_volume(TMT)").cast(pl.Float64) / pl.col("monthly_MS_SALES_TMT").cast(pl.Float64)))
+            .round(2).alias("monthly_MS_percentage"),
 
-    final_data = pl.concat([final_df,total_rows])
-
-    final_data = final_data.with_columns([
-        (100 * (pl.col("MS_volume(TMT)").cast(pl.Float64) / pl.col("MS_SALES_TMT").cast(pl.Float64)))
-            .round(2).alias("MS_percentage"),
-
-        (100 * (pl.col("HSD_volume(TMT)").cast(pl.Float64) / pl.col("HSD_SALES_TMT").cast(pl.Float64)))
-            .round(2).alias("HSD_percentage")
+        (100 * (pl.col("monthly_HSD_volume(TMT)").cast(pl.Float64) / pl.col("monthly_HSD_SALES_TMT").cast(pl.Float64)))
+            .round(2).alias("monthly_HSD_percentage")
     ])
-    print("final data ---->\n", final_data)
+
+    final_result = final_data.join(
+        final_data_monthly,
+        on="state",
+        how="left"
+    )
 
     excel_path = "/tmp/primary_&_secondary_sales.xlsx"
     workbook = xlsxwriter.Workbook(excel_path)
@@ -1555,27 +1626,33 @@ async def sales_tmt_excel():
         "valign": "middle",
         "border": 1
     })
+
     cell_format = workbook.add_format({
         "border": 1,
         "align": "center"
     })
 
+
     # -------------------- HEADERS --------------------
     worksheet.merge_range("A1:A2", "State", header_format)
-    worksheet.merge_range("B1:B2", "Total RO", header_format)
-    worksheet.merge_range("C1:C2", "Connected RO", header_format)
-    worksheet.merge_range("D1:E1", "Nozzle sales (in TMT)", header_format)
+    worksheet.merge_range("B1:B2", "Total Sites", header_format)
+    worksheet.merge_range("C1:C2", "Connected Sites", header_format)
+    worksheet.merge_range("D1:E1", "Nozzle day sales (TMT)", header_format)
     worksheet.write("D2", "MS (all variants)", header_format)
     worksheet.write("E2", "HSD (all variants)", header_format)
-    worksheet.merge_range("F1:G1", "SAP SALES (in TMT)", header_format)
+    worksheet.merge_range("F1:G1", "Nozzle Cum. sales of the month (TMT)", header_format)
     worksheet.write("F2", "MS (all variants)", header_format)
     worksheet.write("G2", "HSD (all variants)", header_format)
-    worksheet.merge_range("H1:I1", "% Nozzle Sales", header_format)
+    worksheet.merge_range("H1:I1", "SAP Cum. sales of the month (TMT)", header_format)
     worksheet.write("H2", "MS (all variants)", header_format)
     worksheet.write("I2", "HSD (all variants)", header_format)
+    worksheet.merge_range("J1:K1", "% of Cum. Nozzle Sales", header_format)
+    worksheet.write("J2", "MS (all variants)", header_format)
+    worksheet.write("K2", "HSD (all variants)", header_format)
+
 
     # -------------------- DATA --------------------
-    data_rows = final_data.to_dicts()
+    data_rows = final_result.to_dicts()
 
     row = 2
     for record in data_rows:
@@ -1584,25 +1661,28 @@ async def sales_tmt_excel():
         worksheet.write(row, 2, record["connected_sites"], cell_format)
         worksheet.write(row, 3, record["MS_volume(TMT)"], cell_format)
         worksheet.write(row, 4, record["HSD_volume(TMT)"], cell_format)
-        worksheet.write(row, 5, record["MS_SALES_TMT"], cell_format)
-        worksheet.write(row, 6, record["HSD_SALES_TMT"], cell_format)
-        worksheet.write(row, 7, record["MS_percentage"], cell_format)
-        worksheet.write(row, 8, record["HSD_percentage"], cell_format)
+        worksheet.write(row, 5, record["monthly_MS_volume(TMT)"], cell_format)
+        worksheet.write(row, 6, record["monthly_HSD_volume(TMT)"], cell_format)
+        worksheet.write(row, 7, record["monthly_MS_SALES_TMT"], cell_format)
+        worksheet.write(row, 8, record["monthly_HSD_SALES_TMT"], cell_format)
+        worksheet.write(row, 9, record["monthly_MS_percentage"], cell_format)
+        worksheet.write(row, 10, record["monthly_HSD_percentage"], cell_format)
         row += 1
 
     # -------------------- COLUMN WIDTH --------------------
-    worksheet.set_column("A:A", 18)
-    worksheet.set_column("B:B", 18)
-    worksheet.set_column("C:C", 18)
+    worksheet.set_column("A:A", 20)
+    worksheet.set_column("B:B", 20)
+    worksheet.set_column("C:C", 20)
     worksheet.set_column("D:E", 20)
-    worksheet.set_column("F:G", 20)
-    worksheet.set_column("H:I", 20)
-
+    worksheet.set_column("F:G", 23)
+    worksheet.set_column("H:I", 23)
+    worksheet.set_column("J:K", 23)
 
     start_row = 2
     end_row = row - 1
 
-    for col in ["H", "I"]:
+    for col in ["J", "K"]:
+
         cell_range = f"{col}{start_row+1}:{col}{end_row+1}"
 
         # < 70 → Dark Red
@@ -1610,7 +1690,7 @@ async def sales_tmt_excel():
             "type": "cell",
             "criteria": "<",
             "value": 70,
-            "format": workbook.add_format({"bg_color": "#C00000"})
+            "format": workbook.add_format({"bg_color": "#c00000"})
         })
 
         # 70–80 → Orange
@@ -1619,7 +1699,7 @@ async def sales_tmt_excel():
             "criteria": "between",
             "minimum": 70,
             "maximum": 80,
-            "format": workbook.add_format({"bg_color": "#F1A470"})
+            "format": workbook.add_format({"bg_color": "#f1a470"})
         })
 
         # 80–90 → Light Orange
@@ -1628,7 +1708,7 @@ async def sales_tmt_excel():
             "criteria": "between",
             "minimum": 80,
             "maximum": 90,
-            "format": workbook.add_format({"bg_color": "#F5BB99"})
+            "format": workbook.add_format({"bg_color": "#ef7d39"})
         })
 
         # > 90 → Dark Orange
@@ -1636,8 +1716,22 @@ async def sales_tmt_excel():
             "type": "cell",
             "criteria": ">",
             "value": 90,
-            "format": workbook.add_format({"bg_color": "#ED7D31"})
+            "format": workbook.add_format({"bg_color": "#d25704"})
         })
+    
+    legend_start_row = 2
+    legend_col = "M"
+    color_col = "N"
+    legend_items = [
+        ("< 70", "#c00000"),
+        ("70–80", "#f1a470"),
+        ("80–90", "#ef7d39"),
+        ("> 90", "#d25704"),
+    ]
+
+    for i, (label, color) in enumerate(legend_items):
+        worksheet.write(f"{legend_col}{legend_start_row + i}", label, cell_format)
+        worksheet.write_blank(f"{color_col}{legend_start_row + i}", None, workbook.add_format({"bg_color": color}))
         
     workbook.close()
 

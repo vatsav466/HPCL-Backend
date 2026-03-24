@@ -1,4 +1,3 @@
-
 import io
 import ast
 import psycopg2
@@ -9,6 +8,7 @@ import polars as pl
 import pandas as pd
 import charts_actions
 import dashboard_studio_model
+import hpcl_ceg_model as ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 logger = urdhva_base.Logger.getInstance("nrd_data")
@@ -37,11 +37,13 @@ async def db_insert(data: pl.DataFrame):
         logger.info("SUCCESSFULLY inserted Non Reporting Devices Data to DB")
 
     except Exception as e:
+        print(f"error while inserting to db {e}")
         logger.error(f"ERROR while inserting Non Reporting Devices data to db {e}")
 
 async def non_reporting_devices_data():
-#  ims  id=3, vts id =6
+#  ims_id=3, vts_id=6, 162_db_id=1
     # connection for ims
+    print("executing non reporting devices")
     try:
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -67,22 +69,23 @@ async def non_reporting_devices_data():
         # get latest trucks with R3 swipe
         try:
             query = f"""SELECT
-                            TRUCK_REGNO as "truck_regno",
-                            CARD_DATE as "card_date",
-                            CARD_TIME as "card_time",
-                            TO_TIMESTAMP(
-                            TO_CHAR(card_date, 'YYYYMMDD') ||
-                            LPAD(REGEXP_REPLACE(card_time, '[^0-9]', ''), 6, '0'),
-                            'YYYYMMDDHH24MISS'
-                            ) AS "card_datetime",
-                            READER_ID as "reader_id",
-                            LOADED_ON as "loaded_on"
-                        FROM IMS_SAP.TRUCK_SWIPE_ENTRY_SAP
-                        WHERE ORA_ROWSCN > {last_scn}
-                            AND ORA_ROWSCN <= {latest_scn}
-                            AND READER_ID='R3'
-                            AND LOADED_ON > TIMESTAMP '{last_loaded_on}'
-                    """
+                           TRUCK_REGNO as "truck_regno",
+                           CARD_DATE as "card_date",
+                           CARD_TIME as "card_time",
+                           TO_TIMESTAMP(
+                           TO_CHAR(card_date, 'YYYYMMDD') ||
+                           LPAD(REGEXP_REPLACE(card_time, '[^0-9]', ''), 6, '0'),
+                           'YYYYMMDDHH24MISS'
+                           ) AS "card_datetime",
+                           READER_ID as "reader_id",
+                           LOADED_ON as "loaded_on"
+                       FROM IMS_SAP.TRUCK_SWIPE_ENTRY_SAP
+                       WHERE ORA_ROWSCN > {last_scn}
+                           AND ORA_ROWSCN <= {latest_scn}
+                           AND READER_ID='R3'
+                           AND LOADED_ON > TIMESTAMP '{last_loaded_on}'
+                   """
+
             resp = await function(query=query)
             res_df = pl.DataFrame(resp)
             logger.info(f"SUCCESSFULLY retreived latest trucks with R3 swipe")
@@ -101,7 +104,7 @@ async def non_reporting_devices_data():
         await redis_ins.set("last_loaded_on", str(latest_loaded_on))
 
         # connection for vts_truck
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
@@ -111,23 +114,24 @@ async def non_reporting_devices_data():
             return
 
         try:
-            #query to get trucks with non reporting device
+            # query to get trucks with non reporting device
+            # removed  LOCATION_NAME as location_name from query
             query = f"""
             SELECT
-                TRUCK_REGNO as truck_regno,
-                LAST_CHECK_DATE as last_check_date,
-                LAST_CHECK_TIME as last_check_time,
-                LATITUDE as latitiude,
-                LONGITUDE as longitude,
-                LOCATION as location,
-                LOCATION_NAME as location_name
+               TRUCK_REGNO as truck_regno,
+               LAST_CHECK_DATE as last_check_date,
+               LAST_CHECK_TIME as last_check_time,
+               LATITUDE as latitude,
+               LONGITUDE as longitude,
+               LOCATION as location
             FROM VTS_DEVICE_STATUS_HIST
             WHERE TRUCK_REGNO IN {truck_list}
-                AND (
-                CAST(LAST_CHECK_DATE AS DATETIME)
-                + CAST(LAST_CHECK_TIME AS DATETIME)
-                ) <= DATEADD(MINUTE, -30, GETDATE())
+               AND (
+               CAST(LAST_CHECK_DATE AS DATETIME)
+               + CAST(LAST_CHECK_TIME AS DATETIME)
+               ) <= DATEADD(MINUTE, -30, GETDATE())
             """
+
             not_working_device_resp = await function(query=query)
             vts_device_df = pl.DataFrame(not_working_device_resp)
             
@@ -145,6 +149,14 @@ async def non_reporting_devices_data():
             vts_device_df = vts_device_df.with_columns(
                 pl.lit("open").alias("completed_trip_auto_dc")
             )
+
+            # convert longitutde and latitude to string
+            vts_device_df = vts_device_df.with_columns([
+                pl.col("latitude").cast(pl.Utf8),
+                pl.col("longitude").cast(pl.Utf8)
+            ])
+
+            print("device data -->", vts_device_df)
             if not vts_device_df.is_empty():
                 vts_device_df = vts_device_df.join(
                     res_df,
@@ -152,12 +164,40 @@ async def non_reporting_devices_data():
                     how='left'
                 )
                 logger.info("SUCCESSFULLY retrieved trucks with Non Reporting Devices")
+               
+                # add bu zone location name
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+
+                locations = tuple(vts_device_df['location'].unique().to_list())
+                query = f"""
+                    SELECT sap_id AS location, name as location_name, zone, bu
+                    FROM public.location_master
+                    WHERE sap_id in {locations}
+                """
+                lm_data = await function(query=query)
+                lm_data_df = pl.DataFrame(lm_data)
+                logger.info("SUCCESSFULLY retrieved bu, zone, location_name for all sap_id")
+                if not lm_data_df.is_empty():
+                    vts_device_df = vts_device_df.join(
+                    lm_data_df,
+                    on="location",
+                    how='left'
+                    )
+                try:
+                    logger.info("Inserting data into non_reporting_devices")
+                    await ceg_model.NonReportingDevices.bulk_update(vts_device_df, upsert=True)
+                    return
+                except Exception as e:
+                    logger.error(f"error while inserting data to non_reporting_devices {e}")
+                    return
             else:
+                logger.info("no trucks found for non reporting devices")
                 return
-            print("trucks with non reporting devices", vts_device_df)
-            return vts_device_df
         except Exception as e:
-            logger.error("ERROR while retreiving trucks with non reporting devices")
+            logger.error(f"ERROR while retreiving trucks with non reporting devices {e}")
+            return
     except Exception as e:
         logger.error(f"ERROR while retreving non reporting devices data {e}")
         return
@@ -229,7 +269,6 @@ async def update_trip_status():
                 on='truck_regno',
                 how='left'
             )
-            print("truck data", truck_data)
             # clause with truck name, r3 swipe datetime, loadno and ship_to(dealer code)
             truck_data_clause = ",".join(
                 f"('{truck_regno}', '{card_datetime.strftime('%Y-%m-%d %H:%M:%S')}', '{loadno}', '{dealer_code}')"
@@ -243,7 +282,7 @@ async def update_trip_status():
             )
 
             # connection for vts_truck
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
@@ -270,7 +309,6 @@ async def update_trip_status():
                     AND c.TRIP_NAME LIKE '%' + t.ship_to + '%';
                 """
             
-            print("trip_completed_resp query ", query)
             trip_completed_resp = await function(query=query)
             completed_trips = pl.DataFrame(trip_completed_resp)
 
@@ -356,14 +394,8 @@ async def update_trip_status():
         logger.error(f"ERROR While updating trip status")
 
 async def main():
-    data = await non_reporting_devices_data()
-    if isinstance(data, pl.DataFrame) and not data.is_empty():
-        await db_insert(data)
-        logger.info("SUCCESFULLY INSERTED DATA TO TABLE")
-    else:
-        logger.info("NO DATA INSERTED TO DB")
-    status = await update_trip_status()
-    print(status)
+    await non_reporting_devices_data()
+    await update_trip_status()
 
 if __name__ == '__main__':
     asyncio.run(main())

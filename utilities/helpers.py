@@ -18,12 +18,12 @@ try:
     from secrets import choice
 except ImportError:
     from random import choice
-from utilities import sales_mapping
 from collections import defaultdict
 from dateutil.relativedelta import relativedelta
-from utilities import interlock_category_mapping
+import utilities
 import Thingsboard.bu_asset_master_new as tb_master
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import hpcl_ceg_model
 
 def month_short_to_number(short_name):
     # Parses the short month name (%b) and extracts the month as an integer.
@@ -203,17 +203,41 @@ async def generate_filter_query(filters, query, where_clause=False):
         return query
 
 
-async def get_location_details(bu, sap_id):
+async def get_location_details(bu, sap_id, from_db=False):
     """
     Retrieves location details based on the provided business unit and SAP ID.
+    Fetches directly from database to avoid Redis load issues.
 
     Parameters:
     bu (str): The business unit identifier.
     sap_id (str): The SAP ID of the location.
 
     Returns:
-    dict: Location details, including name, address, coordinates, etc., or None if not found.
+    tuple: (status: bool, location_data: dict)
+        - status: True if location found, False otherwise
+        - location_data: Location details including name, address, coordinates, etc., or error message dict
     """
+    if from_db:
+         # Direct database fetch using SQL query
+        try:
+            print("bu and sap id ->", bu, sap_id)
+            if not bu or not sap_id:
+                return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+            
+            # Query database directly using SQL
+            query = f"SELECT * FROM location_master WHERE bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
+            locdata = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
+            
+            if locdata.get('data', []):
+                location_data = locdata.get('data')[0]
+                return True, location_data
+            
+            return False, {"msg": "Data not available"}
+        except Exception as e:
+            print(f"Error in getting location details from database: {e}, BU: {bu}, Location ID: {sap_id}")
+            print(traceback.format_exc())
+            return False, {"msg": f"Error fetching location details: {str(e)}"}
+
     MAX_RETRIES = 5
     RETRY_DELAY = 2
     for attempt in range(MAX_RETRIES):
@@ -235,7 +259,6 @@ async def get_location_details(bu, sap_id):
         else:
             return False, {}
     return False, {}
-
 
 async def get_alert_camunda_url(alert_id, base_url):
     """
@@ -342,7 +365,7 @@ async def get_doc_link(file_name: str):
     return f"http://{server_ip}:8080/api/alerts/stored_document?file_name={file_name}"
 
 def map_device_category(interlock_name):
-    for category, interlocks in interlock_category_mapping.interlock_to_category.items():
+    for category, interlocks in utilities.interlock_category_mapping.interlock_to_category.items():
         if interlock_name in interlocks:
             return category
     return "Unknown"
@@ -582,7 +605,7 @@ def get_user_details(where_clause):
     user_region = rpt.get("region", [])
     user_sales_area = rpt.get("sales_area", [])
 
-    user_zone = [sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
+    user_zone = [utilities.sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
 
     if not user_region:
         user_region = [x['value'] for x in where_clause if x.get('key') == 'Region_Name']   
