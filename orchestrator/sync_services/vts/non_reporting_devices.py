@@ -104,7 +104,7 @@ async def non_reporting_devices_data():
         await redis_ins.set("last_loaded_on", str(latest_loaded_on))
 
         # connection for vts_truck
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
@@ -121,7 +121,7 @@ async def non_reporting_devices_data():
                TRUCK_REGNO as truck_regno,
                LAST_CHECK_DATE as last_check_date,
                LAST_CHECK_TIME as last_check_time,
-               LATITUDE as latitiude,
+               LATITUDE as latitude,
                LONGITUDE as longitude,
                LOCATION as location
             FROM VTS_DEVICE_STATUS_HIST
@@ -151,7 +151,7 @@ async def non_reporting_devices_data():
             )
 
             # convert longitutde and latitude to string
-            df = df.with_columns([
+            vts_device_df = vts_device_df.with_columns([
                 pl.col("latitude").cast(pl.Utf8),
                 pl.col("longitude").cast(pl.Utf8)
             ])
@@ -282,7 +282,7 @@ async def update_trip_status():
             )
 
             # connection for vts_truck
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
