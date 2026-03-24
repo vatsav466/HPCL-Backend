@@ -232,37 +232,20 @@ async def r3_r1_monthwise(data):
             location_wise_query = ims_query.ims_queries.get('location_wise_query', '')
             location_data = await function(query=location_wise_query) if location_wise_query else []
 
-            # location wise summary
-            location_wise_summary_query = ims_query.ims_queries.get('location_wise_summary_query', '')
-            location_summary =  await function(query=location_wise_summary_query) if location_wise_summary_query else []
-
             # month wise data
             monthly_query = ims_query.ims_queries.get('monthly_query', '')
             month_wise_data =  await function(query=monthly_query) if monthly_query else []
         
-            # monthly summary 
-            monthly_summary_query = ims_query.ims_queries.get('monthly_summary_query', '')
-            monthly_summary = await function(query=monthly_summary_query) if monthly_summary_query else []
-
             #zone wise data
             zone_wise_query = ims_query.ims_queries.get('zone_wise_query', [])
             zone_wise_data = await function(query=zone_wise_query) if zone_wise_query else []
-        
-            # zone wise summary
-            zone_wise_summary_query = ims_query.ims_queries.get('zone_wise_summary_query', '')
-            zone_wise_summary = await function(query=zone_wise_summary_query) if zone_wise_query else []
 
             return {
                 "status" : True,
                 "message": "Success",
-                "overall_data": month_wise_data if month_wise_data else [],
-                "overall_summary": monthly_summary if monthly_summary else [],
                 "location_data": location_data if location_data else [],
-                "location_summary": location_summary if location_summary else [],
                 "monthly_data": month_wise_data if month_wise_data else [],
-                "monthly_summary": monthly_summary if monthly_summary else [],
                 "zone_data": zone_wise_data if zone_wise_data else [],
-                "zone_summary": zone_wise_summary if zone_wise_summary else []
             }
     except Exception as e:
         return {
@@ -278,8 +261,8 @@ async def r3_r1_daywise(data):
     try:
         # sample  where cond
         """
-        WHERE tses."CARD_DATE" BETWEEN DATE '2025-09-01' AND DATE '2025-09-03' AND
-	    tses."LOCN_CODE" = '1128' AND lm.zone ='NCZ'
+        WHERE tses."CARD_DATE" BETWEEN DATE '2025-09-01' AND DATE '2025-09-03' AND tses."LOCN_CODE" = '1180'
+        AND tses."CARD_STATUS" IN ('O', 'R')
         """
         # get cross filters
         cross_filters = data.cross_filters
@@ -294,23 +277,26 @@ async def r3_r1_daywise(data):
                     end_date = val.split(",")[-1]
                     end = f"{end_date} 23:59:59"
 
-                    conditions.append(f"""tses."CARD_DATE" BETWEEN DATE '{start}' DATE '{end}' """)
+                    conditions.append(f"""tses."CARD_DATE" BETWEEN DATE '{start}' AND DATE '{end}' """)
                 
                 if rec.key == 'zone':
                     zone_val = rec.value
-                    conditions.append(f""" lm.zone ='{zone_val}' """ + "AND")
+                    conditions.append(f""" lm.zone ='{zone_val}' """ )
                 
                 if rec.key == 'sap_id':
                     sap_id = rec.value
                     conditions.append(f""" tses."LOCN_CODE" = '{sap_id}' """)
+            conditions.append("""tses."CARD_STATUS" IN ('O', 'R')""")
 
         where_clause = " AND ".join(conditions)
-
+        print("where clause -->", where_clause)
         query = ims_query.ims_queries.get('daywise_query', '').format(where_clause)
+        print("query --->", query)
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         daily_data = await function(query=query)
+        print("daily_data -->", daily_data)
 
         return {
                 "status" : True,
