@@ -147,6 +147,22 @@ class Dryoutmanagement_Get_Dry_Out_IndentsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Dryoutmanagement_Get_Retail_Outlet_StockoutsParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
+    resp_level: typing.Optional[str] = pydantic.Field("", **{})
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Cris_Stock_AvailabilityParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     drill_filter: typing.Optional[DrillFilterCreate] | None = None

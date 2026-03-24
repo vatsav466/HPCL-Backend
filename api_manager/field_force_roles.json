@@ -177,6 +177,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -201,6 +204,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -234,6 +240,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -928,6 +937,10 @@
         {
             "name": "get_dry_out_indents",
             "displayName": "get_dry_out_indents"
+        },
+        {
+            "name": "get_retail_outlet_stockouts",
+            "displayName": "get_retail_outlet_stockouts"
         },
         {
             "name": "stock_availability",
