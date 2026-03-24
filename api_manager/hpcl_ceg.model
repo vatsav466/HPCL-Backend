@@ -4059,6 +4059,7 @@ Model TasFaulty {
     device_category str
     zone index_field optional str
     equipment_name index_field str
+    selecting_areas str
     device_name index_field str
     alert_id index_field str
     vendor_name index_field str
@@ -4076,6 +4077,7 @@ Model TasFaulty {
         device_category str
         zone optional str
         equipment_name str
+        selecting_areas str
         device_name str
         alert_id str
         vendor_name str

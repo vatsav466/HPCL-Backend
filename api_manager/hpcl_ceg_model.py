@@ -11037,6 +11037,7 @@ class TasFaultySchema(UrdhvaPostgresBase):
     device_category: Mapped[str] = mapped_column("device_category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[str] = mapped_column("equipment_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    selecting_areas: Mapped[str] = mapped_column("selecting_areas", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     device_name: Mapped[str] = mapped_column("device_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -11057,6 +11058,7 @@ class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    selecting_areas: str
     device_name: str
     alert_id: str
     vendor_name: str
@@ -11084,6 +11086,7 @@ class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
     device_category: typing.Optional[str] | None = None
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] | None = None
+    selecting_areas: typing.Optional[str] | None = None
     device_name: typing.Optional[str] | None = None
     alert_id: typing.Optional[str] | None = None
     vendor_name: typing.Optional[str] | None = None
@@ -11115,6 +11118,7 @@ class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
     device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    selecting_areas: str
     device_name: str
     alert_id: str
     vendor_name: str

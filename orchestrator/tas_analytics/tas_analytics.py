@@ -156,6 +156,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 "sap_id": {"value": sap_id, "type": "String"},
                 "location_name": {"value": location_name, "type": "String"},
                 "device_type": {"value": device_type, "type": "String"},
+                "bu": {"value": "TAS", "type": "String"},
                 "device_name": {"value": device_name, "type": "String"},
                 "zone": {"value": zone, "type": "String"},
                 "vendor_name": {"value":vendor_name, "type": "String"},

@@ -29,7 +29,7 @@ class VendorEmailNotification:
         return [
             "sap_id", "vendor_name", "device_type", "device_name",
             "zone", "bu", "remarks", "status", "messagetype", "location_name",
-            "escalation_level"  # 0=all, 1=level1, 2=level2, 3=level3
+            "escalationlevel"  # 0=all, 1=level1, 2=level2, 3=level3
         ]
 
     async def get_vendor_emails(
@@ -38,11 +38,11 @@ class VendorEmailNotification:
         vendor_name: str,
         zone: str,
         bu: str,
-        escalation_level: int
+        escalationlevel: int
     ) -> tuple[list[str], list[str]]:
         """
         Fetch vendor emails from TasHelpDeskVendorMails table filtered by
-        sap_id and vendor_name, then pick recipients based on escalation_level.
+        sap_id and vendor_name, then pick recipients based on escalationlevel.
         Also fetches CC recipients from Users table based on SOD roles.
 
         Args:
@@ -50,7 +50,7 @@ class VendorEmailNotification:
             vendor_name (str): Vendor name to match
             zone (str): Zone for fallback CC query
             bu (str): Business unit for fallback CC query
-            escalation_level (int): 0=all, 1=level1, 2=level2, 3=level3
+            escalationlevel (int): 0=all, 1=level1, 2=level2, 3=level3
 
         Returns:
             tuple[list[str], list[str]]: (mail_recipients, cc_recipients)
@@ -60,39 +60,31 @@ class VendorEmailNotification:
                  urdhva_base.queryparams.QueryParams(q=f"sap_id='{sap_id}' and vendor_name='{vendor_name}'", limit=0),
                  resp_type="plain"
             )
-
-            if not records:
-                logger.warning(
-                    f"No vendor mail config found | sap_id={sap_id} | vendor_name={vendor_name}"
-                )
+            
+            record_list = records.get("data") if isinstance(records, dict) else records
+            if not record_list:
+                logger.warning(f"No vendor mail config found | sap_id={sap_id} | vendor_name={vendor_name}")
                 return [], []
 
             level_fields = (
                 ["level1", "level2", "level3"]
-                if int(escalation_level) == 0
-                else [f"level{escalation_level}"]
+                if int(escalationlevel) == 0
+                else [f"level{escalationlevel}"]
             )
 
             emails: list[str] = []
-            for record in records:
+            for record in record_list:
                 for field in level_fields:
-                    value: typing.Optional[str] = getattr(record, field, None)
+                    value = record.get(field)
                     if value:
-                        emails.extend(
-                            addr.strip()
-                            for addr in value.split(",")
-                            if addr.strip()
-                        )
+                        emails.extend(addr.strip() for addr in value.split(",") if addr.strip())
 
             unique_emails = list(set(emails))
             logger.info(
                 f"Resolved {len(unique_emails)} recipient(s) | "
-                f"sap_id={sap_id} | vendor={vendor_name} | escalation_level={escalation_level}"
+                f"sap_id={sap_id} | vendor={vendor_name} | escalationlevel={escalationlevel}"
             )
 
-            # ----------------------------------------------------------------
-            # CC: SOD role users from Users table
-            # ----------------------------------------------------------------
             cc_roles = [
                 "Location In-Charge SOD",
                 "Maintenance Officer SOD",
@@ -143,7 +135,7 @@ class VendorEmailNotification:
     async def read_template(self) -> str:
         """Read HTML template file"""
         try:
-            filepath = f"{urdhva_base.settings.template_path}/vendor_notification.html"
+            filepath = f"{urdhva_base.settings.template_path}vendor_notification_notify.html"
             async with aiofiles.open(filepath, "r") as f:
                 return await f.read()
         except Exception as e:
@@ -166,14 +158,14 @@ class VendorEmailNotification:
             sap_id           = params.get("sap_id")
             vendor_name      = params.get("vendor_name")
             device_type      = params.get("device_type")
-            device_name   = params.get("device_name")
+            device_name      = params.get("device_name")
             zone             = params.get("zone")
             bu               = params.get("bu")
             remarks          = params.get("remarks")
             status           = params.get("status")
             message_type     = params.get("messagetype", "notify")
             location_name    = params.get("location_name", "")
-            escalation_level = int(params.get("escalation_level", 1))
+            escalationlevel = int(params.get("escalationlevel", 1))
 
             # ----------------------------------------------------------------
             # Resolve TO and CC recipients from DB
@@ -183,13 +175,13 @@ class VendorEmailNotification:
                 vendor_name=vendor_name,
                 zone=zone,
                 bu=bu,
-                escalation_level=escalation_level,
+                escalationlevel=escalationlevel,
             )
 
             if not self.mail_recipients:
                 logger.info(
                     f"No vendor emails found | sap_id={sap_id} | "
-                    f"vendor={vendor_name} | escalation_level={escalation_level}"
+                    f"vendor={vendor_name} | escalationlevel={escalationlevel}"
                 )
                 return True, {"msg": "No vendor emails configured"}
 
@@ -211,7 +203,7 @@ class VendorEmailNotification:
                 remarks=remarks,
                 status=status,
                 message_type=message_type,
-                escalation_level=escalation_level,
+                escalationlevel=escalationlevel,
             )
             self.subject = f"TAS Notification - {device_name} ({sap_id})"
 
@@ -221,7 +213,7 @@ class VendorEmailNotification:
             await self._send_notification()
             logger.info(
                 f"Vendor email sent | sap_id={sap_id} | vendor={vendor_name} | "
-                f"escalation_level={escalation_level} | "
+                f"escalation_level={escalationlevel} | "
                 f"recipients={self.mail_recipients} | cc={self.cc_recipients}"
             )
             return True, {"msg": "Notification sent successfully"}
@@ -239,7 +231,7 @@ class VendorEmailNotification:
             )
             await notification_module.publish_message(
                 recipients=self.mail_recipients,
-                cc=self.cc_recipients,
+                cc_recipients=self.cc_recipients,
                 subject=self.subject,
                 body=self.body,
                 force_send=True,
