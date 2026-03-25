@@ -294,46 +294,47 @@ ims_queries = {
         ORDER BY zone;
             """,
 "daywise_query" : """
-            WITH swipe_diff AS (
-                SELECT
+        WITH R3_DIFF_R1 AS (
+            WITH base AS (
+                SELECT 
+                    tses."CARD_DATE", 
+                    tses."CARD_NO", 
                     tses."LOCN_CODE",
-                    tses."CARD_DATE",
-                    lm.name,
-                    lm.bu,
-                    lm.zone,
-                    EXTRACT(EPOCH FROM (
-                            MAX(CASE WHEN tses."CARD_STATUS" = 'O' THEN tses."LOADED_ON" END)
-                        - MAX(CASE WHEN tses."CARD_STATUS" = 'R' THEN tses."LOADED_ON" END)
-                        )) / 60 AS r3_diff_r1
-                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tses LEFT JOIN public.location_master lm
-                ON tses."LOCN_CODE" = lm.sap_id
-                
-                {}
-                
-                GROUP BY
-                    tses."LOCN_CODE",
-                    tses."CARD_DATE",
-                    tses."TRUCK_REGNO",
-                    tses."SWIPE_SEQ",
-                    lm.bu,
-                    lm.zone,
-                    lm.name
-                HAVING
-                    MAX(CASE WHEN "CARD_STATUS" = 'O' THEN "LOADED_ON" END) IS NOT NULL
-                AND MAX(CASE WHEN "CARD_STATUS" = 'R' THEN "LOADED_ON" END) IS NOT NULL
-
-                ORDER BY  "LOCN_CODE",
-                    "CARD_DATE"
-            )
+                    tses."CARD_STATUS",
+                    tses."LOADED_ON",
+                    MAX(CASE WHEN tses."CARD_STATUS" = 'O' THEN tses."LOADED_ON" END) 
+                        OVER (PARTITION BY tses."CARD_DATE", tses."CARD_NO") AS o_time
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tses
+                    LEFT JOIN public.location_master lm 
+                        ON tses."LOCN_CODE" = lm."sap_id"
+                WHERE {}
+            ),
+            r_filtered AS (
                 SELECT
-                    "LOCN_CODE",
                     "CARD_DATE",
-                    name,
-                    bu,
-                    zone,
-                    AVG(R3_DIFF_R1) AS avg_r1_diff_r3
-                FROM swipe_diff 
-                GROUP BY "LOCN_CODE", "CARD_DATE", name, bu, zone
-
-        """
+                    "CARD_NO",
+                    "LOCN_CODE",
+                    o_time,
+                    -- Pick the LARGEST R that is still less than O
+                    MAX(CASE 
+                            WHEN "CARD_STATUS" = 'R' AND "LOADED_ON" < o_time 
+                            THEN "LOADED_ON" 
+                        END) AS r_time
+                FROM base
+                GROUP BY "CARD_DATE", "CARD_NO", "LOCN_CODE", o_time
+            )
+            SELECT
+                "CARD_DATE",
+                -- EXTRACT(EPOCH FROM (o_time - r_time)) / 60 AS diff_minutes
+                ROUND(EXTRACT(EPOCH FROM (o_time - r_time)) / 60, 2) AS diff_minutes
+            FROM r_filtered
+            WHERE o_time IS NOT NULL
+            AND r_time IS NOT NULL
+            ) 
+        SELECT "CARD_DATE",
+        ROUND(AVG(diff_minutes), 2) as average_minutes
+        FROM R3_DIFF_R1
+        GROUP BY "CARD_DATE"
+        ORDER BY "CARD_DATE"
+    """
 }
