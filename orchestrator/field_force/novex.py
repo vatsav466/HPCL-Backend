@@ -102,7 +102,7 @@ async def get_retail_outlet_stockouts(data):
                 else:
                     condition = f"{filter.key} IN {tuple(vals)}"
                 all_conditions.append(condition)
-                
+
         if data.filters:
             conditions = []
             for rec in data.filters:
@@ -230,7 +230,10 @@ async def get_retail_outlet_stockouts(data):
         loc_df = pl.DataFrame(location_master_resp)
 
         if loc_df.is_empty():
-            return {"status": False, "message": "No location master data"}
+            return {"status": True, "message": "No location master data"}
+        
+        if alerts_df.is_empty():
+            return {"status": True, "message": "No Data"}
         
         # DISTINCT base population
         loc_df = loc_df.select(["sap_id", "zone"]).unique()
