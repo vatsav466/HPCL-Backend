@@ -2,8 +2,13 @@
 Novex - Field Force orchestrator (Dry-Out under Novex).
 Functional schema for DryOutManagement APIs. No implementation.
 """
+import urdhva_base
 import field_force_model
 from typing import List, Optional
+import hpcl_ceg_model
+import polars as pl
+from datetime import datetime
+import traceback
 
 # dry_out_type in data (WidgetFiltersCreate): 0 = dry-out, 1 = Intra dry-out
 
@@ -62,3 +67,458 @@ async def get_dry_out_indents(
         Same as get_dry_out_indent_analysis.
     """
     pass
+
+async def get_retail_outlet_stockouts(data):
+    try:
+        where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "dry_out_in_days = '1'", "mark_as_false = 'true'"]
+        where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
+            extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
+        start_date = None
+        end_date = None
+        all_conditions = []
+        final_where_clause = ""
+        if data.cross_filters:
+            for filter in data.cross_filters:
+                # Handle DATE filter
+                if "DATE" in filter.key:
+                    if filter.value:
+                        dates = filter.value.split(",")
+                    elif filter.values:
+                        dates = filter.values if isinstance(filter.values, list) else [filter.values]
+                    else:
+                        continue
+                    start_date = dates[0]
+                    end_date = datetime.strptime(dates[-1], "%Y-%m-%d").strftime("%Y-%m-%d")
+                    continue  # skip to next filter after handling date
+                # Handle NON-DATE filters (same logic as filters)
+                if filter.values and isinstance(filter.values, list) and len(filter.values) > 0:
+                    vals = filter.values
+                elif filter.value:
+                    vals = filter.value.split(",")
+                else:
+                    continue
+                if len(vals) == 1:
+                    condition = f"{filter.key} = '{vals[0]}'"
+                else:
+                    condition = f"{filter.key} IN {tuple(vals)}"
+                all_conditions.append(condition)
+
+        if data.filters:
+            conditions = []
+            for rec in data.filters:
+                # Step 1: Decide source
+                if rec.values and isinstance(rec.values, list) and len(rec.values) > 0:
+                    vals = rec.values
+                elif rec.value:
+                    vals = rec.value.split(",")
+                else:
+                    continue  # skip empty filter
+                # Step 2: Build condition
+                if len(vals) == 1:
+                    condition = f"{rec.key} = '{vals[0]}'"
+                else:
+                    condition = f"{rec.key} IN {tuple(vals)}"
+                conditions.append(condition)
+            # Step 3: Merge conditions
+            if conditions:
+                all_conditions.extend(conditions)
+        if where_clause:
+            all_conditions.extend(where_clause)
+        if all_conditions:
+            final_where_clause = " AND " + " AND ".join(all_conditions)
+        query_unique_alert = f"""
+                                SELECT
+                                    lm.zone AS "Zone",
+                                    lm.region AS "Region",
+                                    lm.sales_area AS "Sales Area",
+                                    lm.sap_id AS "Location ID",
+                                    lm.name AS "Location Name",
+                                    e.id as "Alert ID",
+                                    e.alert_history,
+                                    e.indent_no as "Indent No",
+                                    e.closed_at as "Closed At",
+                                    e.updated_at as "Updated At",
+
+                                    -- Dryout Start Time: latest of created_at or dry_out_start_time
+                                    e.dry_out_start_time AS "Dryout Start Time",
+
+                                    -- Dryout End Time: only for closed alerts
+                                    e.dry_out_end_time as "Dryout End Time",
+
+                                    e.product_code AS "Product Code",
+
+                                    CASE e.product_code
+                                        WHEN '2811000' THEN 'MS'
+                                        WHEN '2812000' THEN 'HSD'
+                                        WHEN '3912000' THEN 'TURBO'
+                                        WHEN '2822000' THEN 'E20'
+                                        WHEN '3672000' THEN 'POWER 95'
+                                        WHEN '2816000' THEN 'POWER 99'
+                                        WHEN '3373000' THEN 'POWER 100'
+                                        ELSE e.product_code
+                                    END AS "Product Name"
+
+                                FROM (
+                                    SELECT
+                                        sap_id,
+                                        id,
+                                        product_code,
+                                        indent_status,
+                                        indent_no,
+                                        alert_history,
+                                        indent_raised_date,
+                                        created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' AS created_at,
+                                        closed_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' AS closed_at,
+                                        updated_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' AS updated_at,
+                                        dry_out_start_time AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' AS dry_out_start_time,
+                                        dry_out_end_time AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' AS dry_out_end_time,
+                                        alert_status
+                                    FROM alerts
+                                    WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                                    AND bu = 'RO'
+                                    AND product_code IN ('2811000', '2812000', '3912000','2822000','3672000','2816000','3373000')
+                                    AND dry_out_in_days = '1'
+                                    -- Interval starts before or at timestamp
+                                    AND dry_out_start_time AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata'
+                                            <= '{end_date}'
+
+                                    -- Interval ends after timestamp OR has no end
+                                    AND (
+                                        COALESCE(dry_out_end_time, closed_at, updated_at) IS NULL
+                                        OR COALESCE(dry_out_end_time, closed_at, updated_at) >= '{start_date}'
+                                    ) 
+                                    {final_where_clause}
+                                ) AS e
+
+                                JOIN location_master lm
+                                    ON e.sap_id = lm.sap_id
+
+                                GROUP BY
+                                    lm.zone,
+                                    lm.region,
+                                    lm.sales_area,
+                                    lm.sap_id,
+                                    lm.name,
+                                    e.id,
+                                    e.alert_history,
+                                    e.alert_status,
+                                    e.indent_raised_date,
+                                    e.dry_out_start_time,
+                                    e.dry_out_end_time,
+                                    e.indent_status,
+                                    e.indent_no,
+                                    e.product_code,
+                                    e.created_at,
+                                    e.updated_at,
+                                    e.closed_at
+                                ORDER BY
+                                    lm.zone,
+                                    lm.region,
+                                    lm.sales_area,
+                                    lm.sap_id,
+                                    e.product_code,
+                                    e.dry_out_start_time,
+                                    e.dry_out_end_time,
+                                    e.indent_raised_date
+                                """
+        query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query_unique_alert, limit=0)
+        query_resp = query_resp.get("data", [])
+        alerts_df = pl.DataFrame(query_resp)
+        location_master_query = f"SELECT sap_id, zone FROM location_master where bu = 'RO'" 
+        location_master_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=location_master_query, limit=0) 
+        location_master_resp = location_master_resp.get("data", [])
+        loc_df = pl.DataFrame(location_master_resp)
+
+        if loc_df.is_empty():
+            return {"status": True, "message": "No location master data"}
+        
+        if alerts_df.is_empty():
+            return {"status": True, "message": "No Data"}
+        
+        # DISTINCT base population
+        loc_df = loc_df.select(["sap_id", "zone"]).unique()
+
+        if data.action == "retail_outlet_stockout_distribution":
+            # Convert dates
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+
+            # Rename columns for consistency
+            alerts_df = alerts_df.rename({
+                "Location ID": "sap_id",
+                "Zone": "zone"
+            })
+
+            # Ensure datetime
+            alerts_df = alerts_df.with_columns([
+                pl.col("Dryout Start Time").cast(pl.Datetime),
+                pl.col("Dryout End Time").cast(pl.Datetime)
+            ])
+
+            # -------------------------------
+            # STEP 1: FULL DRYOUT sap_ids
+            # -------------------------------
+            full_df = alerts_df.filter(
+                (pl.col("Dryout Start Time") <= start_dt) &
+                (
+                    (pl.col("Dryout End Time") >= end_dt) |
+                    (pl.col("Dryout End Time").is_null())
+                )
+            ).select(["sap_id", "zone"]).unique()
+
+            full_df = full_df.with_columns(pl.lit("full").alias("dryout_type"))
+
+            # -------------------------------
+            # STEP 2: ALL DRYOUT sap_ids
+            # -------------------------------
+            all_dryout_df = alerts_df.select(["sap_id", "zone"]).unique()
+
+            # -------------------------------
+            # STEP 3: PARTIAL = ALL - FULL
+            # -------------------------------
+            partial_df = all_dryout_df.join(
+                full_df.select(["sap_id"]),
+                on="sap_id",
+                how="anti"
+            ).with_columns(pl.lit("partial").alias("dryout_type"))
+
+            # -------------------------------
+            # STEP 4: COMBINE FULL + PARTIAL
+            # -------------------------------
+            dryout_df = pl.concat([full_df, partial_df])
+
+            # -------------------------------
+            # STEP 5: ADD WITHOUT DRYOUT
+            # -------------------------------
+            loc_df = loc_df.rename({"sap_id": "sap_id", "zone": "zone"})\
+            
+            final_df = loc_df.join(
+                dryout_df,
+                on=["sap_id", "zone"],
+                how="left"
+            )
+
+            final_df = final_df.with_columns([
+                pl.when(pl.col("dryout_type").is_null())
+                .then(pl.lit("without"))
+                .otherwise(pl.col("dryout_type"))
+                .alias("dryout_type")
+            ])
+
+            # -------------------------------
+            # STEP 6: ZONE SUMMARY
+            # -------------------------------
+            zone_summary = (
+                final_df.group_by(["zone", "dryout_type"])
+                .agg(pl.col("sap_id").n_unique().alias("count"))
+                .pivot(
+                    values="count",
+                    index="zone",
+                    columns="dryout_type"
+                )
+            )
+
+            # Ensure all required columns exist SAFELY
+            zone_summary = zone_summary.with_columns([
+                pl.col("full").fill_null(0) if "full" in zone_summary.columns else pl.lit(0).alias("full"),
+                pl.col("partial").fill_null(0) if "partial" in zone_summary.columns else pl.lit(0).alias("partial"),
+                pl.col("without").fill_null(0) if "without" in zone_summary.columns else pl.lit(0).alias("without"),
+            ])
+
+            # -------------------------------
+            # STEP 7: TOTAL + %
+            # -------------------------------
+            zone_summary = zone_summary.with_columns([
+                (pl.col("full") + pl.col("partial") + pl.col("without")).alias("total")
+            ])
+
+            zone_summary = zone_summary.with_columns([
+                (pl.col("without") / pl.col("total") * 100).round(1).alias("without_pct"),
+                (pl.col("partial") / pl.col("total") * 100).round(1).alias("partial_pct"),
+                (pl.col("full") / pl.col("total") * 100).round(1).alias("full_pct")
+            ])
+
+            # -------------------------------
+            # STEP 8: ZONE OUTPUT
+            # -------------------------------
+            zones_output = []
+
+            for row in zone_summary.to_dicts():
+                zones_output.append({
+                    "zone_code": row["zone"],
+                    "without_dryouts_pct": row["without_pct"],
+                    "partial_dryouts_pct": row["partial_pct"],
+                    "full_dryouts_pct": row["full_pct"],
+                    "without_dryouts_count": int(row.get("without", 0)),
+                    "partial_dryouts_count": int(row.get("partial", 0)),
+                    "full_dryouts_count": int(row.get("full", 0)),
+                })
+            
+            # -------------------------------
+            # STEP 9: OVERALL SUMMARY
+            # -------------------------------
+            total_without = final_df.filter(pl.col("dryout_type") == "without")["sap_id"].n_unique()
+            total_partial = final_df.filter(pl.col("dryout_type") == "partial")["sap_id"].n_unique()
+            total_full = final_df.filter(pl.col("dryout_type") == "full")["sap_id"].n_unique()
+
+            grand_total = total_without + total_partial + total_full
+
+            summary = {
+                "without_dryouts": {
+                    "count": total_without,
+                    "pct": round((total_without / grand_total) * 100)
+                },
+                "partial_dryouts": {
+                    "count": total_partial,
+                    "pct": round((total_partial / grand_total) * 100)
+                },
+                "full_dryouts": {
+                    "count": total_full,
+                    "pct": round((total_full / grand_total) * 100)
+                }
+            }
+
+            # -------------------------------
+            # STEP 10: TOTAL ROW
+            # -------------------------------
+            zones_output.append({
+                "zone_code": "TOTAL",
+                "without_dryouts_pct": summary["without_dryouts"]["pct"],
+                "partial_dryouts_pct": summary["partial_dryouts"]["pct"],
+                "full_dryouts_pct": summary["full_dryouts"]["pct"],
+                "without_dryouts_count": total_without,
+                "partial_dryouts_count": total_partial,
+                "full_dryouts_count": total_full
+            })
+
+            # -------------------------------
+            # FINAL RESPONSE
+            # -------------------------------
+            return {
+                "status": True,
+                "message": "success",
+                "summary": summary,
+                "zones": zones_output
+            }
+        
+        if data.action == "retail_outlet_stockouts":
+            # -------------------------------
+            # STEP 1: PREPARE DATA
+            # -------------------------------
+            alerts_df = alerts_df.rename({
+                "Location ID": "sap_id",
+                "Zone": "zone"
+            })
+
+            # All dryout sap_ids (distinct)
+            dryout_df = alerts_df.select(["sap_id", "zone"]).unique()
+            dryout_df = dryout_df.with_columns(pl.lit("with").alias("dryout_type"))
+
+            # -------------------------------
+            # STEP 2: ADD WITHOUT DRYOUT
+            # -------------------------------
+            final_df = loc_df.join(
+                dryout_df,
+                on=["sap_id", "zone"],
+                how="left"
+            )
+
+            final_df = final_df.with_columns(
+                pl.when(pl.col("dryout_type").is_null())
+                .then(pl.lit("without"))
+                .otherwise(pl.col("dryout_type"))
+                .alias("dryout_type")
+            )
+
+            # -------------------------------
+            # STEP 3: ZONE SUMMARY
+            # -------------------------------
+            zone_summary = (
+                final_df.group_by(["zone", "dryout_type"])
+                .agg(pl.col("sap_id").n_unique().alias("count"))
+                .pivot(
+                    values="count",
+                    index="zone",
+                    columns="dryout_type"
+                )
+            )
+
+            # Ensure columns exist
+            for col in ["with", "without"]:
+                if col not in zone_summary.columns:
+                    zone_summary = zone_summary.with_columns(pl.lit(0).alias(col))
+
+            # Fill nulls
+            zone_summary = zone_summary.with_columns([
+                pl.col("with").fill_null(0),
+                pl.col("without").fill_null(0),
+            ])
+
+            # -------------------------------
+            # STEP 4: TOTAL + %
+            # -------------------------------
+            zone_summary = zone_summary.with_columns([
+                (pl.col("with") + pl.col("without")).alias("total")
+            ])
+
+            zone_summary = zone_summary.with_columns([
+                (pl.col("without") / pl.col("total") * 100).round(1).alias("without_pct"),
+                (pl.col("with") / pl.col("total") * 100).round(1).alias("with_pct")
+            ])
+
+            # -------------------------------
+            # STEP 5: ZONE OUTPUT
+            # -------------------------------
+            zones_output = []
+
+            for row in zone_summary.to_dicts():
+                zones_output.append({
+                    "zone_code": row["zone"],
+                    "without_dryouts_pct": row["without_pct"],
+                    "with_dryouts_pct": row["with_pct"],
+                    "without_dryouts_count": int(row.get("without", 0)),
+                    "with_dryouts_count": int(row.get("with", 0)),
+                })
+            
+            # -------------------------------
+            # STEP 6: OVERALL SUMMARY
+            # -------------------------------
+            total_without = final_df.filter(pl.col("dryout_type") == "without")["sap_id"].n_unique()
+            total_with = final_df.filter(pl.col("dryout_type") == "with")["sap_id"].n_unique()
+
+            grand_total = total_without + total_with
+
+            summary = {
+                "without_dryouts": {
+                    "count": total_without,
+                    "pct": round((total_without / grand_total) * 100)
+                },
+                "with_dryouts": {
+                    "count": total_with,
+                    "pct": round((total_with / grand_total) * 100)
+                }
+            }
+            # -------------------------------
+            # STEP 7: TOTAL ROW
+            # -------------------------------
+            zones_output.append({
+                "zone_code": "TOTAL",
+                "without_dryouts_pct": summary["without_dryouts"]["pct"],
+                "with_dryouts_pct": summary["with_dryouts"]["pct"],
+                "without_dryouts_count": total_without,
+                "with_dryouts_count": total_with
+            })
+
+            # -------------------------------
+            # FINAL RESPONSE
+            # -------------------------------
+            return {
+                "status": True,
+                "message": "success",
+                "summary": summary,
+                "zones": zones_output
+            }        
+    except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}

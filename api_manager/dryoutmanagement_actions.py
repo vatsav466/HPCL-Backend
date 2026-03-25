@@ -27,3 +27,9 @@ async def dryoutmanagement_get_dry_out_indent_analysis(data: Dryoutmanagement_Ge
 @router.post('/get_dry_out_indents', tags=['DryOutManagement'])
 async def dryoutmanagement_get_dry_out_indents(data: Dryoutmanagement_Get_Dry_Out_IndentsParams):
     return await field_force_novex.get_dry_out_indents(**_params(data))
+
+
+# Action get_retail_outlet_stockouts
+@router.post('/get_retail_outlet_stockouts', tags=['DryOutManagement'])
+async def dryoutmanagement_get_retail_outlet_stockouts(data: Dryoutmanagement_Get_Retail_Outlet_StockoutsParams):
+    return await field_force_novex.get_retail_outlet_stockouts(data)
