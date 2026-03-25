@@ -26,7 +26,7 @@ def fetch_active_orders(mysql_conn):
         FROM CONN_ENT.ZPMCV_ORDER_STG
         WHERE SYSTEM_STATUS_DESC != 'Technically completed'
         AND ORDER_TYPE = 'PM03'
-        AND PLANNING_PLANT = '1146'
+        AND planning_plant BETWEEN 1000 AND 2000
     """)
     rows = cur.fetchall()
     cur.close()
@@ -34,7 +34,10 @@ def fetch_active_orders(mysql_conn):
     if not rows:
         return pl.DataFrame()
 
-    df = pl.DataFrame(rows)
+    df = pl.from_dicts(
+        [{k: None if v is None else str(v) for k, v in row.items()} for row in rows],
+        infer_schema_length=None
+    )
     df.columns = [c.lower() for c in df.columns]
     return df
 
@@ -61,7 +64,7 @@ def delete_completed_orders(pg_conn, mysql_conn):
         FROM CONN_ENT.ZPMCV_ORDER_STG
         WHERE SYSTEM_STATUS_DESC = 'Technically completed'
         AND ORDER_TYPE = 'PM03'
-        AND PLANNING_PLANT = '1146'
+        AND planning_plant BETWEEN 1000 AND 2000
     """)
     rows = cur.fetchall()
     cur.close()
@@ -103,7 +106,7 @@ def upsert_orders(pg_conn, df):
         DO UPDATE SET {update_clause}
     """
 
-    data = [tuple(x) for x in df.to_numpy()]
+    data = df.rows()
 
     with pg_conn.cursor() as cur:
         cur.executemany(sql, data)
