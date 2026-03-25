@@ -346,6 +346,17 @@ Model Ticketing {
         limit optional int
     }
 
+    Action=> pm_orders_weekly {
+        planning_plant optional list str
+        start_date optional str
+        end_date optional str
+        search optional str
+        segment_type optional str
+        skip optional int
+        limit optional int
+    }
+
+
     Config=> {
         crud_operations='read'
     }

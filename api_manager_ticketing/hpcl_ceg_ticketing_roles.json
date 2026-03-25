@@ -93,6 +93,9 @@
                 },
                 {
                     "name": "pm_orders"
+                },
+                {
+                    "name": "pm_orders_weekly"
                 }
             ]
         },
@@ -207,6 +210,9 @@
                 },
                 {
                     "name": "pm_orders"
+                },
+                {
+                    "name": "pm_orders_weekly"
                 }
             ]
         },
@@ -630,6 +636,10 @@
         {
             "name": "pm_orders",
             "displayName": "pm_orders"
+        },
+        {
+            "name": "pm_orders_weekly",
+            "displayName": "pm_orders_weekly"
         },
         {
             "name": "add_comment_to_ticket",

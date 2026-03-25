@@ -137,6 +137,9 @@ def insertToDB(data, table_name, indexing_col=()):
     pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_TMT")
     
 ])
+    if "PLANT_CD" in data.columns:
+        data = data.rename({"PLANT_CD": "plant_cd"})
+
      
     dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
                   'Float64': str('double precision'), 'Float32': str('double precision'),
@@ -188,13 +191,15 @@ def insertToDB(data, table_name, indexing_col=()):
     columns = []
     for i in column_names:
         columns.append(i)
-    data = data.rename({"PLANT_CD": "plant_cd"})
     # print("data.columns--------------->",data.columns)
     # print("dataaaaaaaaaaaaaaa",data['plant_cd'].unique())
+    
+    data = data.select(columns)
+    if "PLANT_CD" in data.columns:
+        data = data.rename({"PLANT_CD": "plant_cd"})
     if 'plant_cd' not in data.columns:
     
         data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("plant_cd"))
-    data = data.select(columns)
     #data.write_csv('/tmp/sales_data.csv')
     print(data)
     #data.write_csv(f"/tmp/table_name.csv",separator='~')
