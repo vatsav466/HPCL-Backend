@@ -515,6 +515,7 @@ class Ticketing_Pm_OrdersParams(pydantic.BaseModel):
     start_date: typing.Optional[str] = pydantic.Field("", **{})
     end_date: typing.Optional[str] = pydantic.Field("", **{})
     search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
 
@@ -528,6 +529,7 @@ class Ticketing_Pm_Orders_WeeklyParams(pydantic.BaseModel):
     start_date: typing.Optional[str] = pydantic.Field("", **{})
     end_date: typing.Optional[str] = pydantic.Field("", **{})
     search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
     segment_type: typing.Optional[str] = pydantic.Field("", **{})
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})

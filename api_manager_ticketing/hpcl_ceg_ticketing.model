@@ -342,6 +342,7 @@ Model Ticketing {
         start_date optional str
         end_date optional str
         search optional str
+        data_required bool
         skip optional int
         limit optional int
     }
@@ -351,6 +352,7 @@ Model Ticketing {
         start_date optional str
         end_date optional str
         search optional str
+        data_required bool
         segment_type optional str
         skip optional int
         limit optional int

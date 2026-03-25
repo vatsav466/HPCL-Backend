@@ -2237,7 +2237,8 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
         # Date filter
         if data.start_date and data.end_date:
             filters.append(f"""
-                planned_date::date BETWEEN '{data.start_date}' AND '{data.end_date}'
+                TO_DATE(planned_date,'YYYYMMDD')
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
             """)
 
         # Planning plant filter
@@ -2290,10 +2291,14 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
         """
 
         print(query)
-        print(count_query)
+        
 
-        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
-        rows = result.get("data", [])
+        rows = []
+
+        if data.data_required:
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = result.get("data", [])
+        
         base_filters = [f for f in filters if "system_status_desc" not in f]
 
         total_orders_where = ""
@@ -2340,7 +2345,7 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
             "total_orders_count": total_orders_count,
             "active_orders_count": active_orders_count,
             "completed_orders_count": completed_orders_count,
-            "data": rows
+            "data": rows if data.data_required else []
         }
 
     except Exception as e:
@@ -2450,8 +2455,12 @@ async def ticketing_pm_orders_weekly(data: Ticketing_Pm_Orders_WeeklyParams):
         print(query)
         print(count_query)
 
-        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
-        rows = result.get("data", [])
+        rows = []
+
+        if data.data_required:
+            data_res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = data_res.get("data", [])
+            
 
         count_result = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
         segment_counts = count_result.get("data", [])
@@ -2460,7 +2469,7 @@ async def ticketing_pm_orders_weekly(data: Ticketing_Pm_Orders_WeeklyParams):
             "status": True,
             "message": message,
             "segment_counts": segment_counts,
-            "data": rows
+            "data": rows if data.data_required else []
         }
 
     except Exception as e:
