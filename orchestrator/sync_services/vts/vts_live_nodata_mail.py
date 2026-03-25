@@ -53,7 +53,6 @@ class VTSLiveNoData:
 
                 # This block is INSIDE the loop, so it will trigger for each violation type
                 if send_alert:
-                    print(f"Alert Triggered -> v_type: {v_type}, last_time: {display_time}")
                     await self.send_no_data_mail(v_type, display_time)
                     # Optional: small delay to prevent email rate limiting
                     await asyncio.sleep(1) 
