@@ -108,6 +108,19 @@ Model DryOutManagement crud_disable {
         data WidgetFilters
         drill_filter optional DrillFilter
     }
+
+    // Zone Wise Dry Out Trends
+    Action=> get_retail_outlet_stockouts {
+        filters optional list WidgetFilters
+        action str
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+        resp_format optional str regex="^([a-zA-Z0-9_. ]+|)$" // stacked for stacked data, else keep as empty
+        resp_level  optional str // this is to get the graphs at sbu level in industry_performance
+        payload optional dict
+    }
 }
 
 // ========== CRIS (combined) - backward compatibility; use TankInventory / NozzleSales for new use ==========
