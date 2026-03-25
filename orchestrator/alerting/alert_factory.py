@@ -146,7 +146,7 @@ class AlertFactory:
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
-                                                        'external_id': alert_data.get('vendor_alert_id', alert_data['alert_id']),
+                                                        'external_id': alert_data.get('vendor_alert_id', str(alert_data['alert_id'])),
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': '',
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
