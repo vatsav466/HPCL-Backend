@@ -271,7 +271,7 @@ async def r3_r1_daywise(data):
         conditions = []
         if cross_filters:
             for rec in cross_filters:
-                if rec.key == 'DATE':
+                if 'DATE' in rec.key.upper():
                     val = rec.value
                     start = val.split(",")[0]
                     end_date = val.split(",")[-1]
@@ -279,11 +279,11 @@ async def r3_r1_daywise(data):
 
                     conditions.append(f"""tses."CARD_DATE" BETWEEN DATE '{start}' AND DATE '{end}' """)
                 
-                if rec.key == 'zone':
+                if 'zone' in rec.key:
                     zone_val = rec.value
                     conditions.append(f""" lm.zone ='{zone_val}' """ )
                 
-                if rec.key == 'sap_id':
+                if 'sap_id' in rec.key:
                     sap_id = rec.value
                     conditions.append(f""" tses."LOCN_CODE" = '{sap_id}' """)
             conditions.append("""tses."CARD_STATUS" IN ('O', 'R')""")
