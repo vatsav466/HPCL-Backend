@@ -7969,6 +7969,84 @@
             ]
         },
         {
+            "name": "tassealdateform",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_seal_date_form_create"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
+            "name": "tassealdateform_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
+            "name": "tassealdateform_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_seal_date_form_create"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
             "name": "tasfireenginetest",
             "type": "all",
             "ownerManagedAccess": false,
@@ -9009,6 +9087,14 @@
         {
             "name": "get_info",
             "displayName": "get_info"
+        },
+        {
+            "name": "tas_seal_date_form_create",
+            "displayName": "tas_seal_date_form_create"
+        },
+        {
+            "name": "get_filtered_mfm_data",
+            "displayName": "get_filtered_mfm_data"
         }
     ]
 }
