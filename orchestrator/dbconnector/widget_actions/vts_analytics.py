@@ -781,8 +781,9 @@ class VTSAnalyticsActions:
             if bu_value:
                 bu = bu_value.upper()
                 if bu == 'TAS':
-                    all_conditions.append("division = '11'")
-                    all_conditions.append("sales_org = '7000'")
+                    all_conditions.append("division in ('11', '12','80')")
+                    all_conditions.append("sales_org in ('7000','3000','1000')")
+                    all_conditions.append("distribution_channel in ('16','12','11')")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
                     all_conditions.append("division in ('20', '80')")
