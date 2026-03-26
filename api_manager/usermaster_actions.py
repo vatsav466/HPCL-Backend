@@ -1,6 +1,7 @@
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import json
 import fastapi
 import traceback
 import authenticator.authentication_manager_ad as authentication_manager_ad
@@ -147,7 +148,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         
         data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
-        params = urdhva_base.QueryParams(q="")
+        params = urdhva_base.QueryParams(q="", limit=0, fields=json.dumps(['name']))
         role = await Roles.get_all(params, resp_type="plain")
         roles = []
         if role["data"]:
