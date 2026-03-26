@@ -187,7 +187,8 @@ async def non_reporting_devices_data():
                     )
                 try:
                     logger.info("Inserting data into non_reporting_devices")
-                    await ceg_model.NonReportingDevices.bulk_update(vts_device_df, upsert=True)
+                    nrd_data = vts_device_df.to_dicts()
+                    await ceg_model.NonReportingDevices.bulk_update(nrd_data, upsert=True)
                     return
                 except Exception as e:
                     logger.error(f"error while inserting data to non_reporting_devices {e}")

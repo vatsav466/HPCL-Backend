@@ -1084,11 +1084,11 @@ class AlertAction:
                     await hpcl_ceg_model.NoticesVTS(**{"id": notices_data['id']}).modify()
                 else:
                     notices_respose = {
-                        "doc_type": "System Generated",
+                        "doc_type": "Show Cause Notice UnSigned",
                         "uploaded_date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
-                        "uploaded_by": rpt.get("employee_id",""),
+                        "uploaded_by": "Novex",
                         "file_path": minio_path,
-                        "uploaded_name": rpt.get("first_name",""),
+                        "uploaded_name": "Novex",
                         "report_type": "System Generated"
                     }
                     notices_resp = {

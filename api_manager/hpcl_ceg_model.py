@@ -11132,6 +11132,112 @@ class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class TasSealDateFormSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mfm_number: Mapped[typing.Optional[str]] = mapped_column("mfm_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[str] = mapped_column("device_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    actual_w_and_m_seal_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("actual_w_and_m_seal_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    next_due_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("next_due_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    certificate: Mapped[typing.List[str]] = mapped_column("certificate", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    present_k_factor: Mapped[typing.Optional[str]] = mapped_column("present_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    past_k_factor: Mapped[typing.Optional[str]] = mapped_column("past_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasSealDateFormCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: str
+    location_name: str
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: str
+    zone: str
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.List[str]
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasSealDateFormSchema
+        upsert_keys = []
+        search_fields = ['location_name', 'sap_id', 'zone', 'device_type']
+
+
+class TasSealDateForm(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[typing.List[str]] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasSealDateFormSchema
+        upsert_keys = []
+        search_fields = ['location_name', 'sap_id', 'zone', 'device_type']
+
+
+class TasSealDateFormGetResp(pydantic.BaseModel):
+    data: typing.List[TasSealDateForm]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tassealdateform_Tas_Seal_Date_Form_CreateParams(pydantic.BaseModel):
+    sap_id: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.List[str]
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tassealdateform_Get_Filtered_Mfm_DataParams(pydantic.BaseModel):
+    sap_id: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TasFireEngineTestSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_fire_engine_test'
     
