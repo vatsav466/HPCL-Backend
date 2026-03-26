@@ -11144,7 +11144,6 @@ class Tasfaulty_Update_FaultyParams(pydantic.BaseModel):
 
 class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
     sap_id: str
-    device_type: str
     equipment_name: str
 
     class Config:

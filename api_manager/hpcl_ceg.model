@@ -4095,7 +4095,6 @@ Model TasFaulty {
 
     Action=> get_info{
         sap_id  str
-        device_type  str
         equipment_name  str
     }
 }

@@ -303,45 +303,48 @@ async def get_info_tas_faulty(data):
       matching the given device type.
     """
     sap_id = data.sap_id
-    device_type_filter = data.device_type
-
+    equipment_name = data.equipment_name
+    mapping = tas_queries.equipment_mapping_helpdesk
+    config = mapping.get(equipment_name)
+    if not config:
+        return "No Data Found"
     device_json = tas_listener.load_device_data(sap_id)
-    if not device_json:
-        return {
-            "status": False,
-            "message": f"Device data not found for SAP ID {sap_id}"
-        }
+    if not device_json or "data" not in device_json:
+        return "Location not onboarded"
+    target_types = config.get("internal_type", [])
+    search_level = config.get("search_level")
+    keywords = config.get("filter_keywords", [])
+    name_filter = config.get("name_filter")
 
-    devices = device_json.get("data", [])
+    results = set()
 
-    # ---------------- CASE 1: Only SAP ID ----------------
-    if not device_type_filter:
-        device_types = {
-            device["device_type"]
-            for device in devices
-            if device.get("device_type")
-        }
-
-        return {
-            "sap_id": sap_id,
-            "device_types": sorted(device_types)
-        }
-
-    # ---------------- CASE 2: SAP ID + Device Type ----------------
-    device_names = {
-        device["device_name"]
-        for device in devices
-        if device.get("device_type") == device_type_filter
-        and device.get("device_name")
-    }
-
+    for device in device_json["data"]:
+        if device.get("device_type") in target_types:
+            if search_level == "device":
+                if name_filter and name_filter not in device.get("device_name", ""):
+                    continue
+                d_name = device.get("device_name")
+                if d_name:
+                    results.add(d_name)
+            
+            elif search_level == "sensor" and keywords:
+                for sensor in device.get("sensors", []):
+                    s_type = sensor.get("sensor_type", "")
+                    s_id = sensor.get("sensor_id", "")
+                    # Logic: If any keyword (MOV) is inside the sensor_type (MOV IL1)
+                    if s_type and s_id:
+                        if any(k.upper() in s_type.upper() for k in keywords):
+                            results.add(s_id)
+    
+    if not results:
+        return "No Data Found"
+    
     return {
         "sap_id": sap_id,
-        "device_type": device_type_filter,
-        "device_names": sorted(device_names)
+        "equipment": equipment_name,
+        "results": sorted(list(results))
     }
-
-
+    
 async def tassealdateform_tas_seal_date_form_create(data, certificate_files=None):
     """
     Create a TAS Seal Date Form record and upload multiple certificates.
