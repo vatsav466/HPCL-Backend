@@ -331,3 +331,221 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
 @router.post('/performance_score_breakdown', tags=['PerformanceScore'])
 async def performancescore_performance_score_breakdown(data: Performancescore_Performance_Score_BreakdownParams):
     return await performance_score_daywise_action(data)
+
+
+# Action performance_score_trend
+@router.post('/performance_score_trend', tags=['PerformanceScore'])
+async def performancescore_performance_score_trend(
+    data: Performancescore_Performance_Score_TrendParams
+):
+    try:
+        # ---------------- BASE QUERY ----------------
+        query = f"""
+            SELECT 
+                DATE(created_at) AS created_at,
+                AVG(score) AS score
+            FROM performance_score_history
+            WHERE bu = '{data.bu}'
+        """
+
+        # ---------------- APPLY FILTERS ----------------
+        if data.filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                query,
+                data.filters,
+                data.drill_state
+            )
+
+        # ---------------- GROUPING ----------------
+        query += """
+            GROUP BY DATE(created_at)
+            ORDER BY created_at DESC
+        """
+
+        print("Final Query:", query)
+
+        # ---------------- EXECUTE ----------------
+        score_data = await PerformanceScoreHistory.get_aggr_data(query)
+        rows = score_data.get("data", [])
+
+        if not rows:
+            return {
+                "status": False,
+                "message": "No data found.",
+                "data": []
+            }
+
+        formatted_data = []
+        for row in rows:
+            try:
+                formatted_data.append({
+                    "created_at": str(row.get("created_at"))[:10],
+                    "score": float(row.get("score", 0) or 0)
+                })
+            except Exception as format_error:
+                print("Row formatting error:", str(format_error))
+                continue  # skip bad row
+
+        return {
+            "status": True,
+            "message": "success",
+            "data": formatted_data
+        }
+
+    except Exception as e:
+        print("Error in performance_score_trend API:", str(e))
+        return {
+            "status": False,
+            "message": "Something went wrong.",
+            "error": str(e),
+            "data": []
+        }
+
+
+
+# Action performance_score_monthly_trend
+@router.post('/performance_score_monthly_trend', tags=['PerformanceScore'])
+async def performancescore_performance_score_monthly_trend(
+    data: Performancescore_Performance_Score_Monthly_TrendParams
+):
+    try:
+        # ---------------- BASE QUERY ----------------
+        base_query = f"""
+            FROM performance_score_history
+            WHERE bu = '{data.bu}'
+        """
+
+        # ---------------- APPLY FILTERS ----------------
+        if data.filters:
+            base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                base_query,
+                data.filters,
+                data.drill_state
+            )
+
+        # ---------------- QUERIES ----------------
+        overall_query = f"""
+            SELECT 
+                DATE_TRUNC('month', created_at) AS month_date,
+                AVG(score) AS score
+            {base_query}
+            GROUP BY DATE_TRUNC('month', created_at)
+            ORDER BY month_date DESC
+        """
+
+        date_query = f"""
+            SELECT 
+                MIN(created_at) AS start_date,
+                MAX(created_at) AS end_date
+            {base_query}
+        """
+
+        zone_query = f"""
+            SELECT 
+                DATE_TRUNC('month', created_at) AS month_date,
+                zone,
+                AVG(score) AS score
+            {base_query}
+            GROUP BY DATE_TRUNC('month', created_at), zone
+            ORDER BY month_date DESC
+        """
+
+        location_query = f"""
+            SELECT 
+                DATE_TRUNC('month', created_at) AS month_date,
+                name AS location,
+                sap_id,
+                zone,
+                AVG(score) AS score
+            {base_query}
+            GROUP BY DATE_TRUNC('month', created_at), name, sap_id, zone
+            ORDER BY month_date DESC
+        """
+
+        # ---------------- EXECUTE ----------------
+        overall_res = await PerformanceScoreHistory.get_aggr_data(overall_query)
+        date_res = await PerformanceScoreHistory.get_aggr_data(date_query)
+        zone_res = await PerformanceScoreHistory.get_aggr_data(zone_query)
+        location_res = await PerformanceScoreHistory.get_aggr_data(location_query)
+
+        # ---------------- EXTRACT DATA ----------------
+        overall_rows = overall_res.get("data", [])
+        date_rows = date_res.get("data", [])
+        zone_rows = zone_res.get("data", [])
+        location_rows = location_res.get("data", [])
+
+        if not overall_rows and not zone_rows and not location_rows:
+            return {
+                "status": False,
+                "message": "No data found.",
+                "data": []
+            }
+
+        # ---------------- FORMAT ----------------
+        def safe_float(val):
+            try:
+                return float(val or 0)
+            except:
+                return 0.0
+
+        overall_data = []
+        for r in overall_rows:
+            try:
+                overall_data.append({
+                    "month_date": str(r.get("month_date"))[:10],
+                    "score": safe_float(r.get("score"))
+                })
+            except Exception as e:
+                print("Overall format error:", str(e))
+
+        date_range = {
+            "start_date": str(date_rows[0].get("start_date"))[:10] if date_rows else None,
+            "end_date": str(date_rows[0].get("end_date"))[:10] if date_rows else None
+        }
+
+        zone_data = []
+        for r in zone_rows:
+            try:
+                zone_data.append({
+                    "month_date": str(r.get("month_date"))[:10],
+                    "zone": r.get("zone"),
+                    "score": safe_float(r.get("score"))
+                })
+            except Exception as e:
+                print("Zone format error:", str(e))
+
+        location_data = []
+        for r in location_rows:
+            try:
+                location_data.append({
+                    "month_date": str(r.get("month_date"))[:10],
+                    "location": r.get("location"),
+                    "sap_id": r.get("sap_id"),
+                    "zone": r.get("zone"),
+                    "score": safe_float(r.get("score"))
+                })
+            except Exception as e:
+                print("Location format error:", str(e))
+
+        # Latest month data
+        monthly_data = overall_data[0] if overall_data else {}
+
+        # ---------------- FINAL RESPONSE ----------------
+        return {
+            "status": True,
+            "message": "Success",
+            "overall_data": overall_data,
+            "date_range": date_range,
+            "zone_data": zone_data,
+            "location_data": location_data,
+            "monthly_data": monthly_data
+        }
+
+    except Exception as e:
+        print("Error in performance_score_monthly_trend API:", str(e))
+        return {
+            "status": False,
+            "message": "Something went wrong.",
+            "error": str(e),
+            "data": []
+        }
