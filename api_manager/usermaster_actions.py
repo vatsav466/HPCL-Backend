@@ -1,6 +1,7 @@
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import json
 import fastapi
 import traceback
 import authenticator.authentication_manager_ad as authentication_manager_ad
@@ -12,28 +13,33 @@ router = fastapi.APIRouter(prefix='/usermaster')
 @router.post('/create_user', tags=['UserMaster'])
 async def usermaster_create_user(data: Usermaster_Create_UserParams):
     try:
-        if urdhva_base.context.context.exists():
-            rpt = urdhva_base.context.context.get('rpt', {})
-        else:
-            rpt = {}
-        
-        if rpt and rpt.get('username','') in ['admin','superadmin']:
+        if not urdhva_base.context.context.exists():
             return {
-                "success": False, 
+                "success": False,
                 "message": "Not allowed to perform this operation"
             }
-        
-        if data.data.username in ['admin','superadmin']:
+
+        rpt = urdhva_base.context.context.get('rpt', {})
+
+        # Normalize roles (lowercase + remove spaces)
+        user_roles = [r.replace(" ", "").lower() for r in rpt.get("system_role", [])]
+
+        # Roles to check
+        allowed = ['admin', 'superadmin']
+
+        # Check
+        is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if not is_allowed:
             return {
-                "success": False, 
+                "success": False,
                 "message": "Not allowed to perform this operation"
             }
 
         if not isinstance(data.data,dict):
             data = data.data.__dict__
         
-        query = f"""username = '{data.get('username','')}'
-                """
+        query = f"""username = '{data.get('username','')}'"""
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
         if user_data["data"]:
             return {
@@ -99,22 +105,30 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "success": False, 
             "message": "An error occurred while creating user details."
         }
-    
-    
-
-    
 
 
 # Action update_user
 @router.post('/update_user', tags=['UserMaster'])
 async def usermaster_update_user(data: Usermaster_Update_UserParams):
     try:
-        if urdhva_base.context.context.exists():
-            rpt = urdhva_base.context.context.get('rpt', {})
-        else:
-            rpt = {}
-        
-        if rpt and rpt.get('username','') in ['admin','superadmin']:
+        if not urdhva_base.context.context.exists():
+            return {
+                "success": False,
+                "message": "Not allowed to perform this operation"
+            }
+
+        rpt = urdhva_base.context.context.get('rpt', {})
+
+        # Normalize roles (lowercase + remove spaces)
+        user_roles = [r.replace(" ", "").lower() for r in rpt.get("system_role", [])]
+
+        # Roles to check
+        allowed = ['admin', 'superadmin']
+
+        # Check
+        is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if not is_allowed:
             return {
                 "success": False, 
                 "message": "Not allowed to perform this operation"
@@ -123,8 +137,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         if not isinstance(data.data,dict):
             data = data.data.__dict__
         
-        query = f"""username = '{data.get('username','')}'
-                """
+        query = f"""username = '{data.get('username','')}'"""
 
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
         if not user_data["data"]:
@@ -135,7 +148,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         
         data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
-        params = urdhva_base.QueryParams(q="")
+        params = urdhva_base.QueryParams(q="", limit=0, fields=json.dumps(['name']))
         role = await Roles.get_all(params, resp_type="plain")
         roles = []
         if role["data"]:

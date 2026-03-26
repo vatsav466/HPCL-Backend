@@ -4100,6 +4100,48 @@ Model TasFaulty {
     }
 }
 
+Model TasSealDateForm{
+    sap_id index_field str
+    location_name index_field str
+    bcu_number optional str
+    mfm_number optional str
+    device_type index_field str
+    zone index_field  str
+    remarks optional str
+    actual_w_and_m_seal_date optional datetime
+    next_due_date optional datetime
+    certificate list str
+    status optional str
+    present_k_factor optional str
+    past_k_factor optional str
+
+    Action=> tas_seal_date_form_create {
+    sap_id  str
+    location_name optional str
+    bcu_number optional str
+    mfm_number optional str
+    device_type optional str
+    zone optional str
+    remarks optional str
+    actual_w_and_m_seal_date optional datetime
+    next_due_date optional datetime
+    certificate list str
+    status optional str
+    present_k_factor optional str
+    past_k_factor optional str
+    }
+
+    Action=> get_filtered_mfm_data{
+    sap_id  str
+    location_name optional str
+    device_type optional str
+    }
+
+    Config=> {
+        search_fields='location_name,sap_id,zone,device_type'
+    }
+}
+
 Model TasFireEngineTest {
     sap_id index_field str
     device_name index_field str
