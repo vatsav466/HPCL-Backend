@@ -8246,75 +8246,6 @@
                     "name": "delete"
                 }
             ]
-        },
-        {
-            "name": "lpgoperationsinsights",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "LpgOperationsInsights",
-            "attributes": {},
-            "uris": [
-                "/api/lpgoperationsinsights/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "lpg_plants_insights"
-                }
-            ]
-        },
-        {
-            "name": "lpgoperationsinsights_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "LpgOperationsInsights_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/lpgoperationsinsights/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "lpgoperationsinsights_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "LpgOperationsInsights_admin",
-            "attributes": {},
-            "uris": [
-                "/api/lpgoperationsinsights/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "lpg_plants_insights"
-                }
-            ]
         }
     ],
     "policies": [
@@ -9184,10 +9115,6 @@
         {
             "name": "get_filtered_mfm_data",
             "displayName": "get_filtered_mfm_data"
-        },
-        {
-            "name": "lpg_plants_insights",
-            "displayName": "lpg_plants_insights"
         }
     ]
 }

@@ -9,7 +9,7 @@ import hpcl_ceg_model
 import traceback
 import pandas as pd
 from jinja2 import Template
-# from weasyprint import HTML
+from weasyprint import HTML
 import utilities.helpers as helpers
 # import orchestrator.alerting.ro_alert as ro_alert
 # import orchestrator.alerting.va_alert as va_alert

@@ -8,7 +8,7 @@ import polars as pl
 import pandas as pd
 import numpy as np
 import hpcl_ceg_model
-# from weasyprint import HTML
+from weasyprint import HTML
 import charts_actions
 import dashboard_studio_model
 import indentdryout_actions

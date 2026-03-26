@@ -4201,14 +4201,3 @@ Model NonReportingDevices {
     }
 
 }
-
-
-Model LpgOperationsInsights {
-
-    Action=> lpg_plants_insights {
-        filters optional list WidgetFilters
-        cross_filters optional list WidgetFilters
-        drill_state optional str
-        metric_type str   
-    }
-}
