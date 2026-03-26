@@ -5136,6 +5136,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -5187,6 +5193,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -8815,6 +8827,14 @@
         {
             "name": "performance_score_breakdown",
             "displayName": "performance_score_breakdown"
+        },
+        {
+            "name": "performance_score_trend",
+            "displayName": "performance_score_trend"
+        },
+        {
+            "name": "performance_score_monthly_trend",
+            "displayName": "performance_score_monthly_trend"
         },
         {
             "name": "update_ro_master_data",

@@ -2716,6 +2716,20 @@ Model PerformanceScore {
         end_date optional str     
     }
 
+    Action=> performance_score_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> performance_score_monthly_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
     }

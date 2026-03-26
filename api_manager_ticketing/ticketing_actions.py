@@ -2068,7 +2068,7 @@ async def get_escalation_config() -> List[Dict]:
     return [
         {
             "level": "L1",
-            "query": "ticket_status='Open' and escalation_level is null or escalation_level = ''",
+            "query": "ticket_status='Open' AND (escalation_level IS NULL OR escalation_level = '')",
             "multiplier": 1
         },
         {
