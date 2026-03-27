@@ -11469,3 +11469,46 @@ class NonReportingDevicesGetResp(pydantic.BaseModel):
     data: typing.List[NonReportingDevices]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class LpgOperationsInsightsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_operations_insights'
+
+
+class LpgOperationsInsightsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_operations_insights'
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgOperationsInsightsSchema
+        upsert_keys = []
+
+
+class LpgOperationsInsights(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_operations_insights'
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgOperationsInsightsSchema
+        upsert_keys = []
+
+
+class LpgOperationsInsightsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgOperationsInsights]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgoperationsinsights_Lpg_Plants_InsightsParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    metric_type: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
