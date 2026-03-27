@@ -3879,7 +3879,7 @@ Model DeviceInstallation{
     tt_chassis_no optional str  
     tt_engine_no optional str  
     select_business optional str  
-    location optional str  
+    location index_field optional  str 
     transporter optional str  
     device optional str
     zone optional str  
@@ -3888,10 +3888,10 @@ Model DeviceInstallation{
     device_installation_approved_by optional str  
     contract_valid_upto optional str  
     certificate optional str  
-    status optional str
+    status index_field optional  str
     remarks optional str
     reason_for_cancel optional str
-    status_decommissioning optional str
+    status_decommissioning index_field optional  str
     sap_id index_field optional str
     commissioning_status optional str
     commissioning_status_code optional str
@@ -3899,7 +3899,7 @@ Model DeviceInstallation{
     commissioned_at optional str
     commissioning_responses_2 optional str
     de_commissioning_responses optional str
-    AOT_status optional str
+    AOT_status index_field optional  str
     AOT_sap_tt_no optional str
     AOT_request_type optional str
     expiry_alert_created  index_field optional  bool
