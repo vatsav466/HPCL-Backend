@@ -515,6 +515,22 @@ class Ticketing_Pm_OrdersParams(pydantic.BaseModel):
     start_date: typing.Optional[str] = pydantic.Field("", **{})
     end_date: typing.Optional[str] = pydantic.Field("", **{})
     search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketing_Pm_Orders_WeeklyParams(pydantic.BaseModel):
+    planning_plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+    search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
+    segment_type: typing.Optional[str] = pydantic.Field("", **{})
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
 

@@ -24,8 +24,7 @@ def fetch_active_orders(mysql_conn):
     cur.execute("""
         SELECT *
         FROM CONN_ENT.ZPMCV_ORDER_STG
-        WHERE SYSTEM_STATUS_DESC != 'Technically completed'
-        AND ORDER_TYPE = 'PM03'
+        WHERE  ORDER_TYPE = 'PM03'
         AND planning_plant BETWEEN 1000 AND 2000
     """)
     rows = cur.fetchall()
@@ -55,34 +54,6 @@ def create_table_if_not_exists(pg_conn, df):
         """)
     pg_conn.commit()
 
-
-# ---------- DELETE COMPLETED ORDERS ----------
-def delete_completed_orders(pg_conn, mysql_conn):
-    cur = mysql_conn.cursor()
-    cur.execute("""
-        SELECT order_no
-        FROM CONN_ENT.ZPMCV_ORDER_STG
-        WHERE SYSTEM_STATUS_DESC = 'Technically completed'
-        AND ORDER_TYPE = 'PM03'
-        AND planning_plant BETWEEN 1000 AND 2000
-    """)
-    rows = cur.fetchall()
-    cur.close()
-
-    if not rows:
-        print("No completed orders found in source")
-        return
-
-    order_list = [r[0] for r in rows]
-
-    with pg_conn.cursor() as pg_cur:
-        pg_cur.execute(
-            f"DELETE FROM {TARGET_TABLE} WHERE order_no = ANY(%s)",
-            (order_list,)
-        )
-
-    pg_conn.commit()
-    print(f"Deleted {len(order_list)} completed orders from target")
 
 
 # ---------- UPSERT ----------
@@ -131,8 +102,6 @@ def sync_pm_orders():
         print("Ensuring target table exists...")
         create_table_if_not_exists(pg_conn, df)
 
-        print("Deleting completed orders from target...")
-        delete_completed_orders(pg_conn, mysql_conn)
 
         print("Upserting active orders...")
         upsert_orders(pg_conn, df)
