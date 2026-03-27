@@ -15,10 +15,10 @@ async def check_master_status():
     """
     This function checks for alerts related to master status and creates alerts if certain conditions are met.
     It queries the master_status table for specific active server names and checks the status count.  
-    If the status count is exactly 5, it creates an alert with relevant details.
+    If the status count is exactly 30, it creates an alert with relevant details.
     
     Scenarios handled:
-    1. Create alert only once for every 5-day cycle per active_server_name
+    1. Create alert only once for every 30-day cycle per active_server_name
     2. Reset count if active_server_name changes mid-cycle
     3. Log switchover events 
     """ 
@@ -90,12 +90,12 @@ async def check_master_status():
                 print(f"Not meeting continuous period requirements for sap_id: {sap_id}, server: {active_server_name}")
                 continue
             
-            # Send email notifications for status_count 2-3 (changed from 25-29)
-            if 25 <= status_count <= 29:
+            # Send email notifications for status_count 25-29
+            if 2 <= status_count <= 3:
                 await send_notification_email(record, sap_id)
             
-            # Scenario 1: Check if the status count is exactly 5 and create alert (changed from 30)
-            if status_count == 30:
+            # Scenario 1: Check if the status count is exactly 30 and create alert 
+            if status_count == 5:
                 await create_master_status_alert(record, active_server_name, sap_id)
                 
     except Exception as e:
@@ -148,7 +148,7 @@ async def handle_switchover_detection(sap_id, current_active_server):
                         if success:
                             print(f"Closed alert {alert_id} due to switchover from {previous_device_name} to {current_active_server}")
                         else:
-                            print(f"Failed to close alert {alert_id}: {msg}")
+                            print(f"Failed to close alert {alert_id}")
                     except Exception as e:
                         print(f"Error closing switchover alert {alert_id}: {e}")
                     return True  # Switchover occurred
@@ -238,7 +238,7 @@ async def is_continuous_period_check(sap_id, active_server_name, start_date, end
     This prevents creating alerts for periods with gaps or interruptions
     """
     try:
-        # For status counts of 2-3 (email) or 5 (alert), verify continuity
+    
         required_days = status_count
         
         # Check if we have continuous days without gaps
@@ -268,8 +268,7 @@ async def is_continuous_period_check(sap_id, active_server_name, start_date, end
                 END as is_continuous
             FROM recent_days rd
             LEFT JOIN status_days sd ON rd.check_date = sd.status_date
-        """
-        
+        """        
         continuous_resp = await hpcl_ceg_model.Alerts.get_aggr_data(continuous_check_query)
         
         if continuous_resp.get("data"):
@@ -344,7 +343,7 @@ async def is_alert_already_created_for_cycle(sap_id, active_server_name, first_o
 
 async def send_notification_email(record, sap_id):
     """
-    Send notification emails for status_count between 2-3
+    Send notification emails for status_count between 25-29 with relevant details
     """
     try:
         recipients = []
@@ -369,13 +368,13 @@ async def send_notification_email(record, sap_id):
         
         if recipients:
             recipients = list(set(recipients))  # Remove duplicates
-            record["interlock_name"] = "LRC Master Switchover required in 5 days"
+            record["interlock_name"] = "LRC Master Switchover required"
             
             notify_email = NotifyEMail()
             resp = await notify_email.publish_message(**{
                 'recipients': recipients,
                 'subject': f"LRC Master Switch Over Notification - {record.get('status_count')} days",
-                'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/lrc_switchover.html", data=record),
+                'body': read_template("/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates/lrc_switchover.html", data=record),
                 'html_content': True,
                 'force_send': True
             })
@@ -390,7 +389,7 @@ async def send_notification_email(record, sap_id):
 
 async def create_master_status_alert(record, active_server_name, sap_id):
     """
-    Create alert when status_count reaches exactly 5
+    Create alert when status_count reaches exactly 30
     """
     try:
         # Initialize alert history

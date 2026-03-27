@@ -16,6 +16,7 @@ class InterlockTemplateMapping(str, Enum):
     SOD_SHOW_CAUSE_NOTICE = "sod_show_case_template.html"
     BLOCK_OUTLET = "block_outlet.html"
     UNBLOCK_OUTLET = "unblock_outlet.html"
+    VTS_DEVICE_EXPIRY = "vts_device_expiry.html"
 
 
 class TemplateMapping(str, Enum):
@@ -38,3 +39,4 @@ class TemplateMapping(str, Enum):
     SODSHOWCAUSENOTICE="SOD_SHOW_CAUSE_NOTICE"
     BLOCKOUTLET="BLOCK_OUTLET"
     UNBLOCKOUTLET="UNBLOCK_OUTLET"
+    VTS_DEVICE_EXPIRY="VTS_DEVICE_EXPIRY" 

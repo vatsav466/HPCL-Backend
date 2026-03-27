@@ -7,14 +7,22 @@ from hpcl_ceg_model import *
 from fastapi import UploadFile, File, Depends
 import urdhva_base.queryparams as queryparams
 import utilities.minio_connector as minio_connector
+import utilities.zone_code_mapping as zone_code_mapping
 import fastapi
+import datetime
 
 router = fastapi.APIRouter(prefix="/deviceinstallation", tags=["DeviceInstallation"])
 
 
-def _format_date(value): 
-    if isinstance(value, datetime):
+
+
+def _format_date(value):
+    if isinstance(value, datetime.datetime):
         return value.strftime("%Y-%m-%d")
+    elif isinstance(value, datetime.date):
+        return value.strftime("%Y-%m-%d")
+    elif isinstance(value, str):
+        return value
     return None
 
 
@@ -168,13 +176,16 @@ async def update_device_installation(
 
         sap_tt_no = payload.get("sap_tt_no")
         sap_id = payload.get("sap_id")
+        zone = payload.get("zone")
 
-        # Fetch existing record
+        # Get zone_code from zone_code_mapp
+        zone_code = zone_code_mapping.get_zone_code(sap_id, zone) if zone else ""
+
         params = urdhva_base.queryparams.QueryParams()
         params.q = (
             f"sap_id='{sap_id}' "
             f"AND sap_tt_no='{sap_tt_no}' "
-            f"AND commissioning_status = 'SUCCESS'"
+            f"AND commissioning_status = 'SUCCESS' "
         )
         params.limit = 1
         params.fields = []
@@ -183,9 +194,9 @@ async def update_device_installation(
         rows = result.get("data", [])
         
         if not rows:
-                return {
-                    "status": False, "message": "validation Required and No data found"
-                }
+            return {
+                "status": False, "message": "Not able to update to the record"
+            }
 
         device_id = rows[0]["id"]
         
@@ -224,6 +235,10 @@ async def update_device_installation(
             if value is not None:
                 update_data[key] = value
 
+        # Add zone_code if available
+        if zone_code:
+            update_data["zone_code"] = zone_code
+
         # Update record
         await DeviceInstallation(**update_data).modify()
 
@@ -252,6 +267,9 @@ async def deviceinstallation_action_device_vts(payload :dict):
         id = payload.get("id")
         status = payload.get("status")
         remarks = payload.get("remarks")
+        
+        if not status or not remarks:
+            return {"status": False,"message": "status and remarks are required", "data": {}}
 
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{id}'"
@@ -293,7 +311,7 @@ async def deviceinstallation_action_device_vts(payload :dict):
             "reason_for_cancel": "",
             "sap_tt_no": record_dict.get("sap_tt_no"),
             "transporter": record_dict.get("transporter"),
-            "status":"PENDING",
+            "status":"PENDING - Device "+status.upper(),
             "remarks" :record_dict.get("remarks"),
         }
 
@@ -364,9 +382,13 @@ async def deviceinstallation_action_decommissioning(payload: dict):
             data_dict = dict(row)
             data_dict.pop("id", None)
 
+            columns_to_clear = ["aot_request_type","aot_status","certificate","expiry_alert_created","vehcile_installation_date"]
+            for column in columns_to_clear:
+                if column in data_dict:
+                    data_dict.pop(column)
+
             data_dict["reason_for_cancel"] = reason_for_cancel
             data_dict["status_decommissioning"] = "Request For Approval"
-            data_dict["status"]="Decommissioning Request"
 
             record = DeviceInstallationCreate(**data_dict)
             new_record = await record.create()
@@ -383,8 +405,8 @@ async def deviceinstallation_action_decommissioning(payload: dict):
                 }
             }
 
-        elif status_decommissioning and status_decommissioning.lower() == 'accepted':
-
+        else:
+            # status_decommissioning and status_decommissioning.lower() == 'accepted':
             params = urdhva_base.queryparams.QueryParams()
             params.q = f"id='{device_id}'"
             params.limit = 1
@@ -396,9 +418,14 @@ async def deviceinstallation_action_decommissioning(payload: dict):
             row = rows[0]
             # update dict from existing row
             
+            # Store original status before conversion
+            # original_status = status_decommissioning
+            status_decommissioning = "Approved" if status_decommissioning == "Accepted" else "Rejected"
+           
+            
             data_dict = dict(row)
             data_dict.pop("id", None)
-            data_dict["status_decommissioning"] = "Approved"
+            data_dict["status_decommissioning"] = status_decommissioning
 
             await DeviceInstallation(id=device_id, **data_dict).modify()
             updated = await DeviceInstallation.get_all(params, resp_type="plain")
@@ -409,68 +436,75 @@ async def deviceinstallation_action_decommissioning(payload: dict):
 
             device_id = record_dict.get("id")
 
-            # Build de-commission payload
-            de_comm_payload = {
-                "id": device_id,
-                "created_at": _format_date(record_dict.get("updated_at")),
-                "sap_tt_no": record_dict.get("sap_tt_no"),
-                "location": record_dict.get("sap_id"),
-                "transporter": record_dict.get("transporter"),
-                "reason_for_cancel": record_dict.get("reason_for_cancel"),
-                "status": "PENDING",
-                "remarks": "",
-                "contract_valid_upto": record_dict.get("contract_valid_upto")
-            }
-
-            # print(f'De-commissioning payload: {de_comm_payload}')
-
-            comm_success, comm_response = await call_decommissioning_api(de_comm_payload)
-
-            # print('comm_success->',comm_success)
-            # print('comm_response->',comm_response)
-
-            # Extract status messages from successful response
-            status_messages = comm_response.get("statusMessages", "")
-            if isinstance(status_messages, list):
-                status_messages = ", ".join(status_messages)
+            # Only call decommissioning API if status was "Approved"
+            if status_decommissioning == "Approved":
                 
-            final_status = comm_response.get("status", "")
-            status_code = comm_response.get("statusCode")
-
-            # print(f'[ACTION] Status messages: {status_messages}')
-                   
-            if not comm_success or  status_code == 1:
-                await DeviceInstallation(**{
+                de_comm_payload = {
                     "id": device_id,
-                    "de_commissioning_responses": status_messages,
-                    "status_decommissioning": "Failed"
-                }).modify()
-
-                return {
-                    "status": False, "message": f"{status_messages}",
-                    "data": {
-                        "device_id": device_id,
-                        "commissioning": {
-                            "success": False, "status": final_status, "response": comm_response
-                        }
-                    }
+                    "created_at": _format_date(record_dict.get("updated_at")),
+                    "sap_tt_no": record_dict.get("sap_tt_no"),
+                    "location": record_dict.get("sap_id"),
+                    "transporter": record_dict.get("transporter"),
+                    "reason_for_cancel": record_dict.get("reason_for_cancel"),
+                    "status": "PENDING",
+                    "remarks": "",
+                    "contract_valid_upto": record_dict.get("contract_valid_upto")
                 }
 
-            # STEP 5: SUCCESS CASE                        
-            if comm_success and status_code == 0:            
-                await DeviceInstallation(**{
-                    "id": device_id,
-                    "de_commissioning_responses": status_messages
-                }).modify()
+                # print(f'De-commissioning payload: {de_comm_payload}')
 
-                return {
-                    "status": True, "message": f"The {status_messages}",
-                    "data": {
-                        "device_id": device_id,
-                        "commissioning": {
-                            "success": True,
-                            "status": final_status, "status_code": status_code, "response": comm_response
+                comm_success, comm_response = await call_decommissioning_api(de_comm_payload)
+
+    
+
+                # Extract status messages from successful response
+                status_messages = comm_response.get("statusMessages", "")
+                if isinstance(status_messages, list):
+                    status_messages = ", ".join(status_messages)
+                    
+                final_status = comm_response.get("status", "")
+                status_code = comm_response.get("statusCode")
+
+                       
+                if not comm_success or  status_code == 1:
+                    await DeviceInstallation(**{
+                        "id": device_id,
+                        "de_commissioning_responses": status_messages,
+                        "status_decommissioning": f"{status_decommissioning}"
+                    }).modify()
+
+                    return {
+                        "status": False, "message": f"{status_messages}",
+                        "data": {
+                            "device_id": device_id,
+                            "commissioning": {
+                                "success": False, "status": final_status, "response": comm_response
+                            }
                         }
+                    }
+
+                # STEP 5: SUCCESS CASE                        
+                if comm_success and status_code == 0:            
+                    await DeviceInstallation(**{
+                        "id": device_id,
+                        "de_commissioning_responses": status_messages
+                    }).modify()
+
+                    return {
+                        "status": True, "message": f"The {status_messages}",
+                        "data": {
+                            "device_id": device_id,
+                            "commissioning": {
+                                "success": True,
+                                "status": final_status, "status_code": status_code, "response": comm_response
+                            }
+                        }
+                    }
+            else:
+                return {
+                    "status": True, "message": f"Status updated to {status_decommissioning}",
+                    "data": {
+                        "device_id": device_id
                     }
                 }
 
@@ -482,3 +516,75 @@ async def deviceinstallation_action_decommissioning(payload: dict):
             "message": f"Failed to process device installation: {str(e)}", "data": {}
         }
 
+
+
+
+
+# Action action_decommissioning_rejected
+@router.post('/action_decommissioning_rejected', tags=['DeviceInstallation'])
+async def deviceinstallation_action_decommissioning_rejected(payload: dict):
+    try:
+
+        device_id = int(payload.get("id"))
+
+        status_decommissioning = payload.get("status_decommissioning")
+        reason_for_cancel = payload.get("reason_for_cancel")
+
+        params = urdhva_base.queryparams.QueryParams()
+        params.q = f"id='{device_id}'"
+        params.limit = 1
+        params.fields = []  # all fields
+
+        existing = await DeviceInstallation.get_all(params, resp_type="plain")
+        rows = existing.get("data", [])
+
+        if not rows:
+            return {
+                "status": False,
+                "message": f"No record found for ID: {device_id}",
+                "data": {}
+            }
+
+        row = rows[0]
+        # print(f'Found existing record: {row.get("sap_tt_no")}')
+        
+        
+        # CREATE NEW RECORD
+        if reason_for_cancel and  status_decommissioning:
+
+            # Copy data from existing record
+            data_dict = dict(row)
+            data_dict.pop("id", None)
+
+            columns_to_clear = ["aot_request_type","aot_status","certificate","expiry_alert_created","vehcile_installation_date","reason_for_cancel","status_decommissioning"]
+            for column in columns_to_clear:
+                if column in data_dict:
+                    data_dict.pop(column)
+
+            data_dict["reason_for_cancel"] = reason_for_cancel
+            data_dict["status_decommissioning"] = "Request For Approval"
+
+            record = DeviceInstallationCreate(**data_dict)
+            new_record = await record.create()
+
+            # Convert to dict if needed
+            record_dict = new_record if isinstance(new_record, dict) else new_record.__dict__
+            # new_device_id = record_dict.get("id")
+
+            return {
+                "status": True, "message": "Decommissioning requested",
+                "data": {
+                    "reason_for_cancel": reason_for_cancel,
+                    "status_decommissioning": "Request For Approval"
+                }
+            }
+
+        
+
+    except Exception as e:
+        print(f"Exception in update_device_installation: {str(e)}")
+
+        return {
+            "status": False,
+            "message": f"Failed to process device installation: {str(e)}", "data": {}
+        }

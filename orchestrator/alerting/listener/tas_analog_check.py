@@ -7,8 +7,7 @@ import hpcl_ceg_model
 import uuid
 from datetime import datetime, timedelta, timezone
 import tas_duplicate_alert_check as duplicates_check
-from orchestrator.alerting.alert_manager import create_alert, read_template
-from orchestrator.notification_manager.notify_email import NotifyEMail
+from orchestrator.alerting.alert_manager import create_alert
 from orchestrator.alerting.alert_factory import AlertFactory
 
 
@@ -247,69 +246,6 @@ async def check_bayreassignment():
     except Exception as e:
         print(f"Error in check_bayreassignment: {traceback.format_exc()}")
 
-
-async def notify_prooftest():
-    """
-    This function checks the tas_proof_test table for proof_test_created_at and next_proof_test_date.
-    If the current date is the 84th or 89th day before the next_proof_test_date, it sends a notification.
-    """
-    try:
-        # Query the tas_proof_test table to get the required data
-        query = """
-            SELECT device_name, sap_id, location_name, interlock_name, proof_test_created_at, next_proof_test_date
-            FROM tas_proof_test
-        """
-        try:
-            resp = await hpcl_ceg_model.TasProofTest.get_aggr_data(query)
-        except Exception as e:
-            print(f"Error executing query: {e}")
-            return
-
-        # Check if the response contains data
-        if not resp.get("data", []):
-            print("No data found in tas_proof_test table.")
-            return
-
-        # Process the response
-        today = datetime.now().date()
-        for record in resp.get("data", []):
-            device_name = record.get("device_name")
-            interlock_name = record.get("interlock_name")
-            sap_id = record.get("sap_id")
-            location_name = record.get("location_name")
-            proof_test_created_at = record.get("proof_test_created_at")
-            next_proof_test_date = record.get("next_proof_test_date")
-
-            if not (device_name and sap_id and proof_test_created_at and next_proof_test_date and interlock_name):
-                print(f"Missing required fields in record: {record}")
-                continue
-
-            # Convert dates to datetime objects
-            if isinstance(proof_test_created_at, str):
-                proof_test_created_at = datetime.strptime(proof_test_created_at, "%Y-%m-%d %H:%M:%S")
-            if isinstance(next_proof_test_date, str):
-                next_proof_test_date = datetime.strptime(next_proof_test_date, "%Y-%m-%d %H:%M:%S")
-
-            # Calculate the 84th and 89th days before the next proof test date
-            day_84 = next_proof_test_date - timedelta(days=6)
-            day_89 = next_proof_test_date - timedelta(days=1)
-
-            # Check if today matches the 84th or 89th day
-            if today == day_84.date() or today == day_89.date():
-                notify_email = NotifyEMail()
-                resp = await notify_email.publish_message(
-                    **{
-                        'recipients': [''], # Add the recipient email addresses here
-                        'subject': f"Proof Test Notification for {device_name} - {interlock_name} on {location_name} - {sap_id} ",
-                        'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
-                        'html_content': True,
-                        'force_send': True
-                    }
-                )
-                             
-
-    except Exception as e:
-        print(f"Error in notify_prooftest: {traceback.format_exc()}")
 
 if __name__ == "__main__":
     asyncio.run(check_bayreassignment())

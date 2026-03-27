@@ -75,7 +75,9 @@ class SendNotification:
         return [
             "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
             "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
-            "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
+            "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail",
+            "days_remaining", "contract_valid_upto"
+
         ]
     
     async def check_sap_id_empty(self):
@@ -259,7 +261,7 @@ class SendNotification:
         if self.params.get('messagetype','') in ['resolved']:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
-        
+   
     async def get_subject_for_ro(self):
         if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
             subject_template = f"Outlet Blocked"
@@ -412,7 +414,7 @@ class SendNotification:
                 self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
-                self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+                  self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
 
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
@@ -430,7 +432,11 @@ class SendNotification:
             "block_end_date": self.alert_data['vehicle_blocked_end_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_end_date'] else None,
             "unblock_date": self.alert_data['vehicle_unblocked_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_unblocked_date'] else None,
             "vts_assigned_role": self.vts_assigned_role if self.vts_assigned_role else "",
-            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
+            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]), # this should be location_id
+            "vehicle_number": self.alert_data.get("vehicle_number", ""),
+            "location_name": self.alert_data.get("location_name", ""),
+            "contract_valid_upto": self.alert_data.get("contract_valid_upto", "").strftime("%d.%m.%Y") if self.alert_data.get("contract_valid_upto") else "",
+            "days_remaining": int(self.params.get("days_remaining", 0)),
         }
         return self.base_alert_data
 
@@ -590,7 +596,8 @@ class SendNotification:
             "justified": self._process_justified,
             "resolved": self._process_resolved,
             "senditback": self._process_senditback,
-            "accept": self._process_accept
+            "accept": self._process_accept,
+            "vts_device_expiry": self._process_active,  # Assuming VTS Device Expiry is treated as active
         }
         processor = processors.get(message_type)  # Retrieve the function
         if processor:
@@ -643,9 +650,11 @@ class SendNotification:
             await self._send_resolved_notification()
         elif message_type == 'Resolved':
             await self._send_other_notification()
+        elif message_type == 'vts_device_expiry':
+            await self._send_vts_device_expiry_notification()
         else:
             await self._send_standard_notification()
-    
+
     async def get_ro_recipients(self):
         dealer_mail = f"{self.alert_data.get("sap_id")}@retail.co.in"
         mail_recipients = []
@@ -720,6 +729,64 @@ class SendNotification:
         await hpcl_ceg_model.NotificationAuditLogCreate(**notification_record).create()
 
 
+    async def _send_vts_device_expiry_notification(self):
+        """
+        Send VTS device contract expiry notification to transporter and location officers.
+
+        Called from _send_notifications_with_sms() when messagetype is 'vts_device_expiry'.
+        Uses self.alert_data (already populated) to fetch recipients and render the template.
+
+        alert_data expected keys:
+            - transporter_code, sap_id, vehicle_number, location_name, contract_valid_upto
+        """
+        try:
+            # Fetch TO (transporter) and CC (location officers) using the existing helper
+            mail_recipients, cc_recipients, from_url = await self.get_vts_recipients()
+
+            if not mail_recipients:
+                logger.warning(
+                    f"_send_vts_device_expiry_notification: No recipients found for "
+                    f"transporter_code={self.alert_data.get('transporter_code')}, "
+                    f"sap_id={self.params.get('sap_id')}"
+                )
+                return
+
+            # Render email subject
+            subject = (
+                f"Contract Expiry Intimation - Vehicle {self.alert_data['vehicle_number']} "
+                f"at {self.alert_data['location_name']} "
+                f"(Valid Upto: {self.params['contract_valid_upto']})"
+            )
+
+            # Read and render the HTML template
+            template_filename = "vts_device_expiry.html"
+            template_content = await self.read_template(template_filename)
+            body = Template(template_content).render(
+                location_name=self.alert_data["location_name"],
+                contract_valid_upto=self.params["contract_valid_upto"],
+            )
+
+            # Send email
+            notification_module = await notification_factory.get_notification_module(module_type="email")
+            res = await notification_module.publish_message(
+                from_url=from_url,
+                recipients=mail_recipients,
+                cc_recipients=cc_recipients,
+                subject=subject,
+                body=body,
+                force_send=True,
+                html_content=True,
+            )
+            logger.info(
+                f"_send_vts_device_expiry_notification: Email sent to {mail_recipients}, "
+                f"CC: {cc_recipients}. Response: {res}"
+            )
+            return res
+
+        except Exception as e:
+            logger.error(f"_send_vts_device_expiry_notification error: {str(e)}")
+            logger.error(traceback.format_exc())
+
     async def get_tas_recipients(self):
         try:
             sap_id = self.alert_data.get("sap_id")
@@ -778,7 +845,7 @@ class SendNotification:
         except Exception as e:
             logger.error(f"TAS recipient error: {e}")
             return []
-
+       
     async def _send_active_notification(self):
         """
         Send notifications for LPG/TAS active messages
@@ -1000,7 +1067,7 @@ class SendNotification:
             })
         else:
             self.update_alert.update({
-                    "action_type": hpcl_ceg_model.AlertActionType.Escalated.value,
+                    "action_type": hpcl_ceg_enum.AlertActionType.Escalated.value,
                     "action_msg": self.params.get("msg_subject"),
                     "assigned_user_roles": assigning_roles,
                     # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
