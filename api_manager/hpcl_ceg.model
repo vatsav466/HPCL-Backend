@@ -314,6 +314,7 @@ Model Users {
 
     Config=> {
         crud_operations='read'
+        search_fields='username,email,first_name,last_name,employee_id,employee_number'
     }
 
 }
@@ -878,6 +879,7 @@ Model Alerts {
     image_uploaded optional bool
     tt_type optional str
     ticket_id optional str
+    load_type optional str
 
     Action=> alert_action {
         bu optional str
@@ -2714,6 +2716,20 @@ Model PerformanceScore {
         end_date optional str     
     }
 
+    Action=> performance_score_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> performance_score_monthly_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -4097,6 +4113,48 @@ Model TasFaulty {
     }
 }
 
+Model TasSealDateForm{
+    sap_id index_field str
+    location_name index_field str
+    bcu_number optional str
+    mfm_number optional str
+    device_type index_field str
+    zone index_field  str
+    remarks optional str
+    actual_w_and_m_seal_date optional datetime
+    next_due_date optional datetime
+    certificate list str
+    status optional str
+    present_k_factor optional str
+    past_k_factor optional str
+
+    Action=> tas_seal_date_form_create {
+    sap_id  str
+    location_name optional str
+    bcu_number optional str
+    mfm_number optional str
+    device_type optional str
+    zone optional str
+    remarks optional str
+    actual_w_and_m_seal_date optional datetime
+    next_due_date optional datetime
+    certificate list str
+    status optional str
+    present_k_factor optional str
+    past_k_factor optional str
+    }
+
+    Action=> get_filtered_mfm_data{
+    sap_id  str
+    location_name optional str
+    device_type optional str
+    }
+
+    Config=> {
+        search_fields='location_name,sap_id,zone,device_type'
+    }
+}
+
 Model TasFireEngineTest {
     sap_id index_field str
     device_name index_field str
@@ -4125,5 +4183,41 @@ Model TerminalWiseDryoutCounts {
 
     Config=> {
         crud_operations='read'
+    }
+}
+
+Model NonReportingDevices {
+    truck_regno	unique_field str
+    last_check_date	unique_field date
+    last_check_time	unique_field str
+    latitude optional str
+    longitude optional str
+    location unique_field str
+    location_name str
+    device_working str
+    completed_trip	str
+    completed_trip_auto_dc str
+    card_date datetime_no_zone
+    card_time str
+    card_datetime datetime_no_zone
+    reader_id str
+    loaded_on datetime_no_zone
+    bu str
+    zone str
+
+    Config=> {
+        crud_operations='read'
+    }
+
+}
+
+
+Model LpgOperationsInsights {
+
+    Action=> lpg_plants_insights {
+        filters optional list WidgetFilters
+        cross_filters optional list WidgetFilters
+        drill_state optional str
+        metric_type str   
     }
 }

@@ -27,7 +27,9 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Attach_File_To_CommentParams,
     Ticketing_Delete_File_From_CommentParams,
     Ticketing_Get_Location_DataParams,
-    Ticketing_Vts_Block_TrucksParams
+    Ticketing_Vts_Block_TrucksParams,
+    Ticketing_Pm_OrdersParams,
+    Ticketing_Pm_Orders_WeeklyParams
 
 )
 import os, uuid
@@ -106,6 +108,7 @@ async def _location_incharge_data(sap_ids: list[str]) -> tuple[set[str], set[str
         email = rec.get("email_id")
         zone = rec.get("zone")
 
+        # handle list values from postgres array
         if isinstance(email, list):
             email = email[0] if email else None
 
@@ -173,6 +176,7 @@ async def _fetch_role_emails(
     return zonal_functionary_emails, zonal_head_emails, hqo_emails
 
 
+        
 async def send_ticket_mail(ticket_data: dict) -> None:
     ticket_state: str = ticket_data.get("ticket_state", "")
     try:
@@ -219,7 +223,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
 
     if zones_seen and functional_area:
         zonal_functionary_roles = [f"{z}-{functional_area}" for z in zones_seen]
-        zonal_head_roles = [f"{z}-ZonalHead" for z in zones_seen]
+        zonal_head_roles = [f"{z}-Zonal Head" for z in zones_seen]
 
     zonal_functionary_emails, zonal_head_emails, hqo_emails = (
         await _fetch_role_emails(zonal_functionary_roles, zonal_head_roles, hqo_roles))
@@ -307,7 +311,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         subject=subject,
         body=alert_manager.read_template(template_path, data=template_data),
         html_content=True,
-        force_send=False,
+        force_send=True,
     )
 
     print(
@@ -2065,7 +2069,7 @@ async def get_escalation_config() -> List[Dict]:
     return [
         {
             "level": "L1",
-            "query": "ticket_status='Open' and escalation_level is null or escalation_level = ''",
+            "query": "ticket_status='Open' AND (escalation_level IS NULL OR escalation_level = '')",
             "multiplier": 1
         },
         {
@@ -2221,3 +2225,257 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
     except Exception as e:
         logger.warning(f"Error sending escalation mail for ticket {ticket.get('ticket_id')}: {e}")
         logger.warning(traceback.format_exc())
+
+
+# Action pm_orders
+@router.post('/pm_orders', tags=['Ticketing'])
+async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
+    try:
+        filters = []
+        filters.append("LOWER(system_status_desc) != 'technically completed'")
+        
+        # Date filter
+        if data.start_date and data.end_date:
+            filters.append(f"""
+                TO_DATE(planned_date,'YYYYMMDD')
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """)
+
+        # Planning plant filter
+        if data.planning_plant:
+            if isinstance(data.planning_plant, list):
+                plants = "', '".join([str(p).strip() for p in data.planning_plant])
+                filters.append(f"TRIM(planning_plant) IN ('{plants}')")
+            else:
+                filters.append(f"TRIM(planning_plant) = '{str(data.planning_plant).strip()}'")
+        if data.search:
+            search_text = data.search.strip().lower()
+
+            filters.append(f"""
+                (
+                    LOWER(order_no) LIKE '%{search_text}%'
+                    OR LOWER(order_type) LIKE '%{search_text}%'
+                    OR LOWER(order_description) LIKE '%{search_text}%'
+                    OR LOWER(planner_group_desc) LIKE '%{search_text}%'
+                    OR LOWER(system_status_desc) LIKE '%{search_text}%'
+                    OR LOWER(equipment_description) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant_desc) LIKE '%{search_text}%'
+                )
+            """)
+
+        where_clause = ""
+        if filters:
+            where_clause = "WHERE " + " AND ".join(filters)
+
+        skip = data.skip if data.skip is not None else 0
+        limit = data.limit if data.limit is not None else 50
+
+        #  data query
+        query = f"""
+            SELECT
+                order_no,
+                order_type,
+                order_description,
+                planner_group_desc,
+                system_status_desc,
+                equipment_description,
+                planning_plant,
+                planning_plant_desc,
+                planned_date
+            FROM pm_orders
+            {where_clause}
+            ORDER BY planned_date
+            LIMIT {limit}
+            OFFSET {skip}
+        """
+
+        print(query)
+        
+
+        rows = []
+
+        if data.data_required:
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = result.get("data", [])
+        
+        base_filters = [f for f in filters if "system_status_desc" not in f]
+
+        total_orders_where = ""
+        if base_filters:
+            total_orders_where = "WHERE " + " AND ".join(base_filters)
+
+        total_orders_query = f"""
+            SELECT COUNT(*) AS total_orders
+            FROM pm_orders
+            {total_orders_where}
+        """
+
+        # active orders count (same as current filter)
+        active_orders_query = f"""
+            SELECT COUNT(*) AS active_orders
+            FROM pm_orders
+            {where_clause}
+        """
+
+        # completed orders count
+        completed_orders_where = ""
+        if base_filters:
+            completed_orders_where = "AND " + " AND ".join(base_filters)
+
+        completed_orders_query = f"""
+            SELECT COUNT(*) AS completed_orders
+            FROM pm_orders
+            WHERE LOWER(system_status_desc) = 'technically completed'
+            {completed_orders_where}
+        """
+
+        # execute counts
+        total_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(total_orders_query, limit=0)
+        active_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(active_orders_query, limit=0)
+        completed_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(completed_orders_query, limit=0)
+
+        total_orders_count = total_orders_res.get("data", [{}])[0].get("total_orders", 0)
+        active_orders_count = active_orders_res.get("data", [{}])[0].get("active_orders", 0)
+        completed_orders_count = completed_orders_res.get("data", [{}])[0].get("completed_orders", 0)
+
+        return {
+            "status": True,
+            "message": "PM Orders fetched successfully",
+            "total_orders_count": total_orders_count,
+            "active_orders_count": active_orders_count,
+            "completed_orders_count": completed_orders_count,
+            "data": rows if data.data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error fetching PM orders: {e}")
+        return {
+            "status": False,
+            "message": f"Error fetching PM orders: {e}",
+            "data": []
+        }
+
+
+# Action pm_orders_weekly
+@router.post('/pm_orders_weekly', tags=['Ticketing'])
+async def ticketing_pm_orders_weekly(data: Ticketing_Pm_Orders_WeeklyParams):
+    try:
+        filters = []
+
+        # only technically completed orders
+        filters.append("LOWER(system_status_desc) = 'technically completed'")
+
+        # date filter
+        if data.start_date and data.end_date:
+            filters.append(f"""
+                TO_DATE(planned_date,'YYYYMMDD')
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """)
+
+        # plant filter
+        if data.planning_plant:
+            if isinstance(data.planning_plant, list):
+                plants = "', '".join([str(p).strip() for p in data.planning_plant])
+                filters.append(f"TRIM(planning_plant) IN ('{plants}')")
+            else:
+                filters.append(f"TRIM(planning_plant) = '{str(data.planning_plant).strip()}'")
+
+        # search filter
+        if data.search:
+            search_text = data.search.strip().lower()
+            filters.append(f"""
+                (
+                    LOWER(order_no) LIKE '%{search_text}%'
+                    OR LOWER(order_type) LIKE '%{search_text}%'
+                    OR LOWER(order_description) LIKE '%{search_text}%'
+                    OR LOWER(planner_group_desc) LIKE '%{search_text}%'
+                    OR LOWER(equipment_description) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant_desc) LIKE '%{search_text}%'
+                )
+            """)
+
+        where_clause = "WHERE " + " AND ".join(filters)
+
+        skip = data.skip or 0
+        limit = data.limit or 50
+
+        #  segmentation switch
+        if data.segment_type == "month":
+
+            segment_expr = """
+                TO_CHAR(TO_DATE(planned_date,'YYYYMMDD'),'Mon-YYYY')
+            """
+            message = "Monthly technically completed PM orders fetched successfully"
+
+        else:
+
+            segment_expr = """
+                CASE
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 1 AND 7 THEN 'Week-1'
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 8 AND 14 THEN 'Week-2'
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 15 AND 21 THEN 'Week-3'
+                    ELSE 'Week-4'
+                END
+            """
+            message = "Weekly technically completed PM orders fetched successfully"
+
+        #  main query
+        query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                order_no,
+                order_type,
+                order_description,
+                planner_group_desc,
+                system_status_desc,
+                equipment_description,
+                planning_plant,
+                planning_plant_desc,
+                planned_date
+            FROM pm_orders
+            {where_clause}
+            ORDER BY TO_DATE(planned_date,'YYYYMMDD')
+            LIMIT {limit}
+            OFFSET {skip}
+        """
+
+        # count query
+        count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                COUNT(*) AS total_count
+            FROM pm_orders
+            {where_clause}
+            GROUP BY segment
+            ORDER BY segment
+        """
+
+        print(query)
+        print(count_query)
+
+        rows = []
+
+        if data.data_required:
+            data_res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = data_res.get("data", [])
+            
+
+        count_result = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
+        segment_counts = count_result.get("data", [])
+
+        return {
+            "status": True,
+            "message": message,
+            "segment_counts": segment_counts,
+            "data": rows if data.data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error fetching segmented PM orders: {e}")
+        return {
+            "status": False,
+            "message": str(e),
+            "data": []
+        }

@@ -337,6 +337,27 @@ Model Ticketing {
     Action=> process_escalations {
     }
 
+    Action=> pm_orders {
+        planning_plant optional list str
+        start_date optional str
+        end_date optional str
+        search optional str
+        data_required bool
+        skip optional int
+        limit optional int
+    }
+
+    Action=> pm_orders_weekly {
+        planning_plant optional list str
+        start_date optional str
+        end_date optional str
+        search optional str
+        data_required bool
+        segment_type optional str
+        skip optional int
+        limit optional int
+    }
+
 
     Config=> {
         crud_operations='read'
@@ -377,6 +398,12 @@ Model TicketComment {
         file_path optional str
 
     }
+
+    Action=> download_attachment {
+        ticket_id str
+        file_attachment_name optional str
+    }
+
 }
 
 Model TicketUserMails {
@@ -384,14 +411,14 @@ Model TicketUserMails {
     sap_id index_field optional str
     role index_field str
     location_name index_field optional str
-    zone index_field optional list str
+    zone index_field optional str
     employee_name optional str
     email_id optional str
     employee_id optional str
 
     Action=> get_ticket_mails {
         sap_id optional list str
-        zone str
+        zone list str
         category str
     }
 

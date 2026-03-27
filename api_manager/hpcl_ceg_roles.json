@@ -5136,6 +5136,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -5187,6 +5193,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -7975,6 +7987,84 @@
             ]
         },
         {
+            "name": "tassealdateform",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_seal_date_form_create"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
+            "name": "tassealdateform_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
+            "name": "tassealdateform_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasSealDateForm_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tassealdateform/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_seal_date_form_create"
+                },
+                {
+                    "name": "get_filtered_mfm_data"
+                }
+            ]
+        },
+        {
             "name": "tasfireenginetest",
             "type": "all",
             "ownerManagedAccess": false,
@@ -8097,6 +8187,138 @@
                 },
                 {
                     "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "nonreportingdevices",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "nonreportingdevices_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "nonreportingdevices_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices_admin",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperationsinsights",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsInsights",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsinsights/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "lpg_plants_insights"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperationsinsights_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsInsights_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsinsights/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperationsinsights_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsInsights_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsinsights/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "lpg_plants_insights"
                 }
             ]
         }
@@ -8682,6 +8904,14 @@
             "displayName": "performance_score_breakdown"
         },
         {
+            "name": "performance_score_trend",
+            "displayName": "performance_score_trend"
+        },
+        {
+            "name": "performance_score_monthly_trend",
+            "displayName": "performance_score_monthly_trend"
+        },
+        {
             "name": "update_ro_master_data",
             "displayName": "update_ro_master_data"
         },
@@ -8956,6 +9186,18 @@
         {
             "name": "get_info",
             "displayName": "get_info"
+        },
+        {
+            "name": "tas_seal_date_form_create",
+            "displayName": "tas_seal_date_form_create"
+        },
+        {
+            "name": "get_filtered_mfm_data",
+            "displayName": "get_filtered_mfm_data"
+        },
+        {
+            "name": "lpg_plants_insights",
+            "displayName": "lpg_plants_insights"
         }
     ]
 }

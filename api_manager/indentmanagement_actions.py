@@ -1,7 +1,7 @@
+import fastapi
+import importlib
 from field_force_enum import *
 from field_force_model import *
-import fastapi
-
 import orchestrator.field_force.ims as field_force_ims
 
 router = fastapi.APIRouter(prefix='/indentmanagement')
@@ -9,7 +9,7 @@ router = fastapi.APIRouter(prefix='/indentmanagement')
 
 def _params(data):
     return data.model_dump() if hasattr(data, 'model_dump') else data.dict()
-
+   
 
 # Action get_indents_by_product_volume
 @router.post('/get_indents_by_product_volume', tags=['IndentManagement'])
@@ -63,3 +63,13 @@ async def indentmanagement_get_tpt_indents_vs_availability(data: Indentmanagemen
 @router.post('/get_indents_details', tags=['IndentManagement'])
 async def indentmanagement_get_indents_details(data: Indentmanagement_Get_Indents_DetailsParams):
     return await field_force_ims.get_indents_details(**_params(data))
+
+
+# Action get_r3_r1_details
+@router.post('/get_r3_r1_details', tags=['IndentManagement'])
+async def indentmanagement_get_r3_r1_details(data: Indentmanagement_Get_R3_R1_DetailsParams):
+    action_name = data.action
+    func = getattr(field_force_ims, action_name, None)
+    if not callable(func):
+        raise ValueError(f"{action_name} is not a valid function")
+    return await func(data)

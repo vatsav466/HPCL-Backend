@@ -3,6 +3,7 @@ import os
 import json
 import psycopg2
 import datetime
+import xlsxwriter
 import polars as pl
 import pandas as pd
 import numpy as np
@@ -18,6 +19,7 @@ import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.reporting_services.reporting_helpers.sales_data as sales_data
 
 
 creds = credential_loader.get_credentials('APP_DB')
@@ -1099,85 +1101,639 @@ async def get_ro_locations_sch():
     return resp
 
 
-async def nozzle_sales():
-    nozzle_sales_query = f"""
-                SELECT
-                    "transaction_date",
-                    "zone",
-                    count(distinct(site_id)) as connected_sites,
-                    ROUND(
-                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('MS','POWER 99','POWER 95','POWER 100'))
-                                / 1411.0
-                            ) / 1000.0
-                        ) / 0.89
-                    , 2) AS "MS_TMT",
 
-                    ROUND(
-                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('HSD','TURBO'))
-                                / 1210.0
-                            ) / 1000.0
-                        ) / 0.89
-                    , 2) AS "HSD_TMT"
+# Default product groups and conversion factors for nozzle_sales TMT calculation
+NOZZLE_SALES_MS_PRODUCTS_DEFAULT = ("MS", "E20", "POWER 99", "POWER 95", "POWER 100")
+NOZZLE_SALES_HSD_PRODUCTS_DEFAULT = ("HSD", "TURBO")
+NOZZLE_SALES_MS_DIVISOR = 1411.0
+NOZZLE_SALES_HSD_DIVISOR = 1210.0
+NOZZLE_SALES_VOLUME_FACTOR = 0.89
 
-                FROM "public".nozzle_sales
-                WHERE "transaction_date" = CURRENT_DATE - INTERVAL '1 day'
-                GROUP BY "transaction_date", "zone"
-                ORDER BY "transaction_date";
-            """
+# Relative period shorthand: "1D" = last 1 day (yesterday), "7D" = last 7 days, etc.
+NOZZLE_SALES_RELATIVE_DAYS_PATTERN = {"1d": 1, "2d": 2, "7d": 7, "15d": 15, "30d": 30}
 
-    location_master_query = f""" select sap_id, zone from location_master where bu='RO'  """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    nozzle_sales= await function(query= nozzle_sales_query)
-    nozzle_sales_df = pl.DataFrame(nozzle_sales)
-    print("nozzle_sales_df ---->\n", nozzle_sales_df)
-    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query)
-    location_master_df = pl.DataFrame(location_master_details['data'])
+def _nozzle_sales_parse_date_spec(date_spec, reference_date=None):
+    """
+    Parse flexible date_spec into (start_date_str, end_date_str) for SQL, both 'YYYY-MM-DD'.
 
-    rosapcode_sch = await get_ro_locations_sch()
+    date_spec can be:
+    - None or 1 or "1D": single day = yesterday (relative to reference_date).
+    - int (2, 7, 15, ...) or str "2D", "7D", "15D", "30D": last N days ending yesterday (inclusive).
+    - str "YYYY-MM-DD" or datetime.date: single exact date.
+    - (start, end) or [start, end]: date range; start/end as str or date.
 
-    site_zone_mapping = rosapcode_sch.join(
-        location_master_df,
-        left_on="rosapcode",
-        right_on="sap_id",
-        how="inner"
+    reference_date: date to use as "today" for relative specs; default datetime.date.today().
+    """
+    today = reference_date if reference_date is not None else datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+
+    def to_str(d):
+        if d is None:
+            return None
+        if isinstance(d, datetime.date) and not isinstance(d, datetime.datetime):
+            return d.strftime("%Y-%m-%d")
+        if isinstance(d, datetime.datetime):
+            return d.date().strftime("%Y-%m-%d")
+        s = str(d).strip()
+        if not s:
+            return None
+        return s
+
+    if date_spec is None:
+        start_date = end_date = yesterday
+    elif isinstance(date_spec, int):
+        if date_spec <= 1:
+            start_date = end_date = yesterday
+        else:
+            end_date = yesterday
+            start_date = today - datetime.timedelta(days=date_spec)
+    elif isinstance(date_spec, str):
+        date_spec = date_spec.strip().lower()
+        if date_spec in NOZZLE_SALES_RELATIVE_DAYS_PATTERN:
+            n = NOZZLE_SALES_RELATIVE_DAYS_PATTERN[date_spec]
+            if n <= 1:
+                start_date = end_date = yesterday
+            else:
+                end_date = yesterday
+                start_date = today - datetime.timedelta(days=n)
+        else:
+            try:
+                d = datetime.datetime.strptime(date_spec, "%Y-%m-%d").date()
+                start_date = end_date = d
+            except ValueError:
+                start_date = end_date = yesterday
+    elif isinstance(date_spec, (list, tuple)) and len(date_spec) >= 2:
+        start_date = date_spec[0]
+        end_date = date_spec[1]
+        if isinstance(start_date, str):
+            try:
+                start_date = datetime.datetime.strptime(start_date.strip()[:10], "%Y-%m-%d").date()
+            except ValueError:
+                start_date = yesterday
+        if isinstance(end_date, str):
+            try:
+                end_date = datetime.datetime.strptime(end_date.strip()[:10], "%Y-%m-%d").date()
+            except ValueError:
+                end_date = yesterday
+        if start_date > end_date:
+            start_date, end_date = end_date, start_date
+        start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
+        end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+        return start_date, end_date
+    elif isinstance(date_spec, (datetime.date, datetime.datetime)):
+        d = date_spec.date() if isinstance(date_spec, datetime.datetime) else date_spec
+        s = d.strftime("%Y-%m-%d")
+        return s, s
+    else:
+        start_date = end_date = yesterday
+
+    start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
+    end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+    return start_date, end_date
+
+
+def _nozzle_sales_build_tmt_expr(products: tuple, divisor: float, alias: str) -> str:
+    """Build SQL expression for TMT: (SUM(sales_volume) FILTER / divisor) / 1000 / factor."""
+    in_list = ", ".join(f"'{p}'" for p in products)
+    return (
+        f"ROUND(( (SUM(ns.sales_volume) FILTER (WHERE ns.product_grp IN ({in_list})) "
+        f"/ {divisor}) / 1000.0 ) / {NOZZLE_SALES_VOLUME_FACTOR}, 2) AS {alias}"
     )
-    print("site_zone_mapping---->\n", site_zone_mapping)
 
-    sales_with_zone = (site_zone_mapping
-        .filter(pl.col("zone").is_not_null())
-        .group_by("zone")
-        .agg(pl.count("rosapcode").alias("connected_sites"))
-    )
 
-    print("sales_with_zone---->\n", sales_with_zone)
+def _nozzle_sales_build_filter_conditions(filters):
+    """
+    Build SQL WHERE conditions from filters list.
 
-    daily_zone_product_nozzle_sales = (
-        nozzle_sales_df
-        .join(sales_with_zone, on="zone", how="left")
-        .filter(pl.col("zone").is_not_null())
-        .rename({
-            "MS_TMT": "MS_volume(TMT)",
-            "HSD_TMT": "HSD_volume(TMT)"
-        })
-        .sort(["transaction_date","zone"])
-    )
+    Each filter: {'key': 'sap_id', 'cond': '=', 'value': None, 'values': ['a', 'b']}.
+    - value: single value (used with cond '=' or '!=').
+    - values: multiple values (used with cond 'in' or 'not in').
+    - cond: '=', '!=', 'in', 'not in'.
+
+    Returns list of SQL condition strings (e.g. ["ns.sap_id IN ('a','b')"]).
+    Column names are mapped to nozzle_sales (ns) or location_master (lm) columns; values are quoted as literals.
+    """
+    if not filters:
+        return []
+    conditions = []
+    # Map filter key to (table_alias, column_name) for SQL
+    key_to_col = {
+        "sap_id": ("ns", "sap_id"),
+        "zone": ("lm", "zone"),
+        "state": ("lm", "state"),
+        "sales_area": ("lm", "sales_area"),
+    }
+    for f in filters:
+        if not isinstance(f, dict):
+            continue
+        key = (f.get("key") or "").strip().lower()
+        cond = (f.get("cond") or "=").strip().lower()
+        value = f.get("value")
+        values = f.get("values")
+        if key not in key_to_col:
+            continue
+        tbl, col = key_to_col[key]
+        qual = f"{tbl}.{col}"
+        if values is not None and (isinstance(values, (list, tuple)) and len(values) > 0):
+            vals = [str(v).strip() for v in values if v is not None]
+            if not vals:
+                continue
+            lit = ", ".join(f"'{v}'" for v in vals)
+            if cond == "not in":
+                conditions.append(f"{qual} NOT IN ({lit})")
+            else:
+                conditions.append(f"{qual} IN ({lit})")
+        elif value is not None:
+            lit = f"'{str(value).strip()}'"
+            if cond == "!=":
+                conditions.append(f"{qual} != {lit}")
+            else:
+                conditions.append(f"{qual} = {lit}")
+    return conditions
+
+
+async def nozzle_sales(
+    segregation: str = "sales_area",
+    ms_products: tuple = None,
+    hsd_products: tuple = None,
+    date_spec=None,
+    filters=None,
+    include_expected_sites: bool = True,
+    reference_date=None,
+):
+    """
+    Nozzle sales by segregation level (global, zone, sales_area, state, sap_id) with configurable MS/HSD products.
+
+    Args:
+        segregation: One of "global", "zone", "sales_area", "state", "sap_id". Default "sales_area".
+        ms_products: Product groups for MS volume TMT. Default ("MS","POWER 99","POWER 95","POWER 100").
+        hsd_products: Product groups for HSD volume TMT. Default ("HSD","TURBO").
+        date_spec: Flexible date or range. Default None = yesterday (same as "1D").
+            - None or 1 or "1D": single day = yesterday.
+            - int (2, 7, 15, ...) or "2D", "7D", "15D", "30D": last N days ending yesterday (inclusive).
+            - str "YYYY-MM-DD": single exact date.
+            - (start, end) or [start, end]: date range; start/end as "YYYY-MM-DD" or date.
+            - datetime.date: single exact date.
+        filters: Optional list of filter dicts. Each: {'key': 'sap_id', 'cond': '=', 'value': None, 'values': ['a','b']}.
+            - value: single value (use with cond '=' or '!=').
+            - values: multiple values (use with cond 'in' or 'not in').
+            - cond: '=', '!=', 'in', 'not in'.
+            - key: 'sap_id', 'zone', 'state', 'sales_area'. When sap_id is selected, name is included in output for sap_id segregation.
+        include_expected_sites: If True, attach expected site count per segment from location_master (RO). Default True.
+        reference_date: Date used as "today" for relative specs (e.g. "1D", 7); default today.
+
+    Returns:
+        {"daily_zone_product_nozzle_sales": [{"transaction_date", "<segment_col>", "connected_sites", "MS_volume(TMT)", "HSD_volume(TMT)"[, "name"], ...]}.
+        For segregation sap_id, each row includes "sap_id" and "name" (location name).
+    """
+    ms_products = ms_products if ms_products is not None else NOZZLE_SALES_MS_PRODUCTS_DEFAULT
+    hsd_products = hsd_products if hsd_products is not None else NOZZLE_SALES_HSD_PRODUCTS_DEFAULT
+    seg = segregation.strip().lower()
+    if seg not in ("global", "zone", "sales_area", "state", "sap_id"):
+        seg = "sales_area"
+
+    filters = filters if filters is not None else []
+    filter_conditions = _nozzle_sales_build_filter_conditions(filters)
+    print("*"*40)
+    print("filter_conditions ---->\n", filter_conditions)
+
+    need_lm_for_filters = any("lm." in c for c in filter_conditions)
+    extra_where = " AND ".join(filter_conditions) if filter_conditions else ""
+
+    start_d, end_d = _nozzle_sales_parse_date_spec(date_spec, reference_date=reference_date)
+    if start_d == end_d:
+        date_filter = f"ns.transaction_date::DATE = '{start_d}'"
+    else:
+        date_filter = f"ns.transaction_date::DATE BETWEEN '{start_d}' AND '{end_d}'"
+    where_parts = [date_filter]
+    if extra_where:
+        where_parts.append(extra_where)
+    where_clause = " AND ".join(where_parts)
+    print("*"*40)
+    print("where clause ---->\n", where_clause)
+
+    ms_expr = _nozzle_sales_build_tmt_expr(ms_products, NOZZLE_SALES_MS_DIVISOR, "ms_tmt")
+    hsd_expr = _nozzle_sales_build_tmt_expr(hsd_products, NOZZLE_SALES_HSD_DIVISOR, "hsd_tmt")
     
-    total_row = daily_zone_product_nozzle_sales.select([
-        pl.lit(None).alias("transaction_date"),
-        pl.lit("Total").alias("zone"),
-        pl.sum("connected_sites").alias("connected_sites"),
-        pl.sum("MS_volume(TMT)").alias("MS_volume(TMT)"),
-        pl.sum("HSD_volume(TMT)").alias("HSD_volume(TMT)"),
-        pl.lit(None).alias("connected_sites_right")
-    ])
+    if seg == "global":
+        join_lm = need_lm_for_filters
+        from_join = "FROM public.nozzle_sales ns"
+        if join_lm:
+            from_join += " JOIN public.location_master lm ON ns.sap_id = lm.sap_id"
+        nozzle_sales_query = f"""
+            SELECT
+                ns.transaction_date::DATE AS transaction_date,
+                COUNT(DISTINCT ns.site_id) AS connected_sites,
+                {ms_expr},
+                {hsd_expr}
+            {from_join}
+            WHERE {where_clause}
+            GROUP BY ns.transaction_date::DATE
+            ORDER BY ns.transaction_date
+        """
+        group_cols = []
+        dim_col = None
+        print("*"*20)
+        print("nozzle sales query global ---->\n", nozzle_sales_query)
+    elif seg == "sap_id":
+        dim_col = "sap_id"
+        group_cols = ["sap_id", "name"]
+        group_by_sap = "ns.sap_id, COALESCE(lm.name, lm.location_name)"
+        nozzle_sales_query = f"""
+            SELECT
+                ns.transaction_date::DATE AS transaction_date,
+                ns.sap_id AS sap_id,
+                COALESCE(lm.name, lm.location_name) AS name,
+                COUNT(DISTINCT ns.site_id) AS connected_sites,
+                {ms_expr},
+                {hsd_expr}
+            FROM public.nozzle_sales ns
+            JOIN public.location_master lm ON ns.sap_id = lm.sap_id
+            WHERE {where_clause}
+            GROUP BY ns.transaction_date::DATE, {group_by_sap}
+            ORDER BY ns.transaction_date, ns.sap_id
+        """
+        group_by_lm = None
+        print("*"*20)
+        print("nozzle sale query sap id ---->\n", nozzle_sales_query)
+    else:
+        if seg == "state":
+            dim_col = "state"
+            group_by_lm = "lm.state"
+            select_dim = "lm.state AS state"
+        elif seg == "sales_area":
+            dim_col = "sales_area"
+            group_by_lm = "COALESCE(ns.sales_area, lm.sales_area)"
+            select_dim = f"{group_by_lm} AS sales_area"
+        else:
+            dim_col = "zone"
+            group_by_lm = "COALESCE(ns.zone, lm.zone)"
+            select_dim = f"{group_by_lm} AS zone"
 
-    daily_zone_product_nozzle_sales = pl.concat([daily_zone_product_nozzle_sales, total_row])
+        group_cols = [dim_col]
+        nozzle_sales_query = f"""
+            SELECT
+                ns.transaction_date::DATE AS transaction_date,
+                {select_dim},
+                COUNT(DISTINCT ns.site_id) AS connected_sites,
+                {ms_expr},
+                {hsd_expr}
+            FROM public.nozzle_sales ns
+            JOIN public.location_master lm ON ns.sap_id = lm.sap_id
+            WHERE {where_clause}
+            GROUP BY ns.transaction_date::DATE, {group_by_lm}
+            ORDER BY ns.transaction_date::DATE, {group_by_lm}
+        """
+        print("*"*20)
+        print("nozzle sales query else ---->\n",nozzle_sales_query)
 
-    print("final_df---->\n", daily_zone_product_nozzle_sales)
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    rows = await function(query=nozzle_sales_query)
+    nozzle_sales_df = pl.DataFrame(rows)
+    print("&"*20)
+    print("nozzle sales df --->\n",nozzle_sales_df)
+
+    if dim_col and nozzle_sales_df.height > 0:
+        nozzle_sales_df = nozzle_sales_df.filter(pl.col(dim_col).is_not_null())
+
+    nozzle_sales_df = nozzle_sales_df.rename({
+        "ms_tmt": "MS_volume(TMT)",
+        "hsd_tmt": "HSD_volume(TMT)"
+    })
+
+    print("%"*20)
+    print("nozzle sales df rename ---->\n ", nozzle_sales_df)
+
+    if include_expected_sites and dim_col and dim_col != "sap_id":
+        lm_query = f"""
+            SELECT {dim_col}, COUNT(DISTINCT sap_id) AS expected_sites
+            FROM location_master
+            WHERE bu = 'RO' AND {dim_col} IS NOT NULL
+            GROUP BY {dim_col}
+        """
+        try:
+            lm_rows = await function(query=lm_query)
+            expected_df = pl.DataFrame(lm_rows)
+            if "expected_sites" in expected_df.columns:
+                expected_df = expected_df.rename({"expected_sites": "connected_sites_right"})
+            nozzle_sales_df = nozzle_sales_df.join(expected_df, on=dim_col, how="left")
+            print("$"*20)
+            print("nozzle_sales df if location mastet table--->\n", nozzle_sales_df)
+        except Exception:
+            nozzle_sales_df = nozzle_sales_df.with_columns(pl.lit(None).alias("connected_sites_right"))
+
+    if dim_col and nozzle_sales_df.height > 0:
+        sum_cols = ["connected_sites", "MS_volume(TMT)", "HSD_volume(TMT)"]
+        total_select = [
+            pl.lit(None).alias("transaction_date"),
+            pl.lit("Total").alias(dim_col),
+        ]
+        if dim_col == "sap_id" and "name" in nozzle_sales_df.columns:
+            total_select.append(pl.lit(None).alias("name"))
+        total_select.extend([pl.sum(c).alias(c) for c in sum_cols if c in nozzle_sales_df.columns])
+        if "connected_sites_right" in nozzle_sales_df.columns:
+            total_select.append(pl.lit(None).alias("connected_sites_right"))
+        total_row = nozzle_sales_df.select(total_select)
+        nozzle_sales_df = pl.concat([nozzle_sales_df, total_row])
+        print("8"*20)
+        print("nozzle sales df finla concat---->\n", nozzle_sales_df)
+
+    sort_cols = ["transaction_date"] + (group_cols if group_cols else [])
+    print("*&"*10)
+    print("sortcols --->\n", sort_cols)
+    sort_cols = [c for c in sort_cols if c in nozzle_sales_df.columns]
+    print("sort cols last --->\n ", sort_cols)
+   # if sort_cols:
+    #    nozzle_sales_df = nozzle_sales_df.sort(sort_cols)
+    
+    print("*"*40)
+    print("nozzle sales df final---->\n", nozzle_sales_df)
 
     return {
-        "daily_zone_product_nozzle_sales" : daily_zone_product_nozzle_sales.to_dicts()
+        "daily_zone_product_nozzle_sales": nozzle_sales_df.to_dicts()
     }
+
+
+async def sales_tmt_excel():
+    """
+    Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
+    
+    This function:
+    - Fetches daily nozzle sales data
+    - Fetches month-to-date (MTD) nozzle and SAP sales data
+    - Maps sales areas to states
+    - Aggregates all data at state level
+    - Calculates MTD percentage (Nozzle vs SAP)
+    - Adds total row
+    - Generates a formatted Excel file
+
+    Output:
+    - Excel file saved at: /tmp/primary_&_secondary_sales.xlsx
+
+    Returns:
+    - Dictionary with file path of the generated report
+    
+    """
+
+    # daily sales data
+    nozzle_sales_df = await nozzle_sales()
+    nozzle_sales_df = pl.DataFrame(nozzle_sales_df["daily_zone_product_nozzle_sales"])
+    nozzle_sales_df = nozzle_sales_df.filter(pl.col("sales_area") != "Total")
+
+    location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
+    location_master_df = pl.DataFrame(location_master_details['data'])
+
+    merge_with_lm = nozzle_sales_df.join(location_master_df, on="sales_area", how="left")
+    merge_with_lm = (merge_with_lm
+        .group_by("state")
+        .agg([
+            pl.col("connected_sites").sum(),
+            pl.col("MS_volume(TMT)").sum(),
+            pl.col("HSD_volume(TMT)").sum(),
+        ])
+    )
+
+    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details_df = pl.DataFrame(sales_details)
+
+    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
+    merged_sales_location = (merged_sales_location
+        .group_by("state")
+        .agg([pl.col("outlets").sum().alias("total_sites")])
+    )
+   
+    final_df = merge_with_lm.join(merged_sales_location,on ='state',how = "left")
+
+    total_rows = final_df.select([
+        pl.lit("Total").alias("state"),
+        pl.sum("connected_sites"),
+        pl.sum("MS_volume(TMT)"),
+        pl.sum("HSD_volume(TMT)"),
+        pl.sum("total_sites")
+    ])
+    final_data = pl.concat([final_df,total_rows])
+    
+    # monthly sales data
+    start_of_month = datetime.date.today().replace(day=1)
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+
+    nozzle_sales_monthly = await nozzle_sales(date_spec=(start_of_month, yesterday))
+
+    nozzle_sales_monthly = pl.DataFrame(nozzle_sales_monthly["daily_zone_product_nozzle_sales"])
+    nozzle_sales_monthly = nozzle_sales_monthly.filter(pl.col("sales_area") != "Total")
+
+    nozzle_sales_monthly = (nozzle_sales_monthly
+        .group_by("sales_area")
+        .agg([
+            pl.col("connected_sites").unique().max().alias("monthly_connected_sites"),
+            pl.col("MS_volume(TMT)").sum().alias("monthly_MS_volume(TMT)"),
+            pl.col("HSD_volume(TMT)").sum().alias("monthly_HSD_volume(TMT)"),
+        ])
+    )
+
+    location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
+    location_master_df = pl.DataFrame(location_master_details['data'])
+
+    merge_with_lm_monthly = nozzle_sales_monthly.join(location_master_df, on="sales_area", how="left")
+    
+
+    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details_df = pl.DataFrame(sales_details)
+
+    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
+
+    sap_sales_monthly = await sales_data.get_sales_tmt(date_filter= 'month')
+    sap_sales_monthly = pl.DataFrame(sap_sales_monthly)
+    sap_sales_monthly = sap_sales_monthly.filter(pl.col("sales_area") != "GRAND TOTAL")
+    sap_sales_monthly = sap_sales_monthly.with_columns([
+        pl.col("MS_SALES_TMT").fill_null(0),
+        pl.col("HSD_SALES_TMT").fill_null(0)
+    ])
+    sap_sales_monthly = (
+        sap_sales_monthly
+        .group_by("sales_area")
+        .agg([
+            pl.col("MS_SALES_TMT").sum().alias("monthly_MS_SALES_TMT"),
+            pl.col("HSD_SALES_TMT").sum().alias("monthly_HSD_SALES_TMT")
+        ])
+    )
+
+    merged_data = sap_sales_monthly.join(location_master_df, on ="sales_area", how = "left")
+    merge_with_lm_monthly = (merge_with_lm_monthly
+        .group_by("state")
+        .agg([
+            pl.col("monthly_connected_sites").sum(),
+            pl.col("monthly_MS_volume(TMT)").sum(),
+            pl.col("monthly_HSD_volume(TMT)").sum(),
+        ])
+    )
+
+    merged_sales_location = (merged_sales_location
+        .group_by("state")
+        .agg([pl.col("outlets").sum().alias("total_sites")])
+    )
+
+    merged_data = (merged_data
+        .group_by("state")
+        .agg([
+            pl.col("monthly_MS_SALES_TMT").sum(),
+            pl.col("monthly_HSD_SALES_TMT").sum()
+        ])
+    )
+
+    final_data_monthly = merge_with_lm_monthly.join(merged_data,on ='state',how = "left")
+    final_data_monthly = final_data_monthly.join(merged_sales_location, on="state", how="left")
+
+    total_rows = final_data_monthly.select([
+        pl.lit("Total").alias("state"),
+        pl.sum("monthly_connected_sites"),
+        pl.sum("monthly_MS_volume(TMT)"),
+        pl.sum("monthly_HSD_volume(TMT)"),
+        pl.sum("monthly_MS_SALES_TMT"),
+        pl.sum("monthly_HSD_SALES_TMT"),
+        pl.sum("total_sites")
+    ])
+    
+    final_data_monthly = pl.concat([final_data_monthly,total_rows])
+
+    final_data_monthly = final_data_monthly.with_columns([
+        (100 * (pl.col("monthly_MS_volume(TMT)").cast(pl.Float64) / pl.col("monthly_MS_SALES_TMT").cast(pl.Float64)))
+            .round(2).alias("monthly_MS_percentage"),
+
+        (100 * (pl.col("monthly_HSD_volume(TMT)").cast(pl.Float64) / pl.col("monthly_HSD_SALES_TMT").cast(pl.Float64)))
+            .round(2).alias("monthly_HSD_percentage")
+    ])
+
+    final_result = final_data.join(
+        final_data_monthly,
+        on="state",
+        how="left"
+    )
+
+    excel_path = "/tmp/primary_&_secondary_sales.xlsx"
+    workbook = xlsxwriter.Workbook(excel_path)
+    worksheet = workbook.add_worksheet("Retail Sales")
+
+    # -------------------- FORMATS --------------------
+    header_format = workbook.add_format({
+        "bold": True,
+        "align": "center",
+        "valign": "middle",
+        "border": 1
+    })
+
+    cell_format = workbook.add_format({
+        "border": 1,
+        "align": "center"
+    })
+
+
+    # -------------------- HEADERS --------------------
+    worksheet.merge_range("A1:A2", "State", header_format)
+    worksheet.merge_range("B1:B2", "Total Sites", header_format)
+    worksheet.merge_range("C1:C2", "Connected Sites", header_format)
+    worksheet.merge_range("D1:E1", "Nozzle day sales (TMT)", header_format)
+    worksheet.write("D2", "MS (all variants)", header_format)
+    worksheet.write("E2", "HSD (all variants)", header_format)
+    worksheet.merge_range("F1:G1", "Nozzle Cum. sales of the month (TMT)", header_format)
+    worksheet.write("F2", "MS (all variants)", header_format)
+    worksheet.write("G2", "HSD (all variants)", header_format)
+    worksheet.merge_range("H1:I1", "SAP Cum. sales of the month (TMT)", header_format)
+    worksheet.write("H2", "MS (all variants)", header_format)
+    worksheet.write("I2", "HSD (all variants)", header_format)
+    worksheet.merge_range("J1:K1", "% of Cum. Nozzle Sales", header_format)
+    worksheet.write("J2", "MS (all variants)", header_format)
+    worksheet.write("K2", "HSD (all variants)", header_format)
+
+
+    # -------------------- DATA --------------------
+    data_rows = final_result.to_dicts()
+
+    row = 2
+    for record in data_rows:
+        worksheet.write(row, 0, record["state"], cell_format)
+        worksheet.write(row, 1, record["total_sites"], cell_format)
+        worksheet.write(row, 2, record["connected_sites"], cell_format)
+        worksheet.write(row, 3, record["MS_volume(TMT)"], cell_format)
+        worksheet.write(row, 4, record["HSD_volume(TMT)"], cell_format)
+        worksheet.write(row, 5, record["monthly_MS_volume(TMT)"], cell_format)
+        worksheet.write(row, 6, record["monthly_HSD_volume(TMT)"], cell_format)
+        worksheet.write(row, 7, record["monthly_MS_SALES_TMT"], cell_format)
+        worksheet.write(row, 8, record["monthly_HSD_SALES_TMT"], cell_format)
+        worksheet.write(row, 9, record["monthly_MS_percentage"], cell_format)
+        worksheet.write(row, 10, record["monthly_HSD_percentage"], cell_format)
+        row += 1
+
+    # -------------------- COLUMN WIDTH --------------------
+    worksheet.set_column("A:A", 20)
+    worksheet.set_column("B:B", 20)
+    worksheet.set_column("C:C", 20)
+    worksheet.set_column("D:E", 20)
+    worksheet.set_column("F:G", 23)
+    worksheet.set_column("H:I", 23)
+    worksheet.set_column("J:K", 23)
+
+    start_row = 2
+    end_row = row - 1
+
+    for col in ["J", "K"]:
+
+        cell_range = f"{col}{start_row+1}:{col}{end_row+1}"
+
+        # < 70 → Dark Red
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "<",
+            "value": 70,
+            "format": workbook.add_format({"bg_color": "#c00000"})
+        })
+
+        # 70–80 → Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "between",
+            "minimum": 70,
+            "maximum": 80,
+            "format": workbook.add_format({"bg_color": "#f1a470"})
+        })
+
+        # 80–90 → Light Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "between",
+            "minimum": 80,
+            "maximum": 90,
+            "format": workbook.add_format({"bg_color": "#ef7d39"})
+        })
+
+        # > 90 → Dark Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": ">",
+            "value": 90,
+            "format": workbook.add_format({"bg_color": "#d25704"})
+        })
+    
+    legend_start_row = 2
+    legend_col = "M"
+    color_col = "N"
+    legend_items = [
+        ("< 70", "#c00000"),
+        ("70–80", "#f1a470"),
+        ("80–90", "#ef7d39"),
+        ("> 90", "#d25704"),
+    ]
+
+    for i, (label, color) in enumerate(legend_items):
+        worksheet.write(f"{legend_col}{legend_start_row + i}", label, cell_format)
+        worksheet.write_blank(f"{color_col}{legend_start_row + i}", None, workbook.add_format({"bg_color": color}))
+        
+    workbook.close()
+
+    print("Excel created at:", excel_path)
+    return {"retail_sales_report": excel_path}

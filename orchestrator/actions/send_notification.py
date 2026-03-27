@@ -1113,7 +1113,7 @@ class SendNotification:
         self.update_alert["processed_time"] = processed_time.isoformat()
         # Ensure alert_history is a list and append the new update
         if self.params.get("messagetype") in ["escalation", "escalate"]:
-            if self.alert_data['alert_section'] in ['TAS','RO','VA','LPG','EMLock']:
+            if self.alert_data['alert_section'] in ['TAS','RO','LPG','EMLock']:
                 alert_data.setdefault("alert_history", []).append(self.update_alert)
         else:
             alert_data.setdefault("alert_history", []).append(self.update_alert)

@@ -2167,6 +2167,31 @@ async def delete(id: str):
     return await TasFaulty.delete(id)
 
 
+@router.post('/tassealdateform', response_model=TasSealDateForm, tags=['TasSealDateForm'])
+async def create(inputObj: TasSealDateFormCreate):
+    return await inputObj.create()
+
+
+@router.put('/tassealdateform', response_model=TasSealDateForm, tags=['TasSealDateForm'])
+async def update(inputObj: TasSealDateForm):
+    return await inputObj.modify()
+
+
+@router.get('/tassealdateform/{id}', response_model=TasSealDateForm, tags=['TasSealDateForm'])
+async def get(id: str):
+    return await TasSealDateForm.get(id, skip_secrets=True)
+
+
+@router.get('/tassealdateform', response_model=TasSealDateFormGetResp, tags=['TasSealDateForm'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TasSealDateForm.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tassealdateform/{id}', tags=['TasSealDateForm'])
+async def delete(id: str):
+    return await TasSealDateForm.delete(id)
+
+
 @router.get('/tasfireenginetest/{id}', response_model=TasFireEngineTest, tags=['TasFireEngineTest'])
 async def get(id: str):
     return await TasFireEngineTest.get(id, skip_secrets=True)
@@ -2186,3 +2211,37 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TerminalWiseDryoutCounts.get_all(params, skip_secrets=True)
 
+
+@router.get('/nonreportingdevices/{id}', response_model=NonReportingDevices, tags=['NonReportingDevices'])
+async def get(id: str):
+    return await NonReportingDevices.get(id, skip_secrets=True)
+
+
+@router.get('/nonreportingdevices', response_model=NonReportingDevicesGetResp, tags=['NonReportingDevices'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NonReportingDevices.get_all(params, skip_secrets=True)
+
+
+@router.post('/lpgoperationsinsights', response_model=LpgOperationsInsights, tags=['LpgOperationsInsights'])
+async def create(inputObj: LpgOperationsInsightsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgoperationsinsights', response_model=LpgOperationsInsights, tags=['LpgOperationsInsights'])
+async def update(inputObj: LpgOperationsInsights):
+    return await inputObj.modify()
+
+
+@router.get('/lpgoperationsinsights/{id}', response_model=LpgOperationsInsights, tags=['LpgOperationsInsights'])
+async def get(id: str):
+    return await LpgOperationsInsights.get(id, skip_secrets=True)
+
+
+@router.get('/lpgoperationsinsights', response_model=LpgOperationsInsightsGetResp, tags=['LpgOperationsInsights'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgOperationsInsights.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgoperationsinsights/{id}', tags=['LpgOperationsInsights'])
+async def delete(id: str):
+    return await LpgOperationsInsights.delete(id)

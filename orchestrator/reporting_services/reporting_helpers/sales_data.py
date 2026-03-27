@@ -1,6 +1,7 @@
 import urdhva_base
 import decimal
 import datetime
+import polars as pl
 import urdhva_base.utilities
 import utilities.helpers as helpers
 import utilities.fiscal_year as fiscal_year
@@ -317,3 +318,64 @@ def process_performance_data(data, limit=3):
     bottom_x = bottom_performers[:limit]
 
     return top_x, bottom_x
+
+
+
+async def get_sales_tmt(date_filter: str):
+
+    date_condition = ""
+
+    # if date_filter == 'day':
+    #     date_condition = f""" AND "DAY_ID" = CURRENT_DATE - INTERVAL '1 day'"""
+
+    # elif date_filter == 'month':
+    #     date_condition = f"""AND "DAY_ID" >= date_trunc('month', CURRENT_DATE)
+    #         AND "DAY_ID" < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
+    #     """
+
+    if date_filter == 'day':
+        date_condition = f""" AND "DAY_ID" = TO_CHAR(CURRENT_DATE - INTERVAL '1 day', 'YYYYMMDD')::bigint"""
+
+    elif date_filter == 'month':
+        date_condition = f"""AND "DAY_ID" >= TO_CHAR(date_trunc('month', CURRENT_DATE), 'YYYYMMDD')::bigint
+            AND "DAY_ID" < TO_CHAR(CURRENT_DATE, 'YYYYMMDD')::bigint
+        """
+    
+    sales_tmt_query = f"""
+        SELECT "Zone_Name", "Region_Name", "SalesArea_Name",
+            ROUND(SUM(
+                CASE WHEN "ProductName" = 'MS'
+                THEN "NETWEIGHT_TMT" END
+            )::numeric,2) AS "MS_SALES_TMT",
+            ROUND(SUM(
+                CASE WHEN "ProductName" = 'HSD'
+                THEN "NETWEIGHT_TMT" END
+            )::numeric,2) AS "HSD_SALES_TMT"
+        FROM "MOM_DAY_LEVEL_DATA"
+        WHERE
+            "SBU_Name" = 'Retail'
+            {date_condition}
+        GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+        ORDER BY "Zone_Name", "Region_Name", "SalesArea_Name"
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+    sales_tmt= await function(query= sales_tmt_query)
+    sales_tmt_df = pl.DataFrame(sales_tmt)
+
+    sales_tmt_df = sales_tmt_df.rename({"SalesArea_Name": "sales_area"})
+
+    total_row = sales_tmt_df.select([
+        pl.lit(None).alias("Zone_Name"),
+        pl.lit(None).alias("Region_Name"),
+        pl.lit("GRAND TOTAL").alias("sales_area"),
+        pl.sum("MS_SALES_TMT").alias("MS_SALES_TMT"),
+        pl.sum("HSD_SALES_TMT").alias("HSD_SALES_TMT")
+    ])
+
+    sales_tmt_df = pl.concat([sales_tmt_df, total_row])
+    return sales_tmt_df

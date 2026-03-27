@@ -81,7 +81,8 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_fault_and_maintenance())
     status_data.update(await sod_data.get_parameters_summary())
     status_data.update(ro_va_cleanliness.main())
-    status_data.update(await retail_data.nozzle_sales())
+    status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
+    status_data.update(await retail_data.sales_tmt_excel())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -107,7 +108,7 @@ async def publish_daily_novex_status_email():
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
         subject="Novex Daily Report: Retail",
-        cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in"],
+        cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in","sandesh.mane@hpcl.in","georget@hpcl.in"],
         bcc_recipients=["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
         inline_images={
@@ -115,7 +116,7 @@ async def publish_daily_novex_status_email():
             "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
             "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
-        attachments = [status_data.get('zone_wise_pdf_path')]
+        attachments = [status_data.get('zone_wise_pdf_path') ,status_data.get('retail_sales_report')]
     )
     await send_notification(
         template_name="seg3.html",
@@ -164,7 +165,8 @@ async def publish_daily_novex_status_email():
         },
         attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('lpg_day_wise_trend_exl_path'), 
                        status_data.get('lpg_va_path'),status_data.get('lpg_pq_path'),status_data.get('tas_day_wise_trend_exl_path'),
-                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path'),
+                       status_data.get('retail_sales_report')]
     )
     await send_notification(
         template_name="ro_va_cleanliness.html",

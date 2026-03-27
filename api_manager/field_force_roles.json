@@ -51,6 +51,9 @@
                 },
                 {
                     "name": "get_indents_details"
+                },
+                {
+                    "name": "get_r3_r1_details"
                 }
             ]
         },
@@ -93,6 +96,9 @@
                 },
                 {
                     "name": "get_indents_details"
+                },
+                {
+                    "name": "get_r3_r1_details"
                 }
             ]
         },
@@ -144,6 +150,9 @@
                 },
                 {
                     "name": "get_indents_details"
+                },
+                {
+                    "name": "get_r3_r1_details"
                 }
             ]
         },
@@ -177,6 +186,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -201,6 +213,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -234,6 +249,9 @@
                 },
                 {
                     "name": "get_dry_out_indents"
+                },
+                {
+                    "name": "get_retail_outlet_stockouts"
                 }
             ]
         },
@@ -918,6 +936,10 @@
             "displayName": "get_indents_details"
         },
         {
+            "name": "get_r3_r1_details",
+            "displayName": "get_r3_r1_details"
+        },
+        {
             "name": "get_dry_out_locations",
             "displayName": "get_dry_out_locations"
         },
@@ -928,6 +950,10 @@
         {
             "name": "get_dry_out_indents",
             "displayName": "get_dry_out_indents"
+        },
+        {
+            "name": "get_retail_outlet_stockouts",
+            "displayName": "get_retail_outlet_stockouts"
         },
         {
             "name": "stock_availability",

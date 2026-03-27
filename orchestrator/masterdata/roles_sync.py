@@ -106,6 +106,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],
@@ -788,6 +794,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],
@@ -833,6 +845,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],
@@ -930,6 +948,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],
@@ -982,6 +1006,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],
@@ -1483,6 +1513,14 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+
+
                 ]
             }
         ],
@@ -3121,6 +3159,12 @@ async def sync_user_roles():
             {
                 "menu_name": "Ticketing",
                 "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
                 ]
             }
         ],

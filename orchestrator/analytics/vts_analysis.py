@@ -423,10 +423,19 @@ async def is_alert_exists(tl_number: str):
     return False
 
 async def last_closed_at(tt_number: str):
-    query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS' and vehicle_unblocked_date is not null"
+    query = f"""
+                select * from alerts 
+                where vehicle_number = '{tt_number}'
+                and alert_status = 'Close'
+                and alert_section = 'VTS'
+                and vehicle_unblocked_date is not null
+                order by vehicle_unblocked_date desc
+            """
+    # query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS' and vehicle_unblocked_date is not null order by vehicle_unblocked_date desc"
+    # vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
     print("query: ", query)
-    vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
-    #print("vts_alert_data: ", vts_alert_data)
+    vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
+    # print("vts_alert_data: ", vts_alert_data)
     if len(vts_alert_data['data']):
         return vts_alert_data['data'][0]['closed_at']
     return None

@@ -67,6 +67,7 @@ def fetch_mysql_data(conn, table, key_column, last_key, user_wheres=None):
             FROM CONN_ENT.ZSDCV_SHORTAGE_STG zsh
             INNER JOIN CONN_ENT.ZSDCV_AY_INV3_STG zinv
             ON zsh.original_inv = zinv.inv_ref
+            AND zsh.material = zinv.ITEM_NO 
             WHERE
             zsh.shortage > 0
             AND zinv.load_status IN ('6', '7')

@@ -228,6 +228,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
@@ -260,6 +261,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number']
 
 
 class UsersGetResp(pydantic.BaseModel):
@@ -1589,6 +1591,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     image_uploaded: Mapped[typing.Optional[bool]] = mapped_column("image_uploaded", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    load_type: Mapped[typing.Optional[str]] = mapped_column("load_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1690,6 +1693,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    load_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1800,6 +1804,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    load_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -7345,6 +7350,28 @@ class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Performancescore_Performance_Score_TrendParams(pydantic.BaseModel):
+    bu: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Performancescore_Performance_Score_Monthly_TrendParams(pydantic.BaseModel):
+    bu: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'performance_score_history'
     
@@ -11147,6 +11174,112 @@ class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class TasSealDateFormSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mfm_number: Mapped[typing.Optional[str]] = mapped_column("mfm_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[str] = mapped_column("device_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    actual_w_and_m_seal_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("actual_w_and_m_seal_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    next_due_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("next_due_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    certificate: Mapped[typing.List[str]] = mapped_column("certificate", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    present_k_factor: Mapped[typing.Optional[str]] = mapped_column("present_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    past_k_factor: Mapped[typing.Optional[str]] = mapped_column("past_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasSealDateFormCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: str
+    location_name: str
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: str
+    zone: str
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.List[str]
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasSealDateFormSchema
+        upsert_keys = []
+        search_fields = ['location_name', 'sap_id', 'zone', 'device_type']
+
+
+class TasSealDateForm(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_seal_date_form'
+    
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[typing.List[str]] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasSealDateFormSchema
+        upsert_keys = []
+        search_fields = ['location_name', 'sap_id', 'zone', 'device_type']
+
+
+class TasSealDateFormGetResp(pydantic.BaseModel):
+    data: typing.List[TasSealDateForm]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tassealdateform_Tas_Seal_Date_Form_CreateParams(pydantic.BaseModel):
+    sap_id: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    actual_w_and_m_seal_date: typing.Optional[datetime.datetime] | None = None
+    next_due_date: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.List[str]
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    present_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+    past_k_factor: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tassealdateform_Get_Filtered_Mfm_DataParams(pydantic.BaseModel):
+    sap_id: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TasFireEngineTestSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_fire_engine_test'
     
@@ -11268,3 +11401,134 @@ class TerminalWiseDryoutCountsGetResp(pydantic.BaseModel):
     data: typing.List[TerminalWiseDryoutCounts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class NonReportingDevicesSchema(UrdhvaPostgresBase):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: Mapped[str] = mapped_column("truck_regno", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_check_date: Mapped[datetime.date] = mapped_column("last_check_date", DATE, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_check_time: Mapped[str] = mapped_column("last_check_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location: Mapped[str] = mapped_column("location", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    device_working: Mapped[str] = mapped_column("device_working", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    completed_trip: Mapped[str] = mapped_column("completed_trip", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    completed_trip_auto_dc: Mapped[str] = mapped_column("completed_trip_auto_dc", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_date: Mapped[datetime.datetime] = mapped_column("card_date", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_time: Mapped[str] = mapped_column("card_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    card_datetime: Mapped[datetime.datetime] = mapped_column("card_datetime", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    reader_id: Mapped[str] = mapped_column("reader_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    loaded_on: Mapped[datetime.datetime] = mapped_column("loaded_on", DateTime(timezone=False), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(truck_regno, last_check_date, last_check_time, location, name="non_reporting_devices_truck_lastc_lastc_locat"),)
+
+
+class NonReportingDevicesCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: str
+    last_check_date: datetime.date
+    last_check_time: str
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
+    location: str
+    location_name: str
+    device_working: str
+    completed_trip: str
+    completed_trip_auto_dc: str
+    card_date: datetime.datetime
+    card_time: str
+    card_datetime: datetime.datetime
+    reader_id: str
+    loaded_on: datetime.datetime
+    bu: str
+    zone: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NonReportingDevicesSchema
+        upsert_keys = ['truck_regno', 'last_check_date', 'last_check_time', 'location']
+
+
+class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'non_reporting_devices'
+    
+    truck_regno: typing.Optional[str] | None = None
+    last_check_date: typing.Optional[datetime.date] | None = None
+    last_check_time: typing.Optional[str] | None = None
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
+    location: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    device_working: typing.Optional[str] | None = None
+    completed_trip: typing.Optional[str] | None = None
+    completed_trip_auto_dc: typing.Optional[str] | None = None
+    card_date: typing.Optional[datetime.datetime] | None = None
+    card_time: typing.Optional[str] | None = None
+    card_datetime: typing.Optional[datetime.datetime] | None = None
+    reader_id: typing.Optional[str] | None = None
+    loaded_on: typing.Optional[datetime.datetime] | None = None
+    bu: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NonReportingDevicesSchema
+        upsert_keys = ['truck_regno', 'last_check_date', 'last_check_time', 'location']
+
+
+class NonReportingDevicesGetResp(pydantic.BaseModel):
+    data: typing.List[NonReportingDevices]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class LpgOperationsInsightsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_operations_insights'
+
+
+class LpgOperationsInsightsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_operations_insights'
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgOperationsInsightsSchema
+        upsert_keys = []
+
+
+class LpgOperationsInsights(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_operations_insights'
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgOperationsInsightsSchema
+        upsert_keys = []
+
+
+class LpgOperationsInsightsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgOperationsInsights]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgoperationsinsights_Lpg_Plants_InsightsParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    metric_type: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

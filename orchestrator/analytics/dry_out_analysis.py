@@ -1472,7 +1472,7 @@ async def dry_out_diff():
     # novex_resp = await function(
     #     query=novex_query
     # )
-    novex_resp = await hpcl_ceg_model.Alerts.get_aggr_data(novex_query, limit=10000)
+    novex_resp = await hpcl_ceg_model.Alerts.get_aggr_data(novex_query, limit=0)
     novex_resp = novex_resp.get("data", [])
 
     cris_resp = pd.DataFrame(cris_resp)

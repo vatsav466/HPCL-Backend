@@ -510,6 +510,35 @@ class Ticketing_Process_EscalationsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketing_Pm_OrdersParams(pydantic.BaseModel):
+    planning_plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+    search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketing_Pm_Orders_WeeklyParams(pydantic.BaseModel):
+    planning_plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+    search: typing.Optional[str] = pydantic.Field("", **{})
+    data_required: bool
+    segment_type: typing.Optional[str] = pydantic.Field("", **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TicketCommentSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_comment'
     
@@ -600,6 +629,15 @@ class Ticketcomment_Attach_File_To_CommentParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketcomment_Download_AttachmentParams(pydantic.BaseModel):
+    ticket_id: str
+    file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TicketUserMailsSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_user_mails'
     
@@ -607,7 +645,7 @@ class TicketUserMailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     employee_name: Mapped[typing.Optional[str]] = mapped_column("employee_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     email_id: Mapped[typing.Optional[str]] = mapped_column("email_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -620,7 +658,7 @@ class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
     employee_name: typing.Optional[str] = pydantic.Field("", **{})
     email_id: typing.Optional[str] = pydantic.Field("", **{})
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -640,7 +678,7 @@ class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[str] | None = None
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
     employee_name: typing.Optional[str] = pydantic.Field("", **{})
     email_id: typing.Optional[str] = pydantic.Field("", **{})
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -661,7 +699,7 @@ class TicketUserMailsGetResp(pydantic.BaseModel):
 
 class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    zone: str
+    zone: typing.List[str]
     category: str
 
     class Config:

@@ -338,6 +338,110 @@ async def get_info_tas_faulty(data):
     }
 
 
+async def tassealdateform_tas_seal_date_form_create(data, certificate_files=None):
+    """
+    Create a TAS Seal Date Form record and upload multiple certificates.
+    """
+    try:
+        data = data.dict()
+        certificate_list = []
+
+        # SAVE MULTIPLE CERTIFICATES         
+        if certificate_files and len(certificate_files) > 0:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "tas_seal_date_form"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            seal_date_val = data['actual_w_and_m_seal_date']
+            if isinstance(seal_date_val, datetime):
+                seal_date_val = seal_date_val.strftime("%Y%m%d_%H%M%S")
+
+            for i, certificate_file in enumerate(certificate_files):
+                object_name = f"{seal_date_val}_{data['sap_id']}_{data['bcu_number']}_{data['mfm_number']}_cert_{i+1}"
+
+                file_path = os.path.join(
+                    UPLOAD_DIR,
+                    certificate_file.filename
+                )
+
+                with open(file_path, "wb") as f:
+                    f.write(await certificate_file.read())
+
+                status_minio, minio_path = minio_connector.upload_to_minio(
+                    "TAS",
+                    "tas_seal_date_form_certificates",
+                    object_name,
+                    file_path
+                )
+
+                if not status_minio:
+                    return {
+                        "status": False,
+                        "message": f"MinIO upload failed for certificate {i+1}",
+                        "error": minio_path
+                    }
+
+                certificate_list.append(str(minio_path))
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+
+        if 'certificate' in data and isinstance(data['certificate'], list):
+            data['certificate'].extend(certificate_list)
+        else:
+            data['certificate'] = certificate_list
+
+        # INSERT THE RECORD
+        record = await hpcl_ceg_model.TasSealDateFormCreate(**data).create()
+        return {"status": True, "message": "TAS Seal Date Form record saved successfully", "data": record}
+
+    except Exception as e:
+        return {"status": False, "message": f"Failed to save TAS Seal Date Form record: {e}", "data": {}}
+
+
+async def tassealdateform_get_filtered_mfm_data(data):
+    data = data.dict()
+
+    sap_id = data.get("sap_id")
+    location_name = data.get("location_name")
+    device_type = data.get("device_type")    
+    query_params = urdhva_base.queryparams.QueryParams(
+        q=f"sap_id='{sap_id}' AND location_name='{location_name}'",
+        limit=0
+    )
+    resp = await hpcl_ceg_model.HostMFMFactor.get_all(query_params, resp_type="plain")
+
+    if not resp.get("data"):
+        return {"status": False, "message": "No Data found", "data": []}
+
+    result_list = []
+
+    for item in resp.get("data", []):
+        if device_type == "MFM":
+            value = item.get("mfm_number")
+        elif device_type == "BCU":
+            value = item.get("bcu_number")
+        else:
+            value = None
+
+        if value:
+            result_list.append({"id": value})
+
+    # Remove duplicates
+    unique_list = []
+    unique_values = set()
+
+    for d in result_list:
+        if d["id"] not in unique_values:
+            unique_values.add(d["id"])
+            unique_list.append(d)
+
+    return {
+        "status": True,"message": "Success","data": unique_list}                                                   
+
 def create_valid_vehicle_filter(column_name: str, min_length: int = 9) -> pl.Expr:
     """Validate vehicle/truck numbers: min length, contains A-Z and 0-9, alphanumeric only."""
     return pl.when(
@@ -582,6 +686,10 @@ async def tas_severity_summary(data):
                 SELECT
                     interlock_name,
                     equipment_name,
+                    device_name,
+                    sap_id,
+                    location_name,
+                    closed_at,
                     TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
                     CASE
                         WHEN {maintenance_condition} THEN 'maintenance'
@@ -624,6 +732,9 @@ async def tas_severity_summary(data):
                 SELECT
                     zone,
                     location_name,
+                    device_name,
+                    sap_id,
+                    closed_at,
                     CASE
                         WHEN {maintenance_condition} THEN 'maintenance'
                         WHEN {fault_condition} THEN 'fault'
@@ -1034,64 +1145,90 @@ async def tas_alerts_exception_report(data):
     )
 
     # ---- Bay reassignment
-    bay_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostBayReAssignment.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", [])
+    bay_raw = (await hpcl_ceg_model.HostBayReAssignment.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if bay_raw:
+        bay_df = (
+            pl.DataFrame(bay_raw)
+            .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+            .group_by(["truck_number", "created_date"])
+            .agg([
+                pl.col("load_number").drop_nulls().first(),
+                pl.col("assigned_bay").drop_nulls().first(),
+                pl.col("reassigned_bay").drop_nulls().first(),
+            ])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
-        .agg([
-            pl.col("load_number").drop_nulls().first(),
-            pl.col("assigned_bay").drop_nulls().first(),
-            pl.col("reassigned_bay").drop_nulls().first(),
-        ])
-    )
+    else:
+        bay_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "load_number": pl.Series([], dtype=pl.Utf8),
+            "assigned_bay": pl.Series([], dtype=pl.Utf8),
+            "reassigned_bay": pl.Series([], dtype=pl.Utf8),
+        })
 
     # ---- Local loading
-    local_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostLocalLoadedTts.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", [])
+    local_raw = (await hpcl_ceg_model.HostLocalLoadedTts.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if local_raw:
+        local_df = (
+            pl.DataFrame(local_raw)
+            .with_columns([
+                pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
+                pl.col("created_at").dt.date().alias("created_date")
+            ])
+            .with_columns([
+                create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
+            ])
+            .filter(pl.col("is_valid_truck") == True)
+            .group_by(["truck_number_clean", "created_date"])
+            .agg([
+                pl.col("bcu_number").drop_nulls().first(),
+                pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),
+                pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
+            ])
+            .rename({"truck_number_clean": "truck_number"})
         )
-        .with_columns([
-            pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
-            pl.col("created_at").dt.date().alias("created_date")
-        ])
-        .with_columns([
-            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
-        ])
-        .filter(pl.col("is_valid_truck") == True)
-        .group_by(["truck_number_clean", "created_date"])
-        .agg([
-            pl.col("bcu_number").drop_nulls().first(),
-            pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),  # SUM the loaded_qty
-            pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
-        ])
-        .rename({"truck_number_clean": "truck_number"})
-    )
+    else:
+        local_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "bcu_number": pl.Series([], dtype=pl.Utf8),
+            "loaded_qty": pl.Series([], dtype=pl.Float64),
+            "recipe_name": pl.Series([], dtype=pl.Utf8),
+        })
 
     # ---- Cancel TT
-    cancel_df = (
-        pl.DataFrame(
-            (await hpcl_ceg_model.HostCancelledTts.get_all(
-                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
-                resp_type="plain"
-            )).get("data", []),
-            infer_schema_length=None
+    cancel_raw = (await hpcl_ceg_model.HostCancelledTts.get_all(
+        urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+        resp_type="plain"
+    )).get("data", [])
+
+    if cancel_raw:
+        cancel_df = (
+            pl.DataFrame(cancel_raw, infer_schema_length=None)
+            .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+            .group_by(["truck_number", "created_date"])
+            .agg([
+                pl.col("load_number").drop_nulls().first(),
+                pl.col("required_qty").drop_nulls().first(),
+                pl.col("product_name").drop_nulls().first(),
+            ])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
-        .agg([
-            pl.col("load_number").drop_nulls().first(),
-            pl.col("required_qty").drop_nulls().first(),
-            pl.col("product_name").drop_nulls().first(),
-        ])
-    )
+    else:
+        cancel_df = pl.DataFrame({
+            "truck_number": pl.Series([], dtype=pl.Utf8),
+            "created_date": pl.Series([], dtype=pl.Date),
+            "load_number": pl.Series([], dtype=pl.Utf8),
+            "required_qty": pl.Series([], dtype=pl.Float64),
+            "product_name": pl.Series([], dtype=pl.Utf8),
+        })
     result = []
 
     for loc in df.select("location_name").unique().to_series():
