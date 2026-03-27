@@ -6,6 +6,7 @@ import pandas as pd
 import argparse
 import hpcl_ceg_model
 import performance_score_lpg as pslpg
+import performance_score_ro as psro
 import performance_score_sod as pssod
 import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.analytics.performance_score.performance_score_insights import generate_overall_insights
@@ -16,6 +17,8 @@ def get_performance_score_instance(bu):
         return pslpg.LPGPerformanceScore()
     elif bu == 'TAS':
         return pssod.SODPerformanceScore()
+    elif bu == 'RO':
+        return psro.ROPerformanceScore()
     return None
 
 import logging
@@ -136,8 +139,11 @@ WHERE bu = '{bu}'
             break
         skip += 1
 
-    # Getting PI Score class instance
+    # Getting PI Score class instance (implementations live under performance_score/ only)
     ins = get_performance_score_instance(bu)
+    if ins is None:
+        logger.warning("No performance score implementation for BU %s", bu)
+        return []
     await ins.initialize()
     va_data = await fetch_va_score(bu)
     fallback_scores = await validate_locations_from_history(
@@ -221,6 +227,14 @@ def get_default_location_ids(bu):
                 '1775', '1777', '1797', '1800', '1895', '3833', '1845', '1892', '1856', 
                 '1871', '1879', '1973', '1991', '1999', '1397', '1485', '1504', '1509', 
                 '1551', '1554', '1584', '1585', '1588', '3562']
+    elif bu == 'RO':
+        # Supply --location-ids for RO retail outlets; no baked-in defaults here.
+        # Present Performance Score was giving only for 35 COMCO sites
+        return ["41050855", "41009322", "41050256", "41050290", "41004350", "41039832", "41044897",
+                "41053055", "41003470", "41036056", "41050766", "41054479", "41028213", "41042622",
+                "41011136", "41039837", "41047019", "41015616", "41002358", "41084274", "41035734",
+                "41002360", "41055484", "41015250", "41015332", "41056842", "41044984", "41043471",
+                "41043271", "41002792", "41072929", "41009289", "41055419", "41069653"]
     return []
 
 
@@ -248,8 +262,8 @@ Examples:
         '--bu',
         type=str,
         nargs='+',
-        choices=['LPG', 'TAS'],
-        help='Business unit(s) to process. Can specify multiple: --bu LPG TAS. If not provided, processes all supported BUs.'
+        choices=['LPG', 'TAS', 'RO'],
+        help='Business unit(s) to process. Can specify multiple: --bu LPG TAS RO. If not provided, processes all supported BUs.'
     )
     
     parser.add_argument(
@@ -264,7 +278,7 @@ Examples:
     if args.bu:
         supported_bus = args.bu
     else:
-        supported_bus = ['LPG', 'TAS']
+        supported_bus = ['LPG', 'TAS', 'RO']
     
     # Parse location IDs if provided
     location_ids_dict = {}
