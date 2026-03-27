@@ -16,6 +16,7 @@ Enum Status str {
 
 Enum State str {
     Open='Open'
+    Reassigned='Reassigned'
     Escalated ='Escalated'
     UpdatedByInitiator='Updated By Initiator'
     ReturnedByOcc='Returned By Occ'
@@ -57,6 +58,7 @@ Model Merge_History internal {
 
 Enum TicketType str{
     Open = 'TicketRaised'
+    Reassigned = 'TicketReassigned'
     Escalated ='TicketEscalated'
     UpdatedByInitiator='TicketOnCompleted'
     ReturnedByOcc='TicketReOpen'
@@ -143,7 +145,8 @@ Model Ticketing {
     escalation_level optional str
     comment_history optional list CommentHistory
     employee_id optional list str
-
+    re_assingee_employee_id optional list str
+    re_assingee_mail optional list str
 
     Action=> get_ticket {
         ticket_id str
@@ -185,8 +188,6 @@ Model Ticketing {
         escalation_level optional str
         comment_history optional list CommentHistory
         employee_id optional list str
-
-
     }
 
     Action=> close_ticket {
@@ -226,9 +227,10 @@ Model Ticketing {
         assignee_mail optional list str
         reporter optional str
         comment_history optional list CommentHistory
-
-       
+        re_assingee_employee_id optional list str
+        re_assingee_mail optional list str     
     }
+
     Action=> merge_ticket {
         ticket_id  str
         merge_ticket_id optional list str

@@ -74,6 +74,7 @@ MAIL_TRIGGER_STATES = {
 
 TEMPLATE_MAP = {
     State.Open.value: "create_ticket.html",
+    State.Reassigned.value: "reassigned_ticket.html",
     State.Escalated.value: "escalated_ticket.html",
     State.UpdatedByInitiator.value: "updated_ticket.html",
     State.ReturnedByOcc.value: "returned_ticket.html",
@@ -238,6 +239,12 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         else:
             to_emails = zonal_functionary_emails
             cc_emails = set.union(zonal_head_emails, hqo_emails)
+    
+    elif state_enum == State.Reassigned:
+        re_assignee_mails: set[str] = {m.strip() for m in (ticket_data.get("re_assingee_mail") or []) if (m or "").strip()}
+        if re_assignee_mails:
+            to_emails = re_assignee_mails
+            cc_emails = set.union(location_emails,zonal_functionary_emails,zonal_head_emails,hqo_emails)
 
     elif state_enum == State.Escalated:
         if escalation_level == "L1":
@@ -311,7 +318,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         subject=subject,
         body=alert_manager.read_template(template_path, data=template_data),
         html_content=True,
-        force_send=True,
+        force_send=False,
     )
 
     print(
@@ -365,6 +372,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     employee_id = data.employee_id
 
     tdata = data.model_dump()
+    for field in ["re_assingee_employee_id", "re_assingee_mail"]:
+        if tdata.get(field) == "" or tdata.get(field) is None:
+            tdata[field] = []
     frontend_reporter = tdata.get("reporter")
     reporter_value = frontend_reporter if frontend_reporter else user_name
     auto_close_flag_raw = tdata.get("auto_ticket_close", "")
@@ -918,8 +928,10 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # Rename alert_type → interlock_name safely
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = clean_list(data_dict.pop("alert_type"))
-        # ----------------------------------------------------
-
+        
+        re_assingee_employee_id: list[str] = data_dict.get("re_assingee_employee_id") or []
+        re_assingee_mail:        list[str] = data_dict.get("re_assingee_mail")        or []
+     
         ticket_id = data.update_id
 
         params = urdhva_base.queryparams.QueryParams()
@@ -987,6 +999,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         STATE_UI_TO_ENUM = {
             "Open": "Open",
             "Escalated": "Escalated",
+            "Reassigned": "Reassigned",
             "Updated By Initiator": "UpdatedByInitiator",
             "Returned By Occ": "ReturnedByOcc",
             "Reviewed By Occ": "ReviewedByOcc"
@@ -1183,6 +1196,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                     "start_date": existing_ticket.get("start_date"),
                     "zone": existing_ticket.get("zone"),
                     "ticket_end_date": existing_ticket.get("ticket_end_date"),
+                    "re_assingee_mail":  re_assingee_mail,
                 }
                 await send_ticket_mail(mail_payload)
             except Exception as e:

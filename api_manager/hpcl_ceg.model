@@ -118,6 +118,7 @@ Enum AlertActionType str {
     ESDFailure='ESDFailure'
     Maintenance='Maintenance'
     TicketRaised='TicketRaised'
+    TicketReassigned='TicketReassigned'
     TicketInProgress='TicketInProgress'
     TicketCancelled='TicketCancelled'
     TicketResolved='TicketResolved'

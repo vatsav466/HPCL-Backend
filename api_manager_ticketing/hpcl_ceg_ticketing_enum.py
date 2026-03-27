@@ -31,6 +31,7 @@ class Status(str, enum.Enum):
 
 class State(str, enum.Enum):
     Open = 'Open'
+    Reassigned = 'Reassigned'
     Escalated = 'Escalated'
     UpdatedByInitiator = 'Updated By Initiator'
     ReturnedByOcc = 'Returned By Occ'
@@ -66,6 +67,7 @@ class Assignee(str, enum.Enum):
 
 class TicketType(str, enum.Enum):
     Open = 'TicketRaised'
+    Reassigned = 'TicketReassigned'
     Escalated = 'TicketEscalated'
     UpdatedByInitiator = 'TicketOnCompleted'
     ReturnedByOcc = 'TicketReOpen'
