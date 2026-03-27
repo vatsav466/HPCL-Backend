@@ -338,7 +338,7 @@ async def get_sales_tmt(date_filter: str):
 
     elif date_filter == 'month':
         date_condition = f"""AND "DAY_ID" >= TO_CHAR(date_trunc('month', CURRENT_DATE), 'YYYYMMDD')::bigint
-            AND "DAY_ID" < TO_CHAR(date_trunc('month', CURRENT_DATE) + INTERVAL '1 month', 'YYYYMMDD')::bigint
+            AND "DAY_ID" < TO_CHAR(CURRENT_DATE, 'YYYYMMDD')::bigint
         """
     
     sales_tmt_query = f"""SELECT "Zone_Name", "Region_Name", "SalesArea_Name",
@@ -355,7 +355,8 @@ async def get_sales_tmt(date_filter: str):
 
     FROM "MOM_DAY_LEVEL_DATA"
     WHERE
-        "SBU_Name" = 'Retail'
+        "SBU_Name" != '0'
+        AND "SBU_Name" = 'Retail'
         AND "SBU_Name" NOT IN ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')
         {date_condition}
     GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
