@@ -189,6 +189,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -216,6 +219,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -252,6 +258,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -954,6 +963,10 @@
         {
             "name": "get_retail_outlet_stockouts",
             "displayName": "get_retail_outlet_stockouts"
+        },
+        {
+            "name": "get_loss_of_sales_volume",
+            "displayName": "get_loss_of_sales_volume"
         },
         {
             "name": "stock_availability",
