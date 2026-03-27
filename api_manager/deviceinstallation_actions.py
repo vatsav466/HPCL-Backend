@@ -265,14 +265,10 @@ async def deviceinstallation_action_device_vts(payload :dict):
     """
     try:
         id = payload.get("id")
-        print('iddddddd----->', id)
         status = payload.get("status")
-        print('status', status)
         remarks = payload.get("remarks")
-        print('remarks', remarks)
         
         if not status or not remarks:
-            print('entttttttttttt')
             return {"status": False,"message": "status and remarks are required", "data": {}}
 
         params = urdhva_base.queryparams.QueryParams()
@@ -359,9 +355,7 @@ async def deviceinstallation_action_decommissioning(payload: dict):
         device_id = int(payload.get("id"))
 
         status_decommissioning = payload.get("status_decommissioning")
-        print('status_decommissioning----->',status_decommissioning)
         reason_for_cancel = payload.get("reason_for_cancel")
-        print('reason_for_cancel---------->',reason_for_cancel)
 
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{device_id}'"
@@ -383,7 +377,6 @@ async def deviceinstallation_action_decommissioning(payload: dict):
 
         # CREATE NEW RECORD
         if reason_for_cancel and not status_decommissioning:
-            print('entered block 1---------------->')
 
             # Copy data from existing record
             data_dict = dict(row)
@@ -414,10 +407,6 @@ async def deviceinstallation_action_decommissioning(payload: dict):
 
         else:
             # status_decommissioning and status_decommissioning.lower() == 'accepted':
-            #  status_decommissioning and not reason_for_cancel
-            
-            print('entered block 2------------------------>')
-
             params = urdhva_base.queryparams.QueryParams()
             params.q = f"id='{device_id}'"
             params.limit = 1
@@ -541,9 +530,7 @@ async def deviceinstallation_action_decommissioning_rejected(payload: dict):
         device_id = int(payload.get("id"))
 
         status_decommissioning = payload.get("status_decommissioning")
-        print('status_decommissioning',status_decommissioning)
         reason_for_cancel = payload.get("reason_for_cancel")
-        print('reason_for_cancel',reason_for_cancel)
 
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{device_id}'"
@@ -552,7 +539,6 @@ async def deviceinstallation_action_decommissioning_rejected(payload: dict):
 
         existing = await DeviceInstallation.get_all(params, resp_type="plain")
         rows = existing.get("data", [])
-        print('rowss',rows)
 
         if not rows:
             return {
