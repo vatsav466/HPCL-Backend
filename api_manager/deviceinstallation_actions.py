@@ -421,7 +421,7 @@ async def deviceinstallation_action_decommissioning(payload: dict):
             # Store original status before conversion
             # original_status = status_decommissioning
             status_decommissioning = "Approved" if status_decommissioning == "Accepted" else "Rejected"
-            print('status_decommissioning------',status_decommissioning)
+           
             
             data_dict = dict(row)
             data_dict.pop("id", None)
@@ -455,8 +455,7 @@ async def deviceinstallation_action_decommissioning(payload: dict):
 
                 comm_success, comm_response = await call_decommissioning_api(de_comm_payload)
 
-                # print('comm_success->',comm_success)
-                # print('comm_response->',comm_response)
+    
 
                 # Extract status messages from successful response
                 status_messages = comm_response.get("statusMessages", "")
@@ -466,7 +465,6 @@ async def deviceinstallation_action_decommissioning(payload: dict):
                 final_status = comm_response.get("status", "")
                 status_code = comm_response.get("statusCode")
 
-                # print(f'[ACTION] Status messages: {status_messages}')
                        
                 if not comm_success or  status_code == 1:
                     await DeviceInstallation(**{
