@@ -314,7 +314,6 @@ Model Users {
 
     Config=> {
         crud_operations='read'
-        search_fields='employee_id'
     }
 
 }
