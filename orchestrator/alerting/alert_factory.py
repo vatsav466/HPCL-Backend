@@ -275,6 +275,16 @@ class AlertFactory:
                                                "auto_unblock": {"value": alert_data.get('auto_unblock', ''), "type": "String"},
                                                "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},
                                                "checkTicketClose":{"value": alert_data.get('checkTicketClose', False), "type": "Boolean"}})
+                 
+            if alert_data.get("interlock_name") == 'Truck Contract Validity Status':
+                payload['variables'].update({"contract_valid_upto": {"value": alert_data.get('contract_valid_upto', ''), "type": "String"},
+                                             "bu": {"value": alert_data.get('bu', ''), "type": "String"},
+                                             "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},
+                                             "device_installation_id":{"value": alert_data.get('device_installation_id', ''), "type": "String"},
+                                             "before30days":{"value": alert_data.get('before30days', False), "type": "Boolean"},
+                                             "waitTime":{"value": alert_data.get('waitTime', ''), "type": "String"},
+                                             "days_remaining":{"value": alert_data.get('days_remaining', ''), "type": "String"}
+                                             })
             # Create Interlock
             # Start workflow after creating the interlock
             if interlock_name:

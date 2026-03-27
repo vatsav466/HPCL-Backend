@@ -10571,11 +10571,11 @@ class Noticesvts_Upload_NoticeParams(pydantic.BaseModel):
 class DeviceInstallationSchema(UrdhvaPostgresBase):
     __tablename__ = 'device_installation'
     
-    sap_tt_no: Mapped[str] = mapped_column("sap_tt_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_tt_no: Mapped[typing.Optional[str]] = mapped_column("sap_tt_no", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     tt_chassis_no: Mapped[typing.Optional[str]] = mapped_column("tt_chassis_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_engine_no: Mapped[typing.Optional[str]] = mapped_column("tt_engine_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     select_business: Mapped[typing.Optional[str]] = mapped_column("select_business", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location: Mapped[typing.Optional[str]] = mapped_column("location", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location: Mapped[typing.Optional[str]] = mapped_column("location", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     transporter: Mapped[typing.Optional[str]] = mapped_column("transporter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device: Mapped[typing.Optional[str]] = mapped_column("device", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -10584,26 +10584,29 @@ class DeviceInstallationSchema(UrdhvaPostgresBase):
     device_installation_approved_by: Mapped[typing.Optional[str]] = mapped_column("device_installation_approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     contract_valid_upto: Mapped[typing.Optional[str]] = mapped_column("contract_valid_upto", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     reason_for_cancel: Mapped[typing.Optional[str]] = mapped_column("reason_for_cancel", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    status_decommissioning: Mapped[typing.Optional[str]] = mapped_column("status_decommissioning", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status_decommissioning: Mapped[typing.Optional[str]] = mapped_column("status_decommissioning", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     commissioning_status: Mapped[typing.Optional[str]] = mapped_column("commissioning_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     commissioning_status_code: Mapped[typing.Optional[str]] = mapped_column("commissioning_status_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     commissioning_responses: Mapped[typing.Optional[str]] = mapped_column("commissioning_responses", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     commissioned_at: Mapped[typing.Optional[str]] = mapped_column("commissioned_at", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     commissioning_responses_2: Mapped[typing.Optional[str]] = mapped_column("commissioning_responses_2", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     de_commissioning_responses: Mapped[typing.Optional[str]] = mapped_column("de_commissioning_responses", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    aot_status: Mapped[typing.Optional[str]] = mapped_column("aot_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    aot_status: Mapped[typing.Optional[str]] = mapped_column("aot_status", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     aot_sap_tt_no: Mapped[typing.Optional[str]] = mapped_column("aot_sap_tt_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     aot_request_type: Mapped[typing.Optional[str]] = mapped_column("aot_request_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    expiry_alert_created: Mapped[typing.Optional[bool]] = mapped_column("expiry_alert_created", Boolean, index=True, nullable=True, default=False, primary_key=False, unique=False)
+    tibco_expiry_date: Mapped[typing.Optional[str]] = mapped_column("tibco_expiry_date", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone_code: Mapped[typing.Optional[str]] = mapped_column("zone_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'device_installation'
     
-    sap_tt_no: str
+    sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     tt_chassis_no: typing.Optional[str] = pydantic.Field("", **{})
     tt_engine_no: typing.Optional[str] = pydantic.Field("", **{})
     select_business: typing.Optional[str] = pydantic.Field("", **{})
@@ -10630,6 +10633,9 @@ class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
     aot_status: typing.Optional[str] = pydantic.Field("", **{})
     aot_sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     aot_request_type: typing.Optional[str] = pydantic.Field("", **{})
+    expiry_alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    tibco_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
+    zone_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -10637,13 +10643,14 @@ class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = DeviceInstallationSchema
         upsert_keys = []
-        access_key_mapping = ['sap_tt_no']
+        search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
+        access_key_mapping = ['select_business:bu', 'sap_id']
 
 
 class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'device_installation'
     
-    sap_tt_no: typing.Optional[str] | None = None
+    sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     tt_chassis_no: typing.Optional[str] = pydantic.Field("", **{})
     tt_engine_no: typing.Optional[str] = pydantic.Field("", **{})
     select_business: typing.Optional[str] = pydantic.Field("", **{})
@@ -10670,6 +10677,9 @@ class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
     aot_status: typing.Optional[str] = pydantic.Field("", **{})
     aot_sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     aot_request_type: typing.Optional[str] = pydantic.Field("", **{})
+    expiry_alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    tibco_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
+    zone_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -10677,7 +10687,8 @@ class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = DeviceInstallationSchema
         upsert_keys = []
-        access_key_mapping = ['sap_tt_no']
+        search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
+        access_key_mapping = ['select_business:bu', 'sap_id']
 
 
 class DeviceInstallationGetResp(pydantic.BaseModel):
@@ -10712,6 +10723,7 @@ class Deviceinstallation_Validate_Aot_DetailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter: typing.Optional[str] = pydantic.Field("", **{})
     contract_valid_upto: typing.Optional[str] = pydantic.Field("", **{})
+    select_business: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -10727,6 +10739,14 @@ class Deviceinstallation_Action_Device_VtsParams(pydantic.BaseModel):
 
 
 class Deviceinstallation_Action_DecommissioningParams(pydantic.BaseModel):
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Deviceinstallation_Action_Decommissioning_RejectedParams(pydantic.BaseModel):
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
