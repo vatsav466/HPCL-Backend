@@ -111,7 +111,7 @@ class Settings(pydantic_settings.BaseSettings):
     
     commisioning_url: str =""
     decommisioning_url: str =""
-    
+    aot_status_url: str=""
 
 
 
