@@ -75,3 +75,10 @@ async def nozzlesales_nozzle_sales_analysis(data: Nozzlesales_Nozzle_Sales_Analy
 @router.post('/nozzle_sales_comparison', tags=['NozzleSales'])
 async def nozzlesales_nozzle_sales_comparison(data: Nozzlesales_Nozzle_Sales_ComparisonParams):
     return await field_force_cris.nozzle_sales_comparison(**_params(data))
+
+
+# Action nozzle_sales_tmt
+@router.post('/nozzle_sales_tmt', tags=['NozzleSales'])
+async def nozzlesales_nozzle_sales_tmt(data: Nozzlesales_Nozzle_Sales_TmtParams):
+    return await field_force_cris.nozzle_sales_tmt(**_params(data))
+

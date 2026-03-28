@@ -423,6 +423,7 @@ def _nozzle_sales_build_filter_conditions(filters):
     conditions = []
     # Map filter key to (table_alias, column_name) for SQL
     key_to_col = {
+        "region": ("ns", "region"),
         "sap_id": ("ns", "sap_id"),
         "zone": ("lm", "zone"),
         "state": ("lm", "state"),
@@ -466,6 +467,7 @@ async def nozzle_sales(
     hsd_products: tuple = None,
     date_spec=None,
     filters=None,
+    level_filter=None,
     include_expected_sites: bool = True,
     reference_date=None,
 ):
@@ -522,6 +524,7 @@ async def nozzle_sales(
 
     print("Final expression ---->\n", sales_volume)
 
+    print("filters before build_filter_condition---->\n",filters)
     filters = filters if filters is not None else []
     if all_products:
         filters.append({
@@ -582,46 +585,140 @@ async def nozzle_sales(
     # Remove transaction_date filter to enable full monthly aggregation (avoid single-day restriction)
     # "monthly" is used as a control flag in segregation (not a column) to indicate monthly-level aggregation
     # This block handles monthly nozzle sales grouped by month, zone, and location_name 
+    # elif "monthly" in segregation:
+    #     if "zone" in segregation or "location_name" in segregation or "monthly" in segregation:
+    #         new_list = []
+    #         where_clause_monthly = ""
+    #         for cond in filter_conditions:
+    #             if "ns.transaction_date" not in cond.lower():
+    #                 new_list.append(cond)
+    #         print("new list ----> \n", new_list)
+    #         filter_conditions_monthly = new_list
+    #         print("filter conditions in monthly zone location name ----> \n", filter_conditions)
+    #         if filter_conditions_monthly:
+    #             where_clause_monthly = "WHERE " + "AND ".join(filter_conditions_monthly)
+
+    #         print("where clause in monthly loop ---->\n", where_clause_monthly)
+
+    #         select_columns = ["DATE_TRUNC('month', ns.transaction_date)::DATE AS month"]
+
+    #         select_columns.extend([
+    #             "COALESCE(ns.zone, lm.zone) AS zone",
+    #             "ns.location_name AS location_name"
+    #         ])
+
+    #         group_by_parts = [
+    #             "DATE_TRUNC('month', ns.transaction_date)::DATE",
+    #             "COALESCE(ns.zone, lm.zone)",
+    #             "location_name"
+    #         ]
+    #         select_sql = ",\n        ".join(select_columns)
+    #         group_by_sql = ", ".join(group_by_parts)
+    #         from_join = "FROM public.nozzle_sales ns JOIN public.location_master lm ON ns.sap_id = lm.sap_id"
+    #         nozzle_sales_query = f"""SELECT {select_sql},
+    #             COUNT(DISTINCT ns.site_id) AS connected_sites,
+    #             {sales_volume}
+    #             {from_join}
+    #             {where_clause_monthly}
+    #             GROUP BY {group_by_sql}
+    #             ORDER BY {group_by_sql}
+    #         """
+    #         print("*"*20)
+    #         print("nozzle sales query monthly ---->\n", nozzle_sales_query)
+
     elif "monthly" in segregation:
-        if "zone" in segregation or "location_name" in segregation or "monthly" in segregation:
-            new_list = []
-            where_clause_monthly = ""
-            for cond in filter_conditions:
-                if "ns.transaction_date" not in cond.lower():
-                    new_list.append(cond)
-            print("new list ----> \n", new_list)
-            filter_conditions_monthly = new_list
-            print("filter conditions in monthly zone location name ----> \n", filter_conditions)
-            if filter_conditions_monthly:
-                where_clause_monthly = "WHERE " + "AND ".join(filter_conditions_monthly)
 
-            print("where clause in monthly loop ---->\n", where_clause_monthly)
+        from_join = "FROM public.nozzle_sales ns JOIN public.location_master lm ON ns.sap_id = lm.sap_id"
 
-            select_columns = ["DATE_TRUNC('month', ns.transaction_date)::DATE AS month"]
+        has_filters = any(f.get("key") for f in (filters or []))
+        level = (level_filter or {}).get("level", "").lower()
 
-            select_columns.extend([
-                "COALESCE(ns.zone, lm.zone) AS zone",
-                "ns.location_name AS location_name"
-            ])
 
-            group_by_parts = [
-                "DATE_TRUNC('month', ns.transaction_date)::DATE",
-                "COALESCE(ns.zone, lm.zone)",
-                "location_name"
+        select_columns = [
+                "DATE_TRUNC('month', ns.transaction_date)::DATE AS month",
+                "COALESCE(ns.zone, lm.zone) AS zone"
             ]
+
+        group_by_parts = [
+                "DATE_TRUNC('month', ns.transaction_date)::DATE",
+                "COALESCE(ns.zone, lm.zone)"
+            ]
+        #default query 
+        if not has_filters and not level:
             select_sql = ",\n        ".join(select_columns)
             group_by_sql = ", ".join(group_by_parts)
-            from_join = "FROM public.nozzle_sales ns JOIN public.location_master lm ON ns.sap_id = lm.sap_id"
-            nozzle_sales_query = f"""SELECT {select_sql},
-                COUNT(DISTINCT ns.site_id) AS connected_sites,
-                {sales_volume}
+            nozzle_sales_query = f"""
+                SELECT
+                    {select_sql},
+                    COUNT(DISTINCT ns.site_id) AS connected_sites,
+                    {sales_volume}
+                {from_join}
+                GROUP BY {group_by_sql}
+                ORDER BY {group_by_sql}
+            """
+            print("Default monthly zone query ---->\n", nozzle_sales_query)
+
+        else:
+
+            filter_conditions = [
+                cond for cond in filter_conditions
+                if "ns.transaction_date" not in cond.lower()
+            ]
+            filter_conditions_monthly = []
+
+            for f, cond in zip(filters or [], filter_conditions):
+                key = f.get("key", "").lower()
+
+                if level == "zone" and key == "zone":
+                    filter_conditions_monthly.append(cond)
+
+                elif level == "region" and key in ("zone", "region"):
+                    filter_conditions_monthly.append(cond)
+
+                elif level == "sales_area" and key in ("zone", "region", "sales_area"):
+                    filter_conditions_monthly.append(cond)
+
+            where_clause_monthly = ""
+            if filter_conditions_monthly:
+                where_clause_monthly = "WHERE " + " AND ".join(filter_conditions_monthly)
+
+            print("where clause ---->\n", where_clause_monthly)
+
+            if level == "zone":
+                select_columns.append("ns.region AS region")
+                group_by_parts.append("ns.region")
+
+            elif level == "region":
+                select_columns.append("ns.region AS region")
+                select_columns.append("ns.sales_area AS sales_area")
+
+                group_by_parts.append("ns.region")
+                group_by_parts.append("ns.sales_area")
+
+            elif level == "sales_area":
+                select_columns.append("ns.region AS region")
+                select_columns.append("ns.sales_area AS sales_area")
+                select_columns.append("ns.location_name AS location_name")
+
+                group_by_parts.append("ns.region")
+                group_by_parts.append("ns.sales_area")
+                group_by_parts.append("ns.location_name")
+
+            select_sql = ",\n        ".join(select_columns)
+            group_by_sql = ", ".join(group_by_parts)
+
+            nozzle_sales_query = f"""
+                SELECT
+                    {select_sql},
+                    COUNT(DISTINCT ns.site_id) AS connected_sites,
+                    {sales_volume}
                 {from_join}
                 {where_clause_monthly}
                 GROUP BY {group_by_sql}
                 ORDER BY {group_by_sql}
             """
-            print("*"*20)
-            print("nozzle sales query monthly ---->\n", nozzle_sales_query)
+
+            print("Filtered monthly query ---->\n", nozzle_sales_query)
 
     else:
         select_columns = ["ns.transaction_date::DATE AS transaction_date"]
@@ -719,7 +816,7 @@ async def nozzle_sales(
 
 
 
-async def nozzle_sales_tmt(filters= None, cross_filters=None, drill_state=None, segregation=None, ms_products=None, hsd_products=None, action: str= ""):
+async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None, segregation=None, ms_products=None, hsd_products=None, action: str= ""):
     """
     this function used for nozzle sales tmt where user gives the filters like zone , product and date range
     and based on that the data will be fetched from the database and return the response to the user 
@@ -749,14 +846,17 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, drill_state=None, 
 
     print("date_range from filters ---->", date_range)
     print("segregation from filters ---->", segregation)
+    # combined_filters = cross_filters + raw_filters
+    combined_filters = (cross_filters or []) + (raw_filters or [])
     if action == "nozzle_daily_sales_tmt":
         result = await nozzle_sales(
             segregation=segregation,
-            # filters=cross_filters and raw_filters,
-            filters=cross_filters,
+            filters=combined_filters,
+            # filters=cross_filters,
             date_spec=date_range,
             ms_products=ms_products,
-            hsd_products=hsd_products
+            hsd_products=hsd_products,
+            level_filter=level_filter
         )
         return result
 
@@ -769,46 +869,63 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, drill_state=None, 
         seg = ["monthly"]
         if segregation:
             seg.extend(segregation)
-        
+
         print("segregation ---->\n", seg)
 
         df = await nozzle_sales(
             # segregation=["monthly", "zone", "location_name"],
             segregation= seg,
-            filters=cross_filters
+            filters= combined_filters,
+            ms_products= ms_products,
+            hsd_products= hsd_products,
+            level_filter= level_filter
         )
         
         df = pl.DataFrame(df["daily_zone_product_nozzle_sales"])
 
-        overall = df.group_by("month").agg([
-            pl.sum("sales_volume").alias("sales_volume"),
-            pl.sum("connected_sites").alias("connected_sites")
-        ]).sort("month")
-        print("overall monthly sales ---->\n", overall)
+        # overall = df.group_by("month").agg([
+        #     pl.sum("sales_volume").alias("sales_volume"),
+        #     pl.sum("connected_sites").alias("connected_sites")
+        # ]).sort("month")
+        # print("overall monthly sales ---->\n", overall)
 
-        zone_wise = None
-        # if segregation == "zone":
-        if "zone" in segregation:
-            zone_wise = df.group_by(["month","zone"]).agg([
+        overall = None
+        zone = None
+        region = None
+        sales_area = None
+        location = None
+        level = level_filter.get("level")
+
+        if not raw_filters:
+            zone = df.select(["month", "zone", "sales_volume"])
+            print("zone level ---->\n", zone)
+            overall = df.group_by("month").agg([
                 pl.sum("sales_volume").alias("sales_volume"),
                 pl.sum("connected_sites").alias("connected_sites")
-            ]).sort(["month","zone"])
-            print("zone wise monthly sales ---->\n", zone_wise)
+            ]).sort("month")
+            print("overall monthly sales ---->\n", overall)
 
-        location_wise = None
-        if "location_name" in segregation:
-            location_wise = df.group_by(["month","zone","location_name"]).agg([
-                pl.sum("sales_volume").alias("sales_volume"),
-                pl.sum("connected_sites").alias("connected_sites")
-            ]).sort(["month","zone","location_name"])
-            print("location wise monthly sales ---->\n", location_wise)
+        if "zone" == level:
+            region = df.select(["month", "region", "sales_volume"])
+            print("region level ----->\n", region)
+
+        if "region" == level:
+            sales_area = df.select(["month", "sales_area", "sales_volume"])
+            print("region level ----->\n", sales_area)
+
+        if "sales_area" == level:
+            location = df.select(["month", "location_name", "sales_volume"])
+            print("region level ----->\n", location)
+
 
 
         return {
-            "overall": overall.to_dicts(),
-            "monthly": overall.to_dicts(),
-            "zone_wise": zone_wise.to_dicts()if zone_wise is not None else [],
-            "location_wise": location_wise.to_dicts() if location_wise is not None else []
+            "overall": overall.to_dicts() if overall is not None else [],
+            "monthly": overall.to_dicts() if overall is not None else [],
+            "zone": zone.to_dicts() if zone is not None else [],
+            "region": region.to_dicts() if region is not None else [],
+            "sales_area": sales_area.to_dicts() if sales_area is not None else [],
+            "location": location.to_dicts() if location is not None else []
         }
     
     return {}

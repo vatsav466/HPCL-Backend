@@ -486,6 +486,9 @@
                 },
                 {
                     "name": "nozzle_sales_comparison"
+                },
+                {
+                    "name": "nozzle_sales_tmt"
                 }
             ]
         },
@@ -585,6 +588,9 @@
                 },
                 {
                     "name": "nozzle_sales_comparison"
+                },
+                {
+                    "name": "nozzle_sales_tmt"
                 }
             ]
         },
@@ -1039,6 +1045,10 @@
         {
             "name": "nozzle_sales_comparison",
             "displayName": "nozzle_sales_comparison"
+        },
+        {
+            "name": "nozzle_sales_tmt",
+            "displayName": "nozzle_sales_tmt"
         },
         {
             "name": "get_sales_by_product",

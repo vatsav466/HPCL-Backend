@@ -11011,11 +11011,11 @@ class NozzleSalesSchema(UrdhvaPostgresBase):
     
     transaction_date: Mapped[datetime.datetime] = mapped_column("transaction_date", DateTime(timezone=True), index=True, nullable=False, default=None, primary_key=False, unique=False)
     site_id: Mapped[str] = mapped_column("site_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     product_grp: Mapped[str] = mapped_column("product_grp", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sales_volume: Mapped[float] = mapped_column("sales_volume", Numeric, index=True, nullable=False, default=None, primary_key=False, unique=False)
 
