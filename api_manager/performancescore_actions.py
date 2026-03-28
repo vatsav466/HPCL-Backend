@@ -50,7 +50,7 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
             clause = f" AND {resp}" if resp else ""
 
         # Only support TAS and LPG
-        if data.bu not in ["TAS", "LPG"]:
+        if data.bu not in ["TAS", "LPG", "RO"]:
             return {"status": "error", "message": f"BU '{data.bu}' not supported for download."}
 
         location_str = f" AND sap_id='{data.sap_id}'" if getattr(data, "sap_id", None) else ""
