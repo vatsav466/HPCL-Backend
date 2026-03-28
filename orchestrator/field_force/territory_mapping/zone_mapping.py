@@ -48,3 +48,18 @@ zone_mapping = {
         "CRIS": "WEST"
     }
 }
+
+zone_map = {
+    "CENTRAL ZONE": "CEN",
+    "EAST CENTRAL ZONE": "ECZ",
+    "EAST": "EZ",
+    "NORTH CENTRAL RETAIL": "NCZ",
+    "NORTH FRONTIER ZONE": "NFZ",
+    "NORTH WEST FRONTIER": "NWF",
+    "NORTH WEST RETAIL ZO": "NWZ",
+    "NORTH": "NZ",
+    "SOUTH CENTRAL RETAIL": "SCZ",
+    "SOUTH WESTERN ZONE": "SWZ",
+    "SOUTH": "SZ",
+    "WEST": "WZ"
+}

@@ -735,7 +735,7 @@ async def get_loss_of_sales_volume(data):
             start_date = (today - timedelta(days=180)).strftime("%Y-%m-%d")
         
         query = f"""
-                    select * from "HPCL_HOS".daily_product_dry_out where
+                    select rosapcode,zonal_name,regional_name,salesarea_name,stock_date,loss_of_sale,site_name from "HPCL_HOS".daily_product_dry_out where
                     stock_date::date between '{start_date}' and '{end_date}'
                     {final_where_clause}
                 """
@@ -754,6 +754,15 @@ async def get_loss_of_sales_volume(data):
                 "message": "success",
                 "data": []
             }
+        
+        zone_map = zone_mapping.zone_map
+
+        loss_df = loss_df.with_columns(
+            pl.col("zonal_name")
+            .map_elements(lambda x: zone_map.get(x, x))
+            .alias("zonal_name")
+        )
+        
 
         if data.action == "daily_loss_of_sale":
             # Convert stock_date to date only (remove time if exists)
@@ -814,7 +823,7 @@ async def get_loss_of_sales_volume(data):
                 "zone": ("zonal_name", "zone", "zone_data"),
                 "region": ("regional_name", "region", "region_data"),
                 "sales_area": ("salesarea_name", "sales_area", "sales_area_data"),
-                "sap_id": ("rosapcode", "sap_id", "sap_id_data")
+                "location": ("site_name", "location_name", "location_data")
             }
 
             if data.drill_state in drill_map:
