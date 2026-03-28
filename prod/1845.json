@@ -10687,7 +10687,7 @@
                 },
                 {
                     "sensor_name": "ESD MAINTENANCE STATUS",
-                    "sensor_tag": "ESD.ESD-12.MAINTENANCE_STATUS",
+                    "sensor_tag": "ESD.ESD-13.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {

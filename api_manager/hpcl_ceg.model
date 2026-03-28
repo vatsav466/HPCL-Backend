@@ -4062,11 +4062,11 @@ Model HyperLocal {
 Model NozzleSales {
     transaction_date unique_field index_field datetime
     site_id str
-    sap_id unique_field str
-    location_name optional str
-    zone optional str
-    region optional str
-    sales_area optional str
+    sap_id unique_field index_field str
+    location_name optional index_field str
+    zone optional index_field str
+    region optional index_field str
+    sales_area optional index_field str
     product_grp unique_field index_field str
     sales_volume index_field float
 
