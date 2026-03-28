@@ -7,7 +7,7 @@ import field_force_model
 from typing import List, Optional
 import hpcl_ceg_model
 import polars as pl
-from datetime import datetime
+from datetime import datetime, timedelta
 import traceback
 import charts_actions
 import dashboard_studio_model
@@ -607,7 +607,7 @@ async def process_drill_data(loss_df, group_col, rename_col, response_key):
     # Group and aggregate
     result_df = (
         loss_df
-        .groupby(["month_date", group_col])
+        .group_by(["month_date", group_col])
         .agg(
             pl.col("loss_of_sale").sum().alias("loss_of_sale")
         )
@@ -721,6 +721,18 @@ async def get_loss_of_sales_volume(data):
 
         if all_conditions:
             final_where_clause = " AND " + " AND ".join(all_conditions)
+
+        # -------------------------------
+        # DEFAULT DATE (LAST 6 MONTHS)
+        # -------------------------------
+        if not start_date or not end_date:
+            today = datetime.now().date()
+            
+            # End date = today
+            end_date = today.strftime("%Y-%m-%d")
+            
+            # Start date = 6 months ago (approx 180 days)
+            start_date = (today - timedelta(days=180)).strftime("%Y-%m-%d")
         
         query = f"""
                     select * from "HPCL_HOS".daily_product_dry_out where
@@ -734,7 +746,6 @@ async def get_loss_of_sales_volume(data):
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         loss_resp = await function(query=query)
-        loss_resp = loss_resp.get("data", [])
         loss_df = pl.DataFrame(loss_resp)
 
         if loss_df.is_empty():
@@ -752,7 +763,7 @@ async def get_loss_of_sales_volume(data):
             # Group by date and sum loss_of_sale
             result_df = (
                 loss_df
-                .groupby("stock_date")
+                .group_by("stock_date")
                 .agg(
                     pl.col("loss_of_sale").sum().alias("loss_of_sale")
                 )
@@ -783,7 +794,7 @@ async def get_loss_of_sales_volume(data):
                 # Group by month and sum
                 result_df = (
                     loss_df
-                    .groupby("month_date")
+                    .group_by("month_date")
                     .agg(
                         pl.col("loss_of_sale").sum().alias("loss_of_sale")
                     )
