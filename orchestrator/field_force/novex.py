@@ -9,6 +9,10 @@ import hpcl_ceg_model
 import polars as pl
 from datetime import datetime
 import traceback
+import charts_actions
+import dashboard_studio_model
+import orchestrator.field_force.territory_mapping.zone_mapping as zone_mapping
+import orchestrator.field_force.territory_mapping.product_mapping as product_mapping
 
 # dry_out_type in data (WidgetFiltersCreate): 0 = dry-out, 1 = Intra dry-out
 
@@ -518,6 +522,294 @@ async def get_retail_outlet_stockouts(data):
                 "summary": summary,
                 "zones": zones_output
             }        
+    except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+
+async def get_clause_conditions():
+    clause_conditions = {}
+    if urdhva_base.ctx.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+        sap_id = rpt.get('sap_id')
+        if sap_id:
+            # Convert list to SQL tuple format
+            sap_id_tuple = tuple(sap_id)
+            query = f"""
+                SELECT DISTINCT sap_id 
+                FROM location_master 
+                WHERE terminal_plant_id IN {sap_id_tuple}
+                AND bu = 'RO'
+            """
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if resp.get('data'):
+                sap_ids = [row['sap_id'] for row in resp['data']]
+                clause_conditions['rosapcode'] = sap_ids
+        elif rpt.get('sales_area'):
+            clause_conditions['salesarea_name'] = rpt.get('sales_area')
+        elif rpt.get('region'):
+            clause_conditions['regional_name'] = rpt.get('region')
+        elif rpt.get('zone'):
+            zones = rpt.get('zone')
+            zone_list = []
+            for zone in zones:
+                if zone in zone_mapping.zone_mapping.keys():
+                    zone_list.append(zone_mapping.zone_mapping[zone].get('CRIS'))
+            clause_conditions['zonal_name'] = zone_list
+    return [{'key': key, 'value': value} for key, value in clause_conditions.items()]
+
+async def map_filter_key_value(key, values):
+    """
+    Map incoming filter keys to DB columns like get_clause_conditions
+    """
+    if key == "sap_id":
+        sap_id_tuple = tuple(values)
+        query = f"""
+            SELECT DISTINCT sap_id 
+            FROM location_master 
+            WHERE terminal_plant_id IN {sap_id_tuple}
+            AND bu = 'RO'
+        """
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        if resp.get('data'):
+            return "rosapcode", [row['sap_id'] for row in resp['data']]
+        return None, None
+
+    elif key == "sales_area":
+        return "salesarea_name", values
+
+    elif key == "region":
+        return "regional_name", values
+
+    elif key == "zone":
+        zone_list = []
+        for zone in values:
+            if zone in zone_mapping.zone_mapping:
+                zone_list.append(zone_mapping.zone_mapping[zone].get('CRIS'))
+        return "zonal_name", zone_list
+    
+    elif key == "product_code":
+        product_list = []
+        for prod in values:
+            if prod in product_mapping.product_mapping:
+                product_list.append(product_mapping.product_mapping[prod].get('CRIS'))
+        return "product_no", product_list
+
+    # default (no mapping)
+    return key, values
+
+async def process_drill_data(loss_df, group_col, rename_col, response_key):
+    # Ensure datetime + month
+    loss_df = loss_df.with_columns(
+        pl.col("stock_date").cast(pl.Datetime),
+        pl.col("stock_date").dt.truncate("1mo").alias("month_date")
+    )
+    # Group and aggregate
+    result_df = (
+        loss_df
+        .groupby(["month_date", group_col])
+        .agg(
+            pl.col("loss_of_sale").sum().alias("loss_of_sale")
+        )
+        .sort(["month_date", group_col])
+        .rename({group_col: rename_col})
+        .with_columns(
+            pl.col("month_date").cast(pl.Date).cast(pl.Utf8)
+        )
+    )
+    return {
+        "status": True,
+        "message": "Success",
+        response_key: result_df.to_dicts()
+    }
+
+async def get_loss_of_sales_volume(data):
+    try:
+        where_clause = ["product_no in ('1322000','1683000','1683100','1322000','3672000','2682000','3373000')"]
+        clause_conditions = await get_clause_conditions()
+
+        start_date = None
+        end_date = None
+        all_conditions = []
+
+        # -------------------------------
+        # STEP: ADD clause_conditions (from rpt)
+        # -------------------------------
+        if clause_conditions:
+            for cond in clause_conditions:
+                key = cond.get("key")
+                values = cond.get("value")
+
+                if not values:
+                    continue
+
+                if isinstance(values, str):
+                    values = values.split(",")
+
+                if len(values) == 1:
+                    condition = f"{key} = '{values[0]}'"
+                else:
+                    condition = f"{key} IN {tuple(values)}"
+
+                all_conditions.append(condition)
+        
+        # -------------------------------
+        # STEP: ADD default where_clause
+        # -------------------------------
+        if where_clause:
+            all_conditions.extend(where_clause)
+
+        if data.cross_filters:
+            for filter in data.cross_filters:
+                # DATE handling
+                if "DATE" in filter.key:
+                    if filter.value:
+                        dates = filter.value.split(",")
+                    elif filter.values:
+                        dates = filter.values if isinstance(filter.values, list) else [filter.values]
+                    else:
+                        continue
+                    start_date = dates[0]
+                    end_date = datetime.strptime(dates[-1], "%Y-%m-%d").strftime("%Y-%m-%d")
+                    continue
+                # Extract values
+                if filter.values and isinstance(filter.values, list) and len(filter.values) > 0:
+                    vals = filter.values
+                elif filter.value:
+                    vals = filter.value.split(",")
+                else:
+                    continue
+
+                # APPLY MAPPING
+                mapped_key, mapped_vals = await map_filter_key_value(filter.key, vals)
+                if not mapped_key or not mapped_vals:
+                    continue
+
+                # Build condition
+                if len(mapped_vals) == 1:
+                    condition = f"{mapped_key} = '{mapped_vals[0]}'"
+                else:
+                    condition = f"{mapped_key} IN {tuple(mapped_vals)}"
+
+                all_conditions.append(condition)
+
+        if data.filters:
+            for rec in data.filters:
+                # Extract values
+                if rec.values and isinstance(rec.values, list) and len(rec.values) > 0:
+                    vals = rec.values
+                elif rec.value:
+                    vals = rec.value.split(",")
+                else:
+                    continue
+                # APPLY MAPPING
+                mapped_key, mapped_vals = await map_filter_key_value(rec.key, vals)
+                if not mapped_key or not mapped_vals:
+                    continue
+                # Build condition
+                if len(mapped_vals) == 1:
+                    condition = f"{mapped_key} = '{mapped_vals[0]}'"
+                else:
+                    condition = f"{mapped_key} IN {tuple(mapped_vals)}"
+
+                all_conditions.append(condition)
+        
+        # -------------------------------
+        # STEP: BUILD FINAL WHERE CLAUSE
+        # -------------------------------
+        final_where_clause = ""
+
+        if all_conditions:
+            final_where_clause = " AND " + " AND ".join(all_conditions)
+        
+        query = f"""
+                    select * from "HPCL_HOS".daily_product_dry_out where
+                    stock_date::date between '{start_date}' and '{end_date}'
+                    {final_where_clause}
+                """
+        
+        print("Final Query:", query)
+
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 2
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        loss_resp = await function(query=query)
+        loss_resp = loss_resp.get("data", [])
+        loss_df = pl.DataFrame(loss_resp)
+
+        if loss_df.is_empty():
+            return {
+                "status": True,
+                "message": "success",
+                "data": []
+            }
+
+        if data.action == "daily_loss_of_sale":
+            # Convert stock_date to date only (remove time if exists)
+            loss_df = loss_df.with_columns(
+                pl.col("stock_date").cast(pl.Date)
+            )
+            # Group by date and sum loss_of_sale
+            result_df = (
+                loss_df
+                .groupby("stock_date")
+                .agg(
+                    pl.col("loss_of_sale").sum().alias("loss_of_sale")
+                )
+                .sort("stock_date")
+            )
+            # Format date as string (YYYY-MM-DD)
+            result_df = result_df.with_columns(
+                pl.col("stock_date").cast(pl.Utf8).alias("process_date")
+            ).drop("stock_date")
+            # Convert to required response format
+            result = result_df.to_dicts()
+            return {
+                "status": True,
+                "message": "success",
+                "data": result
+            }
+        
+        if data.action == "monthly_loss_of_sale":
+            if not data.drill_state:
+                # Convert stock_date to datetime if not already
+                loss_df = loss_df.with_columns(
+                    pl.col("stock_date").cast(pl.Datetime)
+                )
+                # Truncate to month (gives first day of month)
+                loss_df = loss_df.with_columns(
+                    pl.col("stock_date").dt.truncate("1mo").alias("month_date")
+                )
+                # Group by month and sum
+                result_df = (
+                    loss_df
+                    .groupby("month_date")
+                    .agg(
+                        pl.col("loss_of_sale").sum().alias("loss_of_sale")
+                    )
+                    .sort("month_date")
+                )
+                # Format date as string
+                result_df = result_df.with_columns(
+                    pl.col("month_date").cast(pl.Date).cast(pl.Utf8)
+                )
+                return {
+                    "status": True,
+                    "message": "Success",
+                    "overall_data": result_df.to_dicts()
+                }
+            
+            drill_map = {
+                "zone": ("zonal_name", "zone", "zone_data"),
+                "region": ("regional_name", "region", "region_data"),
+                "sales_area": ("salesarea_name", "sales_area", "sales_area_data"),
+                "sap_id": ("rosapcode", "sap_id", "sap_id_data")
+            }
+
+            if data.drill_state in drill_map:
+                group_col, rename_col, response_key = drill_map[data.drill_state]
+                return await process_drill_data(loss_df, group_col, rename_col, response_key)
+            
     except Exception as e:
             print(traceback.format_exc())
             print(f"Error executing query: {e}")

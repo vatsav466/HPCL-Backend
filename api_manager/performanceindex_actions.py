@@ -33,7 +33,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
         clause = f" and {resp}" if resp else ""
         is_plant = getattr(data, "is_plant", False)
 
-        if data.bu in ["TAS", "LPG"]:
+        if data.bu in ["TAS", "LPG", "RO"]:
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
 
             # choose table based on filters

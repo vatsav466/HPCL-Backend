@@ -785,6 +785,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             },
@@ -836,6 +839,7 @@ async def sync_user_roles():
                     {
                         "title": "VTS ITDG Alert Home"
                     }
+                    
                 ]
             },
             {
@@ -885,6 +889,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             }
@@ -924,6 +931,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             },
@@ -1040,6 +1050,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             }
@@ -1071,6 +1084,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             },
@@ -1079,6 +1095,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             }
@@ -1205,6 +1224,9 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "Device Manager"
                     }
                 ]
             }
@@ -1401,7 +1423,7 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
-                    }
+                    }                    
                 ]
             }
         ],

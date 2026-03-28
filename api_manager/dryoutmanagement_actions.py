@@ -33,3 +33,9 @@ async def dryoutmanagement_get_dry_out_indents(data: Dryoutmanagement_Get_Dry_Ou
 @router.post('/get_retail_outlet_stockouts', tags=['DryOutManagement'])
 async def dryoutmanagement_get_retail_outlet_stockouts(data: Dryoutmanagement_Get_Retail_Outlet_StockoutsParams):
     return await field_force_novex.get_retail_outlet_stockouts(data)
+
+
+# Action get_loss_of_sales_volume
+@router.post('/get_loss_of_sales_volume', tags=['DryOutManagement'])
+async def dryoutmanagement_get_loss_of_sales_volume(data: Dryoutmanagement_Get_Loss_Of_Sales_VolumeParams):
+    return await field_force_novex.get_loss_of_sales_volume(data)
