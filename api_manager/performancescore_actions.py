@@ -359,13 +359,13 @@ async def performancescore_performance_score_trend(
         # ---------------- GROUPING ----------------
         query += """
             GROUP BY DATE(created_at)
-            ORDER BY created_at DESC
+            ORDER BY created_at ASC
         """
 
         print("Final Query:", query)
 
         # ---------------- EXECUTE ----------------
-        score_data = await PerformanceScoreHistory.get_aggr_data(query)
+        score_data = await PerformanceScoreHistory.get_aggr_data(query, limit=0)
         rows = score_data.get("data", [])
 
         if not rows:
@@ -430,7 +430,7 @@ async def performancescore_performance_score_monthly_trend(
                 AVG(score) AS score
             {base_query}
             GROUP BY DATE_TRUNC('month', created_at)
-            ORDER BY month_date DESC
+            ORDER BY month_date ASC
         """
 
         date_query = f"""
@@ -447,7 +447,7 @@ async def performancescore_performance_score_monthly_trend(
                 AVG(score) AS score
             {base_query}
             GROUP BY DATE_TRUNC('month', created_at), zone
-            ORDER BY month_date DESC
+            ORDER BY month_date ASC
         """
 
         location_query = f"""
@@ -459,14 +459,14 @@ async def performancescore_performance_score_monthly_trend(
                 AVG(score) AS score
             {base_query}
             GROUP BY DATE_TRUNC('month', created_at), name, sap_id, zone
-            ORDER BY month_date DESC
+            ORDER BY month_date ASC
         """
 
         # ---------------- EXECUTE ----------------
-        overall_res = await PerformanceScoreHistory.get_aggr_data(overall_query)
-        date_res = await PerformanceScoreHistory.get_aggr_data(date_query)
-        zone_res = await PerformanceScoreHistory.get_aggr_data(zone_query)
-        location_res = await PerformanceScoreHistory.get_aggr_data(location_query)
+        overall_res = await PerformanceScoreHistory.get_aggr_data(overall_query,limit =0)
+        date_res = await PerformanceScoreHistory.get_aggr_data(date_query,limit =0)
+        zone_res = await PerformanceScoreHistory.get_aggr_data(zone_query,limit =0)
+        location_res = await PerformanceScoreHistory.get_aggr_data(location_query,limit =0)
 
         # ---------------- EXTRACT DATA ----------------
         overall_rows = overall_res.get("data", [])
@@ -549,3 +549,4 @@ async def performancescore_performance_score_monthly_trend(
             "error": str(e),
             "data": []
         }
+
