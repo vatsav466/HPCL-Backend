@@ -732,7 +732,7 @@ async def get_loss_of_sales_volume(data):
             end_date = today.strftime("%Y-%m-%d")
             
             # Start date = 6 months ago (approx 180 days)
-            start_date = (today - timedelta(days=180)).strftime("%Y-%m-%d")
+            start_date = (today - timedelta(days=180)).replace(day=1).strftime("%Y-%m-%d")
         
         query = f"""
                     select rosapcode,zonal_name,regional_name,salesarea_name,stock_date,loss_of_sale,site_name from "HPCL_HOS".daily_product_dry_out where
