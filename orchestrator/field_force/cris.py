@@ -888,7 +888,7 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
         region = None
         sales_area = None
         location = None
-        level = level_filter.get("level")
+        level = level_filter.get("level") if level_filter else None
 
         if not raw_filters:
             zone = df.select(["month", "zone", "sales_volume"])
