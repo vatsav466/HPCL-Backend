@@ -7509,6 +7509,9 @@
                 },
                 {
                     "name": "action_decommissioning"
+                },
+                {
+                    "name": "action_decommissioning_rejected"
                 }
             ]
         },
@@ -7560,6 +7563,9 @@
                 },
                 {
                     "name": "action_decommissioning"
+                },
+                {
+                    "name": "action_decommissioning_rejected"
                 }
             ]
         },
@@ -9152,6 +9158,10 @@
         {
             "name": "action_decommissioning",
             "displayName": "action_decommissioning"
+        },
+        {
+            "name": "action_decommissioning_rejected",
+            "displayName": "action_decommissioning_rejected"
         },
         {
             "name": "create_user",
