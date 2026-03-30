@@ -110,6 +110,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     re_assingee_employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_employee_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     re_assingee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    reassigne_due_date: Mapped[typing.Optional[str]] = mapped_column("reassigne_due_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -166,6 +167,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -227,6 +229,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -335,6 +338,7 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
     re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

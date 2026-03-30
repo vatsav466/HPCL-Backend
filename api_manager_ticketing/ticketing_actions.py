@@ -40,7 +40,7 @@ import urdhva_base
 import api_manager
 import hpcl_ceg_model
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timezone
 from hpcl_ceg_enum import AlertActionType
 from fastapi import UploadFile, File, Depends
 from orchestrator.alerting import alert_helper
@@ -925,12 +925,24 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         if data_dict.get("ticket_section") == "":
             data_dict["ticket_section"] = None
 
+        if data_dict.get("reassigne_due_date") == "":
+            data_dict["reassigne_due_date"] = None
         # Rename alert_type → interlock_name safely
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = clean_list(data_dict.pop("alert_type"))
         
         re_assingee_employee_id: list[str] = data_dict.get("re_assingee_employee_id") or []
         re_assingee_mail:        list[str] = data_dict.get("re_assingee_mail")        or []
+        
+        raw_due_date = data_dict.get("reassigne_due_date")
+        if raw_due_date and str(raw_due_date).strip() not in ("", "null", "none"):
+            try:
+                parsed = datetime.fromisoformat(str(raw_due_date).replace("Z", "+00:00"))
+                data_dict["reassigne_due_date"] = parsed.isoformat()
+            except (ValueError, TypeError):
+                data_dict["reassigne_due_date"] = None
+        else:
+            data_dict["reassigne_due_date"] = None
      
         ticket_id = data.update_id
 
@@ -2101,6 +2113,9 @@ async def ticketing_process_escalations():
 
         now = datetime.now(ZoneInfo("Asia/Kolkata"))
 
+        reverted_count = await revert_reassigned_tickets()
+        print(f"Reverted {reverted_count} reassigned tickets back to Open")
+
         rules = await get_escalation_config()
         escalated_count = 0
 
@@ -2240,6 +2255,46 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
         logger.warning(f"Error sending escalation mail for ticket {ticket.get('ticket_id')}: {e}")
         logger.warning(traceback.format_exc())
 
+
+async def revert_reassigned_tickets():
+    # 1. Get current time in IST
+    tz_ist = ZoneInfo("Asia/Kolkata")
+    now_ist = datetime.now(tz_ist)
+    
+    # 2. Convert IST to UTC for the database 'updated_at' column
+    # .astimezone(timezone.utc) shifts the time back by 5.5 hours
+    now_utc = now_ist.astimezone(timezone.utc)
+    formatted_utc = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 3. For the QUERY, we use the IST ISO string (as confirmed by your debug)
+    query_time = now_ist.isoformat()
+
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = f"ticket_state = 'Reassigned' AND reassigne_due_date < '{query_time}'"
+    params.fields = ["id", "ticket_id", "ticket_state", "reassigne_due_date"]
+    
+    resp = await Ticketing.get_all(params, resp_type="plain")
+    tickets = resp.get("data", [])
+    reverted_count = 0
+
+    for ticket in tickets:
+        try:
+            update_payload = {
+                "id": ticket["id"],
+                "ticket_state": "Open",
+                "updated_at": formatted_utc  # Send UTC string to the UTC column
+            }
+            
+            # Use the .modify() pattern
+            await Ticketing(**update_payload).modify()
+            
+            reverted_count += 1
+            print(f"SUCCESS: Ticket {ticket['ticket_id']} reverted. DB UTC Time: {formatted_utc}")
+            
+        except Exception as err:
+            print(f"ERROR updating ticket {ticket.get('id')}: {err}")
+            
+    return reverted_count
 
 # Action pm_orders
 @router.post('/pm_orders', tags=['Ticketing'])
