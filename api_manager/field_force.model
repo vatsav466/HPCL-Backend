@@ -236,6 +236,16 @@ Model NozzleSales crud_disable {
     Action=> nozzle_sales_comparison {
         data WidgetFilters
     }
+    
+    Action=> nozzle_sales_tmt {
+        filters optional list WidgetFilters
+        level_filter optional LevelFilter
+        cross_filters optional list WidgetFilters
+        segregation optional list str
+        ms_products optional list str
+        hsd_products optional list str
+        action str
+    }
 }
 
 // ========== Retail Sales (Single Store, including Lubes) - Dev Phase 1 ==========

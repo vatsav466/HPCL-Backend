@@ -346,6 +346,20 @@ class Nozzlesales_Nozzle_Sales_ComparisonParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Nozzlesales_Nozzle_Sales_TmtParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    level_filter: typing.Optional[LevelFilterCreate] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    segregation: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ms_products: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    hsd_products: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Retailsales_Get_Sales_By_ProductParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     drill_filter: typing.Optional[DrillFilterCreate] | None = None
