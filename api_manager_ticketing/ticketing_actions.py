@@ -318,7 +318,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         subject=subject,
         body=alert_manager.read_template(template_path, data=template_data),
         html_content=True,
-        force_send=False,
+        force_send=True,
     )
 
     print(
