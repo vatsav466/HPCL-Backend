@@ -178,6 +178,7 @@ class AlertActionType(str, enum.Enum):
     ESDFailure = 'ESDFailure'
     Maintenance = 'Maintenance'
     TicketRaised = 'TicketRaised'
+    TicketReassigned = 'TicketReassigned'
     TicketInProgress = 'TicketInProgress'
     TicketCancelled = 'TicketCancelled'
     TicketResolved = 'TicketResolved'
