@@ -607,21 +607,51 @@ async def process_drill_data(loss_df, group_col, rename_col, response_key):
     # Group and aggregate
     result_df = (
         loss_df
-        .group_by(["month_date", group_col])
+        .group_by(["month_date", group_col, "product_group"])
         .agg(
             pl.col("loss_of_sale").sum().alias("loss_of_sale")
         )
-        .sort(["month_date", group_col])
+        .sort(["month_date", group_col, "product_group"])
         .rename({group_col: rename_col})
         .with_columns(
             pl.col("month_date").cast(pl.Date).cast(pl.Utf8)
         )
     )
+
+    final_dict = {}
+
+    for row in result_df.to_dicts():
+        date = row["month_date"]
+        grp = row[rename_col]          
+        product = row["product_group"]
+        value = row["loss_of_sale"]
+
+        if product == "OTHER":
+            continue
+
+        key = (date, grp)
+
+        if key not in final_dict:
+            final_dict[key] = {}
+
+        final_dict[key][product] = value
+
+    final_response = [
+        {
+            "month_date": date,
+            rename_col: grp,
+            "loss_of_sale": products
+        }
+        for (date, grp), products in final_dict.items()
+    ]
+
     return {
         "status": True,
         "message": "Success",
-        response_key: result_df.to_dicts()
+        response_key: final_response
     }
+
+
 
 async def get_loss_of_sales_volume(data):
     try:
@@ -762,6 +792,53 @@ async def get_loss_of_sales_volume(data):
             .map_elements(lambda x: zone_map.get(x, x))
             .alias("zonal_name")
         )
+        ms_codes = [
+            product_mapping.product_mapping["2811000"]["CRIS"],  # MS
+            product_mapping.product_mapping["2822000"]["CRIS"],  # E20
+            product_mapping.product_mapping["3672000"]["CRIS"],  # POWER 95
+            product_mapping.product_mapping["2816000"]["CRIS"],  # POWER 99
+            product_mapping.product_mapping["3373000"]["CRIS"],  # POWER 100
+        ]
+        hsd_codes = [
+            product_mapping.product_mapping["2812000"]["CRIS"],  # HSD
+            product_mapping.product_mapping["3912000"]["CRIS"],  # TURBO
+        ]
+
+        loss_df = loss_df.with_columns(
+            pl.col("product_no").cast(pl.Utf8)  
+        )
+        loss_df = loss_df.with_columns(
+            pl.when(pl.col("product_no").is_in(ms_codes))
+            .then(pl.lit("MS"))
+            .when(pl.col("product_no").is_in(hsd_codes))
+            .then(pl.lit("HSD"))
+            .otherwise(pl.lit("OTHER"))
+            .alias("product_group")
+        )
+
+        def build_response(df, date_col):
+           final_result = {}
+
+           for row in df.to_dicts():
+               date = str(row[date_col])
+               group = row["product_group"]
+               value = row["loss_of_sale"]
+
+               if group == "OTHER":
+                   continue  # ignore unwanted products
+
+               if date not in final_result:
+                   final_result[date] = {}
+
+               final_result[date][group] = value
+
+           return [
+               {
+                   "process_date": date,
+                   "loss_of_sale": groups
+               }
+               for date, groups in sorted(final_result.items())
+            ]
         
 
         if data.action == "daily_loss_of_sale":
@@ -772,22 +849,24 @@ async def get_loss_of_sales_volume(data):
             # Group by date and sum loss_of_sale
             result_df = (
                 loss_df
-                .group_by("stock_date")
+                .group_by("stock_date", "product_group")
                 .agg(
                     pl.col("loss_of_sale").sum().alias("loss_of_sale")
                 )
-                .sort("stock_date")
+                .sort(["stock_date", "product_group"])
             )
             # Format date as string (YYYY-MM-DD)
             result_df = result_df.with_columns(
                 pl.col("stock_date").cast(pl.Utf8).alias("process_date")
             ).drop("stock_date")
+
+            response = build_response(result_df, "process_date")
+
             # Convert to required response format
-            result = result_df.to_dicts()
             return {
                 "status": True,
                 "message": "success",
-                "data": result
+                "data": response
             }
         
         if data.action == "monthly_loss_of_sale":
@@ -803,20 +882,22 @@ async def get_loss_of_sales_volume(data):
                 # Group by month and sum
                 result_df = (
                     loss_df
-                    .group_by("month_date")
+                    .group_by("month_date", "product_group")
                     .agg(
                         pl.col("loss_of_sale").sum().alias("loss_of_sale")
                     )
-                    .sort("month_date")
+                    .sort("month_date","product_group")
                 )
                 # Format date as string
                 result_df = result_df.with_columns(
                     pl.col("month_date").cast(pl.Date).cast(pl.Utf8)
                 )
+
+                response = build_response(result_df, "month_date")
                 return {
                     "status": True,
                     "message": "Success",
-                    "overall_data": result_df.to_dicts()
+                    "overall_data": response
                 }
             
             drill_map = {
