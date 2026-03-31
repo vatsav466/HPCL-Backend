@@ -3573,7 +3573,7 @@ class VTSAnalyticsActions:
                     status = "Closed"
 
                 if "trip_status" in pl_df.columns:
-                    if status == "live":
+                    if status == "Live":
                         return pl_df.filter(pl.col("trip_status") != "Closed")
                     if status == "Closed":
                         return pl_df.filter(pl.col("trip_status") == "Closed")
