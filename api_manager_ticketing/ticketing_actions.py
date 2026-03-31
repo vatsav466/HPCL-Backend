@@ -936,11 +936,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         
         raw_due_date = data_dict.get("reassigne_due_date")
         if raw_due_date and str(raw_due_date).strip() not in ("", "null", "none"):
-            try:
-                parsed = datetime.fromisoformat(str(raw_due_date).replace("Z", "+00:00"))
-                data_dict["reassigne_due_date"] = parsed.isoformat()
-            except (ValueError, TypeError):
-                data_dict["reassigne_due_date"] = None
+            data_dict["reassigne_due_date"] = str(raw_due_date).strip()
         else:
             data_dict["reassigne_due_date"] = None
      
@@ -2115,7 +2111,7 @@ async def ticketing_process_escalations():
 
         reverted_count = await revert_reassigned_tickets()
         print(f"Reverted {reverted_count} reassigned tickets back to Open")
-
+ 
         rules = await get_escalation_config()
         escalated_count = 0
 
@@ -2261,8 +2257,7 @@ async def revert_reassigned_tickets():
     tz_ist = ZoneInfo("Asia/Kolkata")
     now_ist = datetime.now(tz_ist)
     
-    # 2. Convert IST to UTC for the database 'updated_at' column
-    # .astimezone(timezone.utc) shifts the time back by 5.5 hours
+
     now_utc = now_ist.astimezone(timezone.utc)
     formatted_utc = now_utc.strftime('%Y-%m-%d %H:%M:%S')
 
