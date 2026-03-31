@@ -3563,43 +3563,20 @@ class VTSAnalyticsActions:
                 df = df.unique(subset=dedup_cols, keep="first")
 
             #  COMPLETED INVOICE HELPERS
-            async def get_completed_invoices(pl_df):
-                if "invoice_number" not in pl_df.columns:
-                    return []
 
-                invoices = (
-                    pl_df.select(pl.col("invoice_number").cast(pl.Utf8))
-                    .unique()
-                    .drop_nulls()
-                    .to_series()
-                    .to_list()
-                )
-
-                if not invoices:
-                    return []
-
-                invoice_str = "', '".join(invoices)
-                q = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoice_str}')
-                """
-
-                completed_df = await VTSAnalyticsActions.execute_query(q, engine="polars")
-                return completed_df["invoice_no"].to_list() if not completed_df.is_empty() else []
-
-            def apply_status_filter(pl_df, status, completed):
+            def apply_status_filter(pl_df, status):
                 if not status:
                     return pl_df
 
                 status = status.lower().strip()
-                if status == "close":
-                    status = "closed"
+                if status == "Closed":
+                    status = "Closed"
 
-                if status == "live":
-                    return pl_df.filter(~pl.col("invoice_number").is_in(completed))
-                if status == "closed":
-                    return pl_df.filter(pl.col("invoice_number").is_in(completed))
+                if "trip_status" in pl_df.columns:
+                    if status == "live":
+                        return pl_df.filter(pl.col("trip_status") != "Closed")
+                    if status == "Closed":
+                        return pl_df.filter(pl.col("trip_status") == "Closed")
 
                 return pl_df
 
@@ -3622,8 +3599,7 @@ class VTSAnalyticsActions:
 
             #  MODES: DOWNLOAD / SEARCH / TABLE
             if payload.get("download", "").lower() == "true":
-                completed = await get_completed_invoices(df)
-                df = apply_status_filter(df, payload.get("status"), completed)
+                df = apply_status_filter(df, payload.get("status"))
                 df = add_swipe_cols(df)
                 df = df.filter(pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2"))
                 df = df.drop(["has_swipeoutl1", "has_swipeoutl2"], strict=False)
@@ -3633,8 +3609,7 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "success", "data": df.to_dicts()}
 
             if payload.get("table") == "true":
-                completed = await get_completed_invoices(df)
-                df = apply_status_filter(df, payload.get("status"), completed)
+                df = apply_status_filter(df, payload.get("status"))
                 df = add_swipe_cols(df)
                 df = df.filter(pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2"))
                 return {
@@ -3662,8 +3637,7 @@ class VTSAnalyticsActions:
                 ])
             )
 
-            completed = await get_completed_invoices(base)
-            base = apply_status_filter(base, payload.get("status"), completed)
+            base = apply_status_filter(base, payload.get("status"))
 
             filtered = base.filter(
                 pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2")
