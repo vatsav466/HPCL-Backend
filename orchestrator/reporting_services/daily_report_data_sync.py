@@ -465,9 +465,9 @@ async def fetch_daily_report(report_date: str):
             how="left"  # keeps all rows from df1
         )
 
-        df[["valid_indent", "pending_indents"]] = (
-            df[["valid_indent", "pending_indents"]].fillna(0).astype(int)
-        )
+        df["valid_indent"] = df["valid_indent"].fillna(0).astype(int).apply(lambda x: True if x > 0 else False)
+        df["pending_indents"] = df["pending_indents"].fillna(0)
+
         df = df.rename(columns={'terminal_plant_name': 'terminal_name', 'terminal_plant_id': 'terminal_id',
                      'product_code': 'product_no', 'created_at': 'dry_out_start'})
         df = df[['sap_id', 'location_name', 'terminal_id', 'terminal_name', 'product_no',
