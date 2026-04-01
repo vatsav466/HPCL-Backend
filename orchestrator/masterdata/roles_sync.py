@@ -894,6 +894,17 @@ async def sync_user_roles():
                         "title": "Device Manager"
                     }
                 ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -1055,6 +1066,17 @@ async def sync_user_roles():
                         "title": "Device Manager"
                     }
                 ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -1098,6 +1120,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Device Manager"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             }

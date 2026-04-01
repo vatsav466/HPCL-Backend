@@ -40,7 +40,7 @@ import urdhva_base
 import api_manager
 import hpcl_ceg_model
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timezone
 from hpcl_ceg_enum import AlertActionType
 from fastapi import UploadFile, File, Depends
 from orchestrator.alerting import alert_helper
@@ -74,6 +74,7 @@ MAIL_TRIGGER_STATES = {
 
 TEMPLATE_MAP = {
     State.Open.value: "create_ticket.html",
+    State.Reassigned.value: "reassigned_ticket.html",
     State.Escalated.value: "escalated_ticket.html",
     State.UpdatedByInitiator.value: "updated_ticket.html",
     State.ReturnedByOcc.value: "returned_ticket.html",
@@ -238,6 +239,12 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         else:
             to_emails = zonal_functionary_emails
             cc_emails = set.union(zonal_head_emails, hqo_emails)
+    
+    elif state_enum == State.Reassigned:
+        re_assignee_mails: set[str] = {m.strip() for m in (ticket_data.get("re_assingee_mail") or []) if (m or "").strip()}
+        if re_assignee_mails:
+            to_emails = re_assignee_mails
+            cc_emails = set.union(location_emails,zonal_functionary_emails,zonal_head_emails,hqo_emails)
 
     elif state_enum == State.Escalated:
         if escalation_level == "L1":
@@ -365,6 +372,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     employee_id = data.employee_id
 
     tdata = data.model_dump()
+    for field in ["re_assingee_employee_id", "re_assingee_mail"]:
+        if tdata.get(field) == "" or tdata.get(field) is None:
+            tdata[field] = []
     frontend_reporter = tdata.get("reporter")
     reporter_value = frontend_reporter if frontend_reporter else user_name
     auto_close_flag_raw = tdata.get("auto_ticket_close", "")
@@ -915,11 +925,21 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         if data_dict.get("ticket_section") == "":
             data_dict["ticket_section"] = None
 
+        if data_dict.get("reassigne_due_date") == "":
+            data_dict["reassigne_due_date"] = None
         # Rename alert_type → interlock_name safely
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = clean_list(data_dict.pop("alert_type"))
-        # ----------------------------------------------------
-
+        
+        re_assingee_employee_id: list[str] = data_dict.get("re_assingee_employee_id") or []
+        re_assingee_mail:        list[str] = data_dict.get("re_assingee_mail")        or []
+        
+        raw_due_date = data_dict.get("reassigne_due_date")
+        if raw_due_date and str(raw_due_date).strip() not in ("", "null", "none"):
+            data_dict["reassigne_due_date"] = str(raw_due_date).strip()
+        else:
+            data_dict["reassigne_due_date"] = None
+     
         ticket_id = data.update_id
 
         params = urdhva_base.queryparams.QueryParams()
@@ -987,6 +1007,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         STATE_UI_TO_ENUM = {
             "Open": "Open",
             "Escalated": "Escalated",
+            "Reassigned": "Reassigned",
             "Updated By Initiator": "UpdatedByInitiator",
             "Returned By Occ": "ReturnedByOcc",
             "Reviewed By Occ": "ReviewedByOcc"
@@ -1183,6 +1204,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                     "start_date": existing_ticket.get("start_date"),
                     "zone": existing_ticket.get("zone"),
                     "ticket_end_date": existing_ticket.get("ticket_end_date"),
+                    "re_assingee_mail":  re_assingee_mail,
                 }
                 await send_ticket_mail(mail_payload)
             except Exception as e:
@@ -2069,7 +2091,7 @@ async def get_escalation_config() -> List[Dict]:
     return [
         {
             "level": "L1",
-            "query": "ticket_status='Open' AND (escalation_level IS NULL OR escalation_level = '')",
+            "query": "ticket_status='Open' AND ticket_state = 'Open' AND (escalation_level IS NULL OR escalation_level = '')",
             "multiplier": 1
         },
         {
@@ -2087,6 +2109,9 @@ async def ticketing_process_escalations():
 
         now = datetime.now(ZoneInfo("Asia/Kolkata"))
 
+        reverted_count = await revert_reassigned_tickets()
+        print(f"Reverted {reverted_count} reassigned tickets back to Open")
+ 
         rules = await get_escalation_config()
         escalated_count = 0
 
@@ -2226,6 +2251,45 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
         logger.warning(f"Error sending escalation mail for ticket {ticket.get('ticket_id')}: {e}")
         logger.warning(traceback.format_exc())
 
+
+async def revert_reassigned_tickets():
+    # 1. Get current time in IST
+    tz_ist = ZoneInfo("Asia/Kolkata")
+    now_ist = datetime.now(tz_ist)
+    
+
+    now_utc = now_ist.astimezone(timezone.utc)
+    formatted_utc = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 3. For the QUERY, we use the IST ISO string (as confirmed by your debug)
+    query_time = now_ist.isoformat()
+
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = f"ticket_state = 'Reassigned' AND reassigne_due_date < '{query_time}'"
+    params.fields = ["id", "ticket_id", "ticket_state", "reassigne_due_date"]
+    
+    resp = await Ticketing.get_all(params, resp_type="plain")
+    tickets = resp.get("data", [])
+    reverted_count = 0
+
+    for ticket in tickets:
+        try:
+            update_payload = {
+                "id": ticket["id"],
+                "ticket_state": "Open",
+                "updated_at": formatted_utc  # Send UTC string to the UTC column
+            }
+            
+            # Use the .modify() pattern
+            await Ticketing(**update_payload).modify()
+            
+            reverted_count += 1
+            print(f"SUCCESS: Ticket {ticket['ticket_id']} reverted. DB UTC Time: {formatted_utc}")
+            
+        except Exception as err:
+            print(f"ERROR updating ticket {ticket.get('id')}: {err}")
+            
+    return reverted_count
 
 # Action pm_orders
 @router.post('/pm_orders', tags=['Ticketing'])
