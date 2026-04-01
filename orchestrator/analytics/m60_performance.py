@@ -784,6 +784,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             '''
 
             if "fiscal_year" in [x['key'].strip('"') for x in filters]:
+                start_date_org = start_date
+                start_date_history_org = start_date_history
                 fiscal_year_ui = [x['value'] for x in filters if x['key'].strip('"') == "fiscal_year"][0]
 
                 todays_date == str(datetime.date.today())
@@ -797,6 +799,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                  todays_date,
                                                                                                  same_year=True,
                                                                                                  key='YTD')
+                    
+                    if todays_date.split('-')[1] == '04' and todays_date.split('-')[-1] == '01':
+                       start_date = start_date_org
+                       start_date_history = start_date_history_org
+
                 
                 else:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,

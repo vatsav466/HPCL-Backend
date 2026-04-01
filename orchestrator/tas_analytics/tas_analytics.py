@@ -6252,6 +6252,126 @@ async def gantry_override_analysis(data):
         print(f"Error in gantry_override_analysis: {e}")
         return []
     
+async def get_fire_engine_runtime_weekly(data):
+    try:
+        filters = []
+
+        # defaults FIRST
+        segment_type = "week"
+        data_required = True
+        sap_id = None
+
+        #  override from filters
+        if data.filters:
+            for f in data.filters:
+                if f.key == "sap_id":
+                    sap_id = f.value
+
+                elif f.key == "segment_type":
+                    segment_type = f.value.lower()
+
+                elif f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+
+        # Step 3: apply condition ONCE
+        if segment_type == "year":
+            filters.append("NULLIF(total_run_time, '')::interval > interval '4 hours'")
+        else:
+            filters.append("NULLIF(total_run_time, '')::interval > interval '30 minutes'")
+
+        # direct field fallback (important)
+        if not sap_id and hasattr(data, "zone") and data.zone:
+            # example: using zone if needed
+            pass
+
+        # apply sap_id if found
+        if sap_id:
+            filters.append(f"TRIM(sap_id) = '{str(sap_id).strip()}'")
+
+        # date filter
+        if data.start_date and data.end_date:
+            filters.append(f"""
+                created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """)
+
+        # location filter
+        if data.location_name:
+            filters.append(f"LOWER(location_name) = LOWER('{data.location_name}')")
+
+        # device filter
+        if data.equipment_name:
+            filters.append(f"LOWER(device_name) = LOWER('{data.equipment_name}')")
+
+        where_clause = ""
+        if filters:
+            where_clause = "WHERE " + " AND ".join(filters)
+
+        # segmentation logic
+        if segment_type == "year":
+            segment_expr = "TO_CHAR(created_at, 'YYYY')"
+
+        elif segment_type == "month":
+            segment_expr = "TO_CHAR(created_at, 'Mon-YYYY')"
+
+        else:
+            segment_expr = """
+                CASE
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 1 AND 7 THEN 'Week-1'
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 8 AND 14 THEN 'Week-2'
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 15 AND 21 THEN 'Week-3'
+                    ELSE 'Week-4'
+                END
+            """
+
+        # main query
+        query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                sap_id,
+                device_name,
+                location_name,
+                total_run_time,
+                created_at
+            FROM public.tas_fire_engine_test
+            {where_clause}
+            ORDER BY created_at
+        """
+
+        # count query
+        count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                COUNT(*) AS total_count
+            FROM public.tas_fire_engine_test
+            {where_clause}
+            GROUP BY segment
+            ORDER BY segment
+        """
+
+        print(query)
+        print(count_query)
+
+        rows = []
+        if data_required:
+            res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = res.get("data", [])
+
+        count_res = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
+
+        return {
+            "status": True,
+            "message": "Fire engine runtime analysis fetched",
+            "segment_counts": count_res.get("data", []),
+            "data": rows if data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "segment_counts": [],
+            "data": []
+        }
+    
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -6271,7 +6391,8 @@ AnalyticsModelMapping = {
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
     "Gantry Override Analysis": gantry_override_analysis,
-    "Run Daily Data Check": operability_index_health_check
+    "Run Daily Data Check": operability_index_health_check,
+    "Tas_fire_engine":get_fire_engine_runtime_weekly
 
 }
 
