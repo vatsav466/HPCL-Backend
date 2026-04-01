@@ -143,7 +143,13 @@ def insertToDB(data, table_name, indexing_col=()):
     data = data.rename({'FISCAL_YEAR':'fiscal_year'})
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
-        dty = dtype_dict.get(str(dty))
+        # dty = dtype_dict.get(str(dty))
+        dty_str = str(dty)
+
+        if "Decimal" in dty_str:
+            dty = "double precision"
+        else:
+            dty = dtype_dict.get(dty_str, "text")
         table_create_sql += f'"{col}" {dty},'
     table_create_sql = table_create_sql[:-1]
     if not isinstance(indexing_col, list):
