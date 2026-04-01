@@ -429,8 +429,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 end_date = last_day_of_prev_month.date()
         else:
             if same_year:
-                end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
-                                                           date_time_format="%Y-%m-%d")
+                # For April 1st, we have to make days = 0
+                end_date = helpers.get_time_stamp_by_delta(end_date_,
+                                                           days=0 if (end_date_.month==4 and end_date_.day==1) else 1,
+                                                           with_month_start_day=False, date_time_format="%Y-%m-%d")
+                    
+                
             else:
                 '''
                 end_date = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=False,
@@ -466,6 +470,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 last_day_of_prev_month_his = first_day_of_current_month_his - datetime.timedelta(days=1)
                 print("last_day_of_prev_month_his",last_day_of_prev_month_his)
                 end_date_history = datetime.date(last_day_of_prev_month_his.year, last_day_of_prev_month_his.month, last_day_of_prev_month_his.day)
+                
 
                 #end_date = last_day_of_prev_month_his.date()
                 
@@ -484,6 +489,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 end_date_history = helpers.get_time_stamp_by_delta(dt_parser.parse(end_date_check), years=2, days=0,
                                                                    with_month_start_day=False,
                                                                    date_time_format=None)
+               
                 '''
                 end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
                 end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=0, with_month_start_day=False,
@@ -787,22 +793,25 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 start_date_org = start_date
                 start_date_history_org = start_date_history
                 fiscal_year_ui = [x['value'] for x in filters if x['key'].strip('"') == "fiscal_year"][0]
-
+              
                 todays_date == str(datetime.date.today())
                 if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
                                                                                                  same_year=True,
                                                                                                  key='YTD')
+                    
                 elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
                                                                                                  same_year=True,
                                                                                                  key='YTD')
-                    
+
                     if todays_date.split('-')[1] == '04' and todays_date.split('-')[-1] == '01':
                        start_date = start_date_org
                        start_date_history = start_date_history_org
+
+                
 
                 
                 else:
@@ -1040,6 +1049,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             elif '"C"' in [x['key'] for x in filters] and len(org_cross_filters) == 1 and org_cross_filters[0][
                 'key'] == '"sbu_wise"':
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+            elif isinstance(target_data,dict):
+                if len(target_data['data']) == 0:
+                    return {"status":False,"data":'No Data Present For Current Selection'}
             elif '"YTD"' in [x['key'] for x in filters] and 'month_name' in target_data[0]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
@@ -1106,7 +1118,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
                                                   group_by_filter, '"DAY_ID"'))
         if actual_data:
+            if isinstance(actual_data,list):
+                if actual_data[0] == 'data':
+                    return {"status": False, "message": "No Data Present for the current selection"}
             actual_data = pd.DataFrame(actual_data)
+            print("actual_data",actual_data)
             if group_by_filter:
                 actual_data = actual_data.groupby(get_group_by_columns(group_by_filter))[
                     'ACTUAL_TMT_SALES'].sum().reset_index()
