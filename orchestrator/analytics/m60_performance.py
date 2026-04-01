@@ -429,10 +429,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 end_date = last_day_of_prev_month.date()
         else:
             if same_year:
-                end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
-                                                           date_time_format="%Y-%m-%d")
-                if todays_date.split('-')[1] == '04' and todays_date.split('-')[-1] == '01':
-                    end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
+                # For April 1st, we have to make days = 0
+                end_date = helpers.get_time_stamp_by_delta(end_date_,
+                                                           days=0 if (end_date_.month==4 and end_date_.day==1) else 1,
+                                                           with_month_start_day=False, date_time_format="%Y-%m-%d")
                     
                 
             else:
