@@ -425,7 +425,6 @@ def _nozzle_sales_build_filter_conditions(filters):
         "product": ("ns", "product_grp"),
         "location_name": ("ns", "location_name")
     }
-    print("filters ---->", filters)
     for f in filters:
         if not isinstance(f, dict):
             continue
@@ -498,7 +497,6 @@ async def nozzle_sales(
 
     valid_segs = ("zone", "sales_area", "state", "sap_id", "product", "location_name", "monthly")
     segregation = [s for s in segregation if s in valid_segs]
-    print("segregation after validation ---->", segregation)
     if not segregation:
         segregation = ["global"]
 
@@ -509,16 +507,12 @@ async def nozzle_sales(
     if hsd_products:
         all_products.extend(hsd_products)
 
-    print("all products ---->\n", all_products)
     sales_volume = _nozzle_sales_build_tmt_expr(
         tuple(all_products) if all_products else list(NOZZLE_SALES_MS_PRODUCTS_DEFAULT) + list(NOZZLE_SALES_HSD_PRODUCTS_DEFAULT),    
         None,                
         "sales_volume"
     )
 
-    print("Final expression ---->\n", sales_volume)
-
-    print("filters before build_filter_condition---->\n",filters)
     filters = filters if filters is not None else []
     if all_products:
         filters.append({
@@ -527,20 +521,13 @@ async def nozzle_sales(
             "values": all_products
         })
     filter_conditions = _nozzle_sales_build_filter_conditions(filters)
-    print("*"*40)
-    print("filter_conditions ---->\n", filter_conditions)
-    
 
     need_lm_for_filters = any("lm." in c for c in filter_conditions)
     extra_where = " AND ".join(filter_conditions) if filter_conditions else ""
 
-    print("extra_where ---->\n", extra_where)
-
-    print("date_spec ---->", date_spec)
     if isinstance(date_spec, list) and len(date_spec) == 1 and "," in date_spec[0]:
         start_str, end_str = date_spec[0].split(",", 1)
         date_spec = [start_str.strip(), end_str.strip()]
-        print("date_spec 2---->", date_spec)
 
     start_d, end_d = _nozzle_sales_parse_date_spec(date_spec, reference_date=reference_date)
     if start_d == end_d:
@@ -551,8 +538,6 @@ async def nozzle_sales(
     if extra_where:
         where_parts.append(extra_where)
     where_clause = " AND ".join(where_parts)
-    print("*"*40)
-    print("where clause ---->\n", where_clause)
 
     group_cols = []
     dim_col = None
@@ -573,52 +558,7 @@ async def nozzle_sales(
         """
         group_cols = []
         dim_col = None
-        print("*"*20)
         print("nozzle sales query global ---->\n", nozzle_sales_query)
-
-    # Remove transaction_date filter to enable full monthly aggregation (avoid single-day restriction)
-    # "monthly" is used as a control flag in segregation (not a column) to indicate monthly-level aggregation
-    # This block handles monthly nozzle sales grouped by month, zone, and location_name 
-    # elif "monthly" in segregation:
-    #     if "zone" in segregation or "location_name" in segregation or "monthly" in segregation:
-    #         new_list = []
-    #         where_clause_monthly = ""
-    #         for cond in filter_conditions:
-    #             if "ns.transaction_date" not in cond.lower():
-    #                 new_list.append(cond)
-    #         print("new list ----> \n", new_list)
-    #         filter_conditions_monthly = new_list
-    #         print("filter conditions in monthly zone location name ----> \n", filter_conditions)
-    #         if filter_conditions_monthly:
-    #             where_clause_monthly = "WHERE " + "AND ".join(filter_conditions_monthly)
-
-    #         print("where clause in monthly loop ---->\n", where_clause_monthly)
-
-    #         select_columns = ["DATE_TRUNC('month', ns.transaction_date)::DATE AS month"]
-
-    #         select_columns.extend([
-    #             "COALESCE(ns.zone, lm.zone) AS zone",
-    #             "ns.location_name AS location_name"
-    #         ])
-
-    #         group_by_parts = [
-    #             "DATE_TRUNC('month', ns.transaction_date)::DATE",
-    #             "COALESCE(ns.zone, lm.zone)",
-    #             "location_name"
-    #         ]
-    #         select_sql = ",\n        ".join(select_columns)
-    #         group_by_sql = ", ".join(group_by_parts)
-    #         from_join = "FROM public.nozzle_sales ns JOIN public.location_master lm ON ns.sap_id = lm.sap_id"
-    #         nozzle_sales_query = f"""SELECT {select_sql},
-    #             COUNT(DISTINCT ns.site_id) AS connected_sites,
-    #             {sales_volume}
-    #             {from_join}
-    #             {where_clause_monthly}
-    #             GROUP BY {group_by_sql}
-    #             ORDER BY {group_by_sql}
-    #         """
-    #         print("*"*20)
-    #         print("nozzle sales query monthly ---->\n", nozzle_sales_query)
 
     elif "monthly" in segregation:
 
@@ -675,8 +615,6 @@ async def nozzle_sales(
             where_clause_monthly = ""
             if filter_conditions_monthly:
                 where_clause_monthly = "WHERE " + " AND ".join(filter_conditions_monthly)
-
-            print("where clause ---->\n", where_clause_monthly)
 
             if level == "zone":
                 select_columns.append("ns.region AS region")
@@ -760,7 +698,6 @@ async def nozzle_sales(
         GROUP BY {group_by_sql}
         ORDER BY {group_by_sql}
         """
-        print("*"*20)
         print("nozzle sales query ---->\n",nozzle_sales_query)
 
 
@@ -769,20 +706,18 @@ async def nozzle_sales(
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     rows = await function(query=nozzle_sales_query)
     nozzle_sales_df = pl.DataFrame(rows)
-    print("&"*20)
-    print("nozzle sales df --->\n",nozzle_sales_df)
 
+    if nozzle_sales_df.is_empty():
+            return {
+                "status": True,
+                "message": "success",
+                "data": []
+            }
 
     for col in group_cols:
         if col in nozzle_sales_df.columns:
             nozzle_sales_df = nozzle_sales_df.filter(pl.col(col).is_not_null())
 
-    print("%"*20)
-    print("nozzle sales df rename ---->\n ", nozzle_sales_df)
-    # nozzle_sales_df.write_csv("/Users/algofusion/Downloads/result.csv")
-        
-    print("*"*400)
-    print("nozzle sales df final---->\n", nozzle_sales_df)
 
     if (ms_products or hsd_products) and ("product", "zone") in segregation:
         nozzle_sales_df = nozzle_sales_df.with_columns(
@@ -793,15 +728,11 @@ async def nozzle_sales(
                 .otherwise(pl.col("product"))
                 .alias("product")
         )
-        print("*"*400)
-        print("nozzle sales tmt grouping the products ---->\n", nozzle_sales_df)
 
         nozzle_sales_df = nozzle_sales_df.group_by(["transaction_date", "zone", "product"]).agg(
             pl.col("connected_sites").sum().alias("connected_sites"),
             pl.col("sales_volume").sum().alias("sales_volume")
         ).sort("transaction_date")
-
-        print("nozzle sales tmt final---->\n", nozzle_sales_df)
 
 
     return {
@@ -822,10 +753,6 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
     ms_products = ms_products or []
     hsd_products = hsd_products or []
 
-    print("segregation ---->", segregation)
-    print(cross_filters)
-    print("ms products ---->", ms_products)
-    print("hsd products ---->", hsd_products)
     for fc in cross_filters:
         key = fc.get("key", "").lower() 
         if key == "date" and (fc.get("value") or fc.get("values")):
@@ -837,12 +764,25 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
                 else:
                     date_range.append(fc["value"])
 
-
-    print("date_range from filters ---->", date_range)
-    print("segregation from filters ---->", segregation)
     # combined_filters = cross_filters + raw_filters
     combined_filters = (cross_filters or []) + (raw_filters or [])
     if action == "nozzle_daily_sales_tmt":
+        today = datetime.datetime.now().date()
+        yesterday = today - datetime.timedelta(days=1)
+        # the nozzle sales table stores the data with a delay of 1 day.so today's date is mapped to yesterday's date.
+        if date_range:
+            normalized = []
+            print("date range before normalization:", date_range)
+            for d in date_range:
+                try:
+                    parsed = datetime.datetime.strptime(d.strip()[:10], "%Y-%m-%d").date()
+                    if parsed == today:
+                        parsed = yesterday
+                    normalized.append(parsed.strftime("%Y-%m-%d"))
+                except Exception:
+                    normalized.append(d)
+            date_range = normalized
+
         result = await nozzle_sales(
             segregation=segregation,
             filters=combined_filters,
@@ -864,10 +804,7 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
         if segregation:
             seg.extend(segregation)
 
-        print("segregation ---->\n", seg)
-
         df = await nozzle_sales(
-            # segregation=["monthly", "zone", "location_name"],
             segregation= seg,
             filters= combined_filters,
             ms_products= ms_products,
@@ -876,12 +813,6 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
         )
         
         df = pl.DataFrame(df["daily_zone_product_nozzle_sales"])
-
-        # overall = df.group_by("month").agg([
-        #     pl.sum("sales_volume").alias("sales_volume"),
-        #     pl.sum("connected_sites").alias("connected_sites")
-        # ]).sort("month")
-        # print("overall monthly sales ---->\n", overall)
 
         overall = None
         zone = None
@@ -892,26 +823,19 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
 
         if not raw_filters:
             zone = df.select(["month", "zone", "sales_volume"])
-            print("zone level ---->\n", zone)
             overall = df.group_by("month").agg([
                 pl.sum("sales_volume").alias("sales_volume"),
                 pl.sum("connected_sites").alias("connected_sites")
             ]).sort("month")
-            print("overall monthly sales ---->\n", overall)
 
         if "zone" == level:
             region = df.select(["month", "region", "sales_volume"])
-            print("region level ----->\n", region)
 
         if "region" == level:
             sales_area = df.select(["month", "sales_area", "sales_volume"])
-            print("region level ----->\n", sales_area)
 
         if "sales_area" == level:
             location = df.select(["month", "location_name", "sales_volume"])
-            print("region level ----->\n", location)
-
-
 
         return {
             "overall": overall.to_dicts() if overall is not None else [],
