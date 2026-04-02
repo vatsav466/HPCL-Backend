@@ -111,14 +111,21 @@ def insertToDB(data, table_name, indexing_col=()):
 
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
-    column_names = [desc[0] for desc in cur.description]
-    columns=[]
-    for i in column_names:
-        columns.append(i)
+    db_column_names = [desc[0] for desc in cur.description]
+
+    # This handles cases where extra columns were added to the DB table manually
+    columns = [col for col in db_column_names if col in data.columns]
+    missing_in_data = [col for col in db_column_names if col not in data.columns]
+    if missing_in_data:
+        print(f"Columns in DB but not in incoming data (will be NULL): {missing_in_data}")
+
     data = data.select(columns)
     try:
+        # Explicitly list columns in COPY so PostgreSQL skips the extra DB columns
+        
+        copy_columns_formatted = ", ".join(f'"{col}"' for col in columns)
         query = f'''
-        COPY "{table_name}"
+        COPY "{table_name}" ({copy_columns_formatted})
         FROM STDIN
         CSV HEADER DELIMITER '~';
         '''
