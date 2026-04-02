@@ -470,7 +470,7 @@ async def deviceinstallation_action_decommissioning(payload: dict):
                 if not comm_success or  status_code == 1:
                     await DeviceInstallation(**{
                         "id": device_id,
-                        "de_commissioning_responses": f"{status_messages}",
+                        "de_commissioning_responses": status_messages,
                         "status_decommissioning": "Request For Approval",
                     }).modify()
 
