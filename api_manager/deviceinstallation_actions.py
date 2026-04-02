@@ -78,6 +78,7 @@ async def deviceinstallation_validate_aot_details(data: Deviceinstallation_Valid
             "sap_id": payload.get("sap_id"),
             "transporter": payload.get("transporter"),
             "contract_valid_upto": payload.get("contract_valid_upto"),
+            "select_business": payload.get("select_business"),
             "status": "REQUESTED"
         }
         
@@ -311,7 +312,7 @@ async def deviceinstallation_action_device_vts(payload :dict):
             "reason_for_cancel": "",
             "sap_tt_no": record_dict.get("sap_tt_no"),
             "transporter": record_dict.get("transporter"),
-            "status":"PENDING - Device "+status.upper(),
+            "status":"PENDING",
             "remarks" :record_dict.get("remarks"),
         }
 
@@ -469,14 +470,15 @@ async def deviceinstallation_action_decommissioning(payload: dict):
                 if not comm_success or  status_code == 1:
                     await DeviceInstallation(**{
                         "id": device_id,
-                        "de_commissioning_responses": status_messages,
-                        "status_decommissioning": f"{status_decommissioning}"
+                        "de_commissioning_responses": f"{status_messages}",
+                        "status_decommissioning": "Request For Approval",
                     }).modify()
 
                     return {
                         "status": False, "message": f"{status_messages}",
                         "data": {
                             "device_id": device_id,
+                            "status_decommissioning": "Request For Approval",
                             "commissioning": {
                                 "success": False, "status": final_status, "response": comm_response
                             }
