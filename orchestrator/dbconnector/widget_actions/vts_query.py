@@ -786,7 +786,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.tt_risk_score
-                                        WHERE tt_number = '{}'
+                                        WHERE tt_number = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.tt_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 
@@ -805,7 +806,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.transporter_risk_score
-                                        WHERE transporter_code = '{}'
+                                        WHERE transporter_code = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.transporter_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 
