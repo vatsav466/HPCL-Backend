@@ -1049,7 +1049,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
             'dry_out_trends': summary_df.to_dict(orient='records'),
             'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
             'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
-            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage, 'nozzle_sales_avg_df': .to_dicts()[0]}
+            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage, 'nozzle_sales_avg_df': nozzle_sales_avg_df.to_dicts()[0]}
 
 
 async def get_ro_alerts():
