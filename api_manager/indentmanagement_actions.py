@@ -3,6 +3,7 @@ import importlib
 from field_force_enum import *
 from field_force_model import *
 import orchestrator.field_force.ims as field_force_ims
+import orchestrator.field_force.ims_lpg as field_force_ims_lpg
 
 router = fastapi.APIRouter(prefix='/indentmanagement')
 
@@ -73,3 +74,11 @@ async def indentmanagement_get_r3_r1_details(data: Indentmanagement_Get_R3_R1_De
     if not callable(func):
         raise ValueError(f"{action_name} is not a valid function")
     return await func(data)
+
+
+# Action get_indent_details
+@router.post('/get_indent_details', tags=['IndentManagement'])
+async def indentmanagement_get_indent_details(data: Indentmanagement_Get_Indent_DetailsParams):
+    if (data.bu or "").strip().upper() == "LPG":
+        return await field_force_ims_lpg.get_indent_details(data)
+    return await field_force_ims.get_indent_details(data)

@@ -9,12 +9,12 @@ import orchestrator.field_force.vendor_territory_mapping as vendor_territory_map
 # -------- Territory → column name per vendor/model (for WHERE conditions and WidgetFilters) --------
 TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
     "IMS": {
-        "location": "sap_id",
-        "sales_area": "sales_area",
-        "region": "region",
-        "zone": "zone",
-        "plant": "plant",
-        "dealer": "dealer_id",
+        "location": "LOCN_CODE",
+        # "sales_area": "sales_area",
+        # "region": "region",
+        # "zone": "zone",
+        "plant": "LOCN_CODE",
+        "dealer": "SUBSTR(DEALER_CODE,3,10)",
     },
     "CRIS": {
         "location": "rosapcode",
