@@ -560,7 +560,10 @@ async def get_sales_order_placed(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b  ON a."LOCN_CODE" = b."LOCN_CODE" 
+                        AND a."INDENT_NO" = b."INDENT_NO"
+                        WHERE 
                         TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                         AND a."CANCEL_INDENT" IS NULL 
                         AND a."TRUCK_REGNO" IS NOT NULL 
@@ -616,7 +619,10 @@ async def get_invoice_created(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b  ON a."LOCN_CODE" = b."LOCN_CODE" 
+                        AND a."INDENT_NO" = b."INDENT_NO"
+                        WHERE 
                         TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                         AND a."CANCEL_INDENT" IS NULL 
                         AND a."TRUCK_REGNO" IS NOT NULL 
@@ -675,7 +681,11 @@ async def get_r2_swiped(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b 
+                            ON a."LOCN_CODE" = b."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
+                        WHERE 
                         TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                         AND a."CANCEL_INDENT" IS NULL 
                         AND a."TRUCK_REGNO" IS NOT NULL 
@@ -735,7 +745,11 @@ async def get_r3_swiped(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST"  a 
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b 
+                            ON a."LOCN_CODE" = b."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
+                        WHERE 
                         TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                         AND a."CANCEL_INDENT" IS NULL 
                         AND a."TRUCK_REGNO" IS NOT NULL 
@@ -782,7 +796,7 @@ async def get_delivered(
                         AND a."TRUCK_REGNO" IS NOT NULL 
                         AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
                         AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
-                        AND b."DELIVERY_DATE" IS NOT NULL
+                        AND a."DELIVERY_DATE" IS NOT NULL
                         {conditions}
                         ORDER BY 
                             a."INDENT_NO" DESC"""
@@ -798,7 +812,7 @@ async def get_delivered(
                         AND a."TRUCK_REGNO" IS NOT NULL 
                         AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
                         AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
-                        AND b."DELIVERY_DATE" IS NOT NULL
+                        AND a."DELIVERY_DATE" IS NOT NULL
                             {conditions}"""
     resp = await execute_ims_query(query)
     n = _aggregate_count_from_resp(resp)
