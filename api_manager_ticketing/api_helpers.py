@@ -28,7 +28,7 @@ async def attach_file_common(
         ".pdf", ".doc", ".docx"
     ]
 
-    target_dir = urdhva_base.settings.ticketing_attachments
+    target_dir = urdhva_base.settings.ticketing_attachments or "/tmp"
     os.makedirs(target_dir, exist_ok=True)
 
     # Fetch record first
@@ -113,7 +113,7 @@ async def download_attachment_common(
 ):
     # ---------------- FETCH RECORD ----------------
     params = urdhva_base.queryparams.QueryParams(
-        q=f"ticket_id='{record_id}'",
+        q=f"id='{record_id}'",
         limit=1
     )
 
