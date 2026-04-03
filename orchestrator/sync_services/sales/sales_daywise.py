@@ -201,6 +201,9 @@ def insertToDB(data, table_name, indexing_col=()):
     #data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
+        cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2026-2027'
+                    """)
         
         cur.execute(f"""
                     DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2025-2026'
