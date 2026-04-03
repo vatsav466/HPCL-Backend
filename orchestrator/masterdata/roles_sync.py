@@ -1790,6 +1790,9 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Risk Score"
+                            },
+                            {
+                            "title": "Device Manager"
                             }
                         ]
                     },
