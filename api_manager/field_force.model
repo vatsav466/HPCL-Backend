@@ -93,6 +93,8 @@ Model IndentManagement crud_disable {
         action str
         filters list WidgetFilters
         cross_filters optional list WidgetFilters
+        skip optional default=0 int // For skip
+        limit optional default=20 int // Records per page
     }
 }
 

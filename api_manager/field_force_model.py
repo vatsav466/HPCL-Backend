@@ -136,6 +136,8 @@ class Indentmanagement_Get_Indent_DetailsParams(pydantic.BaseModel):
     action: str
     filters: typing.List[WidgetFiltersCreate]
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(20, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

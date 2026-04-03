@@ -81,4 +81,4 @@ async def indentmanagement_get_r3_r1_details(data: Indentmanagement_Get_R3_R1_De
 async def indentmanagement_get_indent_details(data: Indentmanagement_Get_Indent_DetailsParams):
     if (data.bu or "").strip().upper() == "LPG":
         return await field_force_ims_lpg.get_indent_details(data)
-    return await field_force_ims.get_indent_details(data)
+    return {"status": False, "data": [], "message": "Invalid inputs"}
