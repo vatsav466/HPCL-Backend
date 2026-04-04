@@ -391,6 +391,7 @@ Model LocationMaster {
     city optional str
     district optional index_field str
     region optional index_field str
+    region_code optional str
     state optional index_field str
     zone optional index_field str
     address optional str
@@ -402,6 +403,7 @@ Model LocationMaster {
     latitude optional str
     longitude optional str
     sales_area optional str
+    sales_area_code optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
     category optional str
