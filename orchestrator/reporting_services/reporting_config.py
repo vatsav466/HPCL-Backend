@@ -110,7 +110,7 @@ location_master_schema = {
 
 _rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
            "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city",
-           "sales_grp": "sales_area_code", "region_code": "sales_off",
+           "sales_grp": "sales_area_code", "sales_off": "region_code",
            "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location", "dealer_email": "email"}
 
 location_configs = [
