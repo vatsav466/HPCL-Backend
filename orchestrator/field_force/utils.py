@@ -16,6 +16,12 @@ TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
         "plant": "LOCN_CODE",
         "dealer": "SUBSTR(DEALER_CODE,3,10)",
     },
+    "IMS_LPG": {
+        "location": "LOCN_CODE",
+        "plant": "LOCN_CODE",
+        "sales_area": "SAREA_DESC",
+        "zone": "ZONE",
+    },
     "CRIS": {
         "location": "rosapcode",
         "sales_area": "SALES_AREA",

@@ -15,6 +15,7 @@ import orchestrator.analytics.pipeline_details as pipeline_details
 import orchestrator.analytics.sod_location_stats as sod_location_stats
 import orchestrator.tas_operations.command_control as tas_command_control
 import orchestrator.masterdata.location_master_upload as location_master_upload
+import orchestrator.field_force.location_master_metadata as location_master_metadata
 
 router = fastapi.APIRouter(prefix='/locationmaster')
 
@@ -261,3 +262,9 @@ async def locationmaster_get_dist_loc_details(data: Locationmaster_Get_Dist_Loc_
 @router.post('/get_pipeline_locations', tags=['LocationMaster'])
 async def locationmaster_get_pipeline_locations():
      return await pipeline_details.get_pipeline_locations()
+
+
+# Action get_location_metadata
+@router.post('/get_location_metadata', tags=['LocationMaster'])
+async def locationmaster_get_location_metadata(data: Locationmaster_Get_Location_MetadataParams):
+    return await locationmaster_get_location_metadata(data.sap_id, data.metadata_filters, data.required_fields)

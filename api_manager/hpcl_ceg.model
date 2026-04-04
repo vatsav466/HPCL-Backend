@@ -301,8 +301,6 @@ Model Users {
         login_type optional default='employee' str
     }
 
-    
-
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
@@ -462,6 +460,12 @@ Model LocationMaster {
 
     Action=> get_pipeline_locations {
 
+    }
+
+    Action=> get_location_metadata {
+        bu list str
+        metadata_filters optional dict
+        required_fields optional list str
     }
 
     Config=> {
