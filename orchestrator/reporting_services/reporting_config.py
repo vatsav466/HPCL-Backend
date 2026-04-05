@@ -154,6 +154,9 @@ location_configs = [
                     INNER join EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
                 WHERE 
                     zca.deliv_plant <> '' AND zca.sales_org='2000'
+                    AND zca.INACTIVE=''
+                    AND zca.customer BETWEEN 4000000 AND 49999999 
+                    AND zca.DIST_CHANNEL=11 
                  """
     },
     {
