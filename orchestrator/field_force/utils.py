@@ -2,9 +2,7 @@
 Shared utilities for Field Force orchestrator (IMS, CRIS, Novex, etc.).
 """
 from typing import Any, Dict, List, Optional
-
 import orchestrator.field_force.vendor_territory_mapping as vendor_territory_mapping
-
 
 # -------- Territory → column name per vendor/model (for WHERE conditions and WidgetFilters) --------
 TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
@@ -19,7 +17,7 @@ TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
     "IMS_LPG": {
         "location": "LOCN_CODE",
         "plant": "LOCN_CODE",
-        "sales_area": "SAREA_DESC",
+        "sales_area": "SAREA_CODE",
         "zone": "ZONE",
     },
     "CRIS": {
@@ -89,6 +87,132 @@ def generate_session_filters(
     return conditions
 
 
+def _value_is_empty(v: Any) -> bool:
+    if v is None:
+        return True
+    if isinstance(v, str) and v.strip() == "":
+        return True
+    return False
+
+
+def _coalesce_widget_value_and_values(item: Dict[str, Any]) -> None:
+    """
+    If ``value`` is empty but ``values`` is a non-empty list, normalize to a single ``value``
+    or ``cond`` ``in`` + ``values``, in place.
+    """
+    v = item.get("value")
+    vs = item.get("values")
+    if not _value_is_empty(v):
+        return
+    if not isinstance(vs, list) or len(vs) == 0:
+        return
+    strs = [str(x) for x in vs if x is not None and str(x).strip() != ""]
+    if not strs:
+        return
+    if len(strs) == 1:
+        item["value"] = strs[0]
+        item["cond"] = "="
+        item.pop("values", None)
+    else:
+        item["values"] = strs
+        item["cond"] = "in"
+        item.pop("value", None)
+
+
+def widget_filters_to_condition_strings(
+    widget_filters: List[Dict[str, Any]],
+) -> List[str]:
+    """
+    Convert normalized widget filters to the same SQL-style fragments as
+    :func:`generate_session_filters` (via :func:`format_in_condition`).
+
+    Examples: ``SAREA_CODE='384'``, ``ZONE in ('a', 'b')``.
+
+    Reuses :func:`_coalesce_widget_value_and_values`, so ``cond: '='`` with
+    multiple ``values`` becomes an ``IN`` list before formatting.
+    """
+    out: List[str] = []
+    for raw in widget_filters or []:
+        item = dict(raw)
+        _coalesce_widget_value_and_values(item)
+        col = str(item.get("key") or "").strip()
+        if not col:
+            continue
+        v = item.get("value")
+        vs = item.get("values")
+        if isinstance(vs, list) and len(vs) > 1:
+            s = format_in_condition(col, [str(x) for x in vs])
+        elif isinstance(vs, list) and len(vs) == 1:
+            s = format_in_condition(col, str(vs[0]))
+        elif not _value_is_empty(v):
+            s = format_in_condition(col, v)
+        else:
+            continue
+        if s:
+            out.append(s)
+    return out
+
+
+def _apply_vendor_territory_to_widget_item(
+    item: Dict[str, Any], territory_type: str, vendor: str
+) -> None:
+    """Map filter values through vendor_territory (e.g. sales_area codes) like session filters."""
+    c = str(item.get("cond") or "").lower()
+    if c == "in" and isinstance(item.get("values"), list):
+        mapped = vendor_territory_mapping.get_vendor_territory(
+            territory_type, item["values"], vendor
+        )
+        if isinstance(mapped, list):
+            item["values"] = [str(x) for x in mapped]
+        elif mapped is not None:
+            item["values"] = [str(mapped)]
+    elif not _value_is_empty(item.get("value")):
+        mapped = vendor_territory_mapping.get_vendor_territory(
+            territory_type, item.get("value"), vendor
+        )
+        if isinstance(mapped, list):
+            if len(mapped) == 1:
+                item["value"] = str(mapped[0])
+            elif len(mapped) > 1:
+                item["values"] = [str(x) for x in mapped]
+                item["cond"] = "in"
+                item.pop("value", None)
+        elif mapped is not None:
+            item["value"] = str(mapped)
+
+
+def normalize_widget_filters_for_model(
+    widget_filters: List[Dict[str, Any]],
+    vendor: str,
+    model: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Map semantic territory keys on widget filters to SQL column names (same as session path)
+    and normalize ``value`` / ``values`` (e.g. empty ``value`` with ``values: ['384']``).
+
+    Only rewrites ``key`` when it matches a territory key in ``TERRITORY_COLUMN_BY_VENDOR``
+    for the given model (case-insensitive). Already-resolved column names are left unchanged.
+    """
+    model_key = (model or vendor).upper()
+    column_map = TERRITORY_COLUMN_BY_VENDOR.get(model_key, {})
+    out: List[Dict[str, Any]] = []
+    for raw in widget_filters or []:
+        item = dict(raw)
+        _coalesce_widget_value_and_values(item)
+        key = str(item.get("key") or "").strip()
+        if not key:
+            out.append(item)
+            continue
+        lk = key.lower()
+        sql_col = column_map.get(lk)
+        if sql_col:
+            item["key"] = sql_col
+            _coalesce_widget_value_and_values(item)
+            _apply_vendor_territory_to_widget_item(item, lk, vendor)
+        out.append(item)
+    return out
+
+
 def session_dict_to_widget_filters(
     session_dict: Dict[str, Any],
     column_map: Dict[str, str],
@@ -140,14 +264,19 @@ def get_input_filters(
     :param model: Optional; for CRIS/NOVEX use model to pick column map; defaults to vendor.
     :return: List of filter items in WidgetFilters format.
     """
+    normalized = normalize_widget_filters_for_model(
+        list(widget_filters) if widget_filters else [],
+        vendor=vendor,
+        model=model,
+    )
     if not merge_session:
-        return list(widget_filters) if widget_filters else []
+        return normalized
 
     session_dict = vendor_territory_mapping.get_role_based_filters(vendor)
     if not session_dict:
-        return list(widget_filters) if widget_filters else []
+        return normalized
 
     model_key = (model or vendor).upper()
     column_map = TERRITORY_COLUMN_BY_VENDOR.get(model_key, {})
     session_as_widgets = session_dict_to_widget_filters(session_dict, column_map)
-    return session_as_widgets + (list(widget_filters) if widget_filters else [])
+    return session_as_widgets + normalized
