@@ -267,4 +267,8 @@ async def locationmaster_get_pipeline_locations():
 # Action get_location_metadata
 @router.post('/get_location_metadata', tags=['LocationMaster'])
 async def locationmaster_get_location_metadata(data: Locationmaster_Get_Location_MetadataParams):
-    return await locationmaster_get_location_metadata(data.sap_id, data.metadata_filters, data.required_fields)
+    return await location_master_metadata.get_location_metadata(
+        data.bu,
+        data.metadata_filters or {},
+        data.required_fields or [],
+    )

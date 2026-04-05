@@ -707,8 +707,8 @@ class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
 
 class Locationmaster_Get_Location_MetadataParams(pydantic.BaseModel):
     bu: typing.List[str]
-    metadata_filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
-    required_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    metadata_filters: typing.Optional[dict] = pydantic.Field(default_factory=dict)
+    required_fields: typing.Optional[typing.List[str]] = pydantic.Field(default_factory=list)
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
