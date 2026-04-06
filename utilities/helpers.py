@@ -23,7 +23,8 @@ from dateutil.relativedelta import relativedelta
 import utilities
 import Thingsboard.bu_asset_master_new as tb_master
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-import hpcl_ceg_model
+import utilities.sales_mapping as sales_mapping
+
 
 def month_short_to_number(short_name):
     # Parses the short month name (%b) and extracts the month as an integer.
@@ -226,7 +227,7 @@ async def get_location_details(bu, sap_id, from_db=False):
             
             # Query database directly using SQL
             query = f"SELECT * FROM location_master WHERE bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
-            locdata = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
+            locdata = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=1)
             
             if locdata.get('data', []):
                 location_data = locdata.get('data')[0]
@@ -605,7 +606,8 @@ def get_user_details(where_clause):
     user_region = rpt.get("region", [])
     user_sales_area = rpt.get("sales_area", [])
 
-    user_zone = [utilities.sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
+    
+    user_zone = [sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
 
     if not user_region:
         user_region = [x['value'] for x in where_clause if x.get('key') == 'Region_Name']   

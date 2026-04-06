@@ -6259,6 +6259,373 @@ async def gantry_override_analysis(data):
         print(f"Error in gantry_override_analysis: {e}")
         return []
     
+async def get_fire_engine_runtime_weekly(data):
+    try:
+        filters = []
+        below_filters = []   # ADDED (for below threshold)
+
+        # defaults FIRST
+        segment_type = "week"
+        data_required = True
+        sap_id = None
+
+        # override from filters
+        if data.filters:
+            for f in data.filters:
+                if f.key == "sap_id":
+                    sap_id = f.value
+
+                elif f.key == "segment_type":
+                    segment_type = f.value.lower()
+
+                elif f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+
+        #  CHANGED: define BOTH conditions
+        if segment_type == "year":
+            above_condition = "NULLIF(total_run_time, '')::interval > interval '4 hours'"
+            below_condition = "NULLIF(total_run_time, '')::interval <= interval '4 hours'"
+        else:
+            above_condition = "NULLIF(total_run_time, '')::interval > interval '30 minutes'"
+            below_condition = "NULLIF(total_run_time, '')::interval <= interval '30 minutes'"
+
+        filters.append(above_condition)        
+        below_filters.append(below_condition)  
+
+        # direct field fallback
+        if not sap_id and hasattr(data, "zone") and data.zone:
+            pass
+
+        # apply sap_id if found
+        if sap_id:
+            condition = f"TRIM(sap_id) = '{str(sap_id).strip()}'"
+            filters.append(condition)
+            below_filters.append(condition)   
+
+        # date filter
+        if data.start_date and data.end_date:
+            condition = f"""
+                created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """
+            filters.append(condition)
+            below_filters.append(condition)   
+
+        # location filter
+        if data.location_name:
+            condition = f"LOWER(location_name) = LOWER('{data.location_name}')"
+            filters.append(condition)
+            below_filters.append(condition)   
+
+        # device filter
+        if data.equipment_name:
+            condition = f"LOWER(device_name) = LOWER('{data.equipment_name}')"
+            filters.append(condition)
+            below_filters.append(condition)   
+
+        # where clauses
+        where_clause = ""
+        below_where_clause = ""   
+
+        if filters:
+            where_clause = "WHERE " + " AND ".join(filters)
+
+        if below_filters:
+            below_where_clause = "WHERE " + " AND ".join(below_filters)   
+
+        # segmentation logic
+        if segment_type == "year":
+            segment_expr = "TO_CHAR(created_at, 'YYYY')"
+
+        elif segment_type == "month":
+            segment_expr = "TO_CHAR(created_at, 'Mon-YYYY')"
+
+        else:
+            segment_expr = """
+                CASE
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 1 AND 7 THEN 'Week-1'
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 8 AND 14 THEN 'Week-2'
+                    WHEN EXTRACT(DAY FROM created_at) BETWEEN 15 AND 21 THEN 'Week-3'
+                    ELSE 'Week-4'
+                END
+            """
+
+        # main query (above threshold)
+        query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                sap_id,
+                device_name,
+                location_name,
+                total_run_time,
+                created_at
+            FROM public.tas_fire_engine_test
+            {where_clause}
+            ORDER BY created_at
+        """
+
+        # ADDED: below threshold query
+        below_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                sap_id,
+                device_name,
+                location_name,
+                total_run_time,
+                created_at
+            FROM public.tas_fire_engine_test
+            {below_where_clause}
+            ORDER BY created_at
+        """
+
+        # count query (only for above, unchanged)
+        count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                COUNT(*) AS total_count
+            FROM public.tas_fire_engine_test
+            {where_clause}
+            GROUP BY segment
+            ORDER BY segment
+        """
+        below_count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                COUNT(*) AS total_count
+            FROM public.tas_fire_engine_test
+            {below_where_clause}
+            GROUP BY segment
+            ORDER BY segment
+        """
+
+        print(query)
+        print(below_query)   
+        print(count_query)
+
+        rows = []
+        below_rows = []   
+
+        if data_required:
+            res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = res.get("data", [])
+
+            # ADDED execution
+            below_res = await hpcl_ceg_model.Alerts.get_aggr_data(below_query, limit=0)
+            below_rows = below_res.get("data", [])
+
+        count_res = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
+        below_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(below_count_query, limit=0)
+
+        # CHANGED RESPONSE
+        return {
+            "status": True,
+            "message": "Fire engine runtime analysis fetched",
+
+            # CHANGED (clear naming)
+            "above_segment_counts": count_res.get("data", []),
+
+            # ADDED
+            "below_segment_counts": below_count_res.get("data", []),
+
+            "above_threshold_data": rows if data_required else [],
+            "below_threshold_data": below_rows if data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "segment_counts": [],
+            "above_threshold_data": [],
+            "below_threshold_data": []
+        }
+        
+async def get_interlock_testing_analysis(data):
+    try:
+        filters = []
+        testing_filters = []
+        non_testing_filters = []
+
+        data_required = True
+
+        # ----------- HELPER FUNCTION -----------
+        def add_condition(condition):
+            filters.append(condition)
+            testing_filters.append(condition)
+            non_testing_filters.append(condition)
+
+        # ----------- DEFAULTS -----------
+        interlock_names = []
+        sap_id = None
+        bu = None
+        alert_section = None
+        search = None 
+
+        # ----------- READ FILTERS -----------
+        if data.filters:
+            for f in data.filters:
+
+                if f.key == "interlock_name":
+                    if isinstance(f.value, list):
+                        interlock_names = f.value
+                    else:
+                        interlock_names = [i.strip() for i in f.value.split(",")]
+
+                elif f.key == "sap_id":
+                    sap_id = f.value
+
+                elif f.key == "bu":
+                    bu = f.value
+
+                elif f.key == "alert_section":
+                    alert_section = f.value
+
+                elif f.key == "search":
+                    search = f.value
+
+                elif f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+
+        print("INTERLOCKS:", interlock_names)
+
+        # ----------- INTERLOCK FILTER -----------
+        if interlock_names:
+            formatted = ",".join([f"'{i}'" for i in interlock_names])
+            add_condition(f"interlock_name IN ({formatted})")
+
+        # ----------- SAP FILTER -----------
+        if sap_id:
+            add_condition(f"TRIM(sap_id) = '{str(sap_id).strip()}'")
+
+        # ----------- BU FILTER -----------
+        if bu:
+            add_condition(f"LOWER(bu) = LOWER('{bu}')")
+
+        # ----------- ALERT SECTION FILTER -----------
+        if alert_section:
+            add_condition(f"LOWER(alert_section) = LOWER('{alert_section}')")
+
+        # ----------- DATE FILTER -----------
+        if data.start_date and data.end_date:
+            add_condition(f"""
+                created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """)
+
+        # ----------- LOCATION FILTER -----------
+        if data.location_name:
+            add_condition(f"LOWER(location_name) = LOWER('{data.location_name}')")
+
+        # ----------- DEVICE FILTER -----------
+        if data.equipment_name:
+            add_condition(f"LOWER(device_name) = LOWER('{data.equipment_name}')")
+
+        # ----------- SEARCH FILTER -----------
+        if search:
+            search_text = search.lower()
+
+            add_condition(f"""
+                (
+                    LOWER(sap_id) LIKE '%{search_text}%'
+                    OR LOWER(device_name) LIKE '%{search_text}%'
+                    OR LOWER(location_name) LIKE '%{search_text}%'
+                    OR LOWER(interlock_name) LIKE '%{search_text}%'
+                )
+            """)
+
+        # ----------- TESTING CONDITIONS -----------
+        testing_filters.append("(updated_at - created_at) <= interval '5 minutes'")
+        non_testing_filters.append("(updated_at - created_at) > interval '5 minutes'")
+
+        # ----------- WHERE CLAUSES -----------
+        where_clause = "WHERE " + " AND ".join(filters) if filters else ""
+        testing_where_clause = "WHERE " + " AND ".join(testing_filters) if testing_filters else ""
+        non_testing_where_clause = "WHERE " + " AND ".join(non_testing_filters) if non_testing_filters else ""
+
+        # ----------- QUERIES -----------
+        query = f"""
+            SELECT DISTINCT
+                sap_id,
+                device_name,
+                created_at,
+                updated_at
+            FROM alerts
+            {where_clause}
+            ORDER BY created_at
+        """
+
+        testing_query = f"""
+            SELECT
+                sap_id,
+                'TAS' AS bu,
+                location_name,
+                alert_section,
+                interlock_name,
+                created_at,
+                updated_at
+            FROM alerts
+            {testing_where_clause}
+            ORDER BY created_at
+        """
+
+        non_testing_query = f"""
+            SELECT
+                sap_id,
+                'TAS' AS bu,
+                location_name,
+                alert_section,
+                interlock_name,
+                created_at,
+                updated_at
+            FROM alerts
+            {non_testing_where_clause}
+            ORDER BY created_at
+        """
+
+        testing_count_query = f"""
+            SELECT COUNT(*) AS testing_count
+            FROM alerts
+            {testing_where_clause}
+        """
+
+        non_testing_count_query = f"""
+            SELECT COUNT(*) AS non_testing_count
+            FROM alerts
+            {non_testing_where_clause}
+        """
+
+        print(query)
+        print(testing_query)
+        print(non_testing_query)
+
+        # ----------- EXECUTION -----------
+        rows, testing_rows, non_testing_rows = [], [], []
+
+        if data_required:
+            res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = res.get("data", [])
+
+            testing_rows = (await hpcl_ceg_model.Alerts.get_aggr_data(testing_query, limit=0)).get("data", [])
+            non_testing_rows = (await hpcl_ceg_model.Alerts.get_aggr_data(non_testing_query, limit=0)).get("data", [])
+
+        testing_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(testing_count_query, limit=0)
+        non_testing_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(non_testing_count_query, limit=0)
+
+        return {
+            "status": True,
+            "message": "Interlock testing analysis fetched",
+            "testing_count": testing_count_res.get("data", []),
+            "non_testing_count": non_testing_count_res.get("data", []),
+            "testing_data": testing_rows if data_required else [],
+            "non_testing_data": non_testing_rows if data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "testing_count": [],
+            "non_testing_count": [],
+            "testing_data": [],
+            "non_testing_data": []
+        }
+        
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -6278,7 +6645,9 @@ AnalyticsModelMapping = {
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
     "Gantry Override Analysis": gantry_override_analysis,
-    "Run Daily Data Check": operability_index_health_check
+    "Run Daily Data Check": operability_index_health_check,
+    "Tas_fire_engine":get_fire_engine_runtime_weekly,
+    "Interlock_testing":get_interlock_testing_analysis
 
 }
 

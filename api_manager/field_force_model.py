@@ -130,6 +130,20 @@ class Indentmanagement_Get_R3_R1_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentmanagement_Get_Indent_DetailsParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    table_data: typing.Optional[bool] = pydantic.Field(False, )
+    action: str
+    filters: typing.List[WidgetFiltersCreate]
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(20, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Dryoutmanagement_Get_Dry_Out_LocationsParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     by_product: typing.Optional[bool] = pydantic.Field(False, )
@@ -159,6 +173,22 @@ class Dryoutmanagement_Get_Dry_Out_IndentsParams(pydantic.BaseModel):
 
 
 class Dryoutmanagement_Get_Retail_Outlet_StockoutsParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
+    resp_level: typing.Optional[str] = pydantic.Field("", **{})
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Dryoutmanagement_Get_Loss_Of_Sales_VolumeParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     action: str
     drill_state: typing.Optional[str] = pydantic.Field("", **{})
@@ -324,6 +354,20 @@ class Nozzlesales_Nozzle_Sales_AnalysisParams(pydantic.BaseModel):
 
 class Nozzlesales_Nozzle_Sales_ComparisonParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Nozzlesales_Nozzle_Sales_TmtParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    level_filter: typing.Optional[LevelFilterCreate] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    segregation: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ms_products: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    hsd_products: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

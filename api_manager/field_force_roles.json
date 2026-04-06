@@ -54,6 +54,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -99,6 +102,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -153,6 +159,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -189,6 +198,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -216,6 +228,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -252,6 +267,9 @@
                 },
                 {
                     "name": "get_retail_outlet_stockouts"
+                },
+                {
+                    "name": "get_loss_of_sales_volume"
                 }
             ]
         },
@@ -477,6 +495,9 @@
                 },
                 {
                     "name": "nozzle_sales_comparison"
+                },
+                {
+                    "name": "nozzle_sales_tmt"
                 }
             ]
         },
@@ -576,6 +597,9 @@
                 },
                 {
                     "name": "nozzle_sales_comparison"
+                },
+                {
+                    "name": "nozzle_sales_tmt"
                 }
             ]
         },
@@ -940,6 +964,10 @@
             "displayName": "get_r3_r1_details"
         },
         {
+            "name": "get_indent_details",
+            "displayName": "get_indent_details"
+        },
+        {
             "name": "get_dry_out_locations",
             "displayName": "get_dry_out_locations"
         },
@@ -954,6 +982,10 @@
         {
             "name": "get_retail_outlet_stockouts",
             "displayName": "get_retail_outlet_stockouts"
+        },
+        {
+            "name": "get_loss_of_sales_volume",
+            "displayName": "get_loss_of_sales_volume"
         },
         {
             "name": "stock_availability",
@@ -1026,6 +1058,10 @@
         {
             "name": "nozzle_sales_comparison",
             "displayName": "nozzle_sales_comparison"
+        },
+        {
+            "name": "nozzle_sales_tmt",
+            "displayName": "nozzle_sales_tmt"
         },
         {
             "name": "get_sales_by_product",

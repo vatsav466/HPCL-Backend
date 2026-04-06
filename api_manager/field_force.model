@@ -85,6 +85,17 @@ Model IndentManagement crud_disable {
        filters list WidgetFilters
        cross_filters list WidgetFilters
     }
+
+    // For LPG Dryout pattern
+    Action=> get_indent_details {
+        bu optional str // LPG, TAS, DS
+        table_data optional bool // This will decide whether data required or counts required
+        action str
+        filters list WidgetFilters
+        cross_filters optional list WidgetFilters
+        skip optional default=0 int // For skip
+        limit optional default=20 int // Records per page
+    }
 }
 
 // ========== Dry-Out (Novex) - Dev Phase 1 ==========
@@ -111,6 +122,19 @@ Model DryOutManagement crud_disable {
 
     // Zone Wise Dry Out Trends
     Action=> get_retail_outlet_stockouts {
+        filters optional list WidgetFilters
+        action str
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+        resp_format optional str regex="^([a-zA-Z0-9_. ]+|)$" // stacked for stacked data, else keep as empty
+        resp_level  optional str // this is to get the graphs at sbu level in industry_performance
+        payload optional dict
+    }
+
+    // Lost Of Sales Volume
+    Action=> get_loss_of_sales_volume {
         filters optional list WidgetFilters
         action str
         drill_state optional str
@@ -222,6 +246,16 @@ Model NozzleSales crud_disable {
     // Present year vs last year comparison
     Action=> nozzle_sales_comparison {
         data WidgetFilters
+    }
+    
+    Action=> nozzle_sales_tmt {
+        filters optional list WidgetFilters
+        level_filter optional LevelFilter
+        cross_filters optional list WidgetFilters
+        segregation optional list str
+        ms_products optional list str
+        hsd_products optional list str
+        action str
     }
 }
 

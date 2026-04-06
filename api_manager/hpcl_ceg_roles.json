@@ -375,6 +375,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -399,6 +402,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -453,6 +459,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -5136,6 +5145,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -5187,6 +5202,12 @@
                 },
                 {
                     "name": "performance_score_breakdown"
+                },
+                {
+                    "name": "performance_score_trend"
+                },
+                {
+                    "name": "performance_score_monthly_trend"
                 }
             ]
         },
@@ -7497,6 +7518,9 @@
                 },
                 {
                     "name": "action_decommissioning"
+                },
+                {
+                    "name": "action_decommissioning_rejected"
                 }
             ]
         },
@@ -7548,6 +7572,9 @@
                 },
                 {
                     "name": "action_decommissioning"
+                },
+                {
+                    "name": "action_decommissioning_rejected"
                 }
             ]
         },
@@ -8234,69 +8261,6 @@
                     "name": "delete"
                 }
             ]
-        },
-        {
-            "name": "tashelpdeskvendormails",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "TasHelpDeskVendorMails",
-            "attributes": {},
-            "uris": [
-                "/api/tashelpdeskvendormails/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
-            "name": "tashelpdeskvendormails_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "TasHelpDeskVendorMails_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/tashelpdeskvendormails/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "tashelpdeskvendormails_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "TasHelpDeskVendorMails_admin",
-            "attributes": {},
-            "uris": [
-                "/api/tashelpdeskvendormails/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
         }
     ],
     "policies": [
@@ -8458,6 +8422,10 @@
         {
             "name": "get_pipeline_locations",
             "displayName": "get_pipeline_locations"
+        },
+        {
+            "name": "get_location_metadata",
+            "displayName": "get_location_metadata"
         },
         {
             "name": "upload_role_master",
@@ -8880,6 +8848,14 @@
             "displayName": "performance_score_breakdown"
         },
         {
+            "name": "performance_score_trend",
+            "displayName": "performance_score_trend"
+        },
+        {
+            "name": "performance_score_monthly_trend",
+            "displayName": "performance_score_monthly_trend"
+        },
+        {
             "name": "update_ro_master_data",
             "displayName": "update_ro_master_data"
         },
@@ -9128,6 +9104,10 @@
             "displayName": "action_decommissioning"
         },
         {
+            "name": "action_decommissioning_rejected",
+            "displayName": "action_decommissioning_rejected"
+        },
+        {
             "name": "create_user",
             "displayName": "create_user"
         },
@@ -9158,6 +9138,10 @@
         {
             "name": "get_filtered_mfm_data",
             "displayName": "get_filtered_mfm_data"
+        },
+        {
+            "name": "lpg_plants_insights",
+            "displayName": "lpg_plants_insights"
         }
     ]
 }

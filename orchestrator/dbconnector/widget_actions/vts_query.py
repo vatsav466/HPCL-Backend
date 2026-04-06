@@ -720,7 +720,7 @@ vts_query = {
     "get_emlock_open_data": """
                             SELECT
                                 createdat, sap_id, location_name, zone, region, trucknumber,
-                                invoicenumber as invoice_number, swipeoutl1, swipeoutl2
+                                invoicenumber as invoice_number, swipeoutl1, swipeoutl2, trip_status
                             FROM
                                 vts_tripauditmaster
                             WHERE
@@ -733,7 +733,7 @@ vts_query = {
                      ) 
                     as emlock_open
                     FROM vts_tripauditmaster
-                    WHERE invoicenumber != 'null' and invoicenumber != ''
+                    WHERE invoicenumber != 'null' and invoicenumber != '' AND trip_status != 'Closed'
                     """,   
                                      
     "all_violations" : [   
@@ -786,7 +786,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.tt_risk_score
-                                        WHERE tt_number = '{}'
+                                        WHERE tt_number = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.tt_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 
@@ -805,7 +806,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.transporter_risk_score
-                                        WHERE transporter_code = '{}'
+                                        WHERE transporter_code = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.transporter_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 

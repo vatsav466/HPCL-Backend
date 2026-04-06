@@ -76,7 +76,7 @@ async def clear_existing_location_master(bu, data):
     pg_conn.close()
     
 
-async def insert_users(data):
+async def insert_location_data(data):
     for item in data:
         for key in ['sales_area_1']:
             if key in item.keys():
@@ -85,6 +85,7 @@ async def insert_users(data):
                 elif isinstance(item[key], str):
                     item[key] = ast.literal_eval(item[key])
     await hpcl_ceg_model.LocationMaster.bulk_update(data, upsert=True)
+
 
 async def combine_roles(data, _id, role_name):
     """
@@ -162,7 +163,7 @@ async def sync_location_master():
         data["bu"] = config.get("bu", "").upper()
         data = await process_data(data)
         await clear_existing_location_master(config.get("bu", ""), data)
-        await insert_users(data.to_dict(orient="records"))
+        await insert_location_data(data.to_dict(orient="records"))
 
 
 if __name__=="__main__":

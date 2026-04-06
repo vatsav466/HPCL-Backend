@@ -23,10 +23,12 @@ from dateutil.relativedelta import relativedelta
 from fastapi.responses import JSONResponse, FileResponse
 import pytz
 import math
+import charts_actions
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
 import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
+import utilities.connection_mapping as connection_mapping
 
 
 async def generate_cross_filter(cross_filters):
@@ -781,8 +783,9 @@ class VTSAnalyticsActions:
             if bu_value:
                 bu = bu_value.upper()
                 if bu == 'TAS':
-                    all_conditions.append("division = '11'")
-                    all_conditions.append("sales_org = '7000'")
+                    all_conditions.append("division in ('11', '12','80')")
+                    all_conditions.append("sales_org in ('7000','3000','1000')")
+                    all_conditions.append("distribution_channel in ('16','12','11')")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
                     all_conditions.append("division in ('20', '80')")
@@ -3560,43 +3563,18 @@ class VTSAnalyticsActions:
                 df = df.unique(subset=dedup_cols, keep="first")
 
             #  COMPLETED INVOICE HELPERS
-            async def get_completed_invoices(pl_df):
-                if "invoice_number" not in pl_df.columns:
-                    return []
 
-                invoices = (
-                    pl_df.select(pl.col("invoice_number").cast(pl.Utf8))
-                    .unique()
-                    .drop_nulls()
-                    .to_series()
-                    .to_list()
-                )
-
-                if not invoices:
-                    return []
-
-                invoice_str = "', '".join(invoices)
-                q = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoice_str}')
-                """
-
-                completed_df = await VTSAnalyticsActions.execute_query(q, engine="polars")
-                return completed_df["invoice_no"].to_list() if not completed_df.is_empty() else []
-
-            def apply_status_filter(pl_df, status, completed):
+            def apply_status_filter(pl_df, status):
                 if not status:
                     return pl_df
 
                 status = status.lower().strip()
-                if status == "close":
-                    status = "closed"
 
-                if status == "live":
-                    return pl_df.filter(~pl.col("invoice_number").is_in(completed))
-                if status == "closed":
-                    return pl_df.filter(pl.col("invoice_number").is_in(completed))
+                if "trip_status" in pl_df.columns:
+                    if status == "live":
+                        return pl_df.filter(pl.col("trip_status") != "Closed")
+                    if status == "closed":
+                        return pl_df.filter(pl.col("trip_status") == "Closed")
 
                 return pl_df
 
@@ -3619,8 +3597,7 @@ class VTSAnalyticsActions:
 
             #  MODES: DOWNLOAD / SEARCH / TABLE
             if payload.get("download", "").lower() == "true":
-                completed = await get_completed_invoices(df)
-                df = apply_status_filter(df, payload.get("status"), completed)
+                df = apply_status_filter(df, payload.get("status"))
                 df = add_swipe_cols(df)
                 df = df.filter(pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2"))
                 df = df.drop(["has_swipeoutl1", "has_swipeoutl2"], strict=False)
@@ -3630,8 +3607,7 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "success", "data": df.to_dicts()}
 
             if payload.get("table") == "true":
-                completed = await get_completed_invoices(df)
-                df = apply_status_filter(df, payload.get("status"), completed)
+                df = apply_status_filter(df, payload.get("status"))
                 df = add_swipe_cols(df)
                 df = df.filter(pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2"))
                 return {
@@ -3659,8 +3635,7 @@ class VTSAnalyticsActions:
                 ])
             )
 
-            completed = await get_completed_invoices(base)
-            base = apply_status_filter(base, payload.get("status"), completed)
+            base = apply_status_filter(base, payload.get("status"))
 
             filtered = base.filter(
                 pl.col("has_swipeoutl1") | pl.col("has_swipeoutl2")
@@ -4069,12 +4044,14 @@ class VTSAnalyticsActions:
 
                         conditions.append(f'CAST("{col}" AS NUMERIC) {op} {val}')
 
-
-            # Build and execute count query first
-            count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
-            filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
-            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
-            total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
+            # Skip COUNT query for downloads — wasteful round-trip on large tables
+            is_download = payload.get("download") == "true"
+            total_records = 0
+            if not is_download:
+                count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
+                filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
+                count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
+                total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
 
                         # Add sorting
             sort_by = payload.get("sort_by")
@@ -4084,20 +4061,18 @@ class VTSAnalyticsActions:
                 # Note: apply_conditions_to_query handles placing this correctly
                 base_query += f' ORDER BY "{sort_by}" {sort_direction}'
 
-            # Build and execute data query with pagination
+            # Build final filtered query
+            # For completed_trips_risk_score download: query is used directly inside stream_csv()
             filtered_data_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_data_query, limit=limit, skip=page, skip_total=True)
+            resp = None
+            if not (is_download and table_name == "completed_trips_risk_score"):
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                    query=filtered_data_query, limit=limit, skip=page, skip_total=True
+                )
+                if not resp['data']:
+                    return {"status": True, "message": "No data found", "data": [], "total_records": 0}
 
-        
-            if not resp['data']:
-                return {"status": True, "message": "No data found", "data": [], "total_records": 0}
-
-            if payload.get("download") == "true":
-                def strip_tz(frame):
-                    for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                        frame[c] = frame[c].dt.tz_localize(None)
-                    return frame
-
+            if is_download:
                 def norm_id(v):
                     try: return str(int(float(str(v).strip())))
                     except Exception: return str(v).strip()
@@ -4108,6 +4083,11 @@ class VTSAnalyticsActions:
 
                 if table_name == "cluster_master":
                     # Fetch ALL cluster_master rows (no pagination limit)
+                    def strip_tz(frame):
+                        for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                            frame[c] = frame[c].dt.tz_localize(None)
+                        return frame
+
                     all_master_df = strip_tz(pd.DataFrame(
                         (await urdhva_base.BasePostgresModel.get_aggr_data(
                             query=VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions),
@@ -4174,7 +4154,58 @@ class VTSAnalyticsActions:
                                 if norm_id(v) not in sheets_written:
                                     sw.write(r, ci, norm_id(v))
 
+                # completed_trips_risk_score - CSV STREAMING
+                # Large table: bypass Pandas/Polars entirely, stream row-by-row from DB to client.
+                # Each row is yielded immediately - nginx never idles → no 60s timeout.
+                elif table_name == "completed_trips_risk_score":
+                    print(f"[download] Streaming {table_name} natively as CSV...")
+                    from sqlalchemy import text
+                    import urdhva_base.postgresmodel as pm
+
+                    async def stream_csv():
+                        import csv
+                        session = await pm.manager.get_session()
+                        try:
+                            result = await session.stream(
+                                text(filtered_data_query).execution_options(yield_per=1000)
+                            )
+                            cols_fetched = False
+                            async for row in result:
+                                output_buf = io.StringIO()
+                                writer = csv.writer(output_buf)
+                                if not cols_fetched:
+                                    writer.writerow(list(result.keys()))
+                                    cols_fetched = True
+                                row_vals = []
+                                for v in row:
+                                    if hasattr(v, "tzinfo") and getattr(v, "tzinfo") is not None:
+                                        v = v.replace(tzinfo=None).isoformat(sep=" ")
+                                    elif getattr(type(v), "__name__", "") == "datetime":
+                                        v = v.isoformat(sep=" ")
+                                    row_vals.append(v)
+                                writer.writerow(row_vals)
+                                # Instantly flush each row to nginx & client — no idle timeout
+                                yield output_buf.getvalue().encode('utf-8')
+                        except Exception as e:
+                            print(f"[download] Streaming error: {e}")
+                        finally:
+                            import asyncio
+                            await asyncio.shield(session.close())
+
+                    file_name = f"completed_trips_risk_score_{str(datetime.utcnow().date())}.csv"
+                    return StreamingResponse(
+                        stream_csv(),
+                        media_type="text/csv",
+                        headers={"Content-Disposition": f'attachment; filename="{file_name}"'}
+                    )
+
+                # BRANCH 3: all other tables - single-sheet XLSX (small data, BytesIO)
                 else:
+                    def strip_tz(frame):
+                        for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                            frame[c] = frame[c].dt.tz_localize(None)
+                        return frame
+
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                         strip_tz(pd.DataFrame(resp['data'])).dropna(axis=1, how="all") \
                             .to_excel(writer, index=False, sheet_name=table_name[:31])
@@ -4227,50 +4258,137 @@ class VTSAnalyticsActions:
         except Exception as e:
             return {"status": False, "message": str(e), "data": None}
 
+    
     @staticmethod
     async def adding_device(filters, cross_filters, drill_state, payload):
-            try:
-                sap_tt_val = payload.get("sap_tt_no")
-                print(sap_tt_val)
+        try:
+            # Constants
+            rpt = urdhva_base.context.context.get('rpt', {})
+            sap_id = rpt.get("sap_id")
+            print(f'sap_id: {sap_id}')
+            sap_id = sap_id[0] 
+            
+            BLOCKED_CODES = {"0000010001", "00"}
+            COLUMN_MAPPING = {
+                "TRUCK_REGNNO": "SAP TT No.",
+                "LOCN_CODE": "sap_id",
+                "TRANS_ID": "Transporter",
+                "bu": "Select Business",
+                "name": "Location"
+            }
+            
+            sap_tt_val = payload.get("sap_tt_no")
+            safe_val = str(sap_tt_val).replace("'", "''")
 
-                if sap_tt_val:
-                    safe_val = str(sap_tt_val).replace("'", "''")
-                    query = f"""
-                        SELECT  truck_no, location_name, transporter_code, transporter_name, bu
-                        FROM vts_truck_master
-                        WHERE truck_no = '{safe_val}'
-                        LIMIT 1
-                    """
-                    print("Query", query)
-                    df = await VTSAnalyticsActions.execute_query(query)
+            # Fetch truck records
+            truck_query = f"""
+                SELECT TRUCK_REGNNO, LOCN_CODE, TRANS_ID
+                FROM "IMS_SAP"."TRUCK_DETAILS"
+                WHERE TRUCK_REGNNO = '{safe_val}' and LOCN_CODE = '{sap_id}'
+            """
 
-                    if df.empty:
-                        return {"status": False, "message": f"No data found  SAP TT No. {sap_tt_val}", "data": []}
-    
+            charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+                connection_id=connection_mapping.connection_mapping.get("ims", "1"),
+                action="execute_query"
+            )
 
-                # transporter_code 
-                if "transporter_code" in df.columns and "transporter_name" in df.columns:
-                    df["Transporter"] = (
-                            df["transporter_code"].astype(str).replace(["nan", "None", ""], "None")  + " : " +
-                            df["transporter_name"].astype(str).replace(["nan", "None", ""], "None")
-                        )
-                else:
-                    df["Transporter"] = ""
+            function = await charts_actions.charts_connection_vault_routing(charts_ins)
+            truck_result = await function(query=truck_query)
 
-                df = df.rename(columns={"truck_no": "SAP TT No.","bu": "Select Business","location_name": "Location"})
+            truck_df = pl.DataFrame(truck_result, schema={
+                "TRUCK_REGNNO": pl.String,
+                "LOCN_CODE": pl.String,
+                "TRANS_ID": pl.String,
+            })
 
-                df.drop(columns=["transporter_code", "transporter_name"], inplace=True, errors="ignore")
-                df = df.replace([np.nan, np.inf, -np.inf], None)
-                print(df)
-
-                # return matched single row
+            if truck_df.height == 0:
                 return {
-                    "status": True,"message": f"Data found for SAP TT No. {sap_tt_val}","data": df.to_dict(orient="records")}
+                    "status": False,
+                    "message": "No truck details found for given SAP TT No",
+                    "data": {}
+                }
 
-            except Exception as e:
-                print("Exception in adding_device:", str(e))
-                print("traceback:", traceback.format_exc())
-                return {"status": False, "message": str(e), "data": []}
+            # Filter blocked transporters
+            truck_df = truck_df.filter(
+                ~pl.col("TRANS_ID").cast(pl.String).str.strip_chars().is_in(BLOCKED_CODES)
+            )
+
+            if truck_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "trucks is blocked",
+                    "data": {}
+                }
+
+            # Get unique SAP IDs for bulk fetch
+            sap_ids = truck_df.select("LOCN_CODE").unique().to_series().to_list()
+            sap_ids_string = ",".join(f"'{x}'" for x in sap_ids)
+
+            # Fetch locations in bulk
+            location_query = f"""
+                SELECT sap_id,bu,name,zone
+                FROM LOCATION_MASTER
+                WHERE sap_id IN ({sap_ids_string})
+            """
+            location_result = await VTSAnalyticsActions.execute_query(location_query)
+            location_df = pl.DataFrame(location_result, schema={
+                "sap_id": pl.String,
+                "bu": pl.String,
+                "name": pl.String,
+                "zone":pl.String
+            })
+
+            if location_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "No matching locations found",
+                    "data": {}
+                }
+
+            # Join and rename
+            final_df = truck_df.join(location_df, left_on="LOCN_CODE", right_on="sap_id", how="inner")
+            
+            if final_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "No valid truck-location mapping found","data": {}
+                }
+                
+            # Execute Tibco query
+            conn = await VTSAnalyticsActions.tibco_connection()
+            if not conn:
+                return {"status": False, "message": "Database connection failed", "data": {}}
+            
+            
+            shortage_tibco_query = f"""select ENGINE_NO, CHASSIS_NO, vehicle_no
+            from CONN_ENT.ZSDCV_VEH_BLKLIS_STG 
+            where vehicle_no = '{safe_val}'  """
+            print('shortage_tibco_query------->',shortage_tibco_query)
+            shortage_resp = await VTSAnalyticsActions.execute_tibco_query(conn, shortage_tibco_query)
+            shortage_data = pd.DataFrame(shortage_resp.get("data", []))
+            
+            print('shortage_data',shortage_data)
+            
+            # Merge shortage_data with final_df on TRUCK_REGNNO (final_df) = vehicle_no (shortage_data)
+            if not shortage_data.empty:
+                shortage_data_pl = pl.from_pandas(shortage_data)
+                final_df = final_df.join(shortage_data_pl, left_on='TRUCK_REGNNO', right_on='vehicle_no', how='left')
+
+            final_df = final_df.rename(COLUMN_MAPPING)
+            # print('fina_df',final_df)
+
+            return {
+                "status": True, "message": "Data fetched successfully",
+                "data": final_df.to_dicts()
+            }
+
+        except Exception as e:
+            print("Exception:", str(e))
+            return {
+                "status": False,
+                "message": f"Failed to fetch SAP truck details: {str(e)}",
+                "data": {}
+            }
     
     @staticmethod
     async def device_commissioning_table(filters, cross_filters, drill_state, payload):

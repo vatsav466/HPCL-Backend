@@ -28,7 +28,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Delete_File_From_CommentParams,
     Ticketing_Get_Location_DataParams,
     Ticketing_Vts_Block_TrucksParams,
-    Ticketing_Pm_OrdersParams
+    Ticketing_Pm_OrdersParams,
+    Ticketing_Pm_Orders_WeeklyParams
 
 )
 import os, uuid
@@ -39,7 +40,7 @@ import urdhva_base
 import api_manager
 import hpcl_ceg_model
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timezone
 from hpcl_ceg_enum import AlertActionType
 from fastapi import UploadFile, File, Depends
 from orchestrator.alerting import alert_helper
@@ -73,6 +74,7 @@ MAIL_TRIGGER_STATES = {
 
 TEMPLATE_MAP = {
     State.Open.value: "create_ticket.html",
+    State.Reassigned.value: "reassigned_ticket.html",
     State.Escalated.value: "escalated_ticket.html",
     State.UpdatedByInitiator.value: "updated_ticket.html",
     State.ReturnedByOcc.value: "returned_ticket.html",
@@ -237,6 +239,12 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         else:
             to_emails = zonal_functionary_emails
             cc_emails = set.union(zonal_head_emails, hqo_emails)
+    
+    elif state_enum == State.Reassigned:
+        re_assignee_mails: set[str] = {m.strip() for m in (ticket_data.get("re_assingee_mail") or []) if (m or "").strip()}
+        if re_assignee_mails:
+            to_emails = re_assignee_mails
+            cc_emails = set.union(location_emails,zonal_functionary_emails,zonal_head_emails,hqo_emails)
 
     elif state_enum == State.Escalated:
         if escalation_level == "L1":
@@ -364,6 +372,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     employee_id = data.employee_id
 
     tdata = data.model_dump()
+    for field in ["re_assingee_employee_id", "re_assingee_mail"]:
+        if tdata.get(field) == "" or tdata.get(field) is None:
+            tdata[field] = []
     frontend_reporter = tdata.get("reporter")
     reporter_value = frontend_reporter if frontend_reporter else user_name
     auto_close_flag_raw = tdata.get("auto_ticket_close", "")
@@ -914,11 +925,21 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         if data_dict.get("ticket_section") == "":
             data_dict["ticket_section"] = None
 
+        if data_dict.get("reassigne_due_date") == "":
+            data_dict["reassigne_due_date"] = None
         # Rename alert_type → interlock_name safely
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = clean_list(data_dict.pop("alert_type"))
-        # ----------------------------------------------------
-
+        
+        re_assingee_employee_id: list[str] = data_dict.get("re_assingee_employee_id") or []
+        re_assingee_mail:        list[str] = data_dict.get("re_assingee_mail")        or []
+        
+        raw_due_date = data_dict.get("reassigne_due_date")
+        if raw_due_date and str(raw_due_date).strip() not in ("", "null", "none"):
+            data_dict["reassigne_due_date"] = str(raw_due_date).strip()
+        else:
+            data_dict["reassigne_due_date"] = None
+     
         ticket_id = data.update_id
 
         params = urdhva_base.queryparams.QueryParams()
@@ -986,6 +1007,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         STATE_UI_TO_ENUM = {
             "Open": "Open",
             "Escalated": "Escalated",
+            "Reassigned": "Reassigned",
             "Updated By Initiator": "UpdatedByInitiator",
             "Returned By Occ": "ReturnedByOcc",
             "Reviewed By Occ": "ReviewedByOcc"
@@ -1182,6 +1204,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                     "start_date": existing_ticket.get("start_date"),
                     "zone": existing_ticket.get("zone"),
                     "ticket_end_date": existing_ticket.get("ticket_end_date"),
+                    "re_assingee_mail":  re_assingee_mail,
                 }
                 await send_ticket_mail(mail_payload)
             except Exception as e:
@@ -2068,7 +2091,7 @@ async def get_escalation_config() -> List[Dict]:
     return [
         {
             "level": "L1",
-            "query": "ticket_status='Open' and escalation_level is null or escalation_level = ''",
+            "query": "ticket_status='Open' AND ticket_state = 'Open' AND (escalation_level IS NULL OR escalation_level = '')",
             "multiplier": 1
         },
         {
@@ -2086,6 +2109,9 @@ async def ticketing_process_escalations():
 
         now = datetime.now(ZoneInfo("Asia/Kolkata"))
 
+        reverted_count = await revert_reassigned_tickets()
+        print(f"Reverted {reverted_count} reassigned tickets back to Open")
+ 
         rules = await get_escalation_config()
         escalated_count = 0
 
@@ -2226,16 +2252,57 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
         logger.warning(traceback.format_exc())
 
 
+async def revert_reassigned_tickets():
+    # 1. Get current time in IST
+    tz_ist = ZoneInfo("Asia/Kolkata")
+    now_ist = datetime.now(tz_ist)
+    
+
+    now_utc = now_ist.astimezone(timezone.utc)
+    formatted_utc = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 3. For the QUERY, we use the IST ISO string (as confirmed by your debug)
+    query_time = now_ist.isoformat()
+
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = f"ticket_state = 'Reassigned' AND reassigne_due_date < '{query_time}'"
+    params.fields = ["id", "ticket_id", "ticket_state", "reassigne_due_date"]
+    
+    resp = await Ticketing.get_all(params, resp_type="plain")
+    tickets = resp.get("data", [])
+    reverted_count = 0
+
+    for ticket in tickets:
+        try:
+            update_payload = {
+                "id": ticket["id"],
+                "ticket_state": "Open",
+                "updated_at": formatted_utc  # Send UTC string to the UTC column
+            }
+            
+            # Use the .modify() pattern
+            await Ticketing(**update_payload).modify()
+            
+            reverted_count += 1
+            print(f"SUCCESS: Ticket {ticket['ticket_id']} reverted. DB UTC Time: {formatted_utc}")
+            
+        except Exception as err:
+            print(f"ERROR updating ticket {ticket.get('id')}: {err}")
+            
+    return reverted_count
+
 # Action pm_orders
 @router.post('/pm_orders', tags=['Ticketing'])
 async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
     try:
         filters = []
-
+        filters.append("LOWER(system_status_desc) != 'technically completed'")
+        
         # Date filter
         if data.start_date and data.end_date:
             filters.append(f"""
-                planned_date::date BETWEEN '{data.start_date}' AND '{data.end_date}'
+                TO_DATE(planned_date,'YYYYMMDD')
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
             """)
 
         # Planning plant filter
@@ -2268,7 +2335,7 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
         skip = data.skip if data.skip is not None else 0
         limit = data.limit if data.limit is not None else 50
 
-        # ⭐ data query
+        #  data query
         query = f"""
             SELECT
                 order_no,
@@ -2287,29 +2354,62 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
             OFFSET {skip}
         """
 
-        # total count query
-        count_query = f"""
-            SELECT COUNT(*) AS total_count
+        print(query)
+        
+
+        rows = []
+
+        if data.data_required:
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = result.get("data", [])
+        
+        base_filters = [f for f in filters if "system_status_desc" not in f]
+
+        total_orders_where = ""
+        if base_filters:
+            total_orders_where = "WHERE " + " AND ".join(base_filters)
+
+        total_orders_query = f"""
+            SELECT COUNT(*) AS total_orders
+            FROM pm_orders
+            {total_orders_where}
+        """
+
+        # active orders count (same as current filter)
+        active_orders_query = f"""
+            SELECT COUNT(*) AS active_orders
             FROM pm_orders
             {where_clause}
         """
 
-        print(query)
-        print(count_query)
+        # completed orders count
+        completed_orders_where = ""
+        if base_filters:
+            completed_orders_where = "AND " + " AND ".join(base_filters)
 
-        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
-        rows = result.get("data", [])
+        completed_orders_query = f"""
+            SELECT COUNT(*) AS completed_orders
+            FROM pm_orders
+            WHERE LOWER(system_status_desc) = 'technically completed'
+            {completed_orders_where}
+        """
 
-        count_result = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
-        total_count = 0
-        if count_result.get("data"):
-            total_count = count_result["data"][0].get("total_count", 0)
+        # execute counts
+        total_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(total_orders_query, limit=0)
+        active_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(active_orders_query, limit=0)
+        completed_orders_res = await hpcl_ceg_model.Alerts.get_aggr_data(completed_orders_query, limit=0)
+
+        total_orders_count = total_orders_res.get("data", [{}])[0].get("total_orders", 0)
+        active_orders_count = active_orders_res.get("data", [{}])[0].get("active_orders", 0)
+        completed_orders_count = completed_orders_res.get("data", [{}])[0].get("completed_orders", 0)
 
         return {
             "status": True,
             "message": "PM Orders fetched successfully",
-            "total_count": total_count,
-            "data": rows
+            "total_orders_count": total_orders_count,
+            "active_orders_count": active_orders_count,
+            "completed_orders_count": completed_orders_count,
+            "data": rows if data.data_required else []
         }
 
     except Exception as e:
@@ -2317,5 +2417,129 @@ async def ticketing_pm_orders(data: Ticketing_Pm_OrdersParams):
         return {
             "status": False,
             "message": f"Error fetching PM orders: {e}",
+            "data": []
+        }
+
+
+# Action pm_orders_weekly
+@router.post('/pm_orders_weekly', tags=['Ticketing'])
+async def ticketing_pm_orders_weekly(data: Ticketing_Pm_Orders_WeeklyParams):
+    try:
+        filters = []
+
+        # only technically completed orders
+        filters.append("LOWER(system_status_desc) = 'technically completed'")
+
+        # date filter
+        if data.start_date and data.end_date:
+            filters.append(f"""
+                TO_DATE(planned_date,'YYYYMMDD')
+                BETWEEN '{data.start_date}' AND '{data.end_date}'
+            """)
+
+        # plant filter
+        if data.planning_plant:
+            if isinstance(data.planning_plant, list):
+                plants = "', '".join([str(p).strip() for p in data.planning_plant])
+                filters.append(f"TRIM(planning_plant) IN ('{plants}')")
+            else:
+                filters.append(f"TRIM(planning_plant) = '{str(data.planning_plant).strip()}'")
+
+        # search filter
+        if data.search:
+            search_text = data.search.strip().lower()
+            filters.append(f"""
+                (
+                    LOWER(order_no) LIKE '%{search_text}%'
+                    OR LOWER(order_type) LIKE '%{search_text}%'
+                    OR LOWER(order_description) LIKE '%{search_text}%'
+                    OR LOWER(planner_group_desc) LIKE '%{search_text}%'
+                    OR LOWER(equipment_description) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant) LIKE '%{search_text}%'
+                    OR LOWER(planning_plant_desc) LIKE '%{search_text}%'
+                )
+            """)
+
+        where_clause = "WHERE " + " AND ".join(filters)
+
+        skip = data.skip or 0
+        limit = data.limit or 50
+
+        #  segmentation switch
+        if data.segment_type == "month":
+
+            segment_expr = """
+                TO_CHAR(TO_DATE(planned_date,'YYYYMMDD'),'Mon-YYYY')
+            """
+            message = "Monthly technically completed PM orders fetched successfully"
+
+        else:
+
+            segment_expr = """
+                CASE
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 1 AND 7 THEN 'Week-1'
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 8 AND 14 THEN 'Week-2'
+                    WHEN EXTRACT(DAY FROM TO_DATE(planned_date,'YYYYMMDD')) BETWEEN 15 AND 21 THEN 'Week-3'
+                    ELSE 'Week-4'
+                END
+            """
+            message = "Weekly technically completed PM orders fetched successfully"
+
+        #  main query
+        query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                order_no,
+                order_type,
+                order_description,
+                planner_group_desc,
+                system_status_desc,
+                equipment_description,
+                planning_plant,
+                planning_plant_desc,
+                planned_date
+            FROM pm_orders
+            {where_clause}
+            ORDER BY TO_DATE(planned_date,'YYYYMMDD')
+            LIMIT {limit}
+            OFFSET {skip}
+        """
+
+        # count query
+        count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                COUNT(*) AS total_count
+            FROM pm_orders
+            {where_clause}
+            GROUP BY segment
+            ORDER BY segment
+        """
+
+        print(query)
+        print(count_query)
+
+        rows = []
+
+        if data.data_required:
+            data_res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            rows = data_res.get("data", [])
+            
+
+        count_result = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
+        segment_counts = count_result.get("data", [])
+
+        return {
+            "status": True,
+            "message": message,
+            "segment_counts": segment_counts,
+            "data": rows if data.data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error fetching segmented PM orders: {e}")
+        return {
+            "status": False,
+            "message": str(e),
             "data": []
         }

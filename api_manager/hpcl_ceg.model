@@ -118,6 +118,7 @@ Enum AlertActionType str {
     ESDFailure='ESDFailure'
     Maintenance='Maintenance'
     TicketRaised='TicketRaised'
+    TicketReassigned='TicketReassigned'
     TicketInProgress='TicketInProgress'
     TicketCancelled='TicketCancelled'
     TicketResolved='TicketResolved'
@@ -300,8 +301,6 @@ Model Users {
         login_type optional default='employee' str
     }
 
-    
-
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
@@ -390,6 +389,7 @@ Model LocationMaster {
     city optional str
     district optional index_field str
     region optional index_field str
+    region_code optional str
     state optional index_field str
     zone optional index_field str
     address optional str
@@ -401,6 +401,7 @@ Model LocationMaster {
     latitude optional str
     longitude optional str
     sales_area optional str
+    sales_area_code optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
     category optional str
@@ -459,6 +460,12 @@ Model LocationMaster {
 
     Action=> get_pipeline_locations {
 
+    }
+
+    Action=> get_location_metadata {
+        bu list str
+        metadata_filters optional dict
+        required_fields optional list str
     }
 
     Config=> {
@@ -531,7 +538,7 @@ Model ROAssetMaster {
 Model WidgetFilters internal {
     key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
     cond str
-    value optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
+    value optional str 
     val optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
 }
 
@@ -2716,6 +2723,20 @@ Model PerformanceScore {
         end_date optional str     
     }
 
+    Action=> performance_score_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> performance_score_monthly_trend {
+        bu str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -3861,11 +3882,11 @@ Model NoticesVTS {
 }
 
 Model DeviceInstallation{
-    sap_tt_no  str  
+    sap_tt_no index_field optional  str  
     tt_chassis_no optional str  
     tt_engine_no optional str  
     select_business optional str  
-    location optional str  
+    location index_field optional  str 
     transporter optional str  
     device optional str
     zone optional str  
@@ -3874,20 +3895,23 @@ Model DeviceInstallation{
     device_installation_approved_by optional str  
     contract_valid_upto optional str  
     certificate optional str  
-    status optional str
+    status index_field optional  str
     remarks optional str
     reason_for_cancel optional str
-    status_decommissioning optional str
-    sap_id optional str
+    status_decommissioning index_field optional  str
+    sap_id index_field optional str
     commissioning_status optional str
     commissioning_status_code optional str
     commissioning_responses optional str
     commissioned_at optional str
     commissioning_responses_2 optional str
     de_commissioning_responses optional str
-    AOT_status optional str
+    AOT_status index_field optional  str
     AOT_sap_tt_no optional str
     AOT_request_type optional str
+    expiry_alert_created  index_field optional  bool
+    tibco_expiry_date index_field optional  str
+    zone_code optional  str
 
     Action=> update_device_installation {
             sap_tt_no  str  
@@ -3910,7 +3934,8 @@ Model DeviceInstallation{
         sap_tt_no optional str 
         sap_id optional str 
         transporter optional str 
-        contract_valid_upto optional str 
+        contract_valid_upto optional str
+        select_business optional str
     }
    
     Action=> action_device_vts{
@@ -3921,8 +3946,13 @@ Model DeviceInstallation{
         payload optional dict
     }
 
+    Action=> action_decommissioning_rejected{
+        payload optional dict
+    }
+
     Config=> {
-        access_key_mapping='sap_tt_no'
+        access_key_mapping='select_business:bu,sap_id'
+        search_fields='sap_tt_no,sap_id,location,status,status_decommissioning,AOT_status'
     }
 }
 
@@ -4039,11 +4069,11 @@ Model HyperLocal {
 Model NozzleSales {
     transaction_date unique_field index_field datetime
     site_id str
-    sap_id unique_field str
-    location_name optional str
-    zone optional str
-    region optional str
-    sales_area optional str
+    sap_id unique_field index_field str
+    location_name optional index_field str
+    zone optional index_field str
+    region optional index_field str
+    sales_area optional index_field str
     product_grp unique_field index_field str
     sales_volume index_field float
 
@@ -4207,5 +4237,17 @@ Model TasHelpDeskVendorMails {
 
     Config=> {
         crud_operations='read'
+
+}
+
+
+Model LpgOperationsInsights {
+
+    Action=> lpg_plants_insights {
+        filters optional list WidgetFilters
+        cross_filters optional list WidgetFilters
+        drill_state optional str
+        metric_type str   
+>>>>>>> HPCL_Code
     }
 }

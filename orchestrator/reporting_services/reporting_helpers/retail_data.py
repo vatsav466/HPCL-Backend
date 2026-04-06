@@ -781,31 +781,22 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                                date_time_format=None)
     month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
                                                date_time_format="%Y-%m-%d")
-    loss_query = f"""WITH financial_year_bounds AS (
-                        SELECT
-                            CASE
-                                WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4 THEN
-                                    DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '3 months'  -- April 1 current year
-                                ELSE 
-                                    DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '9 months'  -- April 1 last year
-                            END AS fy_start
-                    )
-                    SELECT
-                        TO_CHAR(stock_date, 'Mon''YY') AS "Month",
-                        SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
-                        SUM(CASE WHEN product_name = 'HSD' THEN loss_of_sale ELSE 0 END) AS "HSD in KL",
-                        SUM(CASE WHEN product_name IN ('HSD', 'MS') THEN loss_of_sale ELSE 0 END) AS "TMF in KL"
-                    FROM
-                        daily_product_dry_out, financial_year_bounds
-                    WHERE
-                        stock_date >= fy_start
-                        AND stock_date < fy_start + INTERVAL '1 year'
-                        AND product_no in (1322000, 1683000)
-                    GROUP BY
-                        TO_CHAR(stock_date, 'Mon''YY'),
-                        DATE_TRUNC('month', stock_date)
-                    ORDER BY
-                        DATE_TRUNC('month', stock_date)
+    loss_query = f"""SELECT
+                            TO_CHAR(stock_date, 'Mon''YY') AS "Month",
+                            SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
+                            SUM(CASE WHEN product_name = 'HSD' THEN loss_of_sale ELSE 0 END) AS "HSD in KL",
+                            SUM(CASE WHEN product_name IN ('HSD', 'MS') THEN loss_of_sale ELSE 0 END) AS "TMF in KL"
+                        FROM
+                            daily_product_dry_out
+                        WHERE
+                            stock_date >= CURRENT_DATE - INTERVAL '1 year'
+                            AND stock_date < CURRENT_DATE
+                            AND product_no IN (1322000, 1683000)
+                        GROUP BY
+                            TO_CHAR(stock_date, 'Mon''YY'),
+                            DATE_TRUNC('month', stock_date)
+                        ORDER BY
+                            DATE_TRUNC('month', stock_date);
                     """
     last_30_days_dry_out_trends_query = f"""SELECT dry_out_date, dry_out_count
                                             FROM dry_out_daily_report Where created_at::DATE > CURRENT_DATE - INTERVAL '30 days'

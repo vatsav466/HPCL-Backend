@@ -110,7 +110,8 @@ class VTSAlertsListener:
                 if int(time.time()) - last_reported_time <= self.idle_time:
                     continue
                 print(f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_event_received_time}")
-                await self.send_no_data_mail()
+                if urdhva_base.settings.environment not in ["development", "dev", "uat", "staging"]:
+                    await self.send_no_data_mail()
                 last_reported_time = int(time.time())
 
     async def process_task(self, task):
