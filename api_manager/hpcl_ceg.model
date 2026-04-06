@@ -301,8 +301,6 @@ Model Users {
         login_type optional default='employee' str
     }
 
-    
-
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
@@ -391,6 +389,7 @@ Model LocationMaster {
     city optional str
     district optional index_field str
     region optional index_field str
+    region_code optional str
     state optional index_field str
     zone optional index_field str
     address optional str
@@ -402,6 +401,7 @@ Model LocationMaster {
     latitude optional str
     longitude optional str
     sales_area optional str
+    sales_area_code optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
     category optional str
@@ -460,6 +460,12 @@ Model LocationMaster {
 
     Action=> get_pipeline_locations {
 
+    }
+
+    Action=> get_location_metadata {
+        bu list str
+        metadata_filters optional dict
+        required_fields optional list str
     }
 
     Config=> {
@@ -532,7 +538,7 @@ Model ROAssetMaster {
 Model WidgetFilters internal {
     key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
     cond str
-    value optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
+    value optional str 
     val optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
 }
 

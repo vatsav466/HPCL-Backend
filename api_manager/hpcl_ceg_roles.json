@@ -375,6 +375,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -399,6 +402,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -453,6 +459,9 @@
                 },
                 {
                     "name": "get_pipeline_locations"
+                },
+                {
+                    "name": "get_location_metadata"
                 }
             ]
         },
@@ -8482,6 +8491,10 @@
         {
             "name": "get_pipeline_locations",
             "displayName": "get_pipeline_locations"
+        },
+        {
+            "name": "get_location_metadata",
+            "displayName": "get_location_metadata"
         },
         {
             "name": "upload_role_master",

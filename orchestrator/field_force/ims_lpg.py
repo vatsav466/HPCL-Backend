@@ -44,15 +44,50 @@ def generate_session_filters(
 
 def _filters(
     widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]],
-) -> tuple[List[Dict[str, Any]], List[str]]:
+) -> List[str]:
+    """Merged widget + session filters as SQL fragments (session is merged in ``get_input_filters``)."""
     effective = field_force_utils.get_input_filters(
         _widget_filters_to_dicts(widget_filters),
-        vendor="IMS",
+        vendor="IMS_LPG",
         merge_session=True,
-        model="IMS",
+        model="IMS_LPG",
     )
-    session = field_force_utils.generate_session_filters(vendor="IMS", model="IMS")
-    return effective, session
+    return field_force_utils.widget_filters_to_condition_strings(effective)
+
+
+def _lpg_indent_join_qualify(sql_fragment: str) -> str:
+    """
+    Prefix LPG IMS filter fragments with the correct join alias:
+    ``a`` = ``INDENT_REQUEST`` (``LOCN_CODE``), ``b`` = ``INDENT_PRODUCTS``
+    (``SAREA_CODE``, ``ZONE``). Unknown columns default to ``a``.
+    """
+    s = (sql_fragment or "").strip()
+    if not s:
+        return s
+    if re.match(r"^[ab]\.", s, re.IGNORECASE):
+        return s
+    sup = s.upper()
+    col_alias = (
+        ("LOCN_CODE", "a"),
+        ("SAREA_CODE", "b"),
+        ("ZONE", "b"),
+    )
+    for col, alias in col_alias:
+        n = len(col)
+        if len(sup) >= n and sup[:n] == col:
+            if len(sup) == n or sup[n] in ("=", " ", "\t"):
+                return f"{alias}.{s}"
+    return f"a.{s}"
+
+
+def _lpg_indent_join_conditions(filter_sql_fragments: List[str]) -> List[str]:
+    return [_lpg_indent_join_qualify(c) for c in (filter_sql_fragments or [])]
+
+
+# INDENT_REQUEST = a, INDENT_PRODUCTS = b (filter columns SAREA_CODE, ZONE live on b).
+_LPG_JOIN_INDENT_PRODUCTS_B = """JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b
+                ON a."LOCN_CODE" = b."LOCN_CODE"
+                AND a."INDENT_NO" = b."INDENT_NO" """
 
 
 async def execute_ims_query(query):
@@ -175,9 +210,8 @@ async def get_total_indents_raised(
         include_total: bool = True,
 ):
     """Total indents raised (all states) in period — SOP: Total Indents Raised."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (effective_filters, session_conditions, level_filter, drill_filter, table_data)
-    conditions = [f"a.{condition}" for condition in session_conditions]
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
         base_query = f"""SELECT DISTINCT
@@ -188,9 +222,7 @@ async def get_total_indents_raised(
                 a."INDENT_DATE" AS "INDENT_DATE",
                 a."PROD_REQD_DT" AS "PROD_REQD_DT"
             FROM "LPGIMS_SAP"."INDENT_REQUEST" a
-            JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b 
-                ON a."LOCN_CODE" = b."LOCN_CODE" 
-                AND a."INDENT_NO" = b."INDENT_NO"
+            {_LPG_JOIN_INDENT_PRODUCTS_B}
             WHERE 
             TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
             {conditions}
@@ -202,7 +234,9 @@ async def get_total_indents_raised(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) as count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) as count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                {_LPG_JOIN_INDENT_PRODUCTS_B}
+                WHERE 
                 TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                 {conditions}"""
     resp = await execute_ims_query(query)
@@ -221,9 +255,9 @@ async def get_cancelled_indents(
     include_total: bool = True,
 ):
     """Indents cancelled in the selected window (SOP: Cancelled Indents)."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (effective_filters, session_conditions, level_filter, drill_filter, table_data)
-    conditions = [f"a.{condition}" for condition in session_conditions]
+    _ = (level_filter, drill_filter, table_data)
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
         base_query = f"""SELECT DISTINCT
@@ -235,9 +269,7 @@ async def get_cancelled_indents(
                     a."INDENT_DATE" AS "INDENT_DATE",
                     a."PROD_REQD_DT" AS "PROD_REQD_DT"
                 FROM "LPGIMS_SAP"."INDENT_REQUEST" a
-                JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b 
-                    ON a."LOCN_CODE" = b."LOCN_CODE" 
-                    AND a."INDENT_NO" = b."INDENT_NO"
+                J{_LPG_JOIN_INDENT_PRODUCTS_B}
                 WHERE 
                 TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                 AND a."CANCEL_INDENT" IS NOT NULL 
@@ -250,7 +282,9 @@ async def get_cancelled_indents(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
                     TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                     AND a."CANCEL_INDENT" IS NOT NULL 
                     {conditions}"""
@@ -270,22 +304,20 @@ async def get_valid_indents(
     include_total: bool = True,
 ):
     """Valid Indents  in the selected window (SOP: Valid Indents)."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (effective_filters, session_conditions, level_filter, drill_filter, table_data)
-    conditions = [f"a.{condition}" for condition in session_conditions]
+    _ = (level_filter, drill_filter, table_data)
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
         base_query = f"""SELECT DISTINCT
-                    a."LOCN_CODE" AS "LOCN_CODE",
                     a."INDENT_NO" AS "INDENT_NO",
+                    a."LOCN_CODE" AS "LOCN_CODE",
                     b."PROD" AS "PROD",
                     a."DEALER_CODE" AS "DEALER_CODE",
                     a."INDENT_DATE" AS "INDENT_DATE",
                     a."PROD_REQD_DT" AS "PROD_REQD_DT"
                 FROM "LPGIMS_SAP"."INDENT_REQUEST" a
-                JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b 
-                    ON a."LOCN_CODE" = b."LOCN_CODE" 
-                    AND a."INDENT_NO" = b."INDENT_NO"
+                {_LPG_JOIN_INDENT_PRODUCTS_B}
                 WHERE 
                 TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                 AND a."CANCEL_INDENT" IS NULL 
@@ -299,7 +331,9 @@ async def get_valid_indents(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
                     TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                     AND a."CANCEL_INDENT" IS NULL 
                     AND a."VALID_INDENT_FLAG" IN ('Y', 'H') 
@@ -325,22 +359,19 @@ async def get_pending_indents(
     Output shape (target):
         {"summary": [{"pending_count": int, ...}], "drill_down": [...] | None, "total": int?}
     """
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (effective_filters, session_conditions, level_filter, drill_filter, table_data)
-    conditions = [f"a.{condition}" for condition in session_conditions]
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
         base_query = f"""SELECT DISTINCT
+                        a."INDENT_NO" AS "INDENT_NO",        
                         a."LOCN_CODE" AS "LOCN_CODE",
-                        a."INDENT_NO" AS "INDENT_NO",
                         b."PROD" AS "PROD",
                         a."DEALER_CODE" AS "DEALER_CODE",
                         a."INDENT_DATE" AS "INDENT_DATE",
                         a."PROD_REQD_DT" AS "PROD_REQD_DT"
                     FROM "LPGIMS_SAP"."INDENT_REQUEST" a
-                    JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b 
-                        ON a."LOCN_CODE" = b."LOCN_CODE" 
-                        AND a."INDENT_NO" = b."INDENT_NO"
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
                     WHERE 
                     TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
                     AND a."TRUCK_REGNO" IS NULL 
@@ -355,10 +386,13 @@ async def get_pending_indents(
             page_size=page_size,
             include_total=include_total,
         )
-    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a WHERE 
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
                         TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND a."CANCEL_INDENT" IS NULL 
-                        AND a."VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND a."TRUCK_REGNO" IS NULL 
+                        AND a."VALID_INDENT_FLAG" <> 'N' 
+                        AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
                         {conditions}"""
     resp = await execute_ims_query(query)
     n = _aggregate_count_from_resp(resp)
@@ -376,18 +410,42 @@ async def get_indents_on_hold(
     include_total: bool = True,
 ):
     """Indents explicitly on hold (credit / compliance / manual hold) — SOP: Indents on Hold."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                        a."INDENT_NO" AS "INDENT_NO",
+                        a."LOCN_CODE" AS "LOCN_CODE",
+                        b."PROD" AS "PROD",
+                        a."DEALER_CODE" AS "DEALER_CODE",
+                        a."INDENT_DATE" AS "INDENT_DATE",
+                        a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                    FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
+                    TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND a."VALID_INDENT_FLAG" = 'N' 
+                    AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
+                    {conditions}
+                    ORDER BY 
+                        a."INDENT_NO" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
+                    TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND a."VALID_INDENT_FLAG" = 'N' 
+                    AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
+                        {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 async def get_trucks_allocated(
@@ -401,18 +459,44 @@ async def get_trucks_allocated(
     include_total: bool = True,
 ):
     """Count of indents with truck allocation (or trucks allocated) — SOP: Trucks Allocated."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                        a."INDENT_NO" AS "INDENT_NO",
+                        a."LOCN_CODE" AS "LOCN_CODE",
+                        b."PROD" AS "PROD",
+                        a."DEALER_CODE" AS "DEALER_CODE",
+                        a."TRUCK_REGNO" AS "TRUCK_REGNO",
+                        b."PROD_ALLOT_TIME" AS "PROD_ALLOT_TIME",
+                        a."INDENT_DATE" AS "INDENT_DATE",
+                        a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                    FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
+                    TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND a."CANCEL_INDENT" IS NULL 
+                    AND a."TRUCK_REGNO" IS NOT NULL
+                    {conditions}
+                    ORDER BY 
+                        a."INDENT_NO" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                    {_LPG_JOIN_INDENT_PRODUCTS_B}
+                    WHERE 
+                    TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND a."CANCEL_INDENT" IS NULL 
+                    AND a."TRUCK_REGNO" IS NOT NULL
+                        {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 async def get_sent_to_sap(
@@ -426,18 +510,45 @@ async def get_sent_to_sap(
     include_total: bool = True,
 ):
     """Indents pushed to SAP interface — SOP: Sent To SAP."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            b."PROD" AS "PROD",
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."SEND_TO_JDE_DATE" AS "SEND_TO_JDE_DATE",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        {conditions}
+                        ORDER BY 
+                            a."SEND_TO_JDE_DATE" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 async def get_sales_order_placed(
@@ -451,18 +562,49 @@ async def get_sales_order_placed(
     include_total: bool = True,
 ):
     """Indents with SAP sales order created — SOP: Sales Order Placed."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            b."PROD" AS "PROD",
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."SEND_TO_JDE_DATE" AS "SEND_TO_JDE_DATE",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND b."SALES_ORDERNO" IS NOT NULL
+                        {conditions}
+                        ORDER BY 
+                            a."SEND_TO_JDE_DATE" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND b."SALES_ORDERNO" IS NOT NULL
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 async def get_invoice_created(
@@ -476,18 +618,181 @@ async def get_invoice_created(
     include_total: bool = True,
 ):
     """Indents with billing / invoice document — SOP: Invoice Created."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            b."PROD" AS "PROD",
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."TRUCK_REGNO" AS "TRUCK_REGNO",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND b."SALES_ORDERNO" IS NOT NULL
+                        {conditions}
+                        ORDER BY 
+                            a."INDENT_NO" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND b."SALES_ORDERNO" IS NOT NULL
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
+
+
+async def get_r2_swiped(
+    widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]] = None,
+    level_filter: Optional[field_force_model.LevelFilterCreate] = None,
+    drill_filter: Optional[field_force_model.DrillFilterCreate] = None,
+    *,
+    table_data: bool = False,
+    page: int = 0,
+    page_size: int = 20,
+    include_total: bool = True,
+):
+    """Trucks where R2 Swiped."""
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            a."TRUCK_REGNO" AS "TRUCK_REGNO", 
+                            c."CARD_STATUS" AS "CARD_STATUS", 
+                            c."LOADED_ON" AS "LOADED_ON", 
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."TRUCK_REGNO" AS "TRUCK_REGNO",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" c 
+                            ON a."LOCN_CODE" = c."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = c."TRUCK_REGNO"
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND c."CARD_STATUS" = 'I'
+                        AND TO_CHAR(c."LOADED_ON",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        {conditions}
+                        ORDER BY 
+                            c."LOADED_ON" DESC        """
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" c 
+                            ON a."LOCN_CODE" = c."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = c."TRUCK_REGNO"
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND c."CARD_STATUS" = 'I'
+                        AND TO_CHAR(c."LOADED_ON",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
+
+
+async def get_r3_swiped(
+    widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]] = None,
+    level_filter: Optional[field_force_model.LevelFilterCreate] = None,
+    drill_filter: Optional[field_force_model.DrillFilterCreate] = None,
+    *,
+    table_data: bool = False,
+    page: int = 0,
+    page_size: int = 20,
+    include_total: bool = True,
+):
+    """Indents completed / delivered — SOP: Delivered."""
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            a."TRUCK_REGNO" AS "TRUCK_REGNO", 
+                            c."CARD_STATUS" AS "CARD_STATUS", 
+                            c."LOADED_ON" AS "LOADED_ON", 
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."TRUCK_REGNO" AS "TRUCK_REGNO",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" c 
+                            ON a."LOCN_CODE" = c."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = c."TRUCK_REGNO"
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND c."CARD_STATUS" = 'O'
+                        AND TO_CHAR(c."LOADED_ON",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        {conditions}
+                        ORDER BY 
+                            c."LOADED_ON" DESC        """
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a 
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        JOIN "LPGIMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" c 
+                            ON a."LOCN_CODE" = c."LOCN_CODE" 
+                            AND a."TRUCK_REGNO" = c."TRUCK_REGNO"
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND c."CARD_STATUS" = 'O'
+                        AND TO_CHAR(c."LOADED_ON",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 async def get_delivered(
@@ -501,18 +806,49 @@ async def get_delivered(
     include_total: bool = True,
 ):
     """Indents completed / delivered — SOP: Delivered."""
-    effective_filters, session_conditions = _filters(widget_filters)
-    _ = (
-        effective_filters,
-        session_conditions,
-        level_filter,
-        drill_filter,
-        table_data,
-        page,
-        page_size,
-        include_total,
-    )
-    return {"data": [], "total": None, "count": 0}
+    filter_sql_fragments = _filters(widget_filters)
+    conditions = _lpg_indent_join_conditions(filter_sql_fragments)
+    conditions = " AND " + " AND ".join(conditions) if conditions else " "
+    if table_data:
+        base_query = f"""SELECT DISTINCT
+                            a."INDENT_NO" AS "INDENT_NO",
+                            a."LOCN_CODE" AS "LOCN_CODE",
+                            b."PROD" AS "PROD",
+                            a."DEALER_CODE" AS "DEALER_CODE",
+                            a."DELIVERY_DATE" AS "DELIVERY_DATE",
+                            a."INDENT_DATE" AS "INDENT_DATE",
+                            a."PROD_REQD_DT" AS "PROD_REQD_DT"
+                        FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND a."DELIVERY_DATE" IS NOT NULL
+                        {conditions}
+                        ORDER BY 
+                            a."INDENT_NO" DESC"""
+        return await _oracle_table_paginated_response(
+            base_query,
+            page=page,
+            page_size=page_size,
+            include_total=include_total,
+        )
+    query = f"""SELECT count(DISTINCT(a."INDENT_NO")) AS count FROM "LPGIMS_SAP"."INDENT_REQUEST" a
+                        {_LPG_JOIN_INDENT_PRODUCTS_B}
+                        WHERE 
+                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') >= TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND a."CANCEL_INDENT" IS NULL 
+                        AND a."TRUCK_REGNO" IS NOT NULL 
+                        AND "VALID_INDENT_FLAG" IN ('Y', 'H') 
+                        AND (a."BATCH_FLAG" = 'Y' or transfer_status is not null)
+                        AND a."DELIVERY_DATE" IS NOT NULL
+                            {conditions}"""
+    resp = await execute_ims_query(query)
+    n = _aggregate_count_from_resp(resp)
+    return {"data": [], "total": n, "count": 0}
 
 
 _LPG_INDENT_ACTION_ALIASES: Dict[str, str] = {
@@ -525,7 +861,9 @@ _LPG_INDENT_ACTION_ALIASES: Dict[str, str] = {
     "sent_to_sap": "get_sent_to_sap",
     "sales_order_placed": "get_sales_order_placed",
     "invoice_created": "get_invoice_created",
-    "indents_delivered": "get_delivered"
+    "indents_delivered": "get_delivered",
+    "r2_swiped": "get_r2_swiped",
+    "r3_swiped": "get_r3_swiped",
 }
 
 
@@ -553,7 +891,9 @@ def _lpg_indent_action_handlers() -> Dict[str, Callable[..., Any]]:
         "get_sent_to_sap": get_sent_to_sap,
         "get_sales_order_placed": get_sales_order_placed,
         "get_invoice_created": get_invoice_created,
-        "get_delivered": get_delivered
+        "get_delivered": get_delivered,
+        "get_r2_swiped": get_r2_swiped,
+        "get_r3_swiped": get_r3_swiped
     }
 
 
@@ -569,6 +909,7 @@ async def get_indent_details(
 
     ``page`` (0-based, default 0), ``page_size``, and ``include_total`` apply when ``table_data`` is true.
     """
+    print(data)
     merged: List[field_force_model.WidgetFiltersCreate] = []
     merged.extend(data.filters or [])
     if data.cross_filters:

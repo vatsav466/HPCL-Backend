@@ -4044,12 +4044,14 @@ class VTSAnalyticsActions:
 
                         conditions.append(f'CAST("{col}" AS NUMERIC) {op} {val}')
 
-
-            # Build and execute count query first
-            count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
-            filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
-            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
-            total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
+            # Skip COUNT query for downloads — wasteful round-trip on large tables
+            is_download = payload.get("download") == "true"
+            total_records = 0
+            if not is_download:
+                count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
+                filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
+                count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
+                total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
 
                         # Add sorting
             sort_by = payload.get("sort_by")
@@ -4059,20 +4061,18 @@ class VTSAnalyticsActions:
                 # Note: apply_conditions_to_query handles placing this correctly
                 base_query += f' ORDER BY "{sort_by}" {sort_direction}'
 
-            # Build and execute data query with pagination
+            # Build final filtered query
+            # For completed_trips_risk_score download: query is used directly inside stream_csv()
             filtered_data_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_data_query, limit=limit, skip=page, skip_total=True)
+            resp = None
+            if not (is_download and table_name == "completed_trips_risk_score"):
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                    query=filtered_data_query, limit=limit, skip=page, skip_total=True
+                )
+                if not resp['data']:
+                    return {"status": True, "message": "No data found", "data": [], "total_records": 0}
 
-        
-            if not resp['data']:
-                return {"status": True, "message": "No data found", "data": [], "total_records": 0}
-
-            if payload.get("download") == "true":
-                def strip_tz(frame):
-                    for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                        frame[c] = frame[c].dt.tz_localize(None)
-                    return frame
-
+            if is_download:
                 def norm_id(v):
                     try: return str(int(float(str(v).strip())))
                     except Exception: return str(v).strip()
@@ -4083,6 +4083,11 @@ class VTSAnalyticsActions:
 
                 if table_name == "cluster_master":
                     # Fetch ALL cluster_master rows (no pagination limit)
+                    def strip_tz(frame):
+                        for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                            frame[c] = frame[c].dt.tz_localize(None)
+                        return frame
+
                     all_master_df = strip_tz(pd.DataFrame(
                         (await urdhva_base.BasePostgresModel.get_aggr_data(
                             query=VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions),
@@ -4149,7 +4154,58 @@ class VTSAnalyticsActions:
                                 if norm_id(v) not in sheets_written:
                                     sw.write(r, ci, norm_id(v))
 
+                # completed_trips_risk_score - CSV STREAMING
+                # Large table: bypass Pandas/Polars entirely, stream row-by-row from DB to client.
+                # Each row is yielded immediately - nginx never idles → no 60s timeout.
+                elif table_name == "completed_trips_risk_score":
+                    print(f"[download] Streaming {table_name} natively as CSV...")
+                    from sqlalchemy import text
+                    import urdhva_base.postgresmodel as pm
+
+                    async def stream_csv():
+                        import csv
+                        session = await pm.manager.get_session()
+                        try:
+                            result = await session.stream(
+                                text(filtered_data_query).execution_options(yield_per=1000)
+                            )
+                            cols_fetched = False
+                            async for row in result:
+                                output_buf = io.StringIO()
+                                writer = csv.writer(output_buf)
+                                if not cols_fetched:
+                                    writer.writerow(list(result.keys()))
+                                    cols_fetched = True
+                                row_vals = []
+                                for v in row:
+                                    if hasattr(v, "tzinfo") and getattr(v, "tzinfo") is not None:
+                                        v = v.replace(tzinfo=None).isoformat(sep=" ")
+                                    elif getattr(type(v), "__name__", "") == "datetime":
+                                        v = v.isoformat(sep=" ")
+                                    row_vals.append(v)
+                                writer.writerow(row_vals)
+                                # Instantly flush each row to nginx & client — no idle timeout
+                                yield output_buf.getvalue().encode('utf-8')
+                        except Exception as e:
+                            print(f"[download] Streaming error: {e}")
+                        finally:
+                            import asyncio
+                            await asyncio.shield(session.close())
+
+                    file_name = f"completed_trips_risk_score_{str(datetime.utcnow().date())}.csv"
+                    return StreamingResponse(
+                        stream_csv(),
+                        media_type="text/csv",
+                        headers={"Content-Disposition": f'attachment; filename="{file_name}"'}
+                    )
+
+                # BRANCH 3: all other tables - single-sheet XLSX (small data, BytesIO)
                 else:
+                    def strip_tz(frame):
+                        for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                            frame[c] = frame[c].dt.tz_localize(None)
+                        return frame
+
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                         strip_tz(pd.DataFrame(resp['data'])).dropna(axis=1, how="all") \
                             .to_excel(writer, index=False, sheet_name=table_name[:31])

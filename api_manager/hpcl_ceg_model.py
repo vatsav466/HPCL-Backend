@@ -474,6 +474,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    region_code: Mapped[typing.Optional[str]] = mapped_column("region_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     address: Mapped[typing.Optional[str]] = mapped_column("address", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -485,6 +486,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area_code: Mapped[typing.Optional[str]] = mapped_column("sales_area_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -519,6 +521,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     city: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
+    region_code: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
@@ -530,6 +533,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area_code: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
@@ -571,6 +575,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     city: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
+    region_code: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
@@ -582,6 +587,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area_code: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
@@ -693,6 +699,16 @@ class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
 
 class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Locationmaster_Get_Location_MetadataParams(pydantic.BaseModel):
+    bu: typing.List[str]
+    metadata_filters: typing.Optional[dict] = pydantic.Field(default_factory=dict)
+    required_fields: typing.Optional[typing.List[str]] = pydantic.Field(default_factory=list)
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -894,7 +910,7 @@ class Roassetmaster_Download_TemplateParams(pydantic.BaseModel):
 class WidgetFiltersCreate(pydantic.BaseModel):
     key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
     cond: str
-    value: typing.Optional[str] = pydantic.Field("", **{'pattern': '^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$'})
+    value: typing.Optional[str] = pydantic.Field("", **{})
     val: typing.Optional[str] = pydantic.Field("", **{'pattern': '^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$'})
 
 
