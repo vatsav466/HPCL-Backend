@@ -1,7 +1,8 @@
 """
 Shared utilities for Field Force orchestrator (IMS, CRIS, Novex, etc.).
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+
 import orchestrator.field_force.vendor_territory_mapping as vendor_territory_mapping
 
 # -------- Territory → column name per vendor/model (for WHERE conditions and WidgetFilters) --------
@@ -24,6 +25,7 @@ TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
         "location": "rosapcode",
         "sales_area": "SALES_AREA",
         "region": "Region",
+        "zone": "zone",
     },
     "NOVEX": {
         "location": "sap_id",
@@ -213,55 +215,180 @@ def normalize_widget_filters_for_model(
     return out
 
 
-def session_dict_to_widget_filters(
+def _session_bu_from_context() -> Optional[str]:
+    """Resolve business unit from request context (``rpt``), if present."""
+    try:
+        import urdhva_base
+
+        if urdhva_base.ctx.exists():
+            rpt = urdhva_base.context.context.get("rpt", {})
+            for key in ("bu", "BU", "business_unit"):
+                v = rpt.get(key)
+                if v is None or (isinstance(v, str) and not v.strip()):
+                    continue
+                return str(v).strip()
+    except Exception:
+        pass
+    return None
+
+
+def _as_str_list(value: Union[str, List[Any]]) -> List[str]:
+    if isinstance(value, list):
+        return [str(x).strip() for x in value if x is not None and str(x).strip() != ""]
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return []
+    return [str(value).strip()]
+
+
+def _sql_literal(val: str) -> str:
+    return "'" + str(val).replace("'", "''") + "'"
+
+
+def _sales_area_from_row(row: Dict[str, Any]) -> Optional[str]:
+    if not row:
+        return None
+    for k in ("sales_area", "SALES_AREA"):
+        if k in row and row[k] is not None:
+            s = str(row[k]).strip()
+            return s if s else None
+    lowered = {str(kk).lower(): vv for kk, vv in row.items()}
+    v = lowered.get("sales_area")
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s if s else None
+
+
+async def _fetch_distinct_sales_areas_for_regions(bu: str, regions: List[str]) -> List[str]:
+    """
+    Distinct ``sales_area`` from ``location_master`` for the given BU and region names.
+
+    Uses ``urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data``. Returns an empty list on
+    failure or when no rows match.
+    """
+    if not bu or not regions:
+        return []
+    try:
+        import urdhva_base
+
+        bu_lit = _sql_literal(bu.strip())
+        region_lits = [_sql_literal(r) for r in regions if str(r).strip()]
+        if not region_lits:
+            return []
+        in_clause = ", ".join(region_lits)
+        sql = f"""
+            SELECT DISTINCT sales_area
+            FROM location_master
+            WHERE bu = {bu_lit}
+              AND region IN ({in_clause})
+              AND sales_area IS NOT NULL
+              AND TRIM(COALESCE(sales_area::text, '')) <> ''
+        """
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sql, limit=0)
+        rows = resp.get("data") or []
+        vals: List[str] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            sa = _sales_area_from_row(row)
+            if sa:
+                vals.append(sa)
+        return list(dict.fromkeys(vals))
+    except Exception:
+        return []
+
+
+async def session_dict_to_widget_filters(
     session_dict: Dict[str, Any],
     column_map: Dict[str, str],
+    *,
+    vendor: str = "IMS",
+    bu: Optional[str] = None,
+    expand_region_to_sales_area: bool = True,
 ) -> List[Dict[str, Any]]:
     """
     Convert session filter dict (territory -> value/list) to WidgetFilters format.
 
-    Each entry becomes {"key": column_name, "cond": "=" | "in", "value": str} or
-    {"key": column_name, "cond": "in", "values": list}. Used so session and request
-    filters can be handled uniformly.
+    Applies the same vendor mapping as :func:`vendor_territory_mapping.get_vendor_territory`
+    (``sales_area_mapping``, ``region_mapping``, ``zone_mapping``). If a mapping is missing
+    or empty, the original session value is kept.
 
-    :param session_dict: Dict from get_role_based_filters, e.g. {"sales_area": "X"} or {"region": ["A","B"]}.
-    :param column_map: Territory type -> column name, e.g. TERRITORY_COLUMN_BY_VENDOR["IMS"].
+    When ``territory`` is ``region``, optional expansion: distinct ``sales_area`` from
+    ``location_master`` where ``bu`` matches and ``region`` is in the mapped region list
+    (requires ``bu`` from the ``bu`` argument or session ``rpt``). On success, a single
+    ``sales_area`` / ``SAREA_CODE`` ``in`` filter is emitted instead of ``region``.
+
+    Each entry becomes ``{"key": column_name, "cond": "=" | "in", "value": str}`` or
+    ``{"key": column_name, "cond": "in", "values": list}``.
+
+    :param session_dict: Dict from get_role_based_filters, e.g. ``{"sales_area": "X"}`` or ``{"region": ["A","B"]}``.
+    :param column_map: Territory type -> column name, e.g. ``TERRITORY_COLUMN_BY_VENDOR["IMS_LPG"]``.
+    :param vendor: Target vendor key for mapping (e.g. ``IMS_LPG``, ``CRIS``).
+    :param bu: Business unit for region→sales_area SQL; defaults to session ``rpt`` when omitted.
+    :param expand_region_to_sales_area: When False, region is passed through to the region column only.
     :return: List of filter items in WidgetFilters shape (key, cond, value or values).
     """
+    eff_bu = bu or _session_bu_from_context()
+    sales_area_col = column_map.get("sales_area")
+
     out: List[Dict[str, Any]] = []
     for territory, value in session_dict.items():
+        mapped = vendor_territory_mapping.get_vendor_territory(territory, value, vendor)
+
+        if (
+            territory == "region"
+            and expand_region_to_sales_area
+            and eff_bu
+            and sales_area_col
+        ):
+            regions = _as_str_list(mapped)
+            if regions:
+                sas = await _fetch_distinct_sales_areas_for_regions(eff_bu, regions)
+                if sas:
+                    out.append(
+                        {
+                            "key": sales_area_col,
+                            "cond": "in",
+                            "values": sas,
+                        }
+                    )
+                    continue
+
         col = column_map.get(territory)
         if not col:
             continue
-        if isinstance(value, list):
-            if len(value) == 0:
+
+        if isinstance(mapped, list):
+            if len(mapped) == 0:
                 continue
-            if len(value) == 1:
-                out.append({"key": col, "cond": "=", "value": str(value[0])})
+            if len(mapped) == 1:
+                out.append({"key": col, "cond": "=", "value": str(mapped[0])})
             else:
-                out.append({"key": col, "cond": "in", "values": [str(v) for v in value]})
+                out.append({"key": col, "cond": "in", "values": [str(v) for v in mapped]})
         else:
-            out.append({"key": col, "cond": "=", "value": str(value)})
+            out.append({"key": col, "cond": "=", "value": str(mapped)})
     return out
 
 
-def get_input_filters(
+async def get_input_filters(
     widget_filters: List[Dict[str, Any]],
     vendor: str = "IMS",
     merge_session: bool = True,
     model: Optional[str] = None,
+    bu: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
     Configure effective input filters in WidgetFilters format, optionally merging session-based filters.
 
     Session filters (from get_role_based_filters) are converted to the same WidgetFilters structure
-    (key, cond, value or values). Session filters are applied first (role restriction), then the
-    request's widget_filters (user selection). Use from ims.py (vendor="IMS") or cris.py (vendor="CRIS").
+    (key, cond, value or values), including territory mapping and optional region→sales_area expansion.
+    Session filters are applied first (role restriction), then the request's widget_filters.
 
     :param widget_filters: Filters from the API request (list of {key, cond, value?/values?}).
-    :param vendor: Target system for territory mapping; "IMS", "CRIS", etc.
+    :param vendor: Target system for territory mapping; "IMS", "CRIS", "IMS_LPG", etc.
     :param merge_session: If True, prepend session-derived filters; if False, return copy of widget_filters.
     :param model: Optional; for CRIS/NOVEX use model to pick column map; defaults to vendor.
+    :param bu: Optional business unit for ``location_master`` when expanding session ``region`` to sales areas.
     :return: List of filter items in WidgetFilters format.
     """
     normalized = normalize_widget_filters_for_model(
@@ -278,5 +405,7 @@ def get_input_filters(
 
     model_key = (model or vendor).upper()
     column_map = TERRITORY_COLUMN_BY_VENDOR.get(model_key, {})
-    session_as_widgets = session_dict_to_widget_filters(session_dict, column_map)
+    session_as_widgets = await session_dict_to_widget_filters(
+        session_dict, column_map, vendor=vendor, bu=bu
+    )
     return session_as_widgets + normalized

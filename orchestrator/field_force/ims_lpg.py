@@ -38,15 +38,15 @@ def generate_session_filters(
 ) -> List[str]:
     """Territory filters for LPG IMS widgets (delegates to shared IMS vendor mapping)."""
     return field_force_utils.generate_session_filters(
-        vendor="IMS", model=model, query_filters=query_filters
+        vendor="IMS_LPG", model=model, query_filters=query_filters
     )
 
 
-def _filters(
+async def _filters(
     widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]],
 ) -> List[str]:
     """Merged widget + session filters as SQL fragments (session is merged in ``get_input_filters``)."""
-    effective = field_force_utils.get_input_filters(
+    effective = await field_force_utils.get_input_filters(
         _widget_filters_to_dicts(widget_filters),
         vendor="IMS_LPG",
         merge_session=True,
@@ -69,8 +69,8 @@ def _lpg_indent_join_qualify(sql_fragment: str) -> str:
     sup = s.upper()
     col_alias = (
         ("LOCN_CODE", "a"),
-        ("SAREA_CODE", "b"),
-        ("ZONE", "b"),
+        ("SAREA_CODE", "dd"),
+        ("ZONE", "dd"),
     )
     for col, alias in col_alias:
         n = len(col)
@@ -85,9 +85,13 @@ def _lpg_indent_join_conditions(filter_sql_fragments: List[str]) -> List[str]:
 
 
 # INDENT_REQUEST = a, INDENT_PRODUCTS = b (filter columns SAREA_CODE, ZONE live on b).
-_LPG_JOIN_INDENT_PRODUCTS_B = """JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b
+_LPG_JOIN_INDENT_PRODUCTS_B = """
+                INNER JOIN "LPGIMS_SAP"."DEALER_DETAILS" dd 
+                ON a."DEALER_CODE" = dd."DEALER_CODE" 
+                JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" b
                 ON a."LOCN_CODE" = b."LOCN_CODE"
-                AND a."INDENT_NO" = b."INDENT_NO" """
+                AND a."INDENT_NO" = b."INDENT_NO" 
+                """
 
 
 async def execute_ims_query(query):
@@ -210,7 +214,7 @@ async def get_total_indents_raised(
         include_total: bool = True,
 ):
     """Total indents raised (all states) in period — SOP: Total Indents Raised."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -256,7 +260,7 @@ async def get_cancelled_indents(
 ):
     """Indents cancelled in the selected window (SOP: Cancelled Indents)."""
     _ = (level_filter, drill_filter, table_data)
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -305,7 +309,7 @@ async def get_valid_indents(
 ):
     """Valid Indents  in the selected window (SOP: Valid Indents)."""
     _ = (level_filter, drill_filter, table_data)
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -359,7 +363,7 @@ async def get_pending_indents(
     Output shape (target):
         {"summary": [{"pending_count": int, ...}], "drill_down": [...] | None, "total": int?}
     """
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -410,7 +414,7 @@ async def get_indents_on_hold(
     include_total: bool = True,
 ):
     """Indents explicitly on hold (credit / compliance / manual hold) — SOP: Indents on Hold."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -459,7 +463,7 @@ async def get_trucks_allocated(
     include_total: bool = True,
 ):
     """Count of indents with truck allocation (or trucks allocated) — SOP: Trucks Allocated."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -510,7 +514,7 @@ async def get_sent_to_sap(
     include_total: bool = True,
 ):
     """Indents pushed to SAP interface — SOP: Sent To SAP."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -562,7 +566,7 @@ async def get_sales_order_placed(
     include_total: bool = True,
 ):
     """Indents with SAP sales order created — SOP: Sales Order Placed."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -618,7 +622,7 @@ async def get_invoice_created(
     include_total: bool = True,
 ):
     """Indents with billing / invoice document — SOP: Invoice Created."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -674,7 +678,7 @@ async def get_r2_swiped(
     include_total: bool = True,
 ):
     """Trucks where R2 Swiped."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -740,7 +744,7 @@ async def get_r3_swiped(
     include_total: bool = True,
 ):
     """Indents completed / delivered — SOP: Delivered."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -806,7 +810,7 @@ async def get_delivered(
     include_total: bool = True,
 ):
     """Indents completed / delivered — SOP: Delivered."""
-    filter_sql_fragments = _filters(widget_filters)
+    filter_sql_fragments = await _filters(widget_filters)
     conditions = _lpg_indent_join_conditions(filter_sql_fragments)
     conditions = " AND " + " AND ".join(conditions) if conditions else " "
     if table_data:
@@ -909,7 +913,6 @@ async def get_indent_details(
 
     ``page`` (0-based, default 0), ``page_size``, and ``include_total`` apply when ``table_data`` is true.
     """
-    print(data)
     merged: List[field_force_model.WidgetFiltersCreate] = []
     merged.extend(data.filters or [])
     if data.cross_filters:
