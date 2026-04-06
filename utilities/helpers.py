@@ -23,7 +23,6 @@ from dateutil.relativedelta import relativedelta
 import utilities
 import Thingsboard.bu_asset_master_new as tb_master
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-import hpcl_ceg_model
 import utilities.sales_mapping as sales_mapping
 
 
@@ -228,7 +227,7 @@ async def get_location_details(bu, sap_id, from_db=False):
             
             # Query database directly using SQL
             query = f"SELECT * FROM location_master WHERE bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
-            locdata = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
+            locdata = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=1)
             
             if locdata.get('data', []):
                 location_data = locdata.get('data')[0]
