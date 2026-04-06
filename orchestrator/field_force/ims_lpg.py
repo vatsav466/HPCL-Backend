@@ -51,6 +51,7 @@ async def _filters(
         vendor="IMS_LPG",
         merge_session=True,
         model="IMS_LPG",
+        bu="LPG_CUSTOMERS"
     )
     return field_force_utils.widget_filters_to_condition_strings(effective)
 

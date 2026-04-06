@@ -247,12 +247,12 @@ def _sql_literal(val: str) -> str:
 def _sales_area_from_row(row: Dict[str, Any]) -> Optional[str]:
     if not row:
         return None
-    for k in ("sales_area", "SALES_AREA"):
+    for k in ("sales_area", "SALES_AREA", "sales_area_code"):
         if k in row and row[k] is not None:
             s = str(row[k]).strip()
             return s if s else None
     lowered = {str(kk).lower(): vv for kk, vv in row.items()}
-    v = lowered.get("sales_area")
+    v = lowered.get("sales_area") or lowered.get("sales_area_code")
     if v is None:
         return None
     s = str(v).strip()
@@ -275,13 +275,14 @@ async def _fetch_distinct_sales_areas_for_regions(bu: str, regions: List[str]) -
         region_lits = [_sql_literal(r) for r in regions if str(r).strip()]
         if not region_lits:
             return []
+        sales_area_key = "sales_area_code" if bu_lit == "LPG_CUSTOMERS" else "sales_area"
         in_clause = ", ".join(region_lits)
         sql = f"""
-            SELECT DISTINCT sales_area
+            SELECT DISTINCT {sales_area_key}
             FROM location_master
             WHERE bu = {bu_lit}
-              AND region IN ({in_clause})
-              AND sales_area IS NOT NULL
+              AND (region_code IN ({in_clause}) or region in ({in_clause}))
+              AND {sales_area_key} IS NOT NULL
               AND TRIM(COALESCE(sales_area::text, '')) <> ''
         """
         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sql, limit=0)
@@ -296,6 +297,78 @@ async def _fetch_distinct_sales_areas_for_regions(bu: str, regions: List[str]) -
         return list(dict.fromkeys(vals))
     except Exception:
         return []
+
+
+def _widget_filter_key_is_region(key: str, column_map: Dict[str, str]) -> bool:
+    """True if ``key`` is the region territory for this model (semantic or mapped SQL column)."""
+    k = (key or "").strip()
+    if not k:
+        return False
+    mapped = column_map.get("region")
+    if mapped:
+        return k.lower() == mapped.lower()
+    return k.lower() == "region"
+
+
+def _territory_value_for_widget_item(item: Dict[str, Any]) -> Any:
+    """Single value or list to pass to :func:`get_vendor_territory` (after coalesce)."""
+    _coalesce_widget_value_and_values(item)
+    vs = item.get("values")
+    v = item.get("value")
+    if isinstance(vs, list) and len(vs) > 0:
+        return vs if len(vs) > 1 else vs[0]
+    if not _value_is_empty(v):
+        return v
+    return None
+
+
+async def _expand_widget_regions_to_sales_area_filters(
+    items: List[Dict[str, Any]],
+    column_map: Dict[str, str],
+    vendor: str,
+    bu: Optional[str],
+    *,
+    expand_region_to_sales_area: bool = True,
+) -> List[Dict[str, Any]]:
+    """
+    For each widget filter on ``region``, replace with distinct ``sales_area`` from
+    ``location_master`` when BU and ``sales_area`` column exist (same rules as session path).
+    If expansion yields no rows, the original region filter is kept.
+    """
+    if not expand_region_to_sales_area or not items:
+        return items
+    eff_bu = bu or _session_bu_from_context()
+    sales_area_col = column_map.get("sales_area")
+    if not eff_bu or not sales_area_col:
+        return items
+
+    out: List[Dict[str, Any]] = []
+    for raw in items:
+        item = dict(raw)
+        if not _widget_filter_key_is_region(str(item.get("key") or "").strip(), column_map):
+            out.append(item)
+            continue
+        tv = _territory_value_for_widget_item(item)
+        if tv is None:
+            out.append(item)
+            continue
+
+        if expand_region_to_sales_area:
+            mapped = vendor_territory_mapping.get_vendor_territory("region", tv, vendor)
+            regions = _as_str_list(mapped)
+            if not regions:
+                out.append(item)
+                continue
+            sas = await _fetch_distinct_sales_areas_for_regions(eff_bu, regions)
+            if sas:
+                out.append(
+                    {"key": sales_area_col, "cond": "in", "values": sas}
+                )
+            else:
+                out.append(item)
+        else:
+            out.append(item)
+    return out
 
 
 async def session_dict_to_widget_filters(
@@ -376,25 +449,40 @@ async def get_input_filters(
     merge_session: bool = True,
     model: Optional[str] = None,
     bu: Optional[str] = None,
+    expand_region_to_sales_area: bool = True,
 ) -> List[Dict[str, Any]]:
     """
     Configure effective input filters in WidgetFilters format, optionally merging session-based filters.
 
     Session filters (from get_role_based_filters) are converted to the same WidgetFilters structure
     (key, cond, value or values), including territory mapping and optional region→sales_area expansion.
+    Request ``widget_filters`` are normalized the same way; when ``key`` is ``region`` (or the model's
+    region SQL column), they are expanded to distinct ``sales_area`` from ``location_master`` like session.
+
     Session filters are applied first (role restriction), then the request's widget_filters.
 
     :param widget_filters: Filters from the API request (list of {key, cond, value?/values?}).
     :param vendor: Target system for territory mapping; "IMS", "CRIS", "IMS_LPG", etc.
     :param merge_session: If True, prepend session-derived filters; if False, return copy of widget_filters.
     :param model: Optional; for CRIS/NOVEX use model to pick column map; defaults to vendor.
-    :param bu: Optional business unit for ``location_master`` when expanding session ``region`` to sales areas.
+    :param bu: Optional business unit for ``location_master`` when expanding ``region`` to sales areas.
+    :param expand_region_to_sales_area: When False, keep region filters without DB expansion.
     :return: List of filter items in WidgetFilters format.
     """
+    model_key = (model or vendor).upper()
+    column_map = TERRITORY_COLUMN_BY_VENDOR.get(model_key, {})
+
     normalized = normalize_widget_filters_for_model(
         list(widget_filters) if widget_filters else [],
         vendor=vendor,
         model=model,
+    )
+    normalized = await _expand_widget_regions_to_sales_area_filters(
+        normalized,
+        column_map,
+        vendor,
+        bu,
+        expand_region_to_sales_area=expand_region_to_sales_area,
     )
     if not merge_session:
         return normalized
@@ -403,9 +491,11 @@ async def get_input_filters(
     if not session_dict:
         return normalized
 
-    model_key = (model or vendor).upper()
-    column_map = TERRITORY_COLUMN_BY_VENDOR.get(model_key, {})
     session_as_widgets = await session_dict_to_widget_filters(
-        session_dict, column_map, vendor=vendor, bu=bu
+        session_dict,
+        column_map,
+        vendor=vendor,
+        bu=bu,
+        expand_region_to_sales_area=expand_region_to_sales_area,
     )
     return session_as_widgets + normalized
