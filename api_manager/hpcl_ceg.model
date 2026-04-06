@@ -4237,6 +4237,7 @@ Model TasHelpDeskVendorMails {
 
     Config=> {
         crud_operations='read'
+    }
 
 }
 
@@ -4248,6 +4249,5 @@ Model LpgOperationsInsights {
         cross_filters optional list WidgetFilters
         drill_state optional str
         metric_type str   
->>>>>>> HPCL_Code
     }
 }
