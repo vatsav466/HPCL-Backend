@@ -2245,3 +2245,24 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpgoperationsinsights/{id}', tags=['LpgOperationsInsights'])
 async def delete(id: str):
     return await LpgOperationsInsights.delete(id)
+
+
+@router.get('/naturalgasconnectionssummary/{id}', response_model=NaturalGasConnectionsSummary, tags=['NaturalGasConnectionsSummary'])
+async def get(id: str):
+    return await NaturalGasConnectionsSummary.get(id, skip_secrets=True)
+
+
+@router.get('/naturalgasconnectionssummary', response_model=NaturalGasConnectionsSummaryGetResp, tags=['NaturalGasConnectionsSummary'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NaturalGasConnectionsSummary.get_all(params, skip_secrets=True)
+
+
+@router.get('/naturalgasconnections/{id}', response_model=NaturalGasConnections, tags=['NaturalGasConnections'])
+async def get(id: str):
+    return await NaturalGasConnections.get(id, skip_secrets=True)
+
+
+@router.get('/naturalgasconnections', response_model=NaturalGasConnectionsGetResp, tags=['NaturalGasConnections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NaturalGasConnections.get_all(params, skip_secrets=True)
+
