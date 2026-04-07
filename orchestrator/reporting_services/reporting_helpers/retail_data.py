@@ -829,89 +829,6 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                             ORDER BY "transaction_date";
                         """
     nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' """
-    nozzle_sales_query_avg =f"""
-                   WITH base AS (
-                        SELECT
-                            "transaction_date",
-
-                            SUM("sales_volume") FILTER (WHERE product_grp = 'MS') AS ms,
-                            SUM("sales_volume") FILTER (WHERE product_grp IN ('POWER 99','POWER 95','POWER 100')) AS power,
-                            SUM("sales_volume") FILTER (WHERE product_grp = 'HSD') AS hsd,
-                            SUM("sales_volume") FILTER (WHERE product_grp = 'TURBO') AS turbo
-
-                        FROM "public".nozzle_sales
-                        WHERE "transaction_date" >= DATE '2026-03-01'
-                        GROUP BY "transaction_date"
-                    ),
-
-                    mar AS (
-                        SELECT
-                            ROUND(AVG(ms)/1000.0,2) AS ms,
-                            ROUND(AVG(power)/1000.0,2) AS power,
-                            ROUND(AVG(hsd)/1000.0,2) AS hsd,
-                            ROUND(AVG(turbo)/1000.0,2) AS turbo
-                        FROM base
-                        WHERE "transaction_date" BETWEEN DATE '2026-03-01' AND DATE '2026-03-19'
-                    ),
-
-                    apr AS (
-                        SELECT
-                            ROUND(AVG(ms)/1000.0,2) AS ms,
-                            ROUND(AVG(power)/1000.0,2) AS power,
-                            ROUND(AVG(hsd)/1000.0,2) AS hsd,
-                            ROUND(AVG(turbo)/1000.0,2) AS turbo
-                        FROM base
-                        WHERE "transaction_date" BETWEEN DATE '2026-03-20' AND CURRENT_DATE - INTERVAL '1 day'
-                    ),
-
-                    yday AS (
-                        SELECT
-                            ROUND(COALESCE(SUM(ms), 0) / 1000.0, 2) AS ms,
-                            ROUND(COALESCE(SUM(power), 0) / 1000.0, 2) AS power,
-                            ROUND(COALESCE(SUM(hsd), 0) / 1000.0, 2) AS hsd,
-                            ROUND(COALESCE(SUM(turbo), 0) / 1000.0, 2) AS turbo
-                        FROM base
-                        WHERE "transaction_date" = CURRENT_DATE - INTERVAL '1 day'
-                    )
-
-                    SELECT
-                        -- ================= MS =================
-                        ROUND(mar.ms,2) AS "MS-R Normal (Mar1-19)",
-                        ROUND(apr.ms,2) AS "MS-R Normal (Mar20-Yday)",
-                        ROUND(yday.ms,2) AS "MS-R Normal (Yday)",
-
-                        ROUND(mar.power,2) AS "MS-R Branded (Mar1-19)",
-                        ROUND(apr.power,2) AS "MS-R Branded (Mar20-Yday)",
-                        ROUND(yday.power,2) AS "MS-R Branded (Yday)",
-
-                        ROUND((mar.power / NULLIF(mar.ms + mar.power, 0)) * 100, 1) AS "MS % (Mar1-19)",
-                        ROUND((apr.power / NULLIF(apr.ms + apr.power, 0)) * 100, 1) AS "MS % (Mar20-Yday)",
-                        ROUND((yday.power / NULLIF(yday.ms + yday.power, 0)) * 100, 1) AS "MS % (Yday)",
-
-                        ROUND(mar.ms + mar.power, 2) AS "MS Total (Mar1-19)",
-                        ROUND(apr.ms + apr.power, 2) AS "MS Total (Mar20-Yday)",
-                        ROUND(yday.ms + yday.power, 2) AS "MS Total (Yday)",
-
-                         -- ================= HSD =================
-                        ROUND(mar.hsd,2) AS "HSD-R Normal (Mar1-19)",
-                        ROUND(apr.hsd,2) AS "HSD-R Normal (Mar20-Yday)",
-                        ROUND(yday.hsd,2) AS "HSD-R Normal (Yday)",
-
-                        ROUND(mar.turbo,2) AS "HSD-R Branded (Mar1-19)",
-                        ROUND(apr.turbo,2) AS "HSD-R Branded (Mar20-Yday)",
-                        ROUND(yday.turbo,2) AS "HSD-R Branded (Yday)",
-
-                        ROUND((mar.turbo / NULLIF(mar.hsd + mar.turbo, 0)) * 100, 1) AS "HSD % (Mar1-19)",
-                        ROUND((apr.turbo / NULLIF(apr.hsd + apr.turbo, 0)) * 100, 1) AS "HSD % (Mar20-Yday)",
-                        ROUND((yday.turbo / NULLIF(yday.hsd + yday.turbo, 0)) * 100, 1) AS "HSD % (Yday)",
-
-                        ROUND(mar.hsd + mar.turbo, 2) AS "HSD Total (Mar1-19)",
-                        ROUND(apr.hsd + apr.turbo, 2) AS "HSD Total (Mar20-Yday)",
-                        ROUND(yday.hsd + yday.turbo, 2) AS "HSD Total (Yday)"
-
-                    FROM mar, apr, yday;                                                                                                                                                                                             16,0-1        21%
-                    """ 
-   
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -936,10 +853,6 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         1
     )
     print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)
-
-    nozzle_sales_avg = await function(query=nozzle_sales_query_avg)
-    nozzle_sales_avg_df = pd.DataFrame(nozzle_sales_avg)
-    print("nozzle_sales_avg_df = pd.DataFrame(nozzle_sales_avg) ---->\n", nozzle_sales_avg_df)
     
     zone_wise_chart = await dry_out_trends_chart(last_30_days_trends_df)
     chart_path = await generate_chart(zone_fuel_df)
@@ -1049,7 +962,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
             'dry_out_trends': summary_df.to_dict(orient='records'),
             'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
             'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
-            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage, 'nozzle_sales_avg_df': nozzle_sales_avg_df.to_dicts()[0]}
+            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage}
 
 
 async def get_ro_alerts():
@@ -1815,4 +1728,3 @@ async def sales_tmt_excel():
 
     print("Excel created at:", excel_path)
     return {"retail_sales_report": excel_path}
-
