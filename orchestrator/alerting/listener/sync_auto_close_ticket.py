@@ -100,7 +100,7 @@ class AlertCloserListener:
 
             await hpcl_ceg_ticketing_model.Ticketing(
                 id=db_id,
-                ticket_state="ReviewedByOcc",
+                ticket_state="Reviewed By Occ",
                 ticket_status="Close",
                 ticket_history=history
             ).modify()
