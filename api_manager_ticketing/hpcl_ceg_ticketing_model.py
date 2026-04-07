@@ -68,11 +68,11 @@ class TicketingSchema(UrdhvaPostgresBase):
     alert_section: Mapped[typing.Optional[str]] = mapped_column("alert_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("location_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("location_name", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    ticket_status: Mapped[typing.Any] = mapped_column("ticket_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ticket_state: Mapped[typing.Any] = mapped_column("ticket_state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ticket_status: Mapped[typing.Any] = mapped_column("ticket_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    ticket_state: Mapped[typing.Any] = mapped_column("ticket_state", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     summary: Mapped[str] = mapped_column("summary", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -105,10 +105,10 @@ class TicketingSchema(UrdhvaPostgresBase):
     auto_ticket_close: Mapped[typing.Optional[str]] = mapped_column("auto_ticket_close", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    escalation_level: Mapped[typing.Optional[str]] = mapped_column("escalation_level", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    escalation_level: Mapped[typing.Optional[str]] = mapped_column("escalation_level", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     comment_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("comment_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    re_assingee_employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_employee_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_id", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
+    re_assingee_employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_employee_id", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     re_assingee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     reassigne_due_date: Mapped[typing.Optional[str]] = mapped_column("reassigne_due_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
@@ -545,6 +545,14 @@ class Ticketing_Pm_Orders_WeeklyParams(pydantic.BaseModel):
     segment_type: typing.Optional[str] = pydantic.Field("", **{})
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketing_Run_Alert_CloserParams(pydantic.BaseModel):
+    pass
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
