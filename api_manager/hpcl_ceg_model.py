@@ -11100,11 +11100,14 @@ class TasFaultySchema(UrdhvaPostgresBase):
     alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     user_remarks: Mapped[typing.Optional[str]] = mapped_column("user_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tas_faulty_unique_id: Mapped[str] = mapped_column("tas_faulty_unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     vendor_remarks: Mapped[typing.Optional[str]] = mapped_column("vendor_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     faulty_date: Mapped[datetime.datetime] = mapped_column("faulty_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     status: Mapped[str] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(tas_faulty_unique_id, name="tas_faulty_tas_faulty_unique_id"),)
 
 
 class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -11121,6 +11124,7 @@ class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
     alert_id: str
     vendor_name: str
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    tas_faulty_unique_id: str
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     faulty_date: datetime.datetime
@@ -11132,7 +11136,7 @@ class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasFaultySchema
-        upsert_keys = []
+        upsert_keys = ['tas_faulty_unique_id']
 
 
 class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
@@ -11149,6 +11153,7 @@ class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
     alert_id: typing.Optional[str] | None = None
     vendor_name: typing.Optional[str] | None = None
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    tas_faulty_unique_id: typing.Optional[str] | None = None
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     faulty_date: typing.Optional[datetime.datetime] | None = None
@@ -11160,7 +11165,7 @@ class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasFaultySchema
-        upsert_keys = []
+        upsert_keys = ['tas_faulty_unique_id']
 
 
 class TasFaultyGetResp(pydantic.BaseModel):

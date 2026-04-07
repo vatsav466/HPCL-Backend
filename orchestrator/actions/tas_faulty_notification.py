@@ -29,7 +29,7 @@ class VendorEmailNotification:
         return [
             "sap_id", "vendor_name", "device_type", "device_name",
             "zone", "bu", "remarks", "status", "messagetype", "location_name",
-            "escalationlevel"  # 0=all, 1=level1, 2=level2, 3=level3
+            "escalationlevel", "tas_faulty_unique_id"
         ]
 
     async def get_vendor_emails(
@@ -167,6 +167,18 @@ class VendorEmailNotification:
             location_name    = params.get("location_name", "")
             escalationlevel = int(params.get("escalationlevel", 1))
 
+            data = hpcl_ceg_model.TasFaulty.get_all(
+                urdhva_base.queryparams.QueryParams(q=f"tas_faulty_unique_id='{params.get('tas_faulty_unique_id')}'", limit=1),
+            )
+            
+            data_list = data.get("data") if isinstance(data, dict) else data
+            if not data_list:
+                logger.warning(f"No TAS Faulty record found for unique_id={params.get('tas_faulty_unique_id')}")
+            else:
+                data = data_list[0]
+                id = data.get("id")
+        
+            
             # ----------------------------------------------------------------
             # Resolve TO and CC recipients from DB
             # ----------------------------------------------------------------
@@ -204,6 +216,7 @@ class VendorEmailNotification:
                 status=status,
                 message_type=message_type,
                 escalationlevel=escalationlevel,
+                id=id
             )
             self.subject = f"TAS Notification - {device_name} ({sap_id})"
 

@@ -123,6 +123,11 @@ async def create_tas_faulty(data, certificate_file=None):
         faulty_date = data['faulty_date']
         vendor_name = data['vendor_name']
 
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        date_str = datetime.now().strftime("%d%m%y") 
+        redis_key = f"tas_faulty_counter:{date_str}"
+        count_incr = await redis_ins.incr(redis_key)
+        data['tas_faulty_unique_id'] = f"TAS_{date_str}_{count_incr}"
 
         # Set default status
         data['status'] = "Open"
@@ -156,6 +161,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 "sap_id": {"value": sap_id, "type": "String"},
                 "location_name": {"value": location_name, "type": "String"},
                 "device_type": {"value": device_type, "type": "String"},
+                "tas_faulty_unique_id": {"value": data['tas_faulty_unique_id'], "type": "String"},
                 "bu": {"value": "TAS", "type": "String"},
                 "device_name": {"value": device_name, "type": "String"},
                 "zone": {"value": zone, "type": "String"},

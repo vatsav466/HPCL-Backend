@@ -4094,6 +4094,7 @@ Model TasFaulty {
     alert_id index_field str
     vendor_name index_field str
     user_remarks optional str
+    tas_faulty_unique_id unique_field str
     vendor_remarks optional str
     workflow_instance_id optional str
     faulty_date datetime
