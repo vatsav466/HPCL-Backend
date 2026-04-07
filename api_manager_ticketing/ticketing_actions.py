@@ -29,7 +29,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Get_Location_DataParams,
     Ticketing_Vts_Block_TrucksParams,
     Ticketing_Pm_OrdersParams,
-    Ticketing_Pm_Orders_WeeklyParams
+    Ticketing_Pm_Orders_WeeklyParams,
+    Ticketing_Run_Alert_CloserParams
 
 )
 import os, uuid
@@ -54,6 +55,7 @@ from typing import List,Dict
 from zoneinfo import ZoneInfo
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.notification_manager.notify_email as notify_email
+import orchestrator.alerting.alert_ticket_close as alert_ticket_close
 
 
 
@@ -647,7 +649,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         ticket_state_str = ticket_data.get('ticket_state')
         if isinstance(ticket_state_str, State):
             ticket_state_str = ticket_state_str.name
-        if auto_close_flag:
+        if auto_close_flag and all_alerts_closed:
             ticket_state_str = "ReviewedByOcc"
             ticket_data["ticket_state"] = "ReviewedByOcc"
         else:
@@ -2572,3 +2574,10 @@ async def ticketing_pm_orders_weekly(data: Ticketing_Pm_Orders_WeeklyParams):
             "message": str(e),
             "data": []
         }
+
+
+# Action run_alert_closer
+@router.post('/run_alert_closer', tags=['Ticketing'])
+async def ticketing_run_alert_closer(data: Ticketing_Run_Alert_CloserParams):
+    await alert_ticket_close.process_and_enqueue_alert_closer()
+    return {"message": "Alert closer triggered"}

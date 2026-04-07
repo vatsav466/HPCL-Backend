@@ -96,6 +96,9 @@
                 },
                 {
                     "name": "pm_orders_weekly"
+                },
+                {
+                    "name": "run_alert_closer"
                 }
             ]
         },
@@ -213,6 +216,9 @@
                 },
                 {
                     "name": "pm_orders_weekly"
+                },
+                {
+                    "name": "run_alert_closer"
                 }
             ]
         },
@@ -640,6 +646,10 @@
         {
             "name": "pm_orders_weekly",
             "displayName": "pm_orders_weekly"
+        },
+        {
+            "name": "run_alert_closer",
+            "displayName": "run_alert_closer"
         },
         {
             "name": "add_comment_to_ticket",

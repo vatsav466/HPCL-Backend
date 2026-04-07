@@ -362,6 +362,9 @@ Model Ticketing {
         limit optional int
     }
 
+    Action=> run_alert_closer {
+    }
+
 
     Config=> {
         crud_operations='read'

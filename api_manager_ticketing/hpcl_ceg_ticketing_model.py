@@ -551,6 +551,14 @@ class Ticketing_Pm_Orders_WeeklyParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketing_Run_Alert_CloserParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TicketCommentSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_comment'
     
