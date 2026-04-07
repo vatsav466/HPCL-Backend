@@ -5,7 +5,10 @@ Maps normalized (e.g. lowercase) territory names to vendor-specific identifiers
 used by IMS, CRIS, and other systems. Used to translate user context (sales area,
 region, zone) into the correct filter values per data source.
 """
+from __future__ import annotations
+
 import urdhva_base
+from typing import Optional
 import orchestrator.field_force.territory_mapping.zone_mapping as zone_mapping
 import orchestrator.field_force.territory_mapping.region_mapping as region_mapping
 import orchestrator.field_force.territory_mapping.sales_area_mapping as sales_area_mapping
@@ -33,11 +36,12 @@ def _get_sales_area_vendor_value(sales_area_key: str, vendor: str):
     """
     Resolve a single sales area key to the given vendor's value.
 
-    :param sales_area_key: Normalized sales area key (e.g. lowercase).
-    :param vendor: Target system key, e.g. "IMS", "CRIS".
+    :param sales_area_key: Sales area lookup key (matched case-insensitively against mapping keys).
+    :param vendor: Target system key, e.g. "IMS", "CRIS", "IMS_LPG".
     :return: Vendor-specific value string, or None if key or vendor not in mapping.
     """
-    area = vendor_mapping["sales_area"].get(sales_area_key)
+    norm = str(sales_area_key).lower().strip()
+    area = vendor_mapping["sales_area"].get(norm)
     if not area:
         return None
     return area.get(vendor) if area else None
@@ -59,29 +63,94 @@ def get_sales_area_vendor_value(territory_value, vendor):
         mapping = []
         for rec in territory_value:
             val = _get_sales_area_vendor_value(rec, vendor)
-            if val is not None:
-                mapping.append(val)
+            mapping.append(val if val is not None else rec)
         return mapping
 
     val = _get_sales_area_vendor_value(territory_value, vendor)
     return val if val is not None else territory_value
 
 
+def _resolve_zone_code(raw: str) -> Optional[str]:
+    """Map zone short code or full zone name to canonical code (NZ, EZ, …)."""
+    s = str(raw).strip()
+    if not s:
+        return None
+    sup = s.upper()
+    zm = zone_mapping.zone_mapping
+    if sup in zm:
+        return sup
+    for full_name, code in zone_mapping.zone_map.items():
+        if full_name.upper() == sup:
+            return code
+    return None
+
+
+def _get_zone_vendor_value_single(raw: str, vendor: str) -> str:
+    code = _resolve_zone_code(raw)
+    if not code:
+        return raw
+    entry = zone_mapping.zone_mapping.get(code)
+    if not entry:
+        return raw
+    val = entry.get(vendor)
+    if val is None or str(val).strip() == "":
+        return raw
+    return val
+
+
+def get_zone_vendor_value(territory_value, vendor: str):
+    """Map zone code or full name to the value used by ``vendor`` (empty mapping → original)."""
+    if isinstance(territory_value, list):
+        return [_get_zone_vendor_value_single(str(x), vendor) for x in territory_value]
+    return _get_zone_vendor_value_single(str(territory_value), vendor)
+
+
+def _find_region_mapping_entry(raw: str):
+    s = str(raw).strip()
+    if not s:
+        return None
+    su = s.upper()
+    for k, v in region_mapping.region_mapping.items():
+        if k.upper() == su:
+            return v
+    return None
+
+
+def _get_region_vendor_value_single(raw: str, vendor: str) -> str:
+    entry = _find_region_mapping_entry(raw)
+    if not entry:
+        return raw
+    val = entry.get(vendor)
+    if val is None or str(val).strip() == "":
+        return raw
+    return val
+
+
+def get_region_vendor_value(territory_value, vendor: str):
+    """Map region to the value used by ``vendor`` (empty mapping → original)."""
+    if isinstance(territory_value, list):
+        return [_get_region_vendor_value_single(str(x), vendor) for x in territory_value]
+    return _get_region_vendor_value_single(str(territory_value), vendor)
+
+
 def get_vendor_territory(territory_type, territory_value, vendor):
     """
-    Map territory (e.g. sales area) to the value used by a specific vendor (IMS, CRIS).
+    Map territory to the value used by a specific vendor (IMS, CRIS, IMS_LPG, …).
 
-    Only territory_type "sales_area" is implemented; other types return territory_value as-is.
-    For list inputs, returns list of mapped values (missing mappings are skipped).
-    For single value, returns the mapped string or original territory_value if not found.
+    Uses ``sales_area_mapping``, ``region_mapping``, and ``zone_mapping`` where defined.
+    If a mapping entry is missing or the vendor value is empty, the original value is kept.
 
-    :param territory_type: One of "sales_area", "region", "zone" (only sales_area has mapping).
-    :param territory_value: Single sales area key (str) or list of keys.
-    :param vendor: Target system key, e.g. "IMS", "CRIS".
-    :return: Mapped value(s), or territory_value when no mapping or unsupported type.
+    :param territory_type: One of "sales_area", "region", "zone".
+    :param territory_value: Single key/name (str) or list of strings.
+    :param vendor: Target system key, e.g. "IMS", "CRIS", "IMS_LPG".
+    :return: Mapped value(s), or originals when no mapping applies.
     """
     if territory_type == "sales_area":
         return get_sales_area_vendor_value(territory_value, vendor)
+    if territory_type == "zone":
+        return get_zone_vendor_value(territory_value, vendor)
+    if territory_type == "region":
+        return get_region_vendor_value(territory_value, vendor)
     return territory_value
 
 
