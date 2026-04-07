@@ -28,8 +28,8 @@ def load_device_data(sap_id):
         elif urdhva_base.settings.environment == 'uat':
             data_path = f"/opt/ceg/algo/uat/{sap_id}.json"
         else:
-            # data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
-            data_path = f"/Users/manohar/Documents/GitHub/dnc_backend_v2/prod/{sap_id}.json"
+            data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        
 
         with open(data_path, 'r') as file:
             return json.load(file)
