@@ -4246,6 +4246,210 @@ class VTSAnalyticsActions:
             drill_state=drill_state,
             payload=payload
         )
+    
+    @staticmethod
+    async def risk_score_cluster_map(filters, cross_filters, drill_state, payload):
+        """
+        Fetch cluster_master records and their events.
+        If version_date is passed without cluster_id: Gives highly optimized summary map view + event frequency counts.
+        If cluster_id is passed: Provides a specific deep-dive drilldown mapping exact events.
+        If event_lat_lon is passed: Further filters the drill-down purely to events matching that coordinate.
+        Applies dynamic global filters.
+        """
+        try:
+            from collections import defaultdict
+            if hasattr(payload, "dict"):
+                payload = dict(payload)
+            elif not isinstance(payload, dict):
+                payload = dict(payload) if hasattr(payload, "__iter__") else {}
+                
+            cluster_id = payload.get("clicked_cluster_id") or payload.get("cluster_id")
+            version_date = payload.get("version_date")
+            event_lat_lon = payload.get("clicked_event_lat_lon") or payload.get("event_lat_lon")
+            
+            if not cluster_id and not version_date:
+                return {"status": False, "message": "Either cluster_id or version_date must be provided in payload", "data": []}
+                
+            # Build general dynamic filters
+            base_conds = []
+            if filters:
+                # Utilizing existing build_filter_conditions helper for dynamic filter mappings
+                # (Assumes "SELECT * FROM public.cluster_master m" for correct DB parsing context)
+                built_conds = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, "SELECT * FROM public.cluster_master")
+                if isinstance(built_conds, list):
+                    base_conds.extend(built_conds)
+                elif built_conds:
+                    base_conds.append(built_conds)
+            
+            # Additional structural logic
+            filter_str = " AND ".join(base_conds)
+            if filter_str:
+                filter_str = f" AND {filter_str}" # Append logic
+
+            if cluster_id:
+                # SECOND/THIRD DRILLDOWN (Specific Cluster & Optional Coordinate)
+                safe_cluster_id = str(cluster_id).replace("'", "''")
+                master_cond = f"m.cluster_id::text = '{safe_cluster_id}'"
+                if version_date:
+                    safe_date = str(version_date).replace("'", "''")
+                    master_cond += f" AND m.version_date::date = '{safe_date}'"
+                    
+                master_query = vts_query.vts_query.get("cluster_map_master_drilldown").format(
+                    master_cond=master_cond, filter_str=filter_str
+                )
+                
+                event_cond = f" AND e.event_lat_lon = '{str(event_lat_lon).replace(chr(39), chr(39)+chr(39))}'" if event_lat_lon else ""
+                event_query = vts_query.vts_query.get("cluster_map_event_drilldown").format(
+                    master_cond=master_cond, filter_str=filter_str, event_cond=event_cond
+                )
+                
+                master_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=master_query, limit=0, skip_total=True)
+                master_data = master_resp.get('data', [])
+                
+                if not master_data:
+                    msg = f"No master data found for cluster_id {cluster_id}"
+                    return {"status": True, "message": msg, "data": []}
+                    
+                event_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=event_query, limit=0, skip_total=True)
+                event_data = event_resp.get('data', [])
+                
+                cluster_info = master_data[0]
+                cluster_info['cluster_events'] = event_data
+                
+                resp_msg = f"Cluster coordinate events for {event_lat_lon}" if event_lat_lon else f"Cluster map details for cluster_id {cluster_id}"
+                return {
+                    "status": True,
+                    "message": resp_msg,
+                    "data": [cluster_info],
+                    "total_records": 1
+                }
+            
+            else:
+                # FIRST DRILLDOWN (Fast summary of ALL Clusters based on Version Date)
+                safe_date = str(version_date).replace("'", "''")
+                
+                # Fetch only summary master data
+                master_query = vts_query.vts_query.get("cluster_map_master_summary").format(
+                    safe_date=safe_date, filter_str=filter_str
+                )
+                
+                # Aggregate events to count in the DB to avoid gigantic payloads, but grab their coordinates
+                # Ensure the same filtering is applied backwards to the events through EXISTS so counts stay accurate
+                count_query = vts_query.vts_query.get("cluster_map_count_summary").format(
+                    safe_date=safe_date, filter_str=filter_str
+                )
+                
+                master_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=master_query, limit=0, skip_total=True)
+                count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=count_query, limit=0, skip_total=True)
+                
+                master_data = master_resp.get('data', [])
+                count_data = count_resp.get('data', [])
+                
+                # Create easy dictionary lookup
+                counts_map = {str(c.get('c_id')): c.get('event_count', 0) for c in count_data if c.get('c_id')}
+                coords_map = {str(c.get('c_id')): c.get('event_coords', []) for c in count_data if c.get('c_id')}
+                
+                total_cluster_events = 0
+                risk_bands = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
+                
+                formatted_data = []
+                for m in master_data:
+                    c_id = str(m.get('cluster_id')) if m.get('cluster_id') is not None else None
+                    ev_count = counts_map.get(c_id, 0)
+                    ev_coords_raw = coords_map.get(c_id, [])
+                    # Clean out nulls from aggregation
+                    ev_coords = [c for c in ev_coords_raw if c]
+                    
+                    total_cluster_events += ev_count
+                    
+                    # Accumulate risk_bands
+                    rb = str(m.get('risk_band', '')).strip().title()
+                    if rb == 'Critical':
+                        risk_bands['Critical'] += 1
+                    elif rb == 'High':
+                        risk_bands['High'] += 1
+                    elif rb in ('Medium', 'Moderate'):
+                        risk_bands['Medium'] += 1
+                    elif rb == 'Low':
+                        risk_bands['Low'] += 1
+                    
+                    # Ensure centroid parsing
+                    cl_ll = m.get("centroid_lat_lon")
+                    if not cl_ll and m.get("centroid_lat") and m.get("centroid_lon"):
+                        cl_ll = f"{m.get('centroid_lat')},{m.get('centroid_lon')}"
+                        
+                    formatted_data.append({
+                        "cluster_id": m.get("cluster_id"),
+                        "cluster_lat_long": cl_ll,
+                        "risk_score": m.get("risk_score"),
+                        "cluster_events_count": ev_count,
+                        "cluster_event_coordinates": ev_coords,
+                        "risk_band": m.get("risk_band"),
+                        "city": m.get("plant_name") or m.get("city"),
+                        "state": m.get("state") or m.get("zone_name") or "",
+                        "first_seen": m.get("first_seen"),
+                        "last_seen": m.get("last_seen"),
+                        "type": m.get("location_type"),
+                        # Include raw master for complete metadata if ever needed by frontend
+                        **m,
+                    })
+
+                return {
+                    "status": True,
+                    "message": f"All cluster map details for version_date {version_date}",
+                    "data": formatted_data,
+                    "total_clusters": len(formatted_data),
+                    "total_cluster_events": total_cluster_events,
+                    "High": risk_bands["High"] + risk_bands["Critical"], # Optionally combine depending on map thresholds
+                    "Medium": risk_bands["Medium"],
+                    "Low": risk_bands["Low"]
+                }
+        except Exception as e:
+            print("Exception in risk_score_cluster_map:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": [], "total_records": 0}
+
+    @staticmethod
+    async def cluster_wise_daily_trends(filters, cross_filters, drill_state, payload):
+        try:
+            if hasattr(payload, "dict"):
+                payload = payload.dict()
+            elif not isinstance(payload, dict):
+                payload = dict(payload) if hasattr(payload, "__iter__") else {}
+
+            cluster_id = payload.get("cluster_id") or payload.get("clicked_cluster_id")
+            
+            filter_sql = ""
+            if cluster_id:
+                safe_val = str(cluster_id).replace("'", "''")
+                filter_sql = f" AND cluster_id::text = '{safe_val}'"
+
+            base_conds = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, "SELECT * FROM public.clusterwise_event")
+            if base_conds:
+                if isinstance(base_conds, list):
+                    filter_sql += " AND " + " AND ".join(base_conds)
+                else:
+                    filter_sql += f" AND {base_conds}"
+
+            query = vts_query.vts_query.get("cluster_wise_daily_trends").format(filter_sql=filter_sql)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
+            
+            data = resp.get('data', [])
+            for row in data:
+                if 'day' in row and row['day']:
+                    row['day'] = str(row['day'])
+            
+            return {
+                "status": True,
+                "message": "Cluster-wise daily trends fetched successfully",
+                "data": data,
+                "total_records": len(data)
+            }
+        except Exception as e:
+            print("Exception in cluster_wise_daily_trends:", str(e))
+            import traceback
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": [], "total_records": 0}
 
     @staticmethod
     async def risk_score_max_date(filters, cross_filters, drill_state, payload):

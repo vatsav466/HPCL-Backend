@@ -45,7 +45,7 @@ async def get_indents_by_product_volume(
          "drill_down": [{"location_id", "location_name", "product_code", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -67,7 +67,7 @@ async def get_pending_vs_executed_indents(
          "drill_down": [{"location_id", "location_name", "status", "count", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -89,7 +89,7 @@ async def get_cancelled_indents(
          "drill_down": [{"location_id", "location_name", "product_code", "volume", "cancelled_at", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -109,7 +109,7 @@ async def get_dtp_dealers_count(
          "drill_down": [{"dealer_id", "dealer_name", "dealer_code", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -133,7 +133,7 @@ async def get_top_dtp_customers(
          "drill_down": [{"dealer_id", "dealer_name", "product_breakdown", ...}] or None,
          "total": int?, "drill_to": str?, "sales_cutoff_kl": float?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -155,7 +155,7 @@ async def get_dct_indents_by_product_volume(
          "drill_down": [{"dealer_id", "dealer_name", "product_code", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -175,7 +175,7 @@ async def get_trucks_failed_to_report(
          "drill_down": [{"dealer_id", "dealer_name", "truck_id", "expected_at", "status", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -195,7 +195,7 @@ async def get_tpt_indents_vs_availability(
          "drill_down": [{"dealer_id", "dealer_name", "indents", "trucks_available", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -216,7 +216,7 @@ async def get_indents_details(
     Output:
         Same as get_indents_by_product_volume.
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 

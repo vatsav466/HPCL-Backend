@@ -802,9 +802,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                  key='YTD')
                     
                 elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
+                    if todays_date.split('-')[1] == '04' and todays_date.split('-')[-1] == '01':
+                        start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
+                                                                                                    todays_date,
+                                                                                                    same_year=True,
+                                                                                                    key='YTD')   
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
-                                                                                                 same_year=True,
+                                                                                                 same_year=False,
                                                                                                  key='YTD')
 
                     if todays_date.split('-')[1] == '04' and todays_date.split('-')[-1] == '01':
@@ -853,7 +858,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
-                                                                                                 same_year=True,
+                                                                                                 same_year=False,
                                                                                                  key='YTDPM')
                 else:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
@@ -1011,6 +1016,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
+        if isinstance(target_data,dict):
+            
+            if not target_data.get('data',[]):
+                target_data = []
         if target_data:
             # if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
             if (('"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for x in filters]
@@ -1024,12 +1033,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-                if target_data.empty:
-                  return {
-                         "status": False,
-                         "message": "No Data Present for the Current Selection",
-                         "data": {}
-                        }
+                
+                # if target_data.empty:
+                #   return {
+                #          "status": False,
+                #          "message": "No Data Present for the Current Selection",
+                #          "data": {}
+                #         }
                 
                 #if "C"  in [x['key'].strip('"') for x in filters]:
                 #    del target_data['month_name']
@@ -1049,9 +1059,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             elif '"C"' in [x['key'] for x in filters] and len(org_cross_filters) == 1 and org_cross_filters[0][
                 'key'] == '"sbu_wise"':
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-            elif isinstance(target_data,dict):
-                if len(target_data['data']) == 0:
-                    return {"status":False,"data":'No Data Present For Current Selection'}
+            # elif isinstance(target_data,dict):
+            #     if len(target_data['data']) == 0:
+            #         return {"status":False,"data":'No Data Present For Current Selection'}
             elif '"YTD"' in [x['key'] for x in filters] and 'month_name' in target_data[0]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
@@ -1118,18 +1128,19 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
                                                   group_by_filter, '"DAY_ID"'))
         if actual_data:
-            if isinstance(actual_data,list):
-                if actual_data[0] == 'data':
-                    return {"status": False, "message": "No Data Present for the current selection"}
-            actual_data = pd.DataFrame(actual_data)
-            print("actual_data",actual_data)
-            if group_by_filter:
-                actual_data = actual_data.groupby(get_group_by_columns(group_by_filter))[
-                    'ACTUAL_TMT_SALES'].sum().reset_index()
+        # if not pd.DataFrame(actual_data).empty:
+            
+            if isinstance(actual_data, list) and len(actual_data) > 0 and actual_data[0] == 'data':
+                    actual_data = []
             else:
-                actual_data = pd.DataFrame([{'ACTUAL_TMT_SALES': actual_data.sum()['ACTUAL_TMT_SALES']}])
-            actual_data['ACTUAL_TMT_SALES'] = actual_data['ACTUAL_TMT_SALES'].fillna(0)
-            actual_data = actual_data.to_dict(orient='records')
+                actual_data = pd.DataFrame(actual_data)
+                if group_by_filter:
+                    actual_data = actual_data.groupby(get_group_by_columns(group_by_filter))[
+                        'ACTUAL_TMT_SALES'].sum().reset_index()
+                else:
+                    actual_data = pd.DataFrame([{'ACTUAL_TMT_SALES': actual_data.sum()['ACTUAL_TMT_SALES']}])
+                actual_data['ACTUAL_TMT_SALES'] = actual_data['ACTUAL_TMT_SALES'].fillna(0)
+                actual_data = actual_data.to_dict(orient='records')
 
     # Data Retrival for last financial year
     if history:
@@ -1794,6 +1805,7 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 print("cumulative_months--->", cumulative_months)
             else:
                 cumulative_months = ['Apr']
+                non_cumulative_months = ['Apr']
             # Summing data for cumulative data
             sum_cols = []
             for col in df.columns.tolist():
