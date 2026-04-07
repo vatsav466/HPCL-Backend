@@ -55,6 +55,36 @@ async def indent_sync_ro_daily_dryout():
             records=ro_data.to_dicts(),
             conflict_columns=["site_id", "fcc_code", "product_no", "tank_no", "run_id"]
         )
+
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
+
+        # drop the table before upsert
+        await function(query="""DROP TABLE IF EXISTS public.sch_inventory_forecast_dashboard_latest""")
+        print("drop query")
+
+        # create table before upsert
+        create_query = """CREATE TABLE public.sch_inventory_forecast_dashboard_latest (LIKE "HPCL_HOS".sch_inventory_forecast_dashboard INCLUDING ALL);"""
+        print("query for creating the table ---->\n", create_query)
+
+        await function(query=create_query)
+        print("create query")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
+
+        await function(
+            schema_name="public",
+            table_name="sch_inventory_forecast_dashboard_latest",
+            records=ro_data.to_dicts(),
+            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no", "run_id"]
+        )
+
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         logger.error(f"Data Sync Failed {e}")
