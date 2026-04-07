@@ -85,6 +85,17 @@ Model IndentManagement crud_disable {
        filters list WidgetFilters
        cross_filters list WidgetFilters
     }
+
+    // For LPG Dryout pattern
+    Action=> get_indent_details {
+        bu optional str // LPG, TAS, DS
+        table_data optional bool // This will decide whether data required or counts required
+        action str
+        filters list WidgetFilters
+        cross_filters optional list WidgetFilters
+        skip optional default=0 int // For skip
+        limit optional default=20 int // Records per page
+    }
 }
 
 // ========== Dry-Out (Novex) - Dev Phase 1 ==========

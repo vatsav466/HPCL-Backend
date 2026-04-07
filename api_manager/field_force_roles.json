@@ -54,6 +54,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -99,6 +102,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -153,6 +159,9 @@
                 },
                 {
                     "name": "get_r3_r1_details"
+                },
+                {
+                    "name": "get_indent_details"
                 }
             ]
         },
@@ -953,6 +962,10 @@
         {
             "name": "get_r3_r1_details",
             "displayName": "get_r3_r1_details"
+        },
+        {
+            "name": "get_indent_details",
+            "displayName": "get_indent_details"
         },
         {
             "name": "get_dry_out_locations",

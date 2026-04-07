@@ -786,7 +786,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.tt_risk_score
-                                        WHERE tt_number = '{}'
+                                        WHERE tt_number = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.tt_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 
@@ -805,7 +806,8 @@ vts_query = {
                                             risk_score,
                                             version_date
                                         FROM public.transporter_risk_score
-                                        WHERE transporter_code = '{}'
+                                        WHERE transporter_code = '{0}'
+                                        AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.transporter_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
 
@@ -824,7 +826,52 @@ vts_query = {
         "harsh_acceleration_count": "Harsh Acceleration",
         "harsh_turn_count": "Harsh Turn",
         "harsh_brake_count": "Harsh Brake"
-    }
+    },
+
+
+    "cluster_map_master_drilldown": """
+    SELECT m.* FROM public.cluster_master m WHERE {master_cond} {filter_str}
+    """,
+
+    "cluster_map_event_drilldown": """
+        SELECT e.*, ctrs.trip_name
+        FROM public.clusterwise_event e
+        JOIN public.cluster_master m ON e.cluster_id::text = m.cluster_id::text
+        LEFT JOIN public.completed_trips_risk_score ctrs ON e.invoice_no = ctrs.invoice_no
+        WHERE {master_cond} {filter_str} {event_cond}
+    """,
+
+    "cluster_map_master_summary": """
+        SELECT * FROM public.cluster_master WHERE version_date::date = '{safe_date}' {filter_str}
+    """,
+
+    "cluster_map_count_summary": """
+        SELECT 
+            e.cluster_id::text AS c_id, 
+            COUNT(*) AS event_count,
+            array_agg(e.event_lat_lon) AS event_coords
+        FROM public.clusterwise_event e
+        WHERE e.version_date::date = '{safe_date}'
+        AND EXISTS (
+            SELECT 1 FROM public.cluster_master m 
+            WHERE m.cluster_id::text = e.cluster_id::text 
+            AND m.version_date::date = '{safe_date}' {filter_str}
+        )
+        GROUP BY e.cluster_id::text
+    """,
+    
+    "cluster_wise_daily_trends": """
+        SELECT 
+            DATE(version_date::date) AS day,
+            AVG(risk_score) AS avg_risk_score
+        FROM public.cluster_master
+        WHERE version_date::date >= (
+            SELECT MAX(version_date::date) - INTERVAL '60 days'
+            FROM public.cluster_master
+        ) {filter_sql}
+        GROUP BY DATE(version_date::date)
+        ORDER BY day ASC
+    """
     }
     
 

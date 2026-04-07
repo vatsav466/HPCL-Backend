@@ -201,17 +201,22 @@ def insertToDB(data, table_name, indexing_col=()):
     #data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
-        
-        cur.execute(f"""
-                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2025-2026'
-                    """)
-        cur.execute(f"""
-                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2024-2025'
-                    """)
-        
-        cur.execute(f"""
-                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2023-2024' and "month_name" not in ('Apr','May','Jun')
-                    """)
+        #  Step 1: Delete dynamically
+        fiscal_years = data['fiscal_year'].unique().to_list()
+        print("Fiscal years to delete:", fiscal_years)
+
+        for fy in fiscal_years:
+            if fy == '2023-2024':
+                cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA"
+                    WHERE "fiscal_year" = %s
+                    AND "month_name" NOT IN ('Apr','May','Jun')
+                """, (fy,))
+            else:
+                cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA"
+                    WHERE "fiscal_year" = %s
+                """, (fy,))
         query = f'''
         COPY "{table_name}"
         FROM STDIN
