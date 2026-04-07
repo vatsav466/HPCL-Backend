@@ -1750,6 +1750,9 @@ async def sync_user_roles():
                                 "title": "TAS Overview"
                             },
                             {
+                                "title": "Help Desk Module"
+                            },
+                            {
                                 "title": "TAS Dashboard"
                             },
                             {
@@ -1805,11 +1808,11 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Risk Score"
-                            },
-                            {
-                            "title": "Device Manager"
                             }
                         ]
+                    },
+                    {
+                        "title": "Device Manager"
                     },
                     {
                         "title": "Alert Manager"
@@ -1821,6 +1824,25 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "CEMS Dashboard"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "TAS Vendor": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
                     }
                 ]
             }
