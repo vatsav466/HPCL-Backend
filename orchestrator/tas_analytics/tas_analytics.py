@@ -164,6 +164,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 "tas_faulty_unique_id": {"value": data['tas_faulty_unique_id'], "type": "String"},
                 "bu": {"value": "TAS", "type": "String"},
                 "device_name": {"value": device_name, "type": "String"},
+                "faulty_date": {"value": faulty_date.strftime("%Y-%m-%d"), "type": "String"},
                 "zone": {"value": zone, "type": "String"},
                 "vendor_name": {"value":vendor_name, "type": "String"},
                 "remarks": {"value": user_remarks, "type": "String"},
