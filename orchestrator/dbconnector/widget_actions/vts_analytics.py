@@ -4508,7 +4508,7 @@ class VTSAnalyticsActions:
             if truck_df.height == 0:
                                 
                 # connection for vts_truck
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("vts", "5")
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
