@@ -4506,12 +4506,37 @@ class VTSAnalyticsActions:
             })
 
             if truck_df.height == 0:
-                return {
-                    "status": False,
-                    "message": "No truck details found for given SAP TT No",
-                    "data": {}
-                }
+                                
+                # connection for vts_truck
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("vts", "5")
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
 
+                # check from completed_trip table
+                query = f"""
+                        SELECT top 1
+                        vehicle_rto_no, depot_erp_code, erp_transporter_code
+                        FROM completed_trip 
+                        WHERE vehicle_rto_no = '{safe_val}' AND depot_erp_code = '{sap_id}'
+                    """
+                
+                trip_completed_resp = await function(query=query)
+                completed_trips = pl.DataFrame(trip_completed_resp)
+                
+                # Map the returned columns to the correct schema
+                truck_df = completed_trips.rename({
+                    "vehicle_rto_no": "TRUCK_REGNNO",
+                    "depot_erp_code": "LOCN_CODE", 
+                    "erp_transporter_code": "TRANS_ID"
+                })
+                              
+                if truck_df.height == 0:
+                    return {
+                        "status": False,
+                        "message": "No truck details found for given SAP TT No",
+                        "data": {}
+                    }
+                
             # Filter blocked transporters
             truck_df = truck_df.filter(
                 ~pl.col("TRANS_ID").cast(pl.String).str.strip_chars().is_in(BLOCKED_CODES)
