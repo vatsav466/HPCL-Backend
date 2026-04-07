@@ -43,7 +43,7 @@ async def stock_availability(
          "drill_down": [{"dealer_id", "dealer_name", "tank_id", "product_code", "quantity", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -63,7 +63,7 @@ async def tank_utilization(
          "drill_down": [{"dealer_id", "tank_id", "capacity", "quantity", "utilization_pct", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -86,7 +86,7 @@ async def get_nozzle_sales_by_product(
          "drill_down": [{"outlet_id", "outlet_name", "dealer_id", "product_code", "volume", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -105,7 +105,7 @@ async def get_nozzle_sales_day_comparison(
          "comparison": [{"product_code", "current_volume", "previous_volume", "pct_change", ...}],
          "period_current": "today", "period_previous": "yesterday"}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -122,7 +122,7 @@ async def get_product_performance(
         {"summary": [{"product_code", "product_name", "volume", "pct_share", "rank", "period", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -142,7 +142,7 @@ async def get_degrading_outlets(
          "drill_down": [{"outlet_id", "outlet_name", "product_code", "current_volume", "previous_volume", "pct_change", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -163,7 +163,7 @@ async def get_top_degrading_dealers(
         {"summary": [{"dealer_id", "dealer_name", "degrading_pct", "volume_drop", "product_code"?, ...}],
          "drill_down": None,          "total": int?, "top_count": int}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -180,7 +180,7 @@ async def get_high_risk_outlets(
         {"summary": [{"outlet_id", "outlet_name", "dealer_id", "sales_drop_pct", "current_volume", "previous_volume", "risk_level", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -202,7 +202,7 @@ async def get_zero_sales_outlets(
          "drill_down": [{"outlet_id", "outlet_name", "dealer_id", "last_sale_date", "days_zero", ...}] or None,
          "total": int?, "period": str?, "drill_to": str?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -219,7 +219,7 @@ async def get_outlets_by_degrowth_group(
         {"summary": [{"degrowth_bucket": str, "outlet_count": int, "min_pct", "max_pct", "total_volume_drop", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -241,7 +241,7 @@ async def get_power_sales_growth_locations(
          "drill_down": [{"location_id", "location_name", "product_breakdown", ...}] or None,
          "total": int?, "drill_to": str?, "top_count": int}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -258,7 +258,7 @@ async def nozzle_sales_analysis(
         {"summary": [{"product_code", "today_volume", "mtd_volume", "period", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -277,7 +277,7 @@ async def nozzle_sales_comparison(
          "comparison": [{"product_code", "current_volume", "previous_volume", "pct_change", ...}],
          "period_current": str, "period_previous": str}
     """
-    effective_filters = field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
