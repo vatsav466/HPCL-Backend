@@ -144,7 +144,7 @@ class SolarService:
             sap_ids_str = ",".join(f"'{sap_id}'" for sap_id in sap_ids)
 
             # =========================
-            # SMART INTERVAL LOGIC (MULTI-DAY + FIX)
+            # INTERVAL LOGIC (MULTI-DAY + FIX)
             # =========================
 
             now_ist = datetime.datetime.now() + datetime.timedelta(hours=5, minutes=30)
@@ -261,7 +261,7 @@ class SolarService:
                     current_day = next_day
 
                 # =========================
-                # 🔥 STEP 3: HANDLE TODAY (ALWAYS RUN)
+                # STEP 3: HANDLE TODAY (ALWAYS RUN)
                 # =========================
                 print("Rebuilding TODAY:", start_of_today.date())
 
@@ -283,7 +283,7 @@ class SolarService:
             print("Final intervals:", intervals)
 
             # =========================
-            # LOCATION FETCH (UNCHANGED)
+            # LOCATION FETCH
             # =========================
             location_query = f"""
                 SELECT sap_id, location_name, zone, capacity_kw
@@ -308,7 +308,7 @@ class SolarService:
             total_outage = 0
 
             # =========================
-            # LOOP (NOW ONLY 1 FULL DAY INTERVAL)
+            # LOOP (FULL DAY INTERVAL)
             # =========================
             for start_utc, end_utc in intervals:
 
@@ -605,7 +605,7 @@ class SolarService:
                             "solar_generation_hrs_day": str(round(row.get("SolarGenHours_day", 0), 3)),
                         })
 
-                    # OUTAGE TRACKING (UNCHANGED)
+                    # OUTAGE TRACKING
                     key = (sap_id, source_id)
 
                     if key not in outage_tracker:
