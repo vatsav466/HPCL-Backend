@@ -707,8 +707,8 @@ class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
 
 class Locationmaster_Get_Location_MetadataParams(pydantic.BaseModel):
     bu: typing.List[str]
-    metadata_filters: typing.Optional[dict] = pydantic.Field(default_factory=dict)
-    required_fields: typing.Optional[typing.List[str]] = pydantic.Field(default_factory=list)
+    metadata_filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    required_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -11090,30 +11090,44 @@ class TasFaultySchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_faulty'
     
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     device_type: Mapped[str] = mapped_column("device_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    device_category: Mapped[str] = mapped_column("device_category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[str] = mapped_column("equipment_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    selecting_areas: Mapped[str] = mapped_column("selecting_areas", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    device_name: Mapped[str] = mapped_column("device_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     user_remarks: Mapped[typing.Optional[str]] = mapped_column("user_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tas_faulty_unique_id: Mapped[str] = mapped_column("tas_faulty_unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     vendor_remarks: Mapped[typing.Optional[str]] = mapped_column("vendor_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    faulty: Mapped[datetime.datetime] = mapped_column("faulty", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    faulty_date: Mapped[datetime.datetime] = mapped_column("faulty_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     status: Mapped[str] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(tas_faulty_unique_id, name="tas_faulty_tas_faulty_unique_id"),)
 
 
 class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'tas_faulty'
     
     sap_id: str
-    name: str
+    location_name: str
     device_type: str
+    device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    selecting_areas: str
+    device_name: str
+    alert_id: str
+    vendor_name: str
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    tas_faulty_unique_id: str
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
-    faulty: datetime.datetime
+    faulty_date: datetime.datetime
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: str
 
@@ -11122,21 +11136,27 @@ class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasFaultySchema
-        upsert_keys = []
+        upsert_keys = ['tas_faulty_unique_id']
 
 
 class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'tas_faulty'
     
     sap_id: typing.Optional[str] | None = None
-    name: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
     device_type: typing.Optional[str] | None = None
+    device_category: typing.Optional[str] | None = None
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] | None = None
+    selecting_areas: typing.Optional[str] | None = None
+    device_name: typing.Optional[str] | None = None
+    alert_id: typing.Optional[str] | None = None
+    vendor_name: typing.Optional[str] | None = None
     user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    tas_faulty_unique_id: typing.Optional[str] | None = None
     vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
-    faulty: typing.Optional[datetime.datetime] | None = None
+    faulty_date: typing.Optional[datetime.datetime] | None = None
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] | None = None
 
@@ -11145,7 +11165,7 @@ class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasFaultySchema
-        upsert_keys = []
+        upsert_keys = ['tas_faulty_unique_id']
 
 
 class TasFaultyGetResp(pydantic.BaseModel):
@@ -11156,12 +11176,17 @@ class TasFaultyGetResp(pydantic.BaseModel):
 
 class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
     sap_id: str
-    name: str
+    location_name: str
     device_type: str
+    device_category: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: str
+    selecting_areas: str
+    device_name: str
+    alert_id: str
+    vendor_name: str
     user_remarks: str
-    faulty: datetime.datetime
+    faulty_date: datetime.datetime
     certificate: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
 
@@ -11182,7 +11207,6 @@ class Tasfaulty_Update_FaultyParams(pydantic.BaseModel):
 
 class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
     sap_id: str
-    device_type: str
     equipment_name: str
 
     class Config:
@@ -11503,6 +11527,62 @@ class NonReportingDevices(urdhva_base.postgresmodel.PostgresModel):
 
 class NonReportingDevicesGetResp(pydantic.BaseModel):
     data: typing.List[NonReportingDevices]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class TasHelpDeskVendorMailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_name: Mapped[str] = mapped_column("vendor_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    level1: Mapped[str] = mapped_column("level1", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    level2: Mapped[str] = mapped_column("level2", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    level3: Mapped[str] = mapped_column("level3", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class TasHelpDeskVendorMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: str
+    location_name: str
+    zone: str
+    vendor_name: str
+    level1: str
+    level2: str
+    level3: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasHelpDeskVendorMailsSchema
+        upsert_keys = []
+
+
+class TasHelpDeskVendorMails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_help_desk_vendor_mails'
+    
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    vendor_name: typing.Optional[str] | None = None
+    level1: typing.Optional[str] | None = None
+    level2: typing.Optional[str] | None = None
+    level3: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasHelpDeskVendorMailsSchema
+        upsert_keys = []
+
+
+class TasHelpDeskVendorMailsGetResp(pydantic.BaseModel):
+    data: typing.List[TasHelpDeskVendorMails]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 

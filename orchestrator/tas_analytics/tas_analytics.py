@@ -117,11 +117,17 @@ async def create_tas_faulty(data, certificate_file=None):
         device_type = data['device_type']
         equipment_name = data['equipment_name']
         zone = data['zone']
-        location_name = data['name']
+        device_name = data['device_name']
+        location_name = data['location_name']
         user_remarks = data['user_remarks']
-        faulty = data['faulty']
+        faulty_date = data['faulty_date']
+        vendor_name = data['vendor_name']
 
-        print("sap_id:", sap_id)
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        date_str = datetime.now().strftime("%d%m%y") 
+        redis_key = f"tas_faulty_counter:{date_str}"
+        count_incr = await redis_ins.incr(redis_key)
+        data['tas_faulty_unique_id'] = f"TAS_{date_str}_{count_incr}"
 
         # Set default status
         data['status'] = "Open"
@@ -132,6 +138,7 @@ async def create_tas_faulty(data, certificate_file=None):
             f"sap_id='{sap_id}' "
             f"AND device_type='{device_type}' "
             f"AND equipment_name='{equipment_name}'"
+            f"AND device_name='{device_name}'"
         )
 
         existing = await hpcl_ceg_model.TasFaulty.get_all(
@@ -154,8 +161,12 @@ async def create_tas_faulty(data, certificate_file=None):
                 "sap_id": {"value": sap_id, "type": "String"},
                 "location_name": {"value": location_name, "type": "String"},
                 "device_type": {"value": device_type, "type": "String"},
-                "equipment_name": {"value": equipment_name, "type": "String"},
+                "tas_faulty_unique_id": {"value": data['tas_faulty_unique_id'], "type": "String"},
+                "bu": {"value": "TAS", "type": "String"},
+                "device_name": {"value": device_name, "type": "String"},
+                "faulty_date": {"value": faulty_date.strftime("%Y-%m-%d"), "type": "String"},
                 "zone": {"value": zone, "type": "String"},
+                "vendor_name": {"value":vendor_name, "type": "String"},
                 "remarks": {"value": user_remarks, "type": "String"},
                 "status": {"value": data['status'], "type": "String"},
             }
@@ -178,7 +189,7 @@ async def create_tas_faulty(data, certificate_file=None):
             )
             os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-            faulty_val = faulty
+            faulty_val = faulty_date
             if isinstance(faulty_val, datetime):
                 faulty_val = faulty_val.strftime("%Y%m%d_%H%M%S")
 
@@ -299,45 +310,48 @@ async def get_info_tas_faulty(data):
       matching the given device type.
     """
     sap_id = data.sap_id
-    device_type_filter = data.device_type
-
+    equipment_name = data.equipment_name
+    mapping = tas_queries.equipment_mapping_helpdesk
+    config = mapping.get(equipment_name)
+    if not config:
+        return "No Data Found"
     device_json = tas_listener.load_device_data(sap_id)
-    if not device_json:
-        return {
-            "status": False,
-            "message": f"Device data not found for SAP ID {sap_id}"
-        }
+    if not device_json or "data" not in device_json:
+        return "Location not onboarded"
+    target_types = config.get("internal_type", [])
+    search_level = config.get("search_level")
+    keywords = config.get("filter_keywords", [])
+    name_filter = config.get("name_filter")
 
-    devices = device_json.get("data", [])
+    results = set()
 
-    # ---------------- CASE 1: Only SAP ID ----------------
-    if not device_type_filter:
-        device_types = {
-            device["device_type"]
-            for device in devices
-            if device.get("device_type")
-        }
-
-        return {
-            "sap_id": sap_id,
-            "device_types": sorted(device_types)
-        }
-
-    # ---------------- CASE 2: SAP ID + Device Type ----------------
-    device_names = {
-        device["device_name"]
-        for device in devices
-        if device.get("device_type") == device_type_filter
-        and device.get("device_name")
-    }
-
+    for device in device_json["data"]:
+        if device.get("device_type") in target_types:
+            if search_level == "device":
+                if name_filter and name_filter not in device.get("device_name", ""):
+                    continue
+                d_name = device.get("device_name")
+                if d_name:
+                    results.add(d_name)
+            
+            elif search_level == "sensor" and keywords:
+                for sensor in device.get("sensors", []):
+                    s_type = sensor.get("sensor_type", "")
+                    s_id = sensor.get("sensor_id", "")
+                    # Logic: If any keyword (MOV) is inside the sensor_type (MOV IL1)
+                    if s_type and s_id:
+                        if any(k.upper() in s_type.upper() for k in keywords):
+                            results.add(s_id)
+    
+    if not results:
+        return "No Data Found"
+    
     return {
         "sap_id": sap_id,
-        "device_type": device_type_filter,
-        "device_names": sorted(device_names)
+        "equipment": equipment_name,
+        "results": sorted(list(results))
     }
-
-
+    
 async def tassealdateform_tas_seal_date_form_create(data, certificate_files=None):
     """
     Create a TAS Seal Date Form record and upload multiple certificates.

@@ -29,6 +29,7 @@ def load_device_data(sap_id):
             data_path = f"/opt/ceg/algo/uat/{sap_id}.json"
         else:
             data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        
 
         with open(data_path, 'r') as file:
             return json.load(file)

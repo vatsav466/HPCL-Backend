@@ -105,11 +105,11 @@ Model Ticketing {
     alert_section optional str
     sop_id optional str
     sap_id index_field unique_field list str
-    location_name optional list str
-    zone optional list str
+    location_name index_field optional list str
+    zone index_field optional list str
     region optional str
-    ticket_status Status
-    ticket_state State
+    ticket_status index_field Status
+    ticket_state index_field State
     start_date optional datetime
     end_date optional datetime
     summary str
@@ -142,10 +142,10 @@ Model Ticketing {
     auto_ticket_close optional str
     assignee_name optional list str
     assignee_mail optional list str
-    escalation_level optional str
+    escalation_level index_field optional str
     comment_history optional list CommentHistory
-    employee_id optional list str
-    re_assingee_employee_id optional list str
+    employee_id index_field optional list str
+    re_assingee_employee_id index_field optional list str
     re_assingee_mail optional list str
     reassigne_due_date optional str
 
@@ -360,6 +360,9 @@ Model Ticketing {
         segment_type optional str
         skip optional int
         limit optional int
+    }
+
+    Action=> run_alert_closer {
     }
 
 

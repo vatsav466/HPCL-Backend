@@ -284,6 +284,25 @@ BAY_REASSIGNMENT_CONFIG = {
 }
 
 
+equipment_mapping_helpdesk = {
+  "BCU": {"internal_type": ["Loading Point"], "search_level": "device"},
+  "MFM": {"internal_type": ["Loading Point"], "search_level": "device"},
+  "Header PT": {"internal_type":["Fire Effect","Fire Pump"], "search_level": "device"},
+  "Barrier Gate": {"internal_type": ["Barrier Gate"], "search_level": "device"},
+  "PT": {"internal_type": ["Fire Effect", "Fire Pump"], "search_level": "device"},
+  "HCD communication": {"internal_type": ["HCD"], "search_level":"device"},
+  "Field Hooters": {"internal_type": ["Hooter"], "search_level":"device"},
+  "Hooters": {"internal_type": ["Hooter"], "search_level":"device"},
+  "ESDs": {"internal_type": ["ESD"], "search_level":"device"},
+  "Safety PLC": {"internal_type": ["PLC"], "search_level":"device", "name_filter": "Safety PLC"},
+  "Process PLC": {"internal_type": ["PLC"], "search_level":"device", "name_filter": "Process PLC"},
+  "Header MOVs": {"internal_type": ["Tank"],"search_level": "sensor", "filter_keywords": ["MOV"]},
+  "Primary Radar": {"internal_type": ["Tank"],"search_level": "sensor","filter_keywords": ["Primary Radar"]},
+  "Secondary Radars": {"internal_type": ["Tank"], "search_level": "sensor", "filter_keywords": ["RADAR"]},
+  "VFTs": {"internal_type": ["Tank"], "search_level": "sensor", "filter_keywords": ["VFT"]},
+  "ROSOV/MOV Communication": {"internal_type": ["Tank"], "search_level": "sensor", "filter_keywords": ["ROSOV", "MOV"]}
+}
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================

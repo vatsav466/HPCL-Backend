@@ -11,6 +11,7 @@
           <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">1</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0nm8pq9</bpmn:incoming>
@@ -38,7 +39,7 @@
           <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
           <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
-          <camunda:inputParameter name="escalationlevel">1</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">2</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1v5n1sz</bpmn:incoming>
@@ -60,6 +61,7 @@
           <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
           <camunda:inputParameter name="remarks">#{remarks}</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">0</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1wol0la</bpmn:incoming>
@@ -80,7 +82,7 @@
           <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
-          <camunda:inputParameter name="escalationlevel">2</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">3</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0fcizbu</bpmn:incoming>
@@ -113,6 +115,7 @@
           <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
           <camunda:inputParameter name="remarks">#{remarks}</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">0</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_02okvwx</bpmn:incoming>
