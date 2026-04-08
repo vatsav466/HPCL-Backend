@@ -175,6 +175,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketingSchema
         upsert_keys = ['ticket_id', 'sap_id']
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'ticket_id']
 
 
 class Ticketing(urdhva_base.postgresmodel.PostgresModel):
@@ -237,6 +238,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketingSchema
         upsert_keys = ['ticket_id', 'sap_id']
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'ticket_id']
 
 
 class TicketingGetResp(pydantic.BaseModel):

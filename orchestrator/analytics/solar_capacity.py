@@ -185,6 +185,7 @@ class SolarCapacity:
                         WHEN Energy_Cumulative_kWh IS NULL THEN 0
                         WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
                         WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                        WHEN (Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh) > 100 THEN 0
 
                         ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                     END AS SolarGen_kWh_entry
@@ -266,6 +267,7 @@ class SolarCapacity:
                             WHEN Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                            WHEN (Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh) > 100 THEN 0
 
                             ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                         END AS SolarGen_kWh_entry,
@@ -356,6 +358,7 @@ class SolarCapacity:
                             WHEN Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                            WHEN (Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh) > 100 THEN 0
 
                             ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                         END AS SolarGen_kWh_entry,
@@ -1013,6 +1016,7 @@ class SolarCapacity:
             solar_master = solar_master.filter(
                 pl.col('Monitoring').cast(pl.Utf8).str.to_lowercase() == 'yes'
             )
+            solar_master = solar_master.filter(pl.col("DOC").cast(pl.Utf8).str.strip_chars().str.to_lowercase() != "pending")
 
             solar_master = solar_master.filter(pl.col('Plant Capacity').is_not_null())
 
@@ -3263,6 +3267,7 @@ class SolarCapacity:
                             WHEN Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
                             WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                            WHEN (Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh) > 100 THEN 0
 
                             ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                         END AS SolarGen_kWh_entry,

@@ -368,6 +368,7 @@ Model Ticketing {
 
     Config=> {
         crud_operations='read'
+        search_fields='bu,sap_id,location_name,zone,ticket_id'
     }
 }
 
