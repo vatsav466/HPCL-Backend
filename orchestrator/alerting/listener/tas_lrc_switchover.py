@@ -374,7 +374,7 @@ async def send_notification_email(record, sap_id):
             resp = await notify_email.publish_message(**{
                 'recipients': recipients,
                 'subject': f"LRC Master Switch Over Notification - {record.get('status_count')} days",
-                'body': read_template("/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates/lrc_switchover.html", data=record),
+                'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/lrc_switchover.html", data=record),
                 'html_content': True,
                 'force_send': True
             })

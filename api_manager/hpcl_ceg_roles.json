@@ -8263,6 +8263,69 @@
             ]
         },
         {
+            "name": "tashelpdeskvendormails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasHelpDeskVendorMails",
+            "attributes": {},
+            "uris": [
+                "/api/tashelpdeskvendormails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tashelpdeskvendormails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasHelpDeskVendorMails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tashelpdeskvendormails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tashelpdeskvendormails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasHelpDeskVendorMails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tashelpdeskvendormails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "lpgoperationsinsights",
             "type": "all",
             "ownerManagedAccess": false,

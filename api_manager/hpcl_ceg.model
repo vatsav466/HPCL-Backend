@@ -4084,25 +4084,36 @@ Model NozzleSales {
 
 Model TasFaulty {
     sap_id index_field str
-    name  index_field  str
+    location_name  index_field  str
     device_type index_field str
+    device_category str
     zone index_field optional str
     equipment_name index_field str
+    selecting_areas str
+    device_name index_field str
+    alert_id index_field str
+    vendor_name index_field str
     user_remarks optional str
+    tas_faulty_unique_id unique_field str
     vendor_remarks optional str
     workflow_instance_id optional str
-    faulty  datetime
+    faulty_date datetime
     certificate optional str
     status index_field str
 
     Action=> tas_faulty_create {
         sap_id  str
-        name  str
-        device_type  str
+        location_name str
+        device_type str
+        device_category str
         zone optional str
-        equipment_name  str
-        user_remarks  str
-        faulty  datetime
+        equipment_name str
+        selecting_areas str
+        device_name str
+        alert_id str
+        vendor_name str
+        user_remarks str
+        faulty_date datetime
         certificate optional str
         status optional str
     }
@@ -4115,7 +4126,6 @@ Model TasFaulty {
 
     Action=> get_info{
         sap_id  str
-        device_type  str
         equipment_name  str
     }
 }
@@ -4211,6 +4221,20 @@ Model NonReportingDevices {
     loaded_on datetime_no_zone
     bu str
     zone str
+
+    Config=> {
+        crud_operations='read'
+    }
+ }
+  
+Model TasHelpDeskVendorMails {
+    sap_id index_field str
+    location_name index_field str
+    zone index_field str
+    vendor_name index_field str
+    level1 str
+    level2 str
+    level3 str
 
     Config=> {
         crud_operations='read'

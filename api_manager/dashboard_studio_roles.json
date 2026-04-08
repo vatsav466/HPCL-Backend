@@ -764,6 +764,201 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "solargenerationsummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SolarGenerationSummary",
+            "attributes": {},
+            "uris": [
+                "/api/solargenerationsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "solargenerationsummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SolarGenerationSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/solargenerationsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "solargenerationsummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SolarGenerationSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/solargenerationsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "solaroutagesummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SolarOutageSummary",
+            "attributes": {},
+            "uris": [
+                "/api/solaroutagesummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "solaroutagesummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SolarOutageSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/solaroutagesummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "solaroutagesummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SolarOutageSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/solaroutagesummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "solarplantcapacity",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPlantCapacity",
+            "attributes": {},
+            "uris": [
+                "/api/solarplantcapacity/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_solar_plant_capacity"
+                }
+            ]
+        },
+        {
+            "name": "solarplantcapacity_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPlantCapacity_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/solarplantcapacity/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "solarplantcapacity_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPlantCapacity_admin",
+            "attributes": {},
+            "uris": [
+                "/api/solarplantcapacity/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_solar_plant_capacity"
+                }
+            ]
         }
     ],
     "policies": [
@@ -977,6 +1172,10 @@
         {
             "name": "get_all_dry_wet_cleaning_records",
             "displayName": "get_all_dry_wet_cleaning_records"
+        },
+        {
+            "name": "upload_solar_plant_capacity",
+            "displayName": "upload_solar_plant_capacity"
         }
     ]
 }

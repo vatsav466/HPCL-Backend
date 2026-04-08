@@ -2222,6 +2222,16 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await NonReportingDevices.get_all(params, skip_secrets=True)
 
 
+@router.get('/tashelpdeskvendormails/{id}', response_model=TasHelpDeskVendorMails, tags=['TasHelpDeskVendorMails'])
+async def get(id: str):
+    return await TasHelpDeskVendorMails.get(id, skip_secrets=True)
+
+
+@router.get('/tashelpdeskvendormails', response_model=TasHelpDeskVendorMailsGetResp, tags=['TasHelpDeskVendorMails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TasHelpDeskVendorMails.get_all(params, skip_secrets=True)
+
+
 @router.post('/lpgoperationsinsights', response_model=LpgOperationsInsights, tags=['LpgOperationsInsights'])
 async def create(inputObj: LpgOperationsInsightsCreate):
     return await inputObj.create()

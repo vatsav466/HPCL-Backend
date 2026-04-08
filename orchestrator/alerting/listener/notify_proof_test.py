@@ -82,7 +82,7 @@ async def notify_prooftest():
                     **{
                         'recipients': recipients,
                         'subject': f"Proof Test Notification for {device_name} - {interlock_name} on {location_name} - {sap_id} ",
-                        'body': alert_manager.read_template("/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates/proof_test_alert.html", data=record),
+                        'body': alert_manager.read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
                         'html_content': True,
                         'force_send': True
                     }

@@ -664,3 +664,75 @@ Model HistoricSolarPanelWetDryCleaningCreate {
     }
 
 }
+
+Model SolarGenerationSummary {
+    bu index_field str
+    sap_id index_field str
+    location_name index_field str
+    zone index_field str
+    source_id index_field str
+    source_name optional str
+    source_type optional str
+    timestamp_ist str
+    capacity_kw optional str
+    solar_generation_kwh str
+    solar_generation_hrs str
+    solar_start_time str
+    solar_end_time str
+    solar_window_hrs str
+    solar_generation_hrs_day optional str
+
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='bu,zone,location_name,sap_id,source_id'
+        search_fields='bu,sap_id,location_name,zone,source_id'
+    }
+}
+
+
+Model SolarOutageSummary {
+    bu index_field str
+    sap_id index_field str
+    location_name index_field str
+    zone index_field str
+    source_id index_field str
+    source_name optional str
+    source_type optional str
+    capacity_kw optional str
+    grid_freq str
+    timestamp_ist str
+    solar_outage_hrs str
+    outage_start_time str
+    outage_end_time str
+    solar_outage_hrs_day optional str
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='bu,zone,location_name,sap_id,source_id'
+        search_fields='bu,sap_id,location_name,zone,source_id'
+    }
+}
+
+Model SolarPlantCapacity {
+    bu index_field str
+    sap_id index_field unique_field str
+    location_name index_field str
+    zone index_field str
+    capacity_kw index_field unique_field str
+    monitoring str
+    doc optional str
+    ref_marking optional str
+    net_metering optional str
+
+
+    Action=> upload_solar_plant_capacity {
+
+    }
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='bu,zone,location_name,sap_id'
+        search_fields='bu,sap_id,location_name,zone'
+    }
+}
