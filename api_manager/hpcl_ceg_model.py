@@ -11630,114 +11630,65 @@ class Lpgoperationsinsights_Lpg_Plants_InsightsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class NaturalGasConnectionsSummarySchema(UrdhvaPostgresBase):
-    __tablename__ = 'natural_gas_connections_summary'
+class NaturalGasGVConnectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'natural_gas_gv_connections'
     
-    jv_name: Mapped[str] = mapped_column("jv_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    gv_name: Mapped[str] = mapped_column("gv_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     conn_date: Mapped[datetime.date] = mapped_column("conn_date", DATE, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    new_connection_count: Mapped[int] = mapped_column("new_connection_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    old_connection_count: Mapped[int] = mapped_column("old_connection_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ga_name: Mapped[str] = mapped_column("ga_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    achieved_count: Mapped[int] = mapped_column("achieved_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    day_wise_target: Mapped[typing.Optional[int]] = mapped_column("day_wise_target", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    backlog_lmc: Mapped[typing.Optional[int]] = mapped_column("backlog_lmc", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    backlog_ngc: Mapped[typing.Optional[int]] = mapped_column("backlog_ngc", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(jv_name, conn_date, name="natural_gas_connections_summary_jv_name_conn_date"),)
+    __table_args__ = (UniqueConstraint(gv_name, conn_date, ga_name, name="natural_gas_gv_connections_gv_name_conn_date_ga_name"),)
 
 
-class NaturalGasConnectionsSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'natural_gas_connections_summary'
+class NaturalGasGVConnectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'natural_gas_gv_connections'
     
-    jv_name: str
+    gv_name: str
     conn_date: datetime.date
-    new_connection_count: int
-    old_connection_count: int
+    ga_name: str
+    achieved_count: int
+    day_wise_target: typing.Optional[int] = pydantic.Field(0, **{})
+    backlog_lmc: typing.Optional[int] = pydantic.Field(0, **{})
+    backlog_ngc: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = NaturalGasConnectionsSummarySchema
-        upsert_keys = ['jv_name', 'conn_date']
+        schema_class = NaturalGasGVConnectionsSchema
+        upsert_keys = ['gv_name', 'conn_date', 'ga_name']
 
 
-class NaturalGasConnectionsSummary(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'natural_gas_connections_summary'
+class NaturalGasGVConnections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'natural_gas_gv_connections'
     
-    jv_name: typing.Optional[str] | None = None
+    gv_name: typing.Optional[str] | None = None
     conn_date: typing.Optional[datetime.date] | None = None
-    new_connection_count: typing.Optional[int] | None = None
-    old_connection_count: typing.Optional[int] | None = None
+    ga_name: typing.Optional[str] | None = None
+    achieved_count: typing.Optional[int] | None = None
+    day_wise_target: typing.Optional[int] = pydantic.Field(0, **{})
+    backlog_lmc: typing.Optional[int] = pydantic.Field(0, **{})
+    backlog_ngc: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = NaturalGasConnectionsSummarySchema
-        upsert_keys = ['jv_name', 'conn_date']
+        schema_class = NaturalGasGVConnectionsSchema
+        upsert_keys = ['gv_name', 'conn_date', 'ga_name']
 
 
-class NaturalGasConnectionsSummaryGetResp(pydantic.BaseModel):
-    data: typing.List[NaturalGasConnectionsSummary]
+class NaturalGasGVConnectionsGetResp(pydantic.BaseModel):
+    data: typing.List[NaturalGasGVConnections]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
 
-class NaturalGasConnectionsSchema(UrdhvaPostgresBase):
-    __tablename__ = 'natural_gas_connections'
-    
-    jv_name: Mapped[str] = mapped_column("jv_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    conn_date: Mapped[datetime.date] = mapped_column("conn_date", DATE, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    new_connection_count: Mapped[int] = mapped_column("new_connection_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    old_connection_count: Mapped[int] = mapped_column("old_connection_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ga_area: Mapped[str] = mapped_column("ga_area", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    ga_id: Mapped[typing.Optional[str]] = mapped_column("ga_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    state: Mapped[str] = mapped_column("state", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-
-    __table_args__ = (UniqueConstraint(jv_name, conn_date, ga_area, state, name="natural_gas_connections_jv_name_conn_date_ga_area_state"),)
-
-
-class NaturalGasConnectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'natural_gas_connections'
-    
-    jv_name: str
-    conn_date: datetime.date
-    new_connection_count: int
-    old_connection_count: int
-    ga_area: str
-    ga_id: typing.Optional[str] = pydantic.Field("", **{})
-    state: str
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = NaturalGasConnectionsSchema
-        upsert_keys = ['jv_name', 'conn_date', 'ga_area', 'state']
-
-
-class NaturalGasConnections(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'natural_gas_connections'
-    
-    jv_name: typing.Optional[str] | None = None
-    conn_date: typing.Optional[datetime.date] | None = None
-    new_connection_count: typing.Optional[int] | None = None
-    old_connection_count: typing.Optional[int] | None = None
-    ga_area: typing.Optional[str] | None = None
-    ga_id: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] | None = None
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = NaturalGasConnectionsSchema
-        upsert_keys = ['jv_name', 'conn_date', 'ga_area', 'state']
-
-
-class NaturalGasConnectionsGetResp(pydantic.BaseModel):
-    data: typing.List[NaturalGasConnections]
-    total: int = pydantic.Field(0)
-    count: int = pydantic.Field(0)
-
-
-class Naturalgasconnections_Upload_Connection_DataParams(pydantic.BaseModel):
+class Naturalgasgvconnections_Upload_Connection_DataParams(pydantic.BaseModel):
     pass
 
     class Config:
@@ -11745,8 +11696,37 @@ class Naturalgasconnections_Upload_Connection_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Naturalgasconnections_Confirm_Data_SyncParams(pydantic.BaseModel):
+class Naturalgasgvconnections_Confirm_Data_SyncParams(pydantic.BaseModel):
     ack_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class SqlAggregationSpecCreate(pydantic.BaseModel):
+    output_alias: str
+    aggregate_fn: str
+    column: str
+
+
+class SqlOrderBySpecCreate(pydantic.BaseModel):
+    column: str
+    direction: str
+
+
+class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
+    table: str
+    group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    date_column: typing.Optional[str] = pydantic.Field("", **{})
+    date_from: typing.Optional[datetime.date] | None = None
+    date_to: typing.Optional[datetime.date] | None = None
+    aggregations: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    detail_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

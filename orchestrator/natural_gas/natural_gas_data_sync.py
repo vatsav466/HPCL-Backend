@@ -1,225 +1,206 @@
-import urdhva_base.redispool
+import urdhva_base
 
-import sys
-import json
 import io
+import json
+import sys
 import uuid
 import typing
-import fastapi
 import asyncio
-import polars as pl
+import fastapi
+import datetime
 import hpcl_ceg_model
-import pandas as pd  # only for reading Excel sheets
-from typing import Dict, Union
-import dateutil.parser as parser
-from collections import defaultdict
+import urdhva_base.redispool
+import dateutil.parser as dateutil_parser
+from fastapi.encoders import jsonable_encoder
+import orchestrator.natural_gas.daily_cmd_dpr_detailed_report as ng_dpr_detail
 
-from orchestrator.natural_gas.daily_cmd_dpr_decode import (
-    decode_daily_cmd_dpr_workbook,
-    json_safe_records,
-)
-from orchestrator.natural_gas.natural_gas_record_mapping import (
-    decoded_payload_to_db_records,
-)
+_LMC_KEY = "backlog_lmc_registration_to_lmc"
+_NGC_KEY = "ngc_lmc_to_ngc"
+_TARGET_KEY = "connection_target_day_wise"
+_ACTUAL_ON_PREFIX = "actual_achieved_on"
+_ACTUAL_TILL_PREFIX = "actual_achieved_till"
 
 
-def clean_dataframe(df: pd.DataFrame) -> pl.DataFrame:
-    """
-    Clean Excel sheet and convert to Polars
-    """
-    # Drop empty rows/cols
-    df = df.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True)
-
-    # Fix headers
-    if df.iloc[0].isnull().sum() > len(df.columns) * 0.5:
-        df.columns = df.iloc[1]
-        df = df[2:]
-    else:
-        df.columns = df.iloc[0]
-        df = df[1:]
-
-    df.columns = [str(c).strip() for c in df.columns]
-
-    # Convert to Polars
-    return pl.from_pandas(df)
+def _to_int(val: typing.Any, default: int = 0) -> int:
+    if val is None:
+        return default
+    if isinstance(val, bool):
+        return int(val)
+    if isinstance(val, int):
+        return val
+    if isinstance(val, float):
+        return int(val)
+    try:
+        return int(str(val).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return default
 
 
-def load_all_sheets(file_path: Union[str, typing.Any]) -> Dict[str, pl.DataFrame]:
-    xls = pd.ExcelFile(file_path)
-    data = {}
-
-    for sheet in xls.sheet_names:
+def _conn_date_from_prefixed_key(key: str, prefix: str) -> typing.Optional[datetime.date]:
+    """Map ``{prefix}`` / ``{prefix}_DD_MM_YY`` to a calendar date."""
+    if key == prefix:
+        return datetime.date.today()
+    sep = prefix + "_"
+    if not key.startswith(sep):
+        return None
+    rest = key[len(sep) :]
+    nums: typing.List[int] = []
+    for part in rest.split("_"):
+        if part.isdigit():
+            nums.append(int(part))
+    if len(nums) >= 3:
+        day, month, year = nums[0], nums[1], nums[2]
+        if year < 100:
+            year += 2000
         try:
-            pdf = pd.read_excel(file_path, sheet_name=sheet)
-            data[sheet] = clean_dataframe(pdf)
-        except Exception as e:
-            print(f"Skipping sheet {sheet}: {e}")
-
-    return data
+            return datetime.date(year, month, day)
+        except ValueError:
+            return None
+    return None
 
 
-def extract_company_data(data: Dict[str, pl.DataFrame]) -> Dict:
-    company_data = defaultdict(list)
-
-    for sheet_name, df in data.items():
-        cols = [c.lower() for c in df.columns]
-
-        company_col = None
-        state_col = None
-
-        for c in df.columns:
-            if "entity" in c.lower() or "company" in c.lower():
-                company_col = c
-            if "state" in c.lower():
-                state_col = c
-
-        if not company_col:
-            continue
-
-        # Convert to dict rows (fast enough after filtering)
-        rows = df.to_dicts()
-
-        for row in rows:
-            company = str(row.get(company_col, "")).strip()
-            if not company:
-                continue
-
-            entry = {
-                "sheet": sheet_name,
-                "company": company,
-                "state": row.get(state_col),
-                "data": row
-            }
-
-            company_data[company].append(entry)
-
-    return company_data
+def _is_metric_key(key: str, prefix: str) -> bool:
+    return key == prefix or key.startswith(prefix + "_")
 
 
-def generate_summary(data: Dict[str, pl.DataFrame]) -> Dict:
-    summary = {}
-
-    for sheet_name, df in data.items():
-
-        # Detect company column
-        company_col = None
-        for c in df.columns:
-            if "entity" in c.lower() or "company" in c.lower():
-                company_col = c
-                break
-
-        if not company_col:
-            continue
-
-        # Select numeric columns
-        numeric_cols = [
-            c for c, dtype in zip(df.columns, df.dtypes)
-            if dtype in (pl.Int64, pl.Float64)
-        ]
-
-        if not numeric_cols:
-            continue
-
-        grouped = (
-            df
-            .groupby(company_col)
-            .agg([pl.col(c).sum().alias(c) for c in numeric_cols])
-        )
-
-        for row in grouped.to_dicts():
-            company = row[company_col]
-            if company not in summary:
-                summary[company] = {}
-
-            for k, v in row.items():
-                if k != company_col:
-                    summary[company][k] = summary[company].get(k, 0) + (v or 0)
-
-    return summary
+def _append_gv_row_for_key(
+    out: typing.List[typing.Dict[str, typing.Any]],
+    flat: typing.Dict[str, typing.Any],
+    key: str,
+    value: typing.Any,
+    prefix: str,
+) -> None:
+    gv = flat.get("gv_name")
+    ga = flat.get("ga_name")
+    if not gv or not ga:
+        return
+    conn_date = _conn_date_from_prefixed_key(key, prefix)
+    if conn_date is None:
+        return
+    out.append(
+        {
+            "gv_name": str(gv).strip(),
+            "ga_name": str(ga).strip(),
+            "conn_date": conn_date,
+            "achieved_count": _to_int(value, 0),
+            "day_wise_target": _to_int(flat.get(_TARGET_KEY), 0),
+            "backlog_lmc": _to_int(flat.get(_LMC_KEY), 0),
+            "backlog_ngc": _to_int(flat.get(_NGC_KEY), 0),
+        }
+    )
 
 
-async def convert_dpr_file_data(
-    file_pointer: fastapi.UploadFile,
-    *,
-    include_grand_total_ngc_column: bool = False,
-    include_cumulative_columns: bool = False,
-):
+def flat_detailed_rows_to_gv_split(
+    rows: typing.List[typing.Dict[str, typing.Any]],
+) -> typing.Dict[str, typing.List[typing.Dict[str, typing.Any]]]:
     """
-    Parse uploaded workbook: **MIS Summary** (entity × summary columns) and
-    **HPCL-JV MIS** (company × GA × metrics). Returns JSON for
-    ``/naturalgasconnections/upload_connection_data``.
+    Expand flat Detailed Report rows into two daywise lists:
 
-    See :func:`decode_daily_cmd_dpr_workbook` for ``include_cumulative_columns`` and
-    ``include_grand_total_ngc_column``.
+    * ``detailed_report`` — one row per ``actual_achieved_on*`` column.
+    * ``summary`` — one row per ``actual_achieved_till*`` column (cumulative / till-date).
+
+    Same field shape as ``NaturalGasGVConnections`` rows.
+    """
+    detailed_report: typing.List[typing.Dict[str, typing.Any]] = []
+    summary: typing.List[typing.Dict[str, typing.Any]] = []
+
+    for flat in rows:
+        for k, v in flat.items():
+            if k in ("gv_name", "ga_name", _LMC_KEY, _NGC_KEY, _TARGET_KEY):
+                continue
+            if _is_metric_key(k, _ACTUAL_ON_PREFIX):
+                _append_gv_row_for_key(detailed_report, flat, k, v, _ACTUAL_ON_PREFIX)
+            elif _is_metric_key(k, _ACTUAL_TILL_PREFIX):
+                _append_gv_row_for_key(summary, flat, k, v, _ACTUAL_TILL_PREFIX)
+
+    return {"detailed_report": detailed_report, "consolidated": summary}
+
+
+async def convert_dpr_file_data(file_pointer: fastapi.UploadFile):
+    """
+    Parse uploaded workbook **Detailed Report** sheet; cache ``detailed_report`` and
+    ``summary`` daywise lists in Redis for ``/naturalgasgvconnections/confirm_data_sync``.
     """
     raw = await file_pointer.read()
     buf = io.BytesIO(raw)
-    decoded = decode_daily_cmd_dpr_workbook(
-        buf,
-        include_grand_total_ngc_column=include_grand_total_ngc_column,
-        include_cumulative_columns=include_cumulative_columns,
-    )
-    db_rows = decoded_payload_to_db_records(
-        decoded,
-        include_cumulative_columns=include_cumulative_columns,
-    )
-    unique_id = str(uuid.uuid4()).replace('-', '')
-    payload = {
-        "Summary Data": db_rows["natural_gas_connections_summary"],
-        "JV Data": db_rows["natural_gas_connections"]
-    }
+    resp = ng_dpr_detail.decode_detailed_report_workbook(buf)
+    flat_rows = resp.get("detailed_report", [])
+    if resp.get("error") or flat_rows is None:
+        return fastapi.responses.JSONResponse(
+            status_code=400,
+            content={"message": resp.get("error") or "Detailed Report sheet missing or empty"},
+        )
+    if len(flat_rows) == 0:
+        return fastapi.responses.JSONResponse(
+            status_code=400,
+            content={"message": "No GA rows parsed from Detailed Report"},
+        )
+    split = flat_detailed_rows_to_gv_split(flat_rows)
+    if not split["detailed_report"] and not split["summary"]:
+        return fastapi.responses.JSONResponse(
+            status_code=400,
+            content={
+                "message": "No actual_achieved_on / actual_achieved_till columns with parseable dates.",
+            },
+        )
+    unique_id = str(uuid.uuid4()).replace("-", "")
     r_ins = await urdhva_base.redispool.get_redis_connection()
     await r_ins.setex(
         f"natural_gas_connections_{unique_id}",
-        10 * 60, # Max 10 mins cached data
-        json.dumps(payload))
+        10 * 60,
+        json.dumps(split, default=str),
+    )
     await r_ins.close()
-    return fastapi.responses.JSONResponse(content={"ack_id": unique_id, "payload": payload})
-
-
-async def _sync_data(data):
-    for key, records in data.items():
-        for index, _ in enumerate(records):
-            data[key][index]['conn_date'] = parser.parse(records[index]['conn_date'])
-    await hpcl_ceg_model.NaturalGasConnectionsSummary.bulk_update(data['Summary Data'], upsert=True)
-    await hpcl_ceg_model.NaturalGasConnections.bulk_update(data['JV Data'], upsert=True)
-    return True, "Success"
+    return fastapi.responses.JSONResponse(
+        content=jsonable_encoder({
+            "ack_id": unique_id,
+            "payload": split,
+        })
+    )
 
 
 async def sync_dpr_data(ack_id: str):
+    """
+    Load cached payload from Redis and upsert into
+    :class:`hpcl_ceg_model.NaturalGasGVConnections` (detailed_report + summary rows).
+    """
     r_ins = await urdhva_base.redispool.get_redis_connection()
-    payload = await r_ins.get(f"natural_gas_connections_{ack_id}")
-    if not payload:
+    raw = await r_ins.get(f"natural_gas_connections_{ack_id}")
+    await r_ins.close()
+    if not raw:
         return False, "Expired records, Please upload file again"
-    db_rows = json.loads(payload)
-    return await _sync_data(db_rows)
+    data = json.loads(raw)
+    if not data['detailed_report']:
+        return False, "Unknown cached payload format or no rows to sync."
+    for row in data['consolidated']:
+        q = f"""gv_name='{row["gv_name"]}' AND ga_name='{row["ga_name"]}' AND conn_date='{row["conn_date"]}'"""
+        q_parmas = urdhva_base.queryparams.QueryParams(q=q,limit=1)
+        resp = await hpcl_ceg_model.NaturalGasGVConnections.get_all(q_parmas, resp_type='')
+        if not resp['data']:
+            data['detailed_report'].append(row)
+        else:
+            continue
+    for rec in data['detailed_report']:
+        rec['conn_date'] = dateutil_parser.parse(rec['conn_date']).date()
+    await hpcl_ceg_model.NaturalGasGVConnections.bulk_update(data['detailed_report'], upsert=True)
+    return True, f"Synced {len(data['detailed_report'])} NaturalGasGVConnections row(s))."
 
 
 async def main(file_path) -> None:
-    decoded = decode_daily_cmd_dpr_workbook(
-        file_path,
-        include_cumulative_columns=False,
-        include_grand_total_ngc_column=False,
-    )
-    db_rows = decoded_payload_to_db_records(
-        decoded,
-        include_cumulative_columns=False,
-    )
-    payload = {
-        "sheets_present": decoded.get("sheets_present", []),
-        "mis_summary_sheet": decoded.get("mis_summary_sheet"),
-        "hpcl_jv_mis_sheet": decoded.get("hpcl_jv_mis_sheet"),
-        "mis_summary": json_safe_records(decoded.get("mis_summary") or []),
-        "hpcl_jv_mis": json_safe_records(decoded.get("hpcl_jv_mis") or []),
-        "natural_gas_connections_summary": db_rows["natural_gas_connections_summary"],
-        "natural_gas_connections": db_rows["natural_gas_connections"],
-        "report_year": db_rows["report_year"],
-        "decode_options": {
-            "include_grand_total_ngc_column": False,
-            "include_cumulative_columns": False,
-        },
-    }
-    print(json.dumps(payload, indent=2, default=str))
+    resp = ng_dpr_detail.decode_detailed_report_workbook(file_path)
+    split = flat_detailed_rows_to_gv_split(resp["detailed_report"])
+    print(json.dumps(split, default=str))
+    from orchestrator.aggregate_query_gateway import query_aggregate_gateway
+    print(await query_aggregate_gateway(
+        table="natural_gas_gv_connections",
+        filters={},
+        date_column="conn_date",
+        date_from=datetime.date(2026, 4, 1),
+        date_to=datetime.date(2026, 4, 8),
+        group_by=["gv_name", "conn_date"],
+        aggregations=[("Total", "sum", "achieved_count")],
+        order_by=[("Total", "desc")],
+    ))
 
 
 if __name__ == "__main__":

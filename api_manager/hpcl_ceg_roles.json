@@ -8395,76 +8395,13 @@
             ]
         },
         {
-            "name": "naturalgasconnectionssummary",
+            "name": "naturalgasgvconnections",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnectionsSummary",
+            "displayName": "NaturalGasGVConnections",
             "attributes": {},
             "uris": [
-                "/api/naturalgasconnectionssummary/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
-            "name": "naturalgasconnectionssummary_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnectionsSummary_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/naturalgasconnectionssummary/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "naturalgasconnectionssummary_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnectionsSummary_admin",
-            "attributes": {},
-            "uris": [
-                "/api/naturalgasconnectionssummary/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
-            "name": "naturalgasconnections",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnections",
-            "attributes": {},
-            "uris": [
-                "/api/naturalgasconnections/*"
+                "/api/naturalgasgvconnections/*"
             ],
             "scopes": [
                 {
@@ -8488,13 +8425,13 @@
             ]
         },
         {
-            "name": "naturalgasconnections_readOnly",
+            "name": "naturalgasgvconnections_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnections_readOnly",
+            "displayName": "NaturalGasGVConnections_readOnly",
             "attributes": {},
             "uris": [
-                "/api/naturalgasconnections/*"
+                "/api/naturalgasgvconnections/*"
             ],
             "scopes": [
                 {
@@ -8503,13 +8440,13 @@
             ]
         },
         {
-            "name": "naturalgasconnections_admin",
+            "name": "naturalgasgvconnections_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "NaturalGasConnections_admin",
+            "displayName": "NaturalGasGVConnections_admin",
             "attributes": {},
             "uris": [
-                "/api/naturalgasconnections/*"
+                "/api/naturalgasgvconnections/*"
             ],
             "scopes": [
                 {
@@ -8529,6 +8466,75 @@
                 },
                 {
                     "name": "confirm_data_sync"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "generate_data_aggregations"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "generate_data_aggregations"
                 }
             ]
         }
@@ -9420,6 +9426,10 @@
         {
             "name": "confirm_data_sync",
             "displayName": "confirm_data_sync"
+        },
+        {
+            "name": "generate_data_aggregations",
+            "displayName": "generate_data_aggregations"
         }
     ]
 }

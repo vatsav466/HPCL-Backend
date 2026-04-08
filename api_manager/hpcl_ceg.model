@@ -4253,26 +4253,15 @@ Model LpgOperationsInsights {
     }
 }
 
-
-Model NaturalGasConnectionsSummary {
-    jv_name index_field unique_field str
+Model NaturalGasGVConnections {
+    gv_name index_field unique_field str
     conn_date index_field unique_field date
-    new_connection_count int
-    old_connection_count int
+    ga_name index_field unique_field str
+    achieved_count int
+    day_wise_target optional int
+    backlog_lmc optional int
+    backlog_ngc optional int
 
-    Config=> {
-        crud_operations='read'
-    }
-}
-
-Model NaturalGasConnections {
-    jv_name index_field unique_field str // This may be HPCL or JV(Joint Venture)
-    conn_date index_field unique_field date
-    new_connection_count int
-    old_connection_count int
-    ga_area index_field unique_field str
-    ga_id optional str
-    state index_field unique_field str
     Action=> upload_connection_data {
     }
 
@@ -4284,3 +4273,62 @@ Model NaturalGasConnections {
         crud_operations='read'
     }
 }
+
+// Params for orchestrator.aggregate_query_gateway.query_aggregate_gateway
+Model SqlAggregationSpec internal {
+    output_alias str
+    aggregate_fn str
+    column str
+}
+
+Model SqlOrderBySpec internal {
+    column str
+    direction str
+}
+
+Model TableAnalytics crud_disable {
+    Action=> generate_data_aggregations {
+        table str
+        group_by optional list str
+        filters optional dict
+        date_column optional str
+        date_from optional date
+        date_to optional date
+        aggregations optional list str
+        detail_fields optional list str
+        order_by optional list str
+        limit optional int
+        skip optional int
+    }
+}
+
+// Model NaturalGasConnectionsSummary {
+//     jv_name index_field unique_field str
+//     conn_date index_field unique_field date
+//     new_connection_count int
+//     old_connection_count int
+//
+//     Config=> {
+//         crud_operations='read'
+//     }
+// }
+
+// Model NaturalGasConnections {
+//     jv_name index_field unique_field str // This may be HPCL or JV(Joint Venture)
+//     conn_date index_field unique_field date
+//     new_connection_count int
+//     old_connection_count int
+//     ga_area index_field unique_field str
+//     ga_id optional str
+//     state index_field unique_field str
+//     Action=> upload_connection_data {
+//     }
+//
+//     Action=> confirm_data_sync {
+//         ack_id str
+//     }
+//
+//     Config=> {
+//         crud_operations='read'
+//     }
+// }
