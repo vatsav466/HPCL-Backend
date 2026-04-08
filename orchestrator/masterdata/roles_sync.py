@@ -618,6 +618,38 @@ async def sync_user_roles():
         ],
         "status": True
     },
+    "Lubes HQO": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Lubes Insights"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "name": "RO",
+        "status": True
+    },
+    "NG HQO": {
+        "allowed_pages": [
+           {
+                "menu_name": "Natural Gas",
+                "allowed_sub_menus": [
+                    {
+                        "title": "NGC Progress MIS"
+                    }
+                ]
+            },
+        ],
+        "status": True
+    },
     "IS User":{
         "allowed_pages": [
             {
