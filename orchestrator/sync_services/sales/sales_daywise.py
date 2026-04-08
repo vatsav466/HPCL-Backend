@@ -307,7 +307,6 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
     print("-" * 50)
     print("Running Query ...")
     cursor.execute(query)
-    
     data = cursor.fetchall()
     print('Total Records :', len(data))
     logger.info(f"Total Records : {len(data)}")
@@ -352,7 +351,13 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
     
     cursor.execute(f"""
                    
-                   select * FROM CONN_ENT.VW_AY_INV3_LUBES_STG  where SALES_ORG=4000
+                select inv3.*,zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC FROM CONN_ENT.VW_AY_INV3_LUBES_STG inv3
+                JOIN CONN_ENT.ZSDCV_CUST_SA_STG zca on inv3.SOLD_TO_PARTY = zca.CUSTOMER
+                INNER join CONN_ENT.ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
+                INNER join CONN_ENT.ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
+                zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off AND zso.sales_group=zca.sales_grp
+                INNER join CONN_ENT.EDW_DC_PLANT plt on zso.PLANT=plt.PLANT
+                INNER join CONN_ENT.EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
                    """)
     di = {}
     
@@ -374,6 +379,7 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
     zone_map = {'WES':'West','NOR':'North','SOU':'South','EAS':'East','HQO':'HQO Customer'}
     #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
     lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
+    lubes_ps_data = lubes_ps_data.rename(columns={'SALES_OFFICE_DESC':'Region_Name','SALES_GROUP_DESC':'SalesArea_Name'})
     if debug:
         lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv', index=False)
     '''
