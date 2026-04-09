@@ -915,7 +915,7 @@ class Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams(pydantic.BaseModel):
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
-    is_download: typing.Optional[bool] = pydantic.Field(False, **{})
+    is_download: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1115,3 +1115,244 @@ class HistoricSolarPanelWetDryCleaningCreateGetResp(pydantic.BaseModel):
     data: typing.List[HistoricSolarPanelWetDryCleaningCreate]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class SolarGenerationSummarySchema(UrdhvaPostgresBase):
+    __tablename__ = 'solar_generation_summary'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    source_id: Mapped[str] = mapped_column("source_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    source_name: Mapped[typing.Optional[str]] = mapped_column("source_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    source_type: Mapped[typing.Optional[str]] = mapped_column("source_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    timestamp_ist: Mapped[str] = mapped_column("timestamp_ist", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    capacity_kw: Mapped[typing.Optional[str]] = mapped_column("capacity_kw", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    solar_generation_kwh: Mapped[str] = mapped_column("solar_generation_kwh", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_generation_hrs: Mapped[str] = mapped_column("solar_generation_hrs", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_start_time: Mapped[str] = mapped_column("solar_start_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_end_time: Mapped[str] = mapped_column("solar_end_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_window_hrs: Mapped[str] = mapped_column("solar_window_hrs", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_generation_hrs_day: Mapped[typing.Optional[str]] = mapped_column("solar_generation_hrs_day", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class SolarGenerationSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'solar_generation_summary'
+    
+    bu: str
+    sap_id: str
+    location_name: str
+    zone: str
+    source_id: str
+    source_name: typing.Optional[str] = pydantic.Field("", **{})
+    source_type: typing.Optional[str] = pydantic.Field("", **{})
+    timestamp_ist: str
+    capacity_kw: typing.Optional[str] = pydantic.Field("", **{})
+    solar_generation_kwh: str
+    solar_generation_hrs: str
+    solar_start_time: str
+    solar_end_time: str
+    solar_window_hrs: str
+    solar_generation_hrs_day: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarGenerationSummarySchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'source_id']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id', 'source_id']
+
+
+class SolarGenerationSummary(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'solar_generation_summary'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    source_id: typing.Optional[str] | None = None
+    source_name: typing.Optional[str] = pydantic.Field("", **{})
+    source_type: typing.Optional[str] = pydantic.Field("", **{})
+    timestamp_ist: typing.Optional[str] | None = None
+    capacity_kw: typing.Optional[str] = pydantic.Field("", **{})
+    solar_generation_kwh: typing.Optional[str] | None = None
+    solar_generation_hrs: typing.Optional[str] | None = None
+    solar_start_time: typing.Optional[str] | None = None
+    solar_end_time: typing.Optional[str] | None = None
+    solar_window_hrs: typing.Optional[str] | None = None
+    solar_generation_hrs_day: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarGenerationSummarySchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'source_id']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id', 'source_id']
+
+
+class SolarGenerationSummaryGetResp(pydantic.BaseModel):
+    data: typing.List[SolarGenerationSummary]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class SolarOutageSummarySchema(UrdhvaPostgresBase):
+    __tablename__ = 'solar_outage_summary'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    source_id: Mapped[str] = mapped_column("source_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    source_name: Mapped[typing.Optional[str]] = mapped_column("source_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    source_type: Mapped[typing.Optional[str]] = mapped_column("source_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    capacity_kw: Mapped[typing.Optional[str]] = mapped_column("capacity_kw", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    grid_freq: Mapped[str] = mapped_column("grid_freq", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    timestamp_ist: Mapped[str] = mapped_column("timestamp_ist", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_outage_hrs: Mapped[str] = mapped_column("solar_outage_hrs", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    outage_start_time: Mapped[str] = mapped_column("outage_start_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    outage_end_time: Mapped[str] = mapped_column("outage_end_time", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    solar_outage_hrs_day: Mapped[typing.Optional[str]] = mapped_column("solar_outage_hrs_day", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class SolarOutageSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'solar_outage_summary'
+    
+    bu: str
+    sap_id: str
+    location_name: str
+    zone: str
+    source_id: str
+    source_name: typing.Optional[str] = pydantic.Field("", **{})
+    source_type: typing.Optional[str] = pydantic.Field("", **{})
+    capacity_kw: typing.Optional[str] = pydantic.Field("", **{})
+    grid_freq: str
+    timestamp_ist: str
+    solar_outage_hrs: str
+    outage_start_time: str
+    outage_end_time: str
+    solar_outage_hrs_day: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarOutageSummarySchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'source_id']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id', 'source_id']
+
+
+class SolarOutageSummary(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'solar_outage_summary'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    source_id: typing.Optional[str] | None = None
+    source_name: typing.Optional[str] = pydantic.Field("", **{})
+    source_type: typing.Optional[str] = pydantic.Field("", **{})
+    capacity_kw: typing.Optional[str] = pydantic.Field("", **{})
+    grid_freq: typing.Optional[str] | None = None
+    timestamp_ist: typing.Optional[str] | None = None
+    solar_outage_hrs: typing.Optional[str] | None = None
+    outage_start_time: typing.Optional[str] | None = None
+    outage_end_time: typing.Optional[str] | None = None
+    solar_outage_hrs_day: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarOutageSummarySchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'source_id']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id', 'source_id']
+
+
+class SolarOutageSummaryGetResp(pydantic.BaseModel):
+    data: typing.List[SolarOutageSummary]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class SolarPlantCapacitySchema(UrdhvaPostgresBase):
+    __tablename__ = 'solar_plant_capacity'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    capacity_kw: Mapped[str] = mapped_column("capacity_kw", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    monitoring: Mapped[str] = mapped_column("monitoring", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    doc: Mapped[typing.Optional[str]] = mapped_column("doc", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ref_marking: Mapped[typing.Optional[str]] = mapped_column("ref_marking", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    net_metering: Mapped[typing.Optional[str]] = mapped_column("net_metering", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(sap_id, capacity_kw, name="solar_plant_capacity_sap_id_capacity_kw"),)
+
+
+class SolarPlantCapacityCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'solar_plant_capacity'
+    
+    bu: str
+    sap_id: str
+    location_name: str
+    zone: str
+    capacity_kw: str
+    monitoring: str
+    doc: typing.Optional[str] = pydantic.Field("", **{})
+    ref_marking: typing.Optional[str] = pydantic.Field("", **{})
+    net_metering: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarPlantCapacitySchema
+        upsert_keys = ['sap_id', 'capacity_kw']
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id']
+
+
+class SolarPlantCapacity(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'solar_plant_capacity'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    capacity_kw: typing.Optional[str] | None = None
+    monitoring: typing.Optional[str] | None = None
+    doc: typing.Optional[str] = pydantic.Field("", **{})
+    ref_marking: typing.Optional[str] = pydantic.Field("", **{})
+    net_metering: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SolarPlantCapacitySchema
+        upsert_keys = ['sap_id', 'capacity_kw']
+        search_fields = ['bu', 'sap_id', 'location_name', 'zone']
+        access_key_mapping = ['bu', 'zone', 'location_name', 'sap_id']
+
+
+class SolarPlantCapacityGetResp(pydantic.BaseModel):
+    data: typing.List[SolarPlantCapacity]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Solarplantcapacity_Upload_Solar_Plant_CapacityParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

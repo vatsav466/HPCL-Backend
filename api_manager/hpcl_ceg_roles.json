@@ -8393,6 +8393,144 @@
                     "name": "lpg_plants_insights"
                 }
             ]
+        },
+        {
+            "name": "naturalgasconnectionssummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnectionsSummary",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnectionssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "naturalgasconnectionssummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnectionsSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnectionssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "naturalgasconnectionssummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnectionsSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnectionssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "naturalgasconnections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnections",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_connection_data"
+                },
+                {
+                    "name": "confirm_data_sync"
+                }
+            ]
+        },
+        {
+            "name": "naturalgasconnections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "naturalgasconnections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NaturalGasConnections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/naturalgasconnections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_connection_data"
+                },
+                {
+                    "name": "confirm_data_sync"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9274,6 +9412,14 @@
         {
             "name": "lpg_plants_insights",
             "displayName": "lpg_plants_insights"
+        },
+        {
+            "name": "upload_connection_data",
+            "displayName": "upload_connection_data"
+        },
+        {
+            "name": "confirm_data_sync",
+            "displayName": "confirm_data_sync"
         }
     ]
 }

@@ -151,3 +151,33 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await HistoricSolarPanelWetDryCleaningCreate.get_all(params, skip_secrets=True)
 
+
+@router.get('/solargenerationsummary/{id}', response_model=SolarGenerationSummary, tags=['SolarGenerationSummary'])
+async def get(id: str):
+    return await SolarGenerationSummary.get(id, skip_secrets=True)
+
+
+@router.get('/solargenerationsummary', response_model=SolarGenerationSummaryGetResp, tags=['SolarGenerationSummary'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SolarGenerationSummary.get_all(params, skip_secrets=True)
+
+
+@router.get('/solaroutagesummary/{id}', response_model=SolarOutageSummary, tags=['SolarOutageSummary'])
+async def get(id: str):
+    return await SolarOutageSummary.get(id, skip_secrets=True)
+
+
+@router.get('/solaroutagesummary', response_model=SolarOutageSummaryGetResp, tags=['SolarOutageSummary'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SolarOutageSummary.get_all(params, skip_secrets=True)
+
+
+@router.get('/solarplantcapacity/{id}', response_model=SolarPlantCapacity, tags=['SolarPlantCapacity'])
+async def get(id: str):
+    return await SolarPlantCapacity.get(id, skip_secrets=True)
+
+
+@router.get('/solarplantcapacity', response_model=SolarPlantCapacityGetResp, tags=['SolarPlantCapacity'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SolarPlantCapacity.get_all(params, skip_secrets=True)
+

@@ -4252,3 +4252,35 @@ Model LpgOperationsInsights {
         metric_type str   
     }
 }
+
+
+Model NaturalGasConnectionsSummary {
+    jv_name index_field unique_field str
+    conn_date index_field unique_field date
+    new_connection_count int
+    old_connection_count int
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model NaturalGasConnections {
+    jv_name index_field unique_field str // This may be HPCL or JV(Joint Venture)
+    conn_date index_field unique_field date
+    new_connection_count int
+    old_connection_count int
+    ga_area index_field unique_field str
+    ga_id optional str
+    state index_field unique_field str
+    Action=> upload_connection_data {
+    }
+
+    Action=> confirm_data_sync {
+        ack_id str
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
