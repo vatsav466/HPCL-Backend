@@ -2061,11 +2061,12 @@ async def generate_omc_compare_data(filters, drill_state):
         # filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2024-2025", "2025-2026"]})
         filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2025-2026", "2026-2027"]})
     present_month = datetime.datetime.now().strftime('%b')
-    if present_month.lower() == 'apr':
-                fiscal_year_pre = fiscal_year_last
-                fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
-    print("fiscal_year_pre",fiscal_year_pre)
-    print("fiscal_year_last",fiscal_year_last)
+    # if present_month.lower() == 'apr':
+    #             print("came inside")
+    #             fiscal_year_pre = fiscal_year_last
+    #             print("curent year ",fiscal_year_pre)
+    #             fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
+    #             print("last year ",fiscal_year_last)
     
     # Modifying filters to handle list conditions
     # for cond in filters:

@@ -2549,6 +2549,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Pro Dash"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             },
@@ -2625,6 +2636,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2713,6 +2735,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2804,6 +2837,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }
