@@ -6738,6 +6738,150 @@ async def get_interlock_testing_analysis(data):
             "testing_data": [],
             "non_testing_data": []
         }
+async def get_master_status(data):
+    try:
+        data_required = True
+        sap_id = None
+
+        # -------- FILTERS --------
+        if data.filters:
+            for f in data.filters:
+                if f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+                elif f.key == "sap_id":
+                    sap_id = f.value
+
+        # -------- OPTIONAL FILTERS --------
+        sap_filter = f"AND TRIM(sap_id) = '{str(sap_id).strip()}'" if sap_id else ""
+
+        zone_filter = (
+            f"AND LOWER(zone) = LOWER('{data.zone}')"
+            if data.zone else ""
+        )
+
+        # -------- SINGLE OPTIMIZED QUERY --------
+        final_query = f"""
+        WITH ref_date_cte AS (
+            SELECT COALESCE(
+                (SELECT CURRENT_DATE 
+                 WHERE EXISTS (
+                     SELECT 1 FROM master_status 
+                     WHERE created_at::date = CURRENT_DATE
+                     {sap_filter}
+                 )),
+                (SELECT MAX(created_at::date) 
+                 FROM master_status 
+                 WHERE active_server_name IS NOT NULL
+                 {sap_filter})
+            ) AS ref_date
+        ),
+
+        latest_data AS (
+            SELECT DISTINCT ON (sap_id)
+                sap_id,
+                active_server_name,
+                location_name,
+                created_at::date AS created_date
+            FROM master_status m, ref_date_cte r
+            WHERE m.created_at::date = r.ref_date
+            {sap_filter}
+            {zone_filter}
+            ORDER BY sap_id, created_at DESC
+        ),
+
+        ordered_data AS (
+            SELECT
+                sap_id,
+                active_server_name,
+                created_at::date AS created_date,
+                LAG(active_server_name) OVER (
+                    PARTITION BY sap_id ORDER BY created_at
+                ) AS prev_server
+            FROM master_status
+            WHERE active_server_name IS NOT NULL
+            {sap_filter}
+        ),
+
+        change_points AS (
+            SELECT *
+            FROM ordered_data
+            WHERE prev_server IS NOT NULL
+              AND active_server_name <> prev_server
+        ),
+
+        last_change AS (
+            SELECT DISTINCT ON (sap_id)
+                sap_id,
+                active_server_name AS changed_to,
+                prev_server AS changed_from,
+                created_date AS change_date
+            FROM change_points
+            ORDER BY sap_id, created_date DESC
+        )
+
+        SELECT 
+            l.sap_id,
+            l.active_server_name AS current_server,
+            lc.changed_from,
+            lc.change_date,
+
+            CASE 
+                WHEN l.active_server_name IS NULL THEN 'NO_SERVER'
+                WHEN lc.change_date IS NULL THEN 'NOT_CHANGED'
+                WHEN lc.change_date >= r.ref_date - INTERVAL '30 days'
+                    THEN 'CHANGED'
+                ELSE 'NOT_CHANGED'
+            END AS status
+
+        FROM latest_data l
+        LEFT JOIN last_change lc ON l.sap_id = lc.sap_id
+        CROSS JOIN ref_date_cte r
+        """
+
+        # -------- EXECUTION (ONLY ONE CALL) --------
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
+        rows = result.get("data", [])
+
+        # -------- SPLIT IN PYTHON (FASTER) --------
+        changed_rows = []
+        not_changed_rows = []
+        no_server_rows = []
+
+        for row in rows:
+            if row["status"] == "CHANGED":
+                changed_rows.append(row)
+            elif row["status"] == "NO_SERVER":
+                no_server_rows.append(row)
+            else:
+                not_changed_rows.append(row)
+
+        # -------- COUNTS --------
+        response = {
+            "status": True,
+            "message": "Optimized active server analysis",
+
+            "changed_count": [{"total_count": len(changed_rows)}],
+            "not_changed_count": [{"total_count": len(not_changed_rows)}],
+            "no_server_count": [{"total_count": len(no_server_rows)}],
+
+            "changed_data": changed_rows if data_required else [],
+            "not_changed_data": not_changed_rows if data_required else [],
+            "no_server_data": no_server_rows if data_required else []
+        }
+
+        return response
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "status": False,
+            "changed_count": [],
+            "not_changed_count": [],
+            "no_server_count": [],
+            "changed_data": [],
+            "not_changed_data": [],
+            "no_server_data": []
+        }
         
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -6760,7 +6904,8 @@ AnalyticsModelMapping = {
     "Gantry Override Analysis": gantry_override_analysis,
     "Run Daily Data Check": operability_index_health_check,
     "Tas_fire_engine":get_fire_engine_runtime_weekly,
-    "Interlock_testing":get_interlock_testing_analysis
+    "Interlock_testing":get_interlock_testing_analysis,
+    "Master_status":get_master_status
 
 }
 
