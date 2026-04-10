@@ -1469,6 +1469,49 @@ Model LpgPlantOperations {
         sap_id str
     }
 }
+
+Model LpgPlantOperationsResync {
+    carousel index_field str
+    filling_head index_field str
+    process_date index_field datetime
+    sap_id index_field str
+    location_name index_field optional str
+    zone index_field optional str
+    region index_field optional str
+    sales_area optional str
+    // normal hours
+    normal_net_hours optional float
+    normal_total_production optional float
+    normal_productivity optional float
+    // break hours
+    break_net_hours optional float
+    break_total_production optional float
+    break_productivity optional float
+    // overtime hours
+    overtime_net_hours optional float
+    overtime_total_production optional float
+    overtime_productivity optional float
+    // total hours
+    total_net_hours optional float
+    total_production optional float
+    total_productivity optional float
+    // cs rejection
+    cs_handled optional float
+    cs_sortout optional float
+    cs_rejection optional float
+    // gd rejection
+    gd_handled optional float
+    gd_sortout optional float
+    gd_rejection optional float
+    // pt rejection
+    pt_handled optional float
+    pt_sortout optional float
+    pt_rejection optional float
+    // bottiling summary
+    production_14_2kg optional default=0 float
+    production_19kg optional default=0 float
+
+}
     
 Model LpgOperationsSummary {
     is_additional_carousel float
@@ -4082,6 +4125,14 @@ Model NozzleSales {
     }
 }
 
+Model FaultyHistory internal{
+    user_name str
+    updated_at str
+    status str
+    role list str
+    remarks str
+}
+
 Model TasFaulty {
     sap_id index_field str
     location_name  index_field  str
@@ -4093,6 +4144,7 @@ Model TasFaulty {
     device_name index_field str
     alert_id index_field str
     vendor_name index_field str
+    faulty_history list FaultyHistory
     user_remarks optional str
     tas_faulty_unique_id unique_field str
     vendor_remarks optional str
@@ -4120,7 +4172,8 @@ Model TasFaulty {
 
     Action=> update_faulty{
         transaction_id str
-        vendor_remarks  str
+        vendor_remarks optional str
+        user_remarks optional str
         resolved bool
     }
 

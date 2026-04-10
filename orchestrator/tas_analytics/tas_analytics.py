@@ -1,6 +1,6 @@
 import urdhva_base
 import polars as pl
-from datetime import datetime
+from datetime import datetime,timedelta, timezone
 import json
 import os
 import math
@@ -13,9 +13,7 @@ from collections import defaultdict
 import orchestrator.workflow.workflow_process as workflow_process
 import utilities.minio_connector as minio_connector
 import decimal
-
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
-from datetime import datetime, timedelta, timezone
 import re
 import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_analytics.tas_queries as tas_queries
@@ -111,6 +109,11 @@ async def create_tas_faulty(data, certificate_file=None):
     """
     try:
         # Convert to dict at the start
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        user_name = rpt["username"]
+
         data = data.dict()
 
         sap_id = data['sap_id']
@@ -131,31 +134,25 @@ async def create_tas_faulty(data, certificate_file=None):
 
         # Set default status
         data['status'] = "Open"
-
-        # ---------------- DUPLICATE CHECK ----------------
         params = urdhva_base.queryparams.QueryParams(limit=1)
         params.q = (
             f"sap_id='{sap_id}' "
             f"AND device_type='{device_type}' "
             f"AND equipment_name='{equipment_name}'"
+            f"AND status='Open'"
             f"AND device_name='{device_name}'"
         )
 
-        existing = await hpcl_ceg_model.TasFaulty.get_all(
-            params, resp_type="plain"
-        )
+        existing = await hpcl_ceg_model.TasFaulty.get_all(params, resp_type="plain")
 
         if existing.get("data"):
             return {
                 "status": False,
-                "message": (
-                    "Duplicate TasFaulty record exists for "
-                    f"SAP ID = {sap_id}, Equipment = {equipment_name}"
-                ),
+                "message": ("Alerts Issues is already raised for the same device. Please check the existing record"
+                            f"SAP ID = {sap_id}, Equipment = {equipment_name}"),
                 "data": {}
             }
 
-        # ---------------- START WORKFLOW ----------------
         payload_workflow = {
             "variables": {
                 "sap_id": {"value": sap_id, "type": "String"},
@@ -172,21 +169,13 @@ async def create_tas_faulty(data, certificate_file=None):
             }
         }
 
-        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(
-            payload=payload_workflow,
-            workflowId="TASFAULTYCHECK"
-        )
-
+        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(payload=payload_workflow, workflowId="TASFAULTYCHECK")
         data['workflow_instance_id'] = camunda_resp.get("id", "")
 
-        # ---------------- SAVE CERTIFICATE ----------------
         certificate_path = None
 
         if certificate_file:
-            UPLOAD_DIR = os.path.join(
-                urdhva_base.settings.uploads,
-                "tas_faulty"
-            )
+            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "tas_faulty")
             os.makedirs(UPLOAD_DIR, exist_ok=True)
 
             faulty_val = faulty_date
@@ -195,10 +184,7 @@ async def create_tas_faulty(data, certificate_file=None):
 
             object_name = f"{faulty_val}_{sap_id}_{equipment_name}"
 
-            file_path = os.path.join(
-                UPLOAD_DIR,
-                certificate_file.filename
-            )
+            file_path = os.path.join(UPLOAD_DIR, certificate_file.filename)
 
             with open(file_path, "wb") as f:
                 f.write(await certificate_file.read())
@@ -211,12 +197,7 @@ async def create_tas_faulty(data, certificate_file=None):
             )
 
             if not status_minio:
-                return {
-                    "status": False,
-                    "message": "MinIO upload failed",
-                    "error": minio_path
-                }
-
+                return {"status": False, "message": "MinIO upload failed", "error": minio_path}
             certificate_path = minio_path
             data['certificate'] = certificate_path
 
@@ -226,33 +207,45 @@ async def create_tas_faulty(data, certificate_file=None):
                 pass
 
         # ---------------- INSERT ----------------
+        ist_time = datetime.now(timezone(timedelta(hours=5, minutes=30)))
+        faulty_history = [{
+            "user_name": user_name,
+            "updated_at": ist_time.isoformat(),
+            "role": rpt.get("novex_role", []),
+            "status": data['status'],
+            "remarks": user_remarks
+        }]
+
+        data['faulty_history'] = faulty_history
+
         record = await hpcl_ceg_model.TasFaultyCreate(**data).create()
 
-        return {
-            "status": True,
-            "message": "TasFaulty record saved successfully",
-            "data": record
-        }
+        return {"status": True, "message": "TasFaulty record saved successfully", "data": record}
 
     except Exception as e:
-        return {
-            "status": False,
-            "message": f"Failed to save TasFaulty record: {e}",
-            "data": {}
-        }
-
+        return {"status": False, "message": f"Failed to save TasFaulty record: {e}", "data": {}}
+    
+    
 async def update_tas_faulty(data):
     """
-    Update a TAS Faulty record and trigger the Camunda workflow with vendor remarks and resolved status.
+    Update a TAS Faulty record and trigger the Camunda workflow with remarks and resolved status.
     """
     try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        user_name = rpt["username"]
+
         transaction_id = int(data.transaction_id)
         vendor_remarks = data.vendor_remarks
+        user_remarks = data.user_remarks
         resolved = bool(data.resolved)
 
         # ---------------- FETCH RECORD ----------------
-        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1),
-                                                        resp_type="plain")
+        record = await hpcl_ceg_model.TasFaulty.get_all(
+            urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1),
+            resp_type="plain"
+        )
         row = record.get("data")
 
         if not row:
@@ -263,38 +256,61 @@ async def update_tas_faulty(data):
         if not process_instance_id:
             return {"status": False, "message": "Workflow instance not linked", "data": {}}
 
-        # ---------------- TRIGGER CAMUNDA ----------------
+        remarks = vendor_remarks or user_remarks
+        if not remarks:
+            return {"status": False, "message": "No remarks provided", "data": {}}
+        
         camunda_payload = {
             "messageName": "Resolved",
             "processInstanceId": process_instance_id,
             "processVariables": {
                 "resolved": {"value": resolved, "type": "Boolean"},
-                "remarks": {"value": vendor_remarks, "type": "String"}
+                "remarks": {"value": remarks, "type": "String"}
             }
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
-                json=camunda_payload,
-                timeout=10
-            )
+            response = await client.post(f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
+                                           json=camunda_payload,
+                                           timeout=10
+                                        )
 
         if response.status_code not in (200, 204):
-            return {"status": False, "message": "Workflow trigger failed", "data": response.text}
+            return {"status": False,  "message": "Workflow trigger failed", "data": response.text }
 
-        # ---------------- UPDATE RECORD ----------------
-        update_data = dict(record)
-        update_data.pop("id", None)
-        update_data["vendor_remarks"] = vendor_remarks
-        update_data["status"] = "Resolved" if resolved else "Rejected"
+        now_ist = datetime.now(timezone(timedelta(hours=5, minutes=30)))
 
-        await hpcl_ceg_model.TasFaulty(id=transaction_id, **update_data).modify()
+        existing_history = row.get("faulty_history") or []
+
+        existing_history.append({
+            "user_name": user_name,
+            "updated_at": now_ist.isoformat(),
+            "status": "Resolved" if resolved else "Rejected",
+            "role": rpt.get("novex_role", []),
+            "remarks": remarks
+        })
+
+        update_payload = {
+            "id": transaction_id,
+            "status": "Resolved" if resolved else "Rejected",
+            "faulty_history": existing_history
+        }
+
+        if vendor_remarks:
+            update_payload["vendor_remarks"] = vendor_remarks
+
+        if user_remarks:
+            update_payload["user_remarks"] = user_remarks
+
+        await hpcl_ceg_model.TasFaulty(**update_payload).modify()
 
         return {
             "status": True,
             "message": "Workflow triggered and record updated successfully",
-            "data": {"transaction_id": transaction_id, "resolved": resolved}
+            "data": {
+                "transaction_id": transaction_id,
+                "resolved": resolved
+            }
         }
 
     except Exception as e:
