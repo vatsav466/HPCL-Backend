@@ -65,9 +65,9 @@
                 <th colspan="3" class="center">Nozzle Sales in MT</th>
             </tr>
             <tr>
-                <th>01 to 19-March-2026 Avg</th>
-                <th>20-March-2026 to {{yesterday_date}} Avg</th>
-                <th>{{yesterday_date}}</th>
+                <th>1st to 19th March 2026 Avg</th>
+                <th>20th to 31st March 2026 Avg</th>
+                <th>1st to 7th April 2026 Avg </th>
             </tr>
         </thead>
 
@@ -77,29 +77,29 @@
                 <td class="product" rowspan="4">MS</td>
                 <td class="category">MS-R Normal</td>
                 <td>{{ nozzle_sales_avg_df["MS-R Normal (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS-R Normal (Mar20-Yday)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS-R Normal (Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS-R Normal (Mar20-31)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS-R Normal (1 Apr-Yday)"] }}</td>
             </tr>
 
             <tr>
                 <td class="category">MS-R Branded</td>
                 <td>{{ nozzle_sales_avg_df["MS-R Branded (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS-R Branded (Mar20-Yday)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS-R Branded (Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS-R Branded (Mar20-31)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS-R Branded (1 Apr-Yday)"] }}</td>
             </tr>
 
             <tr>
                 <td class="category conversion">% Conversion</td>
                 <td>{{ nozzle_sales_avg_df["MS % (Mar1-19)"] }}%</td>
-                <td>{{ nozzle_sales_avg_df["MS % (Mar20-Yday)"] }}%</td>
-                <td>{{ nozzle_sales_avg_df["MS % (Yday)"] }}%</td>
+                <td>{{ nozzle_sales_avg_df["MS % (Mar20-31)"] }}%</td>
+                <td>{{ nozzle_sales_avg_df["MS % (1 Apr-Yday)"] }}%</td>
             </tr>
 
             <tr class="total">
                 <td>MS-Total</td>
                 <td>{{ nozzle_sales_avg_df["MS Total (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS Total (Mar20-Yday)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["MS Total (Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS Total (Mar20-31)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["MS Total (1 Apr-Yday)"] }}</td>
             </tr>
 
             <!-- ================= HSD ================= -->
@@ -107,28 +107,28 @@
                 <td class="product" rowspan="4">HSD</td>
                 <td class="category">HSD-R Normal</td>
                 <td>{{ nozzle_sales_avg_df["HSD-R Normal (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["HSD-R Normal (Mar20-Yday)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["HSD-R Normal (Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["HSD-R Normal (Mar20-31)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["HSD-R Normal (1 Apr-Yday)"] }}</td>
             </tr>
 
             <tr>
                 <td class="category">HSD-R Branded</td>
                 <td>{{ nozzle_sales_avg_df["HSD-R Branded (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["HSD-R Branded (Mar20-Yday)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["HSD-R Branded (Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["HSD-R Branded (Mar20-31)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["HSD-R Branded (1 Apr-Yday)"] }}</td>
             </tr>
 
             <tr>
                 <td class="category conversion">% Conversion</td>
                 <td>{{ nozzle_sales_avg_df["HSD % (Mar1-19)"] }}%</td>
-                <td>{{ nozzle_sales_avg_df["HSD % (Mar20-Yday)"] }}%</td>
-                <td>{{ nozzle_sales_avg_df["HSD % (Yday)"] }}%</td>
+                <td>{{ nozzle_sales_avg_df["HSD % (Mar20-31)"] }}%</td>
+                <td>{{ nozzle_sales_avg_df["HSD % (1 Apr-Yday)"] }}%</td>
             </tr>
 
             <tr class="total">
                 <td>HSD-Total</td>
                 <td>{{ nozzle_sales_avg_df["HSD Total (Mar1-19)"] }}</td>
-                <td>{{ nozzle_sales_avg_df["HSD Total (Mar20-Yday)"] }}</td>
+                <td>{{ nozzle_sales_avg_df["HSD Total (Mar20-31)"] }}</td>
                 <td>{{ nozzle_sales_avg_df["HSD Total (Yday)"] }}</td>
             </tr>
         </tbody>
