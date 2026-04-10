@@ -22,7 +22,7 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # -----------------------------
 
     df = trend_data.with_columns([
-        pl.col("transaction_date").dt.day().alias("day"),
+        pl.col("transaction_date").dt.strftime("%d-%b").alias("day"),
         ((pl.col("ms_power").cast(pl.Float64) /
          pl.col("ms_total").cast(pl.Float64))
         * 100
@@ -91,7 +91,8 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # AXES
     # -----------------------------
     ax1.set_xticks(x)
-    ax1.set_xticklabels(days)
+    # ax1.set_xticklabels(days)
+    ax1.set_xticklabels(days, rotation=45)
 
     #ax2.set_ylim(0, max(conversion) * 1.2 if len(conversion) > 0 else 10)
     #ticks = ax2.get_yticks()
@@ -132,7 +133,12 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
         ax1.spines[spine].set_visible(False)
         ax2.spines[spine].set_visible(False)
 
-    plt.title("MS Total vs Power with Conversion % (Mar 1–19)")
+    start_date = df["transaction_date"].min()
+    end_date = df["transaction_date"].max()
+
+    start_label = start_date.strftime("%d-%b")
+    end_label = end_date.strftime("%d-%b")
+    plt.title(f"MS Total vs Power with Conversion % ({start_label} to {end_label})")
 
     fig.legend(loc="upper left", bbox_to_anchor=(0.01, 0.90), ncol=3, frameon=False)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
@@ -180,7 +186,7 @@ async def fetch_data():
                             ROUND(((((AVG(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
                             ROUND(((((AVG(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
                         FROM base
-                        WHERE "transaction_date" BETWEEN DATE '2026-03-20' AND CURRENT_DATE - INTERVAL '1 day'
+                        WHERE "transaction_date" BETWEEN DATE '2026-03-20' AND DATE '2026-03-31'
                     ),
 
                     yday AS (
@@ -190,43 +196,43 @@ async def fetch_data():
                             ROUND(((((SUM(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
                             ROUND(((((SUM(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
                         FROM base
-                        WHERE "transaction_date" = CURRENT_DATE - INTERVAL '1 day'
+                        WHERE "transaction_date" BETWEEN DATE '2026-04-01' AND CURRENT_DATE - INTERVAL '1 day'
                     )
 
                     SELECT
                         -- ================= MS =================
-                        ROUND(mar.ms,2) AS "MS-R Normal (Mar1-19)",
-                        ROUND(apr.ms,2) AS "MS-R Normal (Mar20-Yday)",
-                        ROUND(yday.ms,2) AS "MS-R Normal (Yday)",
+                        ROUND(mar.ms,1) AS "MS-R Normal (Mar1-19)",
+                        ROUND(apr.ms,1) AS "MS-R Normal (Mar20-31)",
+                        ROUND(yday.ms,1) AS "MS-R Normal (1 Apr-Yday)",
 
-                        ROUND(mar.power,2) AS "MS-R Branded (Mar1-19)",
-                        ROUND(apr.power,2) AS "MS-R Branded (Mar20-Yday)",
-                        ROUND(yday.power,2) AS "MS-R Branded (Yday)",
+                        ROUND(mar.power,1) AS "MS-R Branded (Mar1-19)",
+                        ROUND(apr.power,1) AS "MS-R Branded (Mar20-31)",
+                        ROUND(yday.power,1) AS "MS-R Branded (1 Apr-Yday)",
 
                         ROUND((mar.power / NULLIF(mar.ms + mar.power, 0)) * 100, 1) AS "MS % (Mar1-19)",
-                        ROUND((apr.power / NULLIF(apr.ms + apr.power, 0)) * 100, 1) AS "MS % (Mar20-Yday)",
-                        ROUND((yday.power / NULLIF(yday.ms + yday.power, 0)) * 100, 1) AS "MS % (Yday)",
+                        ROUND((apr.power / NULLIF(apr.ms + apr.power, 0)) * 100, 1) AS "MS % (Mar20-31)",
+                        ROUND((yday.power / NULLIF(yday.ms + yday.power, 0)) * 100, 1) AS "MS % (1 Apr-Yday)",
 
-                        ROUND(mar.ms + mar.power, 2) AS "MS Total (Mar1-19)",
-                        ROUND(apr.ms + apr.power, 2) AS "MS Total (Mar20-Yday)",
-                        ROUND(yday.ms + yday.power, 2) AS "MS Total (Yday)",
+                        ROUND(mar.ms + mar.power, 1) AS "MS Total (Mar1-19)",
+                        ROUND(apr.ms + apr.power, 1) AS "MS Total (Mar20-31)",
+                        ROUND(yday.ms + yday.power, 1) AS "MS Total (1 Apr-Yday)",
 
                         -- ================= HSD =================
-                        ROUND(mar.hsd,2) AS "HSD-R Normal (Mar1-19)",
-                        ROUND(apr.hsd,2) AS "HSD-R Normal (Mar20-Yday)",
-                        ROUND(yday.hsd,2) AS "HSD-R Normal (Yday)",
+                        ROUND(mar.hsd,1) AS "HSD-R Normal (Mar1-19)",
+                        ROUND(apr.hsd,1) AS "HSD-R Normal (Mar20-31)",
+                        ROUND(yday.hsd,1) AS "HSD-R Normal (1 Apr-Yday)",
 
-                        ROUND(mar.turbo,2) AS "HSD-R Branded (Mar1-19)",
-                        ROUND(apr.turbo,2) AS "HSD-R Branded (Mar20-Yday)",
-                        ROUND(yday.turbo,2) AS "HSD-R Branded (Yday)",
+                        ROUND(mar.turbo,1) AS "HSD-R Branded (Mar1-19)",
+                        ROUND(apr.turbo,1) AS "HSD-R Branded (Mar20-31)",
+                        ROUND(yday.turbo,1) AS "HSD-R Branded (1 Apr-Yday)",
 
                         ROUND((mar.turbo / NULLIF(mar.hsd + mar.turbo, 0)) * 100, 1) AS "HSD % (Mar1-19)",
-                        ROUND((apr.turbo / NULLIF(apr.hsd + apr.turbo, 0)) * 100, 1) AS "HSD % (Mar20-Yday)",
-                        ROUND((yday.turbo / NULLIF(yday.hsd + yday.turbo, 0)) * 100, 1) AS "HSD % (Yday)",
+                        ROUND((apr.turbo / NULLIF(apr.hsd + apr.turbo, 0)) * 100, 1) AS "HSD % (Mar20-31)",
+                        ROUND((yday.turbo / NULLIF(yday.hsd + yday.turbo, 0)) * 100, 1) AS "HSD % (1 Apr-Yday)",
 
-                        ROUND(mar.hsd + mar.turbo, 2) AS "HSD Total (Mar1-19)",
-                        ROUND(apr.hsd + apr.turbo, 2) AS "HSD Total (Mar20-Yday)",
-                        ROUND(yday.hsd + yday.turbo, 2) AS "HSD Total (Yday)"
+                        ROUND(mar.hsd + mar.turbo, 1) AS "HSD Total (Mar1-19)",
+                        ROUND(apr.hsd + apr.turbo, 1) AS "HSD Total (Mar20-31)",
+                        ROUND(yday.hsd + yday.turbo, 1) AS "HSD Total (1 Apr-Yday)"
 
                     FROM mar, apr, yday;
                         """
@@ -243,7 +249,8 @@ async def fetch_data():
                         ) / 0.89, 2
                         ) AS ms_power
                 FROM public.nozzle_sales
-                WHERE transaction_date BETWEEN DATE '2026-03-01' AND DATE '2026-03-19'
+                WHERE transaction_date >= CURRENT_DATE - INTERVAL '30 days'
+                    AND transaction_date < CURRENT_DATE
                 GROUP BY transaction_date
 
             """
