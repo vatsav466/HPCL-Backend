@@ -1,14 +1,12 @@
 
 import urdhva_base
 import polars as pl
-import charts_actions
-import dashboard_studio_model
+import numpy as np
+import os
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import matplotlib.pyplot as plt
-import numpy as np
-import os
 
 
 
@@ -58,6 +56,7 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # NUMPY ARRAYS (SAFE)
     # -----------------------------
     days = df["day"].to_numpy()
+
     ms_total = np.nan_to_num(df["ms_total"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
     ms_power = np.nan_to_num(df["ms_power"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
     conversion = np.nan_to_num(df["conversion"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
@@ -91,11 +90,8 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # AXES
     # -----------------------------
     ax1.set_xticks(x)
-    # ax1.set_xticklabels(days)
+    #ax1.set_xticklabels(days)
     ax1.set_xticklabels(days, rotation=45)
-
-    #ax2.set_ylim(0, max(conversion) * 1.2 if len(conversion) > 0 else 10)
-    #ticks = ax2.get_yticks()
 
     ax2.set_ylim(0, 25)
     ticks = np.arange(0, 26, 5)
@@ -153,10 +149,11 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     print(f"Graph saved at: {output_path}")
     return output_path
 
+
 async def fetch_data():
 
     nozzle_sales_query_avg =f"""
-                    WITH base AS (
+                        WITH base AS (
                         SELECT
                             "transaction_date",
 
@@ -169,6 +166,7 @@ async def fetch_data():
                         WHERE "transaction_date" >= DATE '2026-03-01'
                         GROUP BY "transaction_date"
                     ),
+
                     mar AS (
                         SELECT
                             ROUND(((((AVG(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
@@ -191,10 +189,10 @@ async def fetch_data():
 
                     yday AS (
                         SELECT
-                            ROUND(((((SUM(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
-                            ROUND(((((SUM(power))/1411.0)/1000.0)/0.89), 2) AS power,
-                            ROUND(((((SUM(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
-                            ROUND(((((SUM(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
+                            ROUND(((((AVG(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
+                            ROUND(((((AVG(power))/1411.0)/1000.0)/0.89), 2) AS power,
+                            ROUND(((((AVG(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
+                            ROUND(((((AVG(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
                         FROM base
                         WHERE "transaction_date" BETWEEN DATE '2026-04-01' AND CURRENT_DATE - INTERVAL '1 day'
                     )
@@ -235,7 +233,7 @@ async def fetch_data():
                         ROUND(yday.hsd + yday.turbo, 1) AS "HSD Total (1 Apr-Yday)"
 
                     FROM mar, apr, yday;
-                        """
+                    """
     
     nozzle_trend_query = """
                 SELECT
@@ -273,10 +271,3 @@ async def fetch_data():
     nozzle_trend_chart = await plot_ms_sales_trend(nozzle_trend_df)
     print("nozzle trend chart --->\n", nozzle_trend_chart)
     return {"nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0], "nozzle_trend_chart": nozzle_trend_chart}
-
-
-if __name__ == "__main__":
-    import asyncio
-    result = asyncio.run(fetch_data())
-    print(result)
-
