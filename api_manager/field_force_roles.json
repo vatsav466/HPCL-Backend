@@ -274,13 +274,13 @@
             ]
         },
         {
-            "name": "cris",
+            "name": "nozzle_sales_stock",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "CRIS",
+            "displayName": "nozzle_sales_stock",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
@@ -316,13 +316,13 @@
             ]
         },
         {
-            "name": "cris_readOnly",
+            "name": "nozzle_sales_stock_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "CRIS_readOnly",
+            "displayName": "nozzle_sales_stock_readOnly",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
@@ -331,13 +331,13 @@
             ]
         },
         {
-            "name": "cris_admin",
+            "name": "nozzle_sales_stock_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "CRIS_admin",
+            "displayName": "nozzle_sales_stock_admin",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
