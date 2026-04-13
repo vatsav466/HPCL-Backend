@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import utilities.helpers as helpers
 from charts_actions import charts_connection_vault_routing
 import orchestrator.notification_manager.notification_factory as notification_factory
-from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness
+from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness, nozzle_sales_trend
 
 
 WRITE_TO_DB = False
@@ -83,6 +83,7 @@ async def publish_daily_novex_status_email():
     status_data.update(ro_va_cleanliness.main())
     status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
     status_data.update(await retail_data.sales_tmt_excel())
+    status_data.update(await nozzle_sales_trend.fetch_data())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -175,6 +176,20 @@ async def publish_daily_novex_status_email():
         cc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","ArpitaKanak.Bara@hpcl.in"],
         bcc_recipients=["venu@algofusiontech.com","yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com"],
         notification_data=status_data
+    )
+
+    await send_notification(
+        template_name="nozzle_sales_trend.html",
+        to_recipients=["sandesh.mane@hpcl.in"],
+        subject="Nozzle sales of MS Sales and Power daily sales Trend monitoring",
+        cc_recipients=["sanjayk@hpcl.in", "gkpatel@hpcl.in"],
+        bcc_recipients=["adityapandey@hpcl.in", "ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", 
+                        "poojitha.gumma@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "nozzle_trend_chart": f"{status_data.get('nozzle_trend_chart')}"
+        }
     )
 
 
