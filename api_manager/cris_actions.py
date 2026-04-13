@@ -39,3 +39,9 @@ async def cris_nozzle_sales_comparison(data: Cris_Nozzle_Sales_ComparisonParams)
 @router.post('/nozzle_sales_prev_day_comparison', tags=['CRIS'])
 async def cris_nozzle_sales_prev_day_comparison(data: Cris_Nozzle_Sales_Prev_Day_ComparisonParams):
     return await field_force_cris.get_nozzle_sales_day_comparison(**_params(data))
+
+
+# Action product_availability_days
+@router.post('/product_availability_days', tags=['CRIS'])
+async def cris_product_availability_days(data: Cris_Product_Availability_DaysParams):
+    return await field_force_cris.get_product_availability(data)

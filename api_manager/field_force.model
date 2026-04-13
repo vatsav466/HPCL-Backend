@@ -166,6 +166,13 @@ Model CRIS crud_disable {
     Action=> nozzle_sales_prev_day_comparison {
         data WidgetFilters
     }
+    Action=> product_availability_days {
+        filters optional list WidgetFilters
+        cross_filters optional list WidgetFilters
+        level_filter optional LevelFilter
+        action str
+        drill_state optional str
+    }
 }
 
 // ========== Tank Inventory (CRIS) - Dev Phase 1 ==========

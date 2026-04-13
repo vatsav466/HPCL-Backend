@@ -246,6 +246,18 @@ class Cris_Nozzle_Sales_Prev_Day_ComparisonParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Cris_Product_Availability_DaysParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    level_filter: typing.Optional[LevelFilterCreate] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Tankinventory_Stock_AvailabilityParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     drill_filter: typing.Optional[DrillFilterCreate] | None = None
