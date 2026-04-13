@@ -388,6 +388,20 @@ async def sync_user_roles():
         ],
         "status": True
     },
+    "Creator SOD":{
+        "allowed_pages": [
+              {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    },
+                ]
+            }  
+        ],
+        "name": "SOD",
+        "status": True
+    },
     "MRAP":{
         "allowed_pages": [
             {
