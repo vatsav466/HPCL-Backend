@@ -6738,6 +6738,145 @@ async def get_interlock_testing_analysis(data):
             "testing_data": [],
             "non_testing_data": []
         }
+    
+async def location_table_24h_status(data=None):
+    from datetime import datetime, timezone
+
+    window_hours = 24
+    bu = "TAS"
+
+    TABLES = [
+        "host_unauthorised_flow",
+        "host_cancelled_tts",
+        "host_k_factor_changes",
+        "host_local_loaded_tts",
+        "host_bay_re_assignment",
+        "host_manual_fan_printed",
+        "host_over_loaded_tts",
+        "host_mfm_factor",
+        "master_status",
+        "host_standalone_tts",
+        "host_tas_user_details",
+        "host_live_tank_details",
+    ]
+
+    # 1) Get locations
+    loc_query = f"bu = '{bu}' and location_onboard = true"
+
+    zone = getattr(data, "zone", None)
+    location_name = getattr(data, "location_name", None)
+
+    if zone:
+        loc_query += f" AND zone = '{zone}'"
+    if location_name:
+        loc_query += f" AND name = '{location_name}'"
+
+    loc_params = urdhva_base.queryparams.QueryParams(
+        q=loc_query,
+        limit=1000,
+        fields='["sap_id","name","zone"]',
+    )
+
+    loc_resp = await hpcl_ceg_model.LocationMaster.get_all(loc_params, resp_type="plain")
+    loc_rows = loc_resp.get("data", []) if isinstance(loc_resp, dict) else []
+
+    sap_to_info = {
+        (r.get("sap_id") or "").strip(): {
+            "name": (r.get("name") or "").strip(),
+            "zone": (r.get("zone") or "").strip()
+        }
+        for r in loc_rows
+    }
+
+    sap_ids = [s for s in sap_to_info.keys() if s]
+    now = datetime.now(timezone.utc)
+
+    # Initialize structure
+    location_data = {
+        sap: {
+            "sap_id": sap,
+            "location_name": sap_to_info[sap]["name"],
+            "zone": sap_to_info[sap]["zone"],
+            "tables": []
+        }
+        for sap in sap_ids
+    }
+
+    # 2) Query each table
+    for table in TABLES:
+        query = f"""
+            SELECT
+                sap_id,
+                MAX(created_at) AS last_created_at,
+                COUNT(*) FILTER (
+                    WHERE created_at >= NOW() - INTERVAL '{window_hours} hours'
+                ) AS cnt_24h
+            FROM "{table}"
+            GROUP BY sap_id
+        """
+
+        try:
+            resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            data_rows = resp.get("data", [])
+        except Exception as e:
+            print(f"Error running query for table {table}: {e}")
+            data_rows = []
+
+        # Map stats
+        stats_by_sap = {}
+        for row in data_rows:
+            sap = str(row.get("sap_id") or "").strip()
+            if sap:
+                stats_by_sap[sap] = row
+
+        # Store raw status (IMPORTANT CHANGE)
+        for sap in sap_ids:
+            stat = stats_by_sap.get(sap, {})
+            cnt_24h = int(stat.get("cnt_24h") or 0)
+            last_created_at = stat.get("last_created_at")
+
+            is_online = cnt_24h > 0
+
+            if isinstance(last_created_at, datetime):
+                last_str = last_created_at.isoformat(sep=" ", timespec="seconds")
+            else:
+                last_str = str(last_created_at) if last_created_at else None
+
+            location_data[sap]["tables"].append({
+                "table_name": table,
+                "is_online": is_online,   # temp flag
+                "last_created_at": last_str,
+            })
+
+    # 3) FINAL STATUS LOGIC (MAIN PART 🔥)
+    for sap, loc in location_data.items():
+        tables = loc["tables"]
+
+        any_online = any(t["is_online"] for t in tables)
+
+        for t in tables:
+            if any_online:
+                if t["is_online"]:
+                    t["status"] = "Online"
+                else:
+                    t["status"] = "LAST UPDATED"
+            else:
+                t["status"] = "Offline"
+
+            # remove temp field
+            del t["is_online"]
+
+    # Final response
+    return {
+        "data": {
+            "now" : now.isoformat(),
+            "window_hours": window_hours,
+            "locations": list(location_data.values())
+        }
+    }
+        
+
+
 async def get_master_status(data):
     try:
         data_required = True
@@ -6905,7 +7044,8 @@ AnalyticsModelMapping = {
     "Run Daily Data Check": operability_index_health_check,
     "Tas_fire_engine":get_fire_engine_runtime_weekly,
     "Interlock_testing":get_interlock_testing_analysis,
-    "Master_status":get_master_status
+    "Master_status":get_master_status,
+    "Analog 24 hr window" : location_table_24h_status,
 
 }
 
