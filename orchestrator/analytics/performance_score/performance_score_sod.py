@@ -156,7 +156,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     parent_score += child_result.get("score", 0)
 
                 else:
-                    print(f" ⚠️ No compute method for child: {child_name}")
+                    print(f"No compute method for child: {child_name}")
 
             # Apply parent module weightage
             parent_final = round((parent_score * module["weightage"]) / 100, 2)
@@ -191,233 +191,93 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage, 
                 and detailed results of each rule evaluation.
         """
-        # Flatten interlock names
-        interlocks = []
-        equipment_names = []
-
-        for rule in rules['rules']:
-            if 'rules' in rule:  # Nested rules (e.g., Hooter)
+        pi_score_results = []
+        
+        for rule in rules.get('rules', []):
+            # --- CASE 1: HOOTER (NESTED RULES) ---
+            if 'rules' in rule:
+                hooter_combined_score = 0
+                hooter_total_unhealthy = 0
+                hooter_total_units = 0
+                
+                # Loop through Dyke, HCD, ESD to sum them up
                 for sub_rule in rule['rules']:
-                    name = sub_rule.get('interlock_name', "")
-                    eq_name = sub_rule.get('equipment_name', "")
-                    if isinstance(name, list):
-                        interlocks.extend(name)
-                        equipment_names.append(eq_name)
-                    elif name:
-                        interlocks.append(name)
-                        equipment_names.append(eq_name)
-            else:
-                name = rule.get('interlock_name', "")
-                eq_name = rule.get('equipment_name', "")
-                if isinstance(name, list):
-                    interlocks.extend(name)
-                    equipment_names.append(eq_name)
-                elif name:
-                    interlocks.append(name)
-                    equipment_names.append(eq_name)
+                    eq_name = sub_rule.get('equipment_name')
+                    interlocks = sub_rule.get('interlock_name', [])
+                    if not interlocks or interlocks == "":
+                        interlocks = sub_rule.get('search_value', [])
+                    
+                    if not isinstance(interlocks, list):
+                        interlocks = [interlocks] if interlocks else []
 
-        interlocks = list(set(filter(None, interlocks)))  # Remove empty
-        equipment_names = list(set(filter(None, equipment_names)))
+                    # 1. Get Architecture Count
+                    arch_q = f"SELECT count FROM architecture_data WHERE device_type = '{eq_name}' AND sap_id = '{location_id}'"
+                    arch_res = await hpcl_ceg_model.ArchitectureData.get_aggr_data(arch_q)
+                    p_count = int(arch_res['data'][0].get('count', 1) if arch_res.get('data') else 1)
+                    hooter_total_units += p_count
 
-        # Get open alerts
-        in_clause_raw = ", ".join(f"'{val}'" for val in interlocks)
-        in_clause_eq = ", ".join(f"'{val}'" for val in equipment_names)
-
-        query = f"""
-        SELECT interlock_name, tas_device_name FROM alerts 
-        WHERE interlock_name IN ({in_clause_raw}) 
-        AND sap_id = '{location_id}' AND alert_status != 'Close' 
-        AND alert_section = 'TAS' AND bu = 'TAS' AND equipment_name in ({in_clause_eq})
-        """
-        print("safety query --> ", query)
-        data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-
-        open_alerts = defaultdict(list)
-        for item in data.get('data', []):
-            open_alerts[item['interlock_name']].append(item['tas_device_name'])
-
-        # Map device to interlocks
-        device_to_interlocks = defaultdict(set)
-        for interlock, devices in open_alerts.items():
-            for dev in devices:
-                device_to_interlocks[dev].add(interlock)
-
-        # Calculate rule scores
-        pi_score = []
-        for rule in rules['rules']:
-            if 'rules' in rule:  # Nested (e.g., Hooter)
-                hooter_sub_scores = []
-                for sub_rule in rule['rules']:
-                    interlocks = sub_rule.get('interlock_name', "")
-                    if not interlocks:
-                        hooter_sub_scores.append(sub_rule['weightage'] / 100)
-                        continue
-
-                    interlocks = interlocks if isinstance(interlocks, list) else [interlocks]
-                    param_query = f"""
-                        SELECT count FROM architecture_data 
-                        WHERE device_type = '{sub_rule['equipment_name']}' AND sap_id = '{location_id}'
-                    """
-                    arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                    parameter_count = int(
-                        arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
-
-                    # Separate Tank_Under Maintenance and other alerts by device
-                    tank_maintenance_devices = set()
-                    other_alert_devices = set()
-                    for interlock in interlocks:
-                        devices = open_alerts.get(interlock, [])
-                        for dev in devices:
-                            if interlock == "Tank_Under Maintenance":
-                                tank_maintenance_devices.add(dev)
-                            else:
-                                other_alert_devices.add(dev)
-
-                    only_other_devices = other_alert_devices - tank_maintenance_devices
-                    unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
-
-                    score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (
-                                sub_rule['weightage'] / 100)
-                    hooter_sub_scores.append(score)
-
-                combined_score = sum(hooter_sub_scores)
-
-                # Calculate unhealthy devices for Hooter
-                total_unhealthy = 0
-                total_devices = 0
-                hooter_interlocks = []
-                for sub_rule in rule['rules']:
-                    interlocks = sub_rule.get('interlock_name', "")
+                    # 2. Query for OPEN alerts
+                    unhealthy_count = 0
                     if interlocks:
-                        interlocks = interlocks if isinstance(interlocks, list) else [interlocks]
-                        hooter_interlocks.extend(interlocks)
-                        param_query = f"""
-                            SELECT count FROM architecture_data 
-                            WHERE device_type = '{sub_rule['equipment_name']}' AND sap_id = '{location_id}'
-                        """
-                        arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                        param_count = int(
-                            arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
-                        total_devices += param_count
+                        in_clause = ", ".join(f"'{val}'" for val in interlocks)
+                        alert_q = f"SELECT COUNT(DISTINCT tas_device_name) as unhealthy_count FROM alerts WHERE interlock_name IN ({in_clause}) AND sap_id = '{location_id}' AND alert_status != 'Close'"
+                        alert_res = await hpcl_ceg_model.Alerts.get_aggr_data(alert_q)
+                        unhealthy_count = int(alert_res['data'][0].get('unhealthy_count', 0) if alert_res.get('data') else 0)
+                    
+                    hooter_total_unhealthy += unhealthy_count
 
-                        tank_maintenance_devices = set()
-                        other_alert_devices = set()
-                        for interlock in interlocks:
-                            devices = open_alerts.get(interlock, [])
-                            for dev in devices:
-                                if interlock == "Tank_Under Maintenance":
-                                    tank_maintenance_devices.add(dev)
-                                else:
-                                    other_alert_devices.add(dev)
-                        only_other_devices = other_alert_devices - tank_maintenance_devices
-                        unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
-                        total_unhealthy += len(unhealthy_devices)
+                    # 3. Add to Hooter total (Summing individual Dyke/HCD/ESD scores)
+                    sub_score = ((p_count - unhealthy_count) / p_count) * sub_rule['weightage']
+                    hooter_combined_score += sub_score
 
-                # Generate appropriate message
-                if abs(combined_score - rule['weightage']) < 0.01:  # Full score achieved
-                    msg = f"No open alerts. Hooter system operating normally."
-                else:
-                    msg = f"{total_unhealthy} out of {total_devices} devices have active alerts across Hooter sub-systems"
+                # Combine everything into ONE Hooter result
+                hooter_result = {
+                    "name": rule.get('name', 'Hooter'),
+                    "score": round(hooter_combined_score, 2),
+                    "weightage": rule['weightage'],
+                    "msg": f"{hooter_total_unhealthy} open hooter alerts out of {hooter_total_units} units",
+                    "details": {"unhealthy": hooter_total_unhealthy, "total": hooter_total_units}
+                }
+                pi_score_results.append(enhance_result_with_insights(hooter_result, "safety_interlocks"))
+
+            # --- CASE 2: STANDARD SINGLE RULES ---
+            else:
+                eq_name = rule.get('equipment_name')
+                interlocks = rule.get('interlock_name', [])
+                if not interlocks or interlocks == "":
+                    interlocks = rule.get('search_value', [])
+                
+                if not isinstance(interlocks, list):
+                    interlocks = [interlocks] if interlocks else []
+
+                arch_q = f"SELECT count FROM architecture_data WHERE device_type = '{eq_name}' AND sap_id = '{location_id}'"
+                arch_res = await hpcl_ceg_model.ArchitectureData.get_aggr_data(arch_q)
+                p_count = int(arch_res['data'][0].get('count', 1) if arch_res.get('data') else 1)
+
+                unhealthy_count = 0
+                if interlocks:
+                    in_clause = ", ".join(f"'{val}'" for val in interlocks)
+                    alert_q = f"SELECT COUNT(DISTINCT tas_device_name) as unhealthy_count FROM alerts WHERE interlock_name IN ({in_clause}) AND sap_id = '{location_id}' AND alert_status != 'Close'"
+                    alert_res = await hpcl_ceg_model.Alerts.get_aggr_data(alert_q)
+                    unhealthy_count = int(alert_res['data'][0].get('unhealthy_count', 0) if alert_res.get('data') else 0)
+
+                rule_score = ((p_count - unhealthy_count) / p_count) * rule['weightage']
                 
                 result_item = {
-                    "name": rule['name'],
-                    "score": round(combined_score, 2),
+                    "name": rule.get('name', eq_name),
+                    "score": round(rule_score, 2),
                     "weightage": rule['weightage'],
-                    "module": rules.get('name', rule['name']),
-                    "msg": msg,
-                    "details": {
-                        "unhealthy_devices": total_unhealthy,
-                        "total_devices": total_devices,
-                        "affected_interlocks": list(set(hooter_interlocks)),
-                        "sub_scores": hooter_sub_scores
-                    }
+                    "msg": f"{unhealthy_count} open alerts out of {p_count} units",
+                    "details": {"unhealthy": unhealthy_count, "total": p_count}
                 }
+                pi_score_results.append(enhance_result_with_insights(result_item, "safety_interlocks"))
 
-                # Enhance with insights
-                result_item = enhance_result_with_insights(result_item, "safety_interlocks")
-                pi_score.append(result_item)
-            else:  # Regular rule
-                interlocks = rule.get('interlock_name', "")
-                if not interlocks:
-                    # Rule with no interlock_name - give full score but still add insights
-                    system_name = rule.get('equipment_name', rule.get('name', 'Safety Interlocks'))
-                    result_item = {
-                        "name": rule['name'],
-                        "score": round(rule['weightage'], 2),
-                        "weightage": rule['weightage'],
-                        "module": rules.get('name', rule['name']),
-                        "msg": f"No open alerts. {system_name} system operating normally.",
-                        "details": {}
-                    }
-                    result_item = enhance_result_with_insights(result_item, "safety_interlocks")
-                    pi_score.append(result_item)
-                    continue
-
-                interlocks = interlocks if isinstance(interlocks, list) else [interlocks]
-                param_query = f"""
-                    SELECT count FROM architecture_data 
-                    WHERE device_type = '{rule['equipment_name']}' AND sap_id = '{location_id}'
-                """
-                arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                parameter_count = int(
-                    arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
-
-                # Separate Tank_Under Maintenance and other alerts by device
-                tank_maintenance_devices = set()
-                other_alert_devices = set()
-                for interlock in interlocks:
-                    devices = open_alerts.get(interlock, [])
-                    for dev in devices:
-                        if interlock == "Tank_Under Maintenance":
-                            tank_maintenance_devices.add(dev)
-                        else:
-                            other_alert_devices.add(dev)
-
-                only_other_devices = other_alert_devices - tank_maintenance_devices
-                unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
-
-                score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (
-                rule['weightage'])
-
-                # Generate appropriate message
-                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
-                    system_name = rule.get('equipment_name', rule.get('name', 'Safety Interlocks'))
-                    msg = f"No open alerts. {system_name} system operating normally."
-                else:
-                    msg = f"{len(unhealthy_devices)} out of {parameter_count} devices have active alerts"
-
-                result_item = {
-                    "name": rule['name'],
-                    "score": round(score, 2),
-                    "weightage": rule['weightage'],
-                    "module": rules.get('name', rule['name']),
-                    "msg": msg,
-                    "details": {
-                        "unhealthy_devices": len(unhealthy_devices),
-                        "total_devices": parameter_count,
-                        "affected_interlocks": list(set(interlocks))
-                    }
-                }
-
-                # Enhance with insights
-                result_item = enhance_result_with_insights(result_item, "safety_interlocks")
-                pi_score.append(result_item)
-        print("safety pi score --> ", pi_score)
-        # Final score calculation
-        final_score = round(sum([r['score'] for r in pi_score]), 2)
-        print("safety final_score --> ", final_score)
-
-        module_result = {
-            "name": rules.get('name', ""),
-            "score": final_score,
+        return {
+            "name": rules.get('name', "Safety Interlocks"),
+            "score": round(sum(r['score'] for r in pi_score_results), 2),
             "weightage": rules['weightage'],
-            "results": pi_score
+            "results": pi_score_results
         }
-
-        # Add module-level summary insights
-        module_result["insights"] = generate_summary_insights(module_result)
-
-        return module_result
 
     async def _compute_gantry_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -476,7 +336,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         )
 
         # Fetch alerts
-        data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=100000)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
         open_alerts = defaultdict(list)
         lrc_alerts_info = {}  # To store LRC alerts with their history information
 
@@ -546,41 +406,45 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 weightage = None
                 score = 0
             else:
-                weightage = round(rule_weightage / parameter_count, 2)
-
-                # Special case for BCU Parameters Analysis
+                today_date_str = current_date.strftime('%Y-%m-%d')
                 if rule['name'] == "BCU Parameters Analysis":
-                    device_frequency = defaultdict(int)
-                    for interlock_name in interlock_names:
-                        if interlock_name in open_alerts:
-                            for device_name in open_alerts[interlock_name]:
-                                device_frequency[device_name] += 1
+                    # Query specifically for TODAY (includes Open + Closed alerts)
+                    bcu_in_clause = ", ".join(f"'{i}'" for i in interlock_names)
+                    daily_bcu_query = (
+                        f"SELECT tas_device_name, COUNT(*) as alert_count FROM alerts "
+                        f"WHERE interlock_name IN ({bcu_in_clause}) AND sap_id = '{location_id}' "
+                        f"AND created_at::DATE = '{today_date_str}' "
+                        f"AND alert_section = 'TAS' AND bu = 'TAS' GROUP BY tas_device_name"
+                    )
+                    daily_data = await hpcl_ceg_model.Alerts.get_aggr_data(daily_bcu_query)
+                    daily_alert_map = {item['tas_device_name']: int(item['alert_count']) for item in daily_data.get('data', [])}
 
-                    asset_unhealthy_score = 0
-                    healthy_devices = 0
-                    medium_devices = 0
-                    unhealthy_devices = 0
-                    for device, count in device_frequency.items():
+                    weight_per_unit = rule_weightage / parameter_count # e.g., 1.67 / 28 = 0.0596
+                    module_total_score = 0
+                    healthy_devices, medium_devices, unhealthy_devices = 0, 0, 0
+
+                    # Calculate tiered score for each BCU (even those not in daily_alert_map)
+                    alerted_names = list(daily_alert_map.keys())
+                    for i in range(parameter_count):
+                        count = daily_alert_map.get(alerted_names[i], 0) if i < len(alerted_names) else 0
+                        
                         if count < 5:
-                            asset_unhealthy_score += 100
+                            module_total_score += weight_per_unit # 100% share
                             healthy_devices += 1
                         elif 5 <= count <= 15:
-                            asset_unhealthy_score += 50
+                            module_total_score += (weight_per_unit * 0.5) # 50% share
                             medium_devices += 1
                         else:
-                            asset_unhealthy_score += 0
-                            unhealthy_devices += 1
+                            unhealthy_devices += 1 # 0% share
 
-                    score = (asset_unhealthy_score / (parameter_count * 100)) * (
-                                rule_weightage / 100)
-
-                    # Store details for insights
+                    score = round(module_total_score, 4)
+                    asset_unhealthy_count = unhealthy_devices + medium_devices
                     bcu_details = {
                         "healthy_devices": healthy_devices,
                         "medium_devices": medium_devices,
                         "unhealthy_devices": unhealthy_devices,
                         "total_devices": parameter_count,
-                        "device_frequency_distribution": dict(device_frequency)
+                        "device_frequency_distribution": daily_alert_map
                     }
 
                 # Special case for LRC Master
