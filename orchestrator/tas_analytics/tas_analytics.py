@@ -6214,6 +6214,7 @@ async def operability_index_health_check(data) -> dict:
                 "last_ts_utc": last_ts_str,
                 "zone": dev_zone if dev_zone else "Unknown",
                 "status": status,
+                **({"Description": "The TAS vendor has been changed from AST to ICON, and the re-onboarding is pending."} if dev_loc == "mathura" else {}),
             })
 
     return {
