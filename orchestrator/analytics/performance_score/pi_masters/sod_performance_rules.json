@@ -257,15 +257,26 @@
                     "equipment_name": "Dyke",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
-                    "search_value": "",
-                    "interlock_name": "",
+                    "search_value": [
+                        "Dykevalve_Activated Hooter_Fail",
+                        "Dykevalve_Activated Hooter"
+                    ],
+                    "interlock_name": [
+                        "Dykevalve_Activated Hooter_Fail",
+                        "Dykevalve_Activated Hooter"
+                    ],
                     "weightage": 0.71
                 },
                 {
                     "equipment_name": "HCD",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
-                    "search_value": "",
+                    "search_value": [
+                        "HCD_20% LEL activated Hooter_Fail",
+                        "HCD_20% LEL activated Hooter",
+                        "HCD_40% LEL activated Hooter_Fail",
+                        "HCD_40% LEL activated Hooter"
+],
                     "interlock_name": "",
                     "weightage": 0.71
                 },
@@ -273,8 +284,14 @@
                     "equipment_name": "ESD",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
-                    "search_value": "",
-                    "interlock_name": "",
+                    "search_value": [
+                        "Hooter cum strobe for ESD activated in control room_Fail",
+                        "Hooter cum strobe for ESD activated in control room"
+                    ],
+                    "interlock_name": [
+                        "Hooter cum strobe for ESD activated in control room_Fail",
+                        "Hooter cum strobe for ESD activated in control room"
+                    ],
                     "weightage": 0.72
                 }
                 ]
