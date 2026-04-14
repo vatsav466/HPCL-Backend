@@ -211,9 +211,6 @@ Model Ticketing {
         ticket_severity optional str
         comment optional str
         update_id str
-        file_attachment optional list str
-        file_attachment_name optional str
-        file_attachment_id optional str
         linked_alert_id optional list str
         parent_id optional str
         subtask_id optional list str
