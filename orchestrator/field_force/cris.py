@@ -867,102 +867,127 @@ async def get_product_availability(data):
         # -------------------------
         # NORMAL FILTERS
         # -------------------------
-        selected_products = []
-
+        product_filter = ""
         if data.filters:
             for f in data.filters:
-
-                if f.key == "product_grp" and f.value:
-                    selected_products = [p.strip() for p in f.value.split(",")]
-
                 if 'sap_id' in f.key and f.value:
                     if f.cond in ["equals", "="]:
                         conditions.append(f"lm.terminal_plant_id = '{f.value}'")
 
-                if f.cond in ['=', 'equals'] and f.key != "product_grp":
+                elif f.key == "product_grp" and f.value:
+                    product_values = [p.strip() for p in f.value.split(",")]
+                    product_filter = f"""
+                    AND sch.product_grp IN ({",".join([f"'{p}'" for p in product_values])})
+                    """
+
+                elif f.cond in ['=', 'equals'] and f.key != "product_grp":
                     conditions.append(f"{f.key} = '{f.value}'")
 
         # -------------------------
-        # DEFAULT PRODUCT
+        # FINAL WHERE CLAUSE
         # -------------------------
-        if not selected_products:
-            selected_products = ["MS"]
-
-        # -------------------------
-        # WHERE CLAUSE
-        # -------------------------
-        where_clause = " "
+        where_clause = ""
         if conditions:
             where_clause += " AND " + " AND ".join(conditions)
 
-        # -------------------------
-        # QUERY
-        # -------------------------
-        query = f""" 
-            WITH ro_data AS (
-                SELECT 
-                    lm.terminal_plant_id, 
-                    lm_tas.name AS tas_name, 
-                    ns.product_grp,
-                    ns.sap_id
-                FROM nozzle_sales ns
-                JOIN location_master lm 
-                    ON ns.sap_id = lm.sap_id 
-                    AND lm.bu = 'RO'
-                JOIN location_master lm_tas 
-                    ON lm_tas.sap_id = lm.terminal_plant_id 
-                    AND lm_tas.bu = 'TAS'
-                WHERE lm.terminal_plant_id IN (
-                    '1919','1128','1216','1334','1155','1221','1259','1412',
-                    '1146','1509','1424','1892','1588','1845','1856','1636'
-                ) {where_clause}
-                GROUP BY lm.terminal_plant_id, lm_tas.name, ns.product_grp, ns.sap_id
-            ),
 
-            stock_data AS (
-                SELECT
-                    rosapcode, product_grp,
-                    SUM(CASE WHEN pumpable_stock >= 0 THEN pumpable_stock ELSE 0 END) AS total_stock,
-                    SUM(avgsales_7days)/7 AS daily_sales,
-                    CASE
-                        WHEN SUM(pumpable_stock) <= 0 THEN 0
-                        WHEN SUM(pumpable_stock) < (SUM(avgsales_7days)/7) THEN 1
-                        ELSE ROUND(SUM(pumpable_stock) / NULLIF(SUM(avgsales_7days)/7,0))
-                    END AS stock_days
-                FROM sch_inventory_forecast_dashboard_latest
-                WHERE volume > 0
-                GROUP BY rosapcode, product_grp
-            )
+        terminal_plant_id = """('1919','1128','1216','1334','1155','1221','1259','1412',
+                                '1146','1509','1424','1892','1588','1845','1856','1636')
+                            """
 
-            SELECT
-                r.terminal_plant_id,
-                r.product_grp,
-                s.rosapcode,
-                s.stock_days
-            FROM ro_data r
-            LEFT JOIN stock_data s
-                ON r.sap_id = s.rosapcode
-                AND r.product_grp = s.product_grp
-        """
+        ro_data_query = f"""
+                            SELECT 
+                                lm.terminal_plant_id,
+                                ns.product_grp,
+                                ns.sap_id
+                            FROM location_master lm
+                            JOIN nozzle_sales ns 
+                                ON ns.sap_id = lm.sap_id
+                            WHERE lm.bu = 'RO'
+                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp
+                        """
+
+        ro_names_query = f""" SELECT 
+                                lm_tas.sap_id, 
+                                lm_tas.name AS tas_name
+                            FROM location_master lm
+                            JOIN location_master lm_tas 
+                                ON lm_tas.sap_id = lm.terminal_plant_id
+                            WHERE 
+                            lm_tas.bu = 'TAS'
+                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            GROUP BY lm_tas.sap_id, 
+                                lm_tas.name
+                            """
+        stock_data_query = f"""SELECT
+                                rosapcode, product_grp, product_no, item_name,
+                                COUNT(DISTINCT tank_no) AS tank_cnt,
+                                STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                                SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) AS total_stock,
+                                SUM(sch.avgsales_7days) / 7 AS daily_sales,
+                                CASE
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) IS NULL THEN 0
+                                    WHEN SUM(sch.avgsales_7days) / 7 IS NULL OR SUM(sch.avgsales_7days) / 7 = 0 THEN 0
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 0
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 1
+                                    ELSE ROUND(
+                                        SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END)
+                                        / NULLIF(SUM(sch.avgsales_7days) / 7, 0)
+                                    )
+                                END AS stock_days
+                            FROM public.sch_inventory_forecast_dashboard_latest sch
+                            WHERE sch.volume > 0 {product_filter}
+                            GROUP BY rosapcode,product_grp, product_no, item_name
+                        """
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
-        query_data = await function(query=query)
-        df = pl.DataFrame(query_data).drop_nulls()
+        ro_data = await function(query=ro_data_query)
+        ro_df = pl.DataFrame(ro_data)
 
-        # -------------------------
-        # FILTER BY SELECTED PRODUCTS
-        # -------------------------
-        df = df.filter(pl.col("product_grp").is_in(selected_products))
+        ro_names_data = await function(query=ro_names_query)
+        ro_names_df = pl.DataFrame(ro_names_data)
 
-        # =========================================================
-        # ACTION 1: RO COUNT SUMMARY (NO DUPLICATES ISSUE FIXED)
-        # =========================================================
+        stock_data = await function(query=stock_data_query)
+        stock_df = pl.DataFrame(stock_data)
+        stock_df = stock_df.drop_nulls()
+
+        ro_merged = ro_df.join(ro_names_df, left_on="terminal_plant_id", right_on="sap_id", how="left")
+
+        stock_df = (
+            stock_df
+            .with_columns([
+                pl.col("total_stock").cast(pl.Float64, strict=False),
+                pl.col("daily_sales").cast(pl.Float64, strict=False)
+            ])
+            .drop_nulls(["total_stock", "daily_sales"])
+            .group_by(["rosapcode", "product_grp"])
+            .agg([
+                pl.sum("total_stock").alias("total_stock"),
+                pl.sum("daily_sales").alias("daily_sales")
+            ])
+            .with_columns(
+                pl.when(pl.col("daily_sales") == 0)
+                .then(0)
+                .otherwise(
+                    (pl.col("total_stock") / pl.col("daily_sales")).round(0)
+                )
+                .alias("stock_days")
+            )
+        )
+
+        final_merge = ro_merged.join(
+            stock_df,left_on=["sap_id", "product_grp"],
+            right_on=["rosapcode", "product_grp"],
+            how="left", suffix="_right"
+        )
+
         if data.action == "ro_count":
 
-            ro_status = df.group_by(["terminal_plant_id", "rosapcode"]).agg(
+            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id"]).agg(
                 [
                     (pl.col("stock_days") > 0).any().alias("has_stock"),
                     (pl.col("stock_days") == 0).any().alias("has_zero")
@@ -987,24 +1012,18 @@ async def get_product_availability(data):
                 "mixed_ro": result.get("Mixed", 0)
             }
 
-        # =========================================================
-        # ACTION 2: RO DETAILS (DRILL-DOWN)
-        # =========================================================
-
         if data.action == "ro_details":
 
-            pivot_df = df.pivot(
+            pivot_df = final_merge.pivot(
                 values="stock_days",
-                index=["terminal_plant_id", "rosapcode"],
+                index=["terminal_plant_id", "sap_id"],
                 columns="product_grp",
                 aggregate_function="max"
             )
 
-            print("pivot table data ---> \n", pivot_df)
-
             value_cols = [
                 col for col in pivot_df.columns
-                if col not in ["terminal_plant_id", "rosapcode"]
+                if col not in ["terminal_plant_id", "sap_id"]
             ]
 
             pivot_labeled = pivot_df.with_columns(
@@ -1019,28 +1038,49 @@ async def get_product_availability(data):
                 ]
             )
 
-            print("pivot labeled --->\n", pivot_labeled)
+            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id"]).agg(
+                [
+                    (pl.col("stock_days") > 0).any().alias("has_stock"),
+                    (pl.col("stock_days") == 0).any().alias("has_zero")
+                ]
+            ).with_columns(
+                pl.when(pl.col("has_stock") & pl.col("has_zero"))
+                .then(pl.lit("Mixed"))
+                .when(pl.col("has_stock"))
+                .then(pl.lit("Active"))
+                .otherwise(pl.lit("Inactive"))
+                .alias("status")
+            )
+
+            pivot_with_status = pivot_labeled.join(
+                ro_status.select(["terminal_plant_id", "sap_id", "status"]),
+                on=["terminal_plant_id", "sap_id"],
+                how="left"
+            )
 
             status_cols = [f"{col}_status" for col in value_cols]
 
-            in_stock = pivot_labeled.filter(
+            in_stock = pivot_with_status.filter(
                 pl.any_horizontal(
                     [pl.col(col) == "In Stock" for col in status_cols]
                 )
             )
-            out_of_stock = pivot_labeled.filter(
+            out_of_stock = pivot_with_status.filter(
                 pl.any_horizontal(
                     [pl.col(col) == "Out of Stock" for col in status_cols]
                 )
             )
+            mixed_ro = pivot_with_status.filter(
+                pl.col("status") == "Mixed"
+            )
 
             return {
-                "full_details": pivot_labeled,
-                "in_stock": in_stock,
-                "out_of_stock": out_of_stock
+                "full_details": pivot_labeled.to_dicts(),
+                "in_stock": in_stock.to_dicts(),
+                "out_of_stock": out_of_stock.to_dicts(),
+                "mixed_ro": mixed_ro.to_dicts()
             }
-
-
+        
 
     except Exception as e:
         print(traceback.format_exc())
