@@ -21,6 +21,9 @@ import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
 import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
+import requests
+from datetime import datetime, timezone, timedelta
+
 
 
 def unix_ms_to_ist(ts_ms: int) -> datetime:
@@ -7023,6 +7026,195 @@ async def get_master_status(data):
             "no_server_data": []
         }
         
+async def get_plc_master_status(data):
+    data_required = True
+    sap_id = None
+
+    # -------- FILTERS --------
+    if data and getattr(data, "filters", None):
+        for f in data.filters:
+            if f.key == "data_required":
+                data_required = str(f.value).lower() == "true"
+            elif f.key == "sap_id":
+                sap_id = f.value
+
+    THINGSBOARD_HOST = urdhva_base.settings.things_board_url
+    USERNAME = urdhva_base.settings.things_board_username
+    PASSWORD = urdhva_base.settings.things_board_password
+    MAX_VALUES = 50000
+
+    resp = requests.post(
+        f"{THINGSBOARD_HOST}/api/auth/login",
+        json={"username": USERNAME, "password": PASSWORD}
+    )
+    token = resp.json()["token"]
+
+    def tb_get(url, params=None):
+        headers = {"X-Authorization": f"Bearer {token}"}
+        return requests.get(f"{THINGSBOARD_HOST}{url}", headers=headers, params=params or {}).json()
+
+    devices = []
+    page = 0
+    while True:
+        d = tb_get("/api/tenant/devices", {"pageSize": 100, "page": page})
+        devices.extend([x for x in d.get("data", []) if x.get("type") == "PLC"])
+        if not d.get("hasNext"):
+            break
+        page += 1
+
+    now = datetime.now(timezone.utc)
+    last_30_days = now - timedelta(days=30)
+
+    changed_rows = []
+    not_changed_rows = []
+    no_server_rows = []
+
+    for device in devices:
+
+        device_id = device["id"]["id"]
+        device_name = device.get("name")
+
+        attributes = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes")
+        telemetry  = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries")
+
+        attr_data = {i["key"]: i["value"] for i in attributes} if attributes else {}
+        tele_data = {k: v[0]["value"] for k, v in telemetry.items() if v} if telemetry else {}
+
+        device_sap = attr_data.get("SAPID", "N/A")
+        # -------- SAP FILTER --------
+        if sap_id and str(device_sap).strip() != str(sap_id).strip():
+            continue
+
+        has_data = False
+        current_server = None
+        changed_from = None
+        change_date = None
+
+        plc_keys = [k for k in tele_data.keys() if "MASTER" in k.upper()]
+        all_history = []
+
+        for key in plc_keys:
+
+            resp = tb_get(
+                f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
+                {
+                    "keys": key,
+                    "startTs": 0,
+                    "endTs": int(now.timestamp()*1000),
+                    "limit": MAX_VALUES,
+                    "orderBy": "ASC"
+                }
+            )
+
+            history = [
+                {
+                    "ts": datetime.fromtimestamp(r["ts"]/1000, tz=timezone.utc),
+                    "value": int(float(r["value"])),
+                    "plc": key
+                }
+                for r in resp.get(key, [])
+                if r.get("value") is not None
+            ]
+
+            if history:
+                has_data = True
+
+            all_history.extend(history)
+
+        if not has_data:
+            no_server_rows.append({
+                "sap_id": device_sap,
+                "device_name": device_name,
+                "current_server": "",
+                "changed_from": "",
+                "change_date": "",
+                "status": "NO_SERVER"
+            })
+            continue
+
+        all_history = sorted(all_history, key=lambda x: x["ts"])
+
+        for rec in reversed(all_history):
+            if rec["value"] == 1:
+                current_server = rec["plc"]
+                break
+
+        if not current_server:
+            no_server_rows.append({
+                "sap_id": device_sap,
+                "device_name": device_name,
+                "current_server": "",
+                "changed_from": "",
+                "change_date": "",
+                "status": "NO_SERVER"
+            })
+            continue
+
+        last_30 = [h for h in all_history if h["ts"] >= last_30_days]
+        old_data = [h for h in all_history if h["ts"] < last_30_days]
+
+        prev = None
+        is_changed_30 = False
+
+        for rec in last_30:
+            if rec["value"] != 1:
+                continue
+
+            curr = rec["plc"]
+
+            if prev and curr != prev:
+                is_changed_30 = True
+                change_date = rec["ts"].strftime("%Y-%m-%d %H:%M:%S")
+                changed_from = prev
+
+            prev = curr
+
+        if is_changed_30:
+            changed_rows.append({
+                "sap_id": device_sap,
+                "device_name": device_name,
+                "current_server": current_server,
+                "changed_from": changed_from or "",
+                "change_date": change_date or "",
+                "status": "CHANGED"
+            })
+            continue
+
+        prev = None
+        old_change_date = None
+
+        for rec in old_data:
+            if rec["value"] != 1:
+                continue
+
+            curr = rec["plc"]
+
+            if prev and curr != prev:
+                old_change_date = rec["ts"]
+
+            prev = curr
+
+        not_changed_rows.append({
+            "sap_id": device_sap,
+            "device_name": device_name,
+            "current_server": current_server,
+            "changed_from": "",
+            "change_date": old_change_date.strftime("%Y-%m-%d %H:%M:%S") if old_change_date else "",
+            "status": "NOT_CHANGED"
+        })
+
+    # FINAL RESPONSE WITH COUNTS
+    return {
+        "changed_count": len(changed_rows),
+        "not_changed_count": len(not_changed_rows),
+        "no_server_count": len(no_server_rows),
+
+        "changed_data": changed_rows if data_required else [],
+        "not_changed_data": not_changed_rows if data_required else [],
+        "no_server_data": no_server_rows if data_required else []
+    }
+
+        
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -7045,8 +7237,9 @@ AnalyticsModelMapping = {
     "Run Daily Data Check": operability_index_health_check,
     "Tas_fire_engine":get_fire_engine_runtime_weekly,
     "Interlock_testing":get_interlock_testing_analysis,
-    "Master_status":get_master_status,
+    "Lrc_Master_status":get_master_status,
     "Analog 24 hr window" : location_table_24h_status,
+    "Plc_Master_status":get_plc_master_status
 
 }
 
