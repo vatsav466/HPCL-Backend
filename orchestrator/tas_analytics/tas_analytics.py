@@ -22,7 +22,6 @@ import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
 import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
 import requests
-from datetime import datetime, timezone, timedelta
 
 
 
@@ -6671,6 +6670,7 @@ async def get_interlock_testing_analysis(data):
         testing_query = f"""
             SELECT
                 sap_id,
+                device_name,
                 'TAS' AS bu,
                 location_name,
                 alert_section,
@@ -6685,6 +6685,7 @@ async def get_interlock_testing_analysis(data):
         non_testing_query = f"""
             SELECT
                 sap_id,
+                device_name,
                 'TAS' AS bu,
                 location_name,
                 alert_section,
@@ -7213,8 +7214,205 @@ async def get_plc_master_status(data):
         "not_changed_data": not_changed_rows if data_required else [],
         "no_server_data": no_server_rows if data_required else []
     }
+    
+async def verification_meters(data):
+    try:
+        filters = []
+        not_proved_filters = []
 
-        
+        # -------- DEFAULTS --------
+        data_required = True
+        sap_id = None
+        bcu_number = None
+        year = None
+
+        # -------- READ FILTERS --------
+        if data.filters:
+            for f in data.filters:
+                if f.key == "sap_id":
+                    sap_id = f.value
+
+                elif f.key == "bcu_number":
+                    bcu_number = f.value
+
+                elif f.key == "year":
+                    if "," in str(f.value):
+                        year = [int(y.strip()) for y in str(f.value).split(",")]
+                    else:
+                        year = [int(f.value)]
+
+                elif f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+
+        # -------- DEFAULT YEAR --------
+        today = datetime.now()
+
+        if not year:
+            year = [today.year]
+
+        # -------- DATE HANDLING (MAIN FIX) --------
+        if data.start_date and data.end_date:
+            start_date = data.start_date
+            end_date = data.end_date
+        else:
+            # multiple year support
+            min_year = min(year)
+            max_year = max(year)
+
+            start_date = f"{min_year}-01-01"
+            end_date = f"{max_year}-12-31"
+
+        # -------- CURRENT SEGMENT --------
+        month = today.month
+
+        if month in [1, 2, 3]:
+            current_segment = "Q1"
+        elif month in [4, 5, 6]:
+            current_segment = "Q2"
+        elif month in [7, 8, 9]:
+            current_segment = "Q3"
+        else:
+            current_segment = "Q4"
+
+        # -------- PROVER NORMALIZATION --------
+        normalized_truck = """
+            CASE 
+                WHEN LOWER(TRIM(truck_number)) LIKE '%prov%' THEN 'PROVER'
+                ELSE TRIM(truck_number)
+            END
+        """
+
+        # -------- FILTER CONDITIONS --------
+        prover_condition = """
+            LOWER(TRIM(truck_number)) LIKE '%prov%'
+        """
+
+        not_prover_condition = """
+            LOWER(TRIM(truck_number)) NOT LIKE '%prov%'
+        """
+
+        filters.append(prover_condition)
+        not_proved_filters.append(not_prover_condition)
+
+        # -------- APPLY FILTERS --------
+        if sap_id:
+            condition = f"TRIM(sap_id) = '{str(sap_id).strip()}'"
+            filters.append(condition)
+            not_proved_filters.append(condition)
+
+        if bcu_number:
+            condition = f"TRIM(bcu_number) = '{str(bcu_number).strip()}'"
+            filters.append(condition)
+            not_proved_filters.append(condition)
+
+        # -------- DATE FILTER (FINAL) --------
+        date_condition = f"""
+            created_at::date BETWEEN '{start_date}' AND '{end_date}'
+        """
+        filters.append(date_condition)
+        not_proved_filters.append(date_condition)
+
+        # -------- WHERE CLAUSE --------
+        where_clause = "WHERE " + " AND ".join(filters)
+        not_where_clause = "WHERE " + " AND ".join(not_proved_filters)
+
+        # -------- SEGMENT EXPRESSION --------
+        segment_expr = """
+            CASE
+                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 1 AND 3 THEN 'Q1'
+                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 4 AND 6 THEN 'Q2'
+                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 7 AND 9 THEN 'Q3'
+                ELSE 'Q4'
+            END
+        """
+
+        # -------- PROVED QUERY --------
+        query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                EXTRACT(YEAR FROM created_at) AS year,
+                sap_id,
+                bcu_number,
+                {normalized_truck} AS truck_number,
+                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
+                MIN(created_at) AS first_created_at
+            FROM host_local_loaded_tts
+            {where_clause}
+            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
+            ORDER BY segment
+        """
+
+        # -------- NOT PROVED QUERY --------
+        not_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                EXTRACT(YEAR FROM created_at) AS year,
+                sap_id,
+                bcu_number,
+                {normalized_truck} AS truck_number,
+                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
+                MIN(created_at) AS first_created_at
+            FROM host_local_loaded_tts
+            {not_where_clause}
+            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
+            ORDER BY segment
+        """
+
+        # -------- COUNT QUERIES --------
+        count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                EXTRACT(YEAR FROM created_at) AS year,
+                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
+            FROM host_local_loaded_tts
+            {where_clause}
+            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
+            ORDER BY segment
+        """
+
+        not_count_query = f"""
+            SELECT
+                {segment_expr} AS segment,
+                EXTRACT(YEAR FROM created_at) AS year,
+                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
+            FROM host_local_loaded_tts
+            {not_where_clause}
+            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
+            ORDER BY segment
+        """
+
+        # -------- EXECUTION --------
+        proved_rows = []
+        not_proved_rows = []
+
+        if data_required:
+            res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            proved_rows = res.get("data", [])
+
+            not_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_query, limit=0)
+            not_proved_rows = not_res.get("data", [])
+
+        count_res = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
+        not_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_count_query, limit=0)
+
+        return {
+            "status": True,
+            "message": "Prover analysis fetched",
+            "current_segment": current_segment,
+            "proved_segment_counts": count_res.get("data", []),
+            "not_proved_segment_counts": not_count_res.get("data", []),
+            "proved_data": proved_rows if data_required else [],
+            "not_proved_data": not_proved_rows if data_required else []
+        }
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "status": False,
+            "proved_data": [],
+            "not_proved_data": []
+        }
+
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -7239,7 +7437,8 @@ AnalyticsModelMapping = {
     "Interlock_testing":get_interlock_testing_analysis,
     "Lrc_Master_status":get_master_status,
     "Analog 24 hr window" : location_table_24h_status,
-    "Plc_Master_status":get_plc_master_status
+    "Plc_Master_status":get_plc_master_status,
+    "Verification_of_meters":verification_meters
 
 }
 
