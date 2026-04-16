@@ -7,12 +7,12 @@ import field_force_model
 import polars as pl
 import datetime
 import traceback
+import os
 from typing import List, Optional
 import orchestrator.field_force.utils as field_force_utils
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
-
 
 
 # -------- Session-based filter generation --------
@@ -851,6 +851,25 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
     return {}
     
 
+def get_plant_id(folder_path=None):
+    if not folder_path:
+        folder_path = os.path.join(os.path.dirname(os.path.dirname(hpcl_ceg_model.__file__)), "prod")
+    try:
+        names = []
+        for file in os.listdir(folder_path):
+            if file.endswith(".json"):
+                names.append(os.path.splitext(file)[0])
+
+        names = sorted(names)
+        formatted = "(" + ",".join([f"'{x}'" for x in names]) + ")"
+
+        return formatted
+    
+    except Exception as e:
+        print("Error:", str(e))
+        return []
+    
+
 async def get_product_availability(data):
     try:
         conditions = []
@@ -868,6 +887,7 @@ async def get_product_availability(data):
         # NORMAL FILTERS
         # -------------------------
         product_filter = ""
+        ro_product_filter = ""
         if data.filters:
             for f in data.filters:
                 if 'sap_id' in f.key and f.value:
@@ -878,6 +898,9 @@ async def get_product_availability(data):
                     product_values = [p.strip() for p in f.value.split(",")]
                     product_filter = f"""
                     AND sch.product_grp IN ({",".join([f"'{p}'" for p in product_values])})
+                    """
+                    ro_product_filter = f"""
+                    AND ns.product_grp IN ({",".join([f"'{p}'" for p in product_values])})
                     """
 
                 elif f.cond in ['=', 'equals'] and f.key != "product_grp":
@@ -890,10 +913,7 @@ async def get_product_availability(data):
         if conditions:
             where_clause += " AND " + " AND ".join(conditions)
 
-
-        terminal_plant_id = """('1919','1128','1216','1334','1155','1221','1259','1412',
-                                '1146','1509','1424','1892','1588','1845','1856','1636')
-                            """
+        terminal_plant_id = get_plant_id()
 
         ro_data_query = f"""
                             SELECT 
@@ -905,9 +925,10 @@ async def get_product_availability(data):
                                 ON ns.sap_id = lm.sap_id
                             WHERE lm.bu = 'RO'
                             AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            {ro_product_filter}
                             GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp
                         """
-
+        
         ro_names_query = f""" SELECT 
                                 lm_tas.sap_id, 
                                 lm_tas.name AS tas_name
@@ -921,10 +942,12 @@ async def get_product_availability(data):
                                 lm_tas.name
                             """
         stock_data_query = f"""SELECT
-                                rosapcode, product_grp, product_no, item_name,
+                                rosapcode, product_grp, product_no, item_name, 
+                                SUM(capacity) as total_capacity, 
+                                SUM(ullage) as available_ullage,
                                 COUNT(DISTINCT tank_no) AS tank_cnt,
                                 STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
-                                SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) AS total_stock,
+                                SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) AS available_stock,
                                 SUM(sch.avgsales_7days) / 7 AS daily_sales,
                                 CASE
                                     WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) IS NULL THEN 0
@@ -940,7 +963,7 @@ async def get_product_availability(data):
                             WHERE sch.volume > 0 {product_filter}
                             GROUP BY rosapcode,product_grp, product_no, item_name
                         """
-
+        
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -960,20 +983,24 @@ async def get_product_availability(data):
         stock_df = (
             stock_df
             .with_columns([
-                pl.col("total_stock").cast(pl.Float64, strict=False),
-                pl.col("daily_sales").cast(pl.Float64, strict=False)
+                pl.col("available_stock").cast(pl.Float64, strict=False),
+                pl.col("daily_sales").cast(pl.Float64, strict=False),
+                pl.col("total_capacity").cast(pl.Float64, strict=False),
+                pl.col("available_ullage").cast(pl.Float64, strict=False)
             ])
-            .drop_nulls(["total_stock", "daily_sales"])
+            .drop_nulls(["available_stock", "daily_sales"])
             .group_by(["rosapcode", "product_grp"])
             .agg([
-                pl.sum("total_stock").alias("total_stock"),
-                pl.sum("daily_sales").alias("daily_sales")
+                pl.sum("available_stock").alias("available_stock"),
+                pl.sum("daily_sales").alias("daily_sales"),
+                pl.sum("total_capacity").alias("total_capacity"),
+                pl.sum("available_ullage").alias("available_ullage")
             ])
             .with_columns(
                 pl.when(pl.col("daily_sales") == 0)
                 .then(0)
                 .otherwise(
-                    (pl.col("total_stock") / pl.col("daily_sales")).round(0)
+                    (pl.col("available_stock") / pl.col("daily_sales")).round(0)
                 )
                 .alias("stock_days")
             )
@@ -1014,19 +1041,83 @@ async def get_product_availability(data):
 
         if data.action == "ro_details":
 
-            pivot_df = final_merge.pivot(
+        # -------------------------
+        # 1. PIVOT: STOCK DAYS
+        # -------------------------
+            pivot_stock_days = final_merge.pivot(
                 values="stock_days",
                 index=["terminal_plant_id", "sap_id"],
                 columns="product_grp",
                 aggregate_function="max"
             )
 
-            value_cols = [
-                col for col in pivot_df.columns
+            product_cols = [
+                col for col in pivot_stock_days.columns
                 if col not in ["terminal_plant_id", "sap_id"]
             ]
 
-            pivot_labeled = pivot_df.with_columns(
+            # -------------------------
+            # 2. PIVOT: TOTAL CAPACITY
+            # -------------------------
+            pivot_capacity = final_merge.pivot(
+                values="total_capacity",
+                index=["terminal_plant_id", "sap_id"],
+                columns="product_grp",
+                aggregate_function="sum"
+            )
+
+            pivot_capacity = pivot_capacity.rename({
+                col: f"{col}_total_capacity"
+                for col in pivot_capacity.columns
+                if col not in ["terminal_plant_id", "sap_id"]
+            })
+
+            # -------------------------
+            # 3. PIVOT: AVAILABLE ULLAGE
+            # -------------------------
+            pivot_ullage = final_merge.pivot(
+                values="available_ullage",
+                index=["terminal_plant_id", "sap_id"],
+                columns="product_grp",
+                aggregate_function="sum"
+            )
+
+            pivot_ullage = pivot_ullage.rename({
+                col: f"{col}_available_ullage"
+                for col in pivot_ullage.columns
+                if col not in ["terminal_plant_id", "sap_id"]
+            })
+
+            # -------------------------
+            # 4. PIVOT: AVAILABLE STOCK
+            # -------------------------
+            pivot_stock = final_merge.pivot(
+                values="available_stock",
+                index=["terminal_plant_id", "sap_id"],
+                columns="product_grp",
+                aggregate_function="sum"
+            )
+
+            pivot_stock = pivot_stock.rename({
+                col: f"{col}_available_stock"
+                for col in pivot_stock.columns
+                if col not in ["terminal_plant_id", "sap_id"]
+            })
+
+            # -------------------------
+            # 5. MERGE ALL PIVOTS
+            # -------------------------
+            pivot_all = (
+                pivot_stock_days
+                .join(pivot_capacity, on=["terminal_plant_id", "sap_id"], how="left")
+                .join(pivot_ullage, on=["terminal_plant_id", "sap_id"], how="left")
+                .join(pivot_stock, on=["terminal_plant_id", "sap_id"], how="left")
+            )
+
+            # -------------------------
+            # 6. STATUS LABELS (product-wise)
+            # -------------------------
+            pivot_labeled = pivot_all.with_columns(
                 [
                     pl.when(pl.col(col).is_null())
                     .then(pl.lit("Not Available"))
@@ -1034,10 +1125,13 @@ async def get_product_availability(data):
                     .then(pl.lit("Out of Stock"))
                     .otherwise(pl.lit("In Stock"))
                     .alias(f"{col}_status")
-                    for col in value_cols
+                    for col in product_cols
                 ]
             )
 
+            # -------------------------
+            # 7. RO STATUS (overall)
+            # -------------------------
             ro_status = final_merge.group_by(["terminal_plant_id", "sap_id"]).agg(
                 [
                     (pl.col("stock_days") > 0).any().alias("has_stock"),
@@ -1052,36 +1146,32 @@ async def get_product_availability(data):
                 .alias("status")
             )
 
+            # -------------------------
+            # 8. FINAL JOIN (ADD STATUS)
+            # -------------------------
             pivot_with_status = pivot_labeled.join(
                 ro_status.select(["terminal_plant_id", "sap_id", "status"]),
                 on=["terminal_plant_id", "sap_id"],
                 how="left"
             )
 
-            status_cols = [f"{col}_status" for col in value_cols]
+            # -------------------------
+            # 9. FILTERS
+            # -------------------------
+            in_stock = pivot_with_status.filter(pl.col("status") == "Active")
+            out_of_stock = pivot_with_status.filter(pl.col("status") == "Inactive")
+            mixed_ro = pivot_with_status.filter(pl.col("status") == "Mixed")
 
-            in_stock = pivot_with_status.filter(
-                pl.any_horizontal(
-                    [pl.col(col) == "In Stock" for col in status_cols]
-                )
-            )
-            out_of_stock = pivot_with_status.filter(
-                pl.any_horizontal(
-                    [pl.col(col) == "Out of Stock" for col in status_cols]
-                )
-            )
-            mixed_ro = pivot_with_status.filter(
-                pl.col("status") == "Mixed"
-            )
-
+            # -------------------------
+            # 10. RETURN
+            # -------------------------
             return {
-                "full_details": pivot_labeled.to_dicts(),
+                "full_details": pivot_with_status.to_dicts(),
                 "in_stock": in_stock.to_dicts(),
                 "out_of_stock": out_of_stock.to_dicts(),
                 "mixed_ro": mixed_ro.to_dicts()
             }
         
-
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": str(e)}
