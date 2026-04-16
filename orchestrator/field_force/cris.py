@@ -15,7 +15,6 @@ from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 
-
 # -------- Session-based filter generation --------
 def generate_session_filters(query_filters=None, model: str = "CRIS"):
     """
@@ -852,7 +851,9 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
     return {}
     
 
-def get_plant_id(folder_path="/opt/ceg/algo/prod"):
+def get_plant_id(folder_path=None):
+    if not folder_path:
+        folder_path = os.path.join(os.path.dirname(os.path.dirname(hpcl_ceg_model.__file__)), "prod")
     try:
         names = []
         for file in os.listdir(folder_path):
