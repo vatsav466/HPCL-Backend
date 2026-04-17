@@ -10916,6 +10916,7 @@ class CreateUserCreate(pydantic.BaseModel):
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
     is_ad_user: typing.Optional[bool] = pydantic.Field(False, )
     status: typing.Optional[bool] = pydantic.Field(False, )
+    lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class UpdateUserCreate(pydantic.BaseModel):
@@ -10928,6 +10929,7 @@ class UpdateUserCreate(pydantic.BaseModel):
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     novex_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class Usermaster_Create_UserParams(pydantic.BaseModel):

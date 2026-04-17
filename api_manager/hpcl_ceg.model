@@ -4017,6 +4017,7 @@ Model CreateUser internal {
     contact_number optional str
     is_ad_user optional bool
     status optional bool
+    lock_for_auto_sync optional bool
 }
 
 Model UpdateUser internal {
@@ -4029,6 +4030,7 @@ Model UpdateUser internal {
     sales_area optional list str
     novex_role optional list str
     contact_number optional str
+    lock_for_auto_sync optional bool
 }
 
 Model UserMaster crud_disable {
