@@ -3,6 +3,8 @@ import time
 import pytz
 import datetime
 import requests
+import asyncio
+import traceback
 import pandas as pd
 import charts_actions
 import hpcl_ceg_model
@@ -2467,7 +2469,7 @@ class IndentDryOut:
         
     async def _is_indent_delivered(self):
         dealer_code = str(self.params.get("dealer_id"))
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         alert_id = self.params.get("alert_id")
         query = f"""SELECT
@@ -2488,12 +2490,42 @@ class IndentDryOut:
                                  AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
                             ELSE 6
                         END AS status
-                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    FROM sch_inventory_forecast_dashboard_latest as sch
                     WHERE sch.volume > 0 and rosapcode = '{dealer_code}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        cris_resp = await function(query=query)
+        # cris_resp = await function(query=query)
+        max_retries = 5
+        attempt = 0
+        cris_resp = None
+
+        while attempt < max_retries:
+            try:
+                cris_resp = await function(query=query)
+                table_count = len(cris_resp) if cris_resp else 0
+
+                if table_count == 0:
+                    raise ValueError("Table does not exist or empty response")
+                break
+
+            except Exception:
+                attempt += 1
+
+                print(f"\nAttempt {attempt} failed with error:")
+                traceback.print_exc()
+
+                error_str = traceback.format_exc()
+
+                if "does not exist" in error_str:
+                    print("Detected missing table. Retrying...")
+
+                    if attempt >= max_retries:
+                        raise Exception(
+                            "Max retries reached: table 'sch_inventory_forecast_dashboard_latest' does not exist"
+                        )
+                    await asyncio.sleep(5)
+
         if not cris_resp:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
