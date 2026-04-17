@@ -19,7 +19,16 @@ import urdhva_base.postgresmodel as urdhva_pg
 
 _SAFE_IDENT = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+# Inner argument for date_trunc: column or column::type (PostgreSQL)
+_DATE_TRUNC_INNER = re.compile(
+    r"^[a-zA-Z_][a-zA-Z0-9_]*(?:\s*::\s*[a-zA-Z][a-zA-Z0-9_]*)?$",
+    re.IGNORECASE,
+)
+
 _AGG_FUNCS = frozenset({"sum", "avg", "min", "max", "count"})
+
+# Each entry: plain column/expression string, or ``(expression, output_alias)`` for SELECT AS …
+GroupByEntry = typing.Union[str, typing.Tuple[str, str]]
 
 
 def _ident(name: str, *, kind: str = "identifier") -> str:
@@ -29,6 +38,76 @@ def _ident(name: str, *, kind: str = "identifier") -> str:
             "must start with letter or underscore."
         )
     return name
+
+
+def _group_by_item(raw: str) -> str:
+    """
+    ``GROUP BY`` entry: either a plain column identifier or a small set of safe
+    PostgreSQL expressions (no user-controlled raw SQL beyond validated patterns).
+    """
+    s = raw.strip()
+    if _SAFE_IDENT.match(s):
+        return s
+
+    # date_trunc('precision', column) or date_trunc('precision', column::type)
+    m = re.match(
+        r"^\s*date_trunc\s*\(\s*'([^']*)'\s*,\s*(.+?)\s*\)\s*$",
+        s,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if m:
+        inner = m.group(2).strip()
+        if _DATE_TRUNC_INNER.match(inner):
+            return s
+        raise ValueError(
+            f"Invalid date_trunc column in GROUP BY {raw!r}; "
+            "use a single column name, optionally with a cast (e.g. conn_date::date)."
+        )
+
+    # column::type (e.g. conn_date::date)
+    if re.match(
+        r"^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*::\s*[a-zA-Z][a-zA-Z0-9_]*\s*$",
+        s,
+        re.IGNORECASE,
+    ):
+        return s
+
+    raise ValueError(
+        f"Invalid GROUP BY entry {raw!r}; use a column name or a supported expression such as "
+        "date_trunc('month', conn_date) or conn_date::date."
+    )
+
+
+def _parse_group_by_entries(
+    group_by: typing.Sequence[GroupByEntry],
+) -> typing.Tuple[typing.List[str], typing.List[typing.Optional[str]]]:
+    """
+    Returns validated expressions for ``GROUP BY`` and optional output aliases for ``SELECT``.
+
+    * A string ``\"col\"`` → expression ``col``, no ``AS`` (PostgreSQL uses column name as label).
+    * A pair ``(\"date_trunc('month', d)\", \"month\")`` → same expression in ``GROUP BY``,
+      and ``… AS month`` in ``SELECT``.
+    """
+    exprs: typing.List[str] = []
+    out_aliases: typing.List[typing.Optional[str]] = []
+    for i, item in enumerate(group_by):
+        if isinstance(item, str):
+            exprs.append(_group_by_item(item))
+            out_aliases.append(None)
+        elif isinstance(item, (tuple, list)) and len(item) == 2:
+            raw_expr, raw_alias = item[0], item[1]
+            if not isinstance(raw_expr, str) or not isinstance(raw_alias, str):
+                raise ValueError(
+                    f"group_by[{i}] must be a string or (expression, alias) with two strings; "
+                    f"got {item!r}"
+                )
+            exprs.append(_group_by_item(raw_expr))
+            out_aliases.append(_ident(raw_alias.strip(), kind="GROUP BY output alias"))
+        else:
+            raise ValueError(
+                f"group_by[{i}] must be a string or a (expression, alias) pair; got {item!r}"
+            )
+    return exprs, out_aliases
 
 
 def _qualified_table(name: str) -> str:
@@ -117,7 +196,7 @@ def _order_clause(
 async def query_aggregate_gateway(
     *,
     table: str,
-    group_by: typing.Optional[typing.Sequence[str]] = None,
+    group_by: typing.Optional[typing.Sequence[GroupByEntry]] = None,
     filters: typing.Optional[typing.Mapping[str, typing.Any]] = None,
     date_column: typing.Optional[str] = None,
     date_from: typing.Optional[datetime.date] = None,
@@ -135,7 +214,9 @@ async def query_aggregate_gateway(
     **Parameters**
 
     * ``table`` — Physical table name, or ``schema.table`` (each segment validated).
-    * ``group_by`` — Dimension columns for ``GROUP BY`` (validated identifiers).
+    * ``group_by`` — Dimensions for ``GROUP BY``. Each item is either a string (column or
+      safe expression as in :func:`_group_by_item`) or a ``(expression, output_alias)``
+      tuple so the result column is labeled (e.g. ``(\"date_trunc('month', conn_date)\", \"month\")``).
     * ``filters`` — Equality or ``IN`` list: ``{"col": "x"}`` or ``{"col": ["a","b"]}``.
     * ``date_column`` — Column used with ``date_from`` / ``date_to`` (inclusive).
       Required if either date bound is set.
@@ -161,8 +242,9 @@ async def query_aggregate_gateway(
     where_sql = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
 
     gb_list: typing.List[str] = []
+    gb_out_aliases: typing.List[typing.Optional[str]] = []
     if group_by:
-        gb_list = [_ident(c, kind="GROUP BY column") for c in group_by]
+        gb_list, gb_out_aliases = _parse_group_by_entries(group_by)
         if not gb_list:
             raise ValueError("group_by must list at least one column when provided.")
 
@@ -182,8 +264,14 @@ async def query_aggregate_gateway(
             raise ValueError("aggregations is required when using aggregates.")
         aggregations = [ast.literal_eval(item) for item in aggregations]
         select_parts: typing.List[str] = []
-        for c in gb_list:
-            select_parts.append(c)
+        for expr, gb_alias in zip(gb_list, gb_out_aliases):
+            if gb_alias:
+                if gb_alias in alias_names:
+                    raise ValueError(f"Duplicate output alias {gb_alias!r} (group_by vs aggregates)")
+                alias_names.add(gb_alias)
+                select_parts.append(f"{expr} AS {gb_alias}")
+            else:
+                select_parts.append(expr)
         for alias, fn, col in aggregations:
             a = _ident(alias, kind="aggregate alias")
             if a in alias_names:
@@ -200,8 +288,10 @@ async def query_aggregate_gateway(
             fields_sql = "*"
         sql = f"SELECT {fields_sql} FROM {tsql}{where_sql}"
 
-    order_by = [ast.literal_eval(item) for item in order_by]
-    sql += _order_clause(order_by, alias_names)
+    order_by_parsed: typing.List[typing.Tuple[str, str]] = []
+    if order_by:
+        order_by_parsed = [ast.literal_eval(item) for item in order_by]
+    sql += _order_clause(order_by_parsed, alias_names)
 
     return await urdhva_pg.BasePostgresModel.get_aggr_data(
         sql,
