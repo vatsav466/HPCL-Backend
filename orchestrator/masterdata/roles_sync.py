@@ -34,6 +34,19 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -64,6 +77,19 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Dashboard"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     }
@@ -111,6 +137,19 @@ async def sync_user_roles():
                     },
                     {
                         "title": "PM Orders"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -386,6 +425,20 @@ async def sync_user_roles():
                 "menu_name": "Collapse Sidebar",
             }
         ],
+        "status": True
+    },
+    "Creator SOD":{
+        "allowed_pages": [
+              {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    },
+                ]
+            }  
+        ],
+        "name": "SOD",
         "status": True
     },
     "MRAP":{
@@ -778,6 +831,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -820,6 +881,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     },
                     {
                         "title": "Device Manager"
@@ -929,6 +998,14 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     },
                     {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
                         "title": "Device Manager"
                     }
                 ]
@@ -983,6 +1060,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     },
                     {
                         "title": "Device Manager"
@@ -1107,6 +1192,14 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     },
                     {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
                         "title": "Device Manager"
                     }
                 ]
@@ -1166,6 +1259,14 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     },
                     {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
                         "title": "Device Manager"
                     }
                 ]
@@ -1220,6 +1321,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1262,6 +1371,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1304,6 +1421,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     },
                     {
                         "title": "Device Manager"
@@ -1349,6 +1474,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1377,7 +1510,15 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
-                    }
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
                 ]
             }
         ],
@@ -1419,6 +1560,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1461,6 +1610,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1503,6 +1660,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }                    
                 ]
             }
@@ -1545,6 +1710,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1587,6 +1760,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             },
@@ -1642,6 +1823,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1684,6 +1873,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1712,6 +1909,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1751,6 +1956,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1914,6 +2127,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1970,6 +2191,19 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -1996,6 +2230,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2035,6 +2277,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2074,6 +2324,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2113,6 +2371,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2152,6 +2418,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2549,6 +2823,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Pro Dash"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             },
@@ -2625,6 +2910,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2713,6 +3009,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2804,6 +3111,17 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Supply Chain",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "Operations"
+                            },
+                            {
+                            "title": "Sales"
+                            }
+                        ]
                     }
                 ]
             }

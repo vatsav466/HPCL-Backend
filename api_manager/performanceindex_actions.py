@@ -35,10 +35,11 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
 
         if data.bu in ["TAS", "LPG", "RO"]:
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
+            zone_str = f" and zone = '{data.zone}'" if data.zone else ''
 
             # choose table based on filters
             table = "performance_score" if data.filters and any(f.value == "t" for f in data.filters) else "performance_score_history"
-            query = f"select * from {table} where bu='{data.bu}' {location_str} {clause}"
+            query = f"select * from {table} where bu='{data.bu}' {zone_str} {location_str} {clause}"
             score_data = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query, limit=100000)
             print(query)
 

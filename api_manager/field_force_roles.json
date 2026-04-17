@@ -274,13 +274,13 @@
             ]
         },
         {
-            "name": "cris",
+            "name": "nozzle_sales_stock",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "CRIS",
+            "displayName": "nozzle_sales_stock",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
@@ -309,17 +309,20 @@
                 },
                 {
                     "name": "nozzle_sales_prev_day_comparison"
+                },
+                {
+                    "name": "product_availability_days"
                 }
             ]
         },
         {
-            "name": "cris_readOnly",
+            "name": "nozzle_sales_stock_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "CRIS_readOnly",
+            "displayName": "nozzle_sales_stock_readOnly",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
@@ -328,13 +331,13 @@
             ]
         },
         {
-            "name": "cris_admin",
+            "name": "nozzle_sales_stock_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "CRIS_admin",
+            "displayName": "nozzle_sales_stock_admin",
             "attributes": {},
             "uris": [
-                "/api/cris/*"
+                "/api/nozzle_sales_stock/*"
             ],
             "scopes": [
                 {
@@ -363,6 +366,9 @@
                 },
                 {
                     "name": "nozzle_sales_prev_day_comparison"
+                },
+                {
+                    "name": "product_availability_days"
                 }
             ]
         },
@@ -1006,6 +1012,10 @@
         {
             "name": "nozzle_sales_prev_day_comparison",
             "displayName": "nozzle_sales_prev_day_comparison"
+        },
+        {
+            "name": "product_availability_days",
+            "displayName": "product_availability_days"
         },
         {
             "name": "stock_availability",
