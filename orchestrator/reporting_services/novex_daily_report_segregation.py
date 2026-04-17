@@ -109,7 +109,7 @@ async def publish_daily_novex_status_email():
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
         subject="Novex Daily Report: Retail",
-        cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in","sandesh.mane@hpcl.in","georget@hpcl.in", "raksha.patidar@hpcl.in", "gkpatel@hpcl.in"],
+        cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in","sandesh.mane@hpcl.in","georget@hpcl.in", "raksha.patidar@hpcl.in", "gkpatel@hpcl.in", "magarwal@hpcl.in"],
         bcc_recipients=["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in","ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
         notification_data=status_data,
         inline_images={
@@ -134,7 +134,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg4.html",
-        to_recipients=["dramarao@hpcl.in","CZ.OND.IC@hpcl.in","ECZ.OND.IC@hpcl.in","EZ.OND.IC@hpcl.in","NCZ.OND.IC@hpcl.in",
+        to_recipients=["CZ.OND.IC@hpcl.in","ECZ.OND.IC@hpcl.in","EZ.OND.IC@hpcl.in","NCZ.OND.IC@hpcl.in",
                        "NFZ.OND.IC@hpcl.in","NWF.OND.IC@hpcl.in","NWZ.OND.IC@hpcl.in","NZ.OND.IC@hpcl.in","SCRZ.OND.IC@hpcl.in",
                        "SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in"],
         subject="Novex Daily Report: SOD",
