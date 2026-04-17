@@ -1,4 +1,5 @@
 import urdhva_base
+import re
 import ast
 import json
 import time
@@ -346,10 +347,11 @@ async def process_data(data, bu):
             data[col] = data[col].fillna("").astype(str)
             data[col] = '["' + data[col] + '"]'
     data["email"] = data["email"].fillna("").astype(str)
-    
+
     for _role in ["Zonal", "Zone"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
         data.loc[mask, ["sap_id", "region", "sales_area"]] = '[]'
+
     for _role in ["Regional", "Region"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
         data.loc[mask, ["sap_id", "zone", "sales_area"]] = '[]'
@@ -362,6 +364,40 @@ async def process_data(data, bu):
 
     for col in ["region", "sales_area"]:
         data.loc[(data['sap_id'] != '[]'), col] = '[]'
+
+    def update_ticketing_role(role):
+        """
+        ``combine_roles`` stores ``novex_role`` as ``str(list(...))``, so values are
+        strings here — normalize to a list before appending ticketing roles.
+        """
+        if role is None or (isinstance(role, float) and pd.isna(role)):
+            roles: List[str] = []
+        elif isinstance(role, list):
+            roles = [str(x) for x in role]
+        else:
+            s = str(role).strip()
+            if s.startswith("[") and s.endswith("]"):
+                try:
+                    parsed = ast.literal_eval(s)
+                    roles = [str(x) for x in parsed] if isinstance(parsed, list) else [str(parsed)]
+                except (ValueError, SyntaxError):
+                    roles = [s] if s else []
+            else:
+                roles = [s] if s else []
+
+        # Substring / regex checks mirror the pre-fix behavior when ``novex_role`` was
+        # ``str(list(...))`` from ``combine_roles`` (one string cell, not a real list).
+        role_text = " ".join(roles)
+        if "Zonal Head SOD" in role_text:
+            if "Zonal Head SOD Ticketing" not in role_text:
+                roles.append("Zonal Head SOD Ticketing")
+        elif re.search(r"\bzone\b|\bzonal\b", role_text, re.IGNORECASE):
+            if "Zonal SOD Ticketing" not in role_text:
+                roles.append("Zonal SOD Ticketing")
+        return roles
+
+    if bu.upper() == 'TAS':
+        data["novex_role"] = data["novex_role"].apply(update_ticketing_role)
 
     for col in novex_model_col:
         if not col in data.columns:
@@ -634,44 +670,33 @@ async def sync_users(bus_list=None) -> Dict[str, Any]:
     }
 
 
-async def start_user_sync(bus_list, report_html=None):
+async def start_user_sync(bus_list, send_email=True):
     print(f"Syncing business units: {', '.join(b.upper() for b in bus_list)}")
     result = await sync_users(bus_list=bus_list)
     report = result["report_rows"]
     print(json.dumps(report, indent=2, default=str))
-    environment = urdhva_base.settings.environment.upper() or "PROD"
-    html = render_novex_users_sync_report_html(
-        report,
-        sync_start_ist=result["sync_start_ist"],
-        sync_end_ist=result["sync_end_ist"],
-        environment=environment
-    )
-    # out_path = Path(report_html) if report_html else None
-    # if out_path is None:
-    #     out_path = Path(tempfile.gettempdir()) / (
-    #         f"novex_users_sync_report_{urdhva_base.utilities.get_present_time().strftime("%Y%m%d_%H%M%S")}.html"
-    #     )
-    # out_path.parent.mkdir(parents=True, exist_ok=True)
-    # out_path.write_text(html, encoding="utf-8")
-    ins = await notification_factory.get_notification_module("email")
-    await ins.publish_message(
-        subject="Novex User Sync Report(From Tibco)",
-        recipients=EMAIL_RECIPIENTS['to_receipts'],
-        cc_recipients=EMAIL_RECIPIENTS['cc_receipts'] or [],
-        bcc_recipients=EMAIL_RECIPIENTS['bcc_receipts'] or [],
-        html_content=True,
-        body=html,
-        force_send=True,
-        inline_images={},
-        attachments=[]
-    )
-    # for r in report:
-    #     print(
-    #         f"  [{r.get('status', '?')}] {r.get('bu')}: "
-    #         f"auto {r.get('old_auto_user_count')} -> {r.get('new_auto_user_count')}, "
-    #         f"manual={r.get('manual_user_count')}, "
-    #         f"synced_total={r.get('total_records_synced', 0)}"
-    #     )
+    if send_email:
+        environment = urdhva_base.settings.environment.upper() or "PROD"
+        html = render_novex_users_sync_report_html(
+            report,
+            sync_start_ist=result["sync_start_ist"],
+            sync_end_ist=result["sync_end_ist"],
+            environment=environment
+        )
+
+        ins = await notification_factory.get_notification_module("email")
+        await ins.publish_message(
+            subject="Novex User Sync Report(From Tibco)",
+            recipients=EMAIL_RECIPIENTS['to_receipts'],
+            cc_recipients=EMAIL_RECIPIENTS['cc_receipts'] or [],
+            bcc_recipients=EMAIL_RECIPIENTS['bcc_receipts'] or [],
+            html_content=True,
+            body=html,
+            force_send=True,
+            inline_images={},
+            attachments=[]
+        )
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -688,18 +713,23 @@ def main():
         ),
     )
     parser.add_argument(
-        "--report-html",
-        default=None,
-        metavar="PATH",
+        "--send-email",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help=(
-            "Write the post-sync HTML summary to this path. "
-            "If omitted, a file is written under the system temp directory."
+            "Send the HTML sync report by email after completion (default: on). "
+            "Use --no-send-email to run sync without emailing."
         ),
     )
     start_time = time.time()
     args = parser.parse_args()
     bus_list = _parse_bus_list(args.bu)
-    asyncio.run(start_user_sync(bus_list, report_html=args.report_html))
+    asyncio.run(
+        start_user_sync(
+            bus_list,
+            send_email=args.send_email,
+        )
+    )
     end_time = time.time()
     print(f"Users Sync took {end_time - start_time} seconds.")
 
