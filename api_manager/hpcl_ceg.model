@@ -4342,6 +4342,8 @@ Model SqlOrderBySpec internal {
 Model TableAnalytics crud_disable {
     Action=> generate_data_aggregations {
         table str
+        base_table_alias optional str
+        joins optional list str
         group_by optional list str
         filters optional dict
         date_column optional str

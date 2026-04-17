@@ -11857,6 +11857,8 @@ class SqlOrderBySpecCreate(pydantic.BaseModel):
 
 class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
     table: str
+    base_table_alias: typing.Optional[str] = pydantic.Field("", **{})
+    joins: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     date_column: typing.Optional[str] = pydantic.Field("", **{})
