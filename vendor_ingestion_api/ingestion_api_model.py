@@ -550,54 +550,7 @@ class TasAgentCommStatusGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class TasAgentServiceStatusSchema(UrdhvaPostgresBase):
-    __tablename__ = 'tas_agent_service_status'
-    
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    message: Mapped[typing.Optional[str]] = mapped_column("message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-
-
-class TasAgentServiceStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'tas_agent_service_status'
-    
-    sap_id: str
-    status: typing.Optional[str] = pydantic.Field("", **{})
-    message: typing.Optional[str] = pydantic.Field("", **{})
-    location_name: typing.Optional[str] = pydantic.Field("", **{})
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = TasAgentServiceStatusSchema
-        upsert_keys = []
-
-
-class TasAgentServiceStatus(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'tas_agent_service_status'
-    
-    sap_id: typing.Optional[str] | None = None
-    status: typing.Optional[str] = pydantic.Field("", **{})
-    message: typing.Optional[str] = pydantic.Field("", **{})
-    location_name: typing.Optional[str] = pydantic.Field("", **{})
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = TasAgentServiceStatusSchema
-        upsert_keys = []
-
-
-class TasAgentServiceStatusGetResp(pydantic.BaseModel):
-    data: typing.List[TasAgentServiceStatus]
-    total: int = pydantic.Field(0)
-    count: int = pydantic.Field(0)
-
-
-class Tas_Get_Agent_Service_StatusParams(pydantic.BaseModel):
+class Tas_Location_Listener_Get_Agent_Service_StatusParams(pydantic.BaseModel):
     sap_id: str
     status: typing.Optional[str] = pydantic.Field("", **{})
     message: typing.Optional[str] = pydantic.Field("", **{})
@@ -607,7 +560,7 @@ class Tas_Get_Agent_Service_StatusParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Tas_Get_Agent_Comm_StatusParams(pydantic.BaseModel):
+class Tas_Location_Listener_Get_Agent_Comm_StatusParams(pydantic.BaseModel):
     sap_id: str
     status: typing.Optional[str] = pydantic.Field("", **{})
     message: typing.Optional[str] = pydantic.Field("", **{})

@@ -445,16 +445,8 @@ Model TasAgentCommStatus {
 
 }
 
-Model TasAgentServiceStatus {
-      
-      sap_id  str
-      status optional str
-      message optional str
-      location_name optional str
 
-}
-
-Model TAS crud_disable {
+Model TAS_Location_Listener crud_disable {
     Action=> get_agent_service_status {
         sap_id  str
         status optional str
