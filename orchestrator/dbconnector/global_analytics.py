@@ -6194,7 +6194,6 @@ class GlobalAnalytics:
                             alerts a ON a.device_name = l.bcu_number 
                             AND a.interlock_name = 'BCU Local Loading'
                             AND DATE(a.created_at) = l.created_date
-                            AND a.sap_id = l.sap_id
                         GROUP BY 
                             l.created_date, l.zone, l.location_name, l.sap_id, l.bcu_number, l.total_loaded_qty
                         ORDER BY 

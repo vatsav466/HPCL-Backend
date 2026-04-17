@@ -2134,69 +2134,6 @@
             ]
         },
         {
-            "name": "lpgplantoperationsresync",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "LpgPlantOperationsResync",
-            "attributes": {},
-            "uris": [
-                "/api/lpgplantoperationsresync/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
-            "name": "lpgplantoperationsresync_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "LpgPlantOperationsResync_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/lpgplantoperationsresync/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "lpgplantoperationsresync_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "LpgPlantOperationsResync_admin",
-            "attributes": {},
-            "uris": [
-                "/api/lpgplantoperationsresync/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
             "name": "lpgoperationssummary",
             "type": "all",
             "ownerManagedAccess": false,

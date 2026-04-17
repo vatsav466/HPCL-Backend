@@ -148,7 +148,7 @@ Model DryOutManagement crud_disable {
 }
 
 // ========== CRIS (combined) - backward compatibility; use TankInventory / NozzleSales for new use ==========
-Model nozzle_sales_stock crud_disable {
+Model CRIS crud_disable {
     Action=> stock_availability {
         data WidgetFilters
         drill_filter optional DrillFilter
@@ -165,13 +165,6 @@ Model nozzle_sales_stock crud_disable {
     }
     Action=> nozzle_sales_prev_day_comparison {
         data WidgetFilters
-    }
-    Action=> product_availability_days {
-        filters optional list WidgetFilters
-        cross_filters optional list WidgetFilters
-        level_filter optional LevelFilter
-        action str
-        drill_state optional str
     }
 }
 

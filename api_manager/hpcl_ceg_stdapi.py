@@ -42,9 +42,9 @@ async def delete(id: str):
     return await UserLoginAudit.delete(id)
 
 
-@router.get('/users/{id}', response_model=Users, tags=['Users'])
-async def get(id: str):
-    return await Users.get(id, skip_secrets=True)
+# @router.get('/users/{id}', response_model=Users, tags=['Users'])
+# async def get(id: str):
+#     return await Users.get(id, skip_secrets=True)
 
 
 @router.get('/users', response_model=UsersGetResp, tags=['Users'])
@@ -350,31 +350,6 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpgplantoperations/{id}', tags=['LpgPlantOperations'])
 async def delete(id: str):
     return await LpgPlantOperations.delete(id)
-
-
-@router.post('/lpgplantoperationsresync', response_model=LpgPlantOperationsResync, tags=['LpgPlantOperationsResync'])
-async def create(inputObj: LpgPlantOperationsResyncCreate):
-    return await inputObj.create()
-
-
-@router.put('/lpgplantoperationsresync', response_model=LpgPlantOperationsResync, tags=['LpgPlantOperationsResync'])
-async def update(inputObj: LpgPlantOperationsResync):
-    return await inputObj.modify()
-
-
-@router.get('/lpgplantoperationsresync/{id}', response_model=LpgPlantOperationsResync, tags=['LpgPlantOperationsResync'])
-async def get(id: str):
-    return await LpgPlantOperationsResync.get(id, skip_secrets=True)
-
-
-@router.get('/lpgplantoperationsresync', response_model=LpgPlantOperationsResyncGetResp, tags=['LpgPlantOperationsResync'])
-async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await LpgPlantOperationsResync.get_all(params, skip_secrets=True)
-
-
-@router.delete('/lpgplantoperationsresync/{id}', tags=['LpgPlantOperationsResync'])
-async def delete(id: str):
-    return await LpgPlantOperationsResync.delete(id)
 
 
 @router.post('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])

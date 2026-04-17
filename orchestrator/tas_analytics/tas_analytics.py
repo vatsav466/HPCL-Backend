@@ -1,6 +1,6 @@
 import urdhva_base
 import polars as pl
-from datetime import datetime,timedelta, timezone
+from datetime import datetime
 import json
 import os
 import math
@@ -13,7 +13,9 @@ from collections import defaultdict
 import orchestrator.workflow.workflow_process as workflow_process
 import utilities.minio_connector as minio_connector
 import decimal
+
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
+from datetime import datetime, timedelta, timezone
 import re
 import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_analytics.tas_queries as tas_queries
@@ -21,8 +23,6 @@ import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
 import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
-import requests
-
 
 
 def unix_ms_to_ist(ts_ms: int) -> datetime:
@@ -111,11 +111,6 @@ async def create_tas_faulty(data, certificate_file=None):
     """
     try:
         # Convert to dict at the start
-        rpt = urdhva_base.context.context.get('rpt', {})
-        if not rpt:
-            return {"status": False, "message": "Session got expired, Please Re-Login"}
-        user_name = rpt["username"]
-
         data = data.dict()
 
         sap_id = data['sap_id']
@@ -136,25 +131,31 @@ async def create_tas_faulty(data, certificate_file=None):
 
         # Set default status
         data['status'] = "Open"
+
+        # ---------------- DUPLICATE CHECK ----------------
         params = urdhva_base.queryparams.QueryParams(limit=1)
         params.q = (
             f"sap_id='{sap_id}' "
             f"AND device_type='{device_type}' "
             f"AND equipment_name='{equipment_name}'"
-            f"AND status='Open'"
             f"AND device_name='{device_name}'"
         )
 
-        existing = await hpcl_ceg_model.TasFaulty.get_all(params, resp_type="plain")
+        existing = await hpcl_ceg_model.TasFaulty.get_all(
+            params, resp_type="plain"
+        )
 
         if existing.get("data"):
             return {
                 "status": False,
-                "message": ("Alerts Issues is already raised for the same device. Please check the existing record"
-                            f"SAP ID = {sap_id}, Equipment = {equipment_name}"),
+                "message": (
+                    "Duplicate TasFaulty record exists for "
+                    f"SAP ID = {sap_id}, Equipment = {equipment_name}"
+                ),
                 "data": {}
             }
 
+        # ---------------- START WORKFLOW ----------------
         payload_workflow = {
             "variables": {
                 "sap_id": {"value": sap_id, "type": "String"},
@@ -171,13 +172,21 @@ async def create_tas_faulty(data, certificate_file=None):
             }
         }
 
-        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(payload=payload_workflow, workflowId="TASFAULTYCHECK")
+        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(
+            payload=payload_workflow,
+            workflowId="TASFAULTYCHECK"
+        )
+
         data['workflow_instance_id'] = camunda_resp.get("id", "")
 
+        # ---------------- SAVE CERTIFICATE ----------------
         certificate_path = None
 
         if certificate_file:
-            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "tas_faulty")
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "tas_faulty"
+            )
             os.makedirs(UPLOAD_DIR, exist_ok=True)
 
             faulty_val = faulty_date
@@ -186,7 +195,10 @@ async def create_tas_faulty(data, certificate_file=None):
 
             object_name = f"{faulty_val}_{sap_id}_{equipment_name}"
 
-            file_path = os.path.join(UPLOAD_DIR, certificate_file.filename)
+            file_path = os.path.join(
+                UPLOAD_DIR,
+                certificate_file.filename
+            )
 
             with open(file_path, "wb") as f:
                 f.write(await certificate_file.read())
@@ -199,7 +211,12 @@ async def create_tas_faulty(data, certificate_file=None):
             )
 
             if not status_minio:
-                return {"status": False, "message": "MinIO upload failed", "error": minio_path}
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
             certificate_path = minio_path
             data['certificate'] = certificate_path
 
@@ -209,45 +226,33 @@ async def create_tas_faulty(data, certificate_file=None):
                 pass
 
         # ---------------- INSERT ----------------
-        ist_time = datetime.now(timezone(timedelta(hours=5, minutes=30)))
-        faulty_history = [{
-            "user_name": user_name,
-            "updated_at": ist_time.isoformat(),
-            "role": rpt.get("novex_role", []),
-            "status": data['status'],
-            "remarks": user_remarks
-        }]
-
-        data['faulty_history'] = faulty_history
-
         record = await hpcl_ceg_model.TasFaultyCreate(**data).create()
 
-        return {"status": True, "message": "TasFaulty record saved successfully", "data": record}
+        return {
+            "status": True,
+            "message": "TasFaulty record saved successfully",
+            "data": record
+        }
 
     except Exception as e:
-        return {"status": False, "message": f"Failed to save TasFaulty record: {e}", "data": {}}
-    
-    
+        return {
+            "status": False,
+            "message": f"Failed to save TasFaulty record: {e}",
+            "data": {}
+        }
+
 async def update_tas_faulty(data):
     """
-    Update a TAS Faulty record and trigger the Camunda workflow with remarks and resolved status.
+    Update a TAS Faulty record and trigger the Camunda workflow with vendor remarks and resolved status.
     """
     try:
-        rpt = urdhva_base.context.context.get('rpt', {})
-        if not rpt:
-            return {"status": False, "message": "Session got expired, Please Re-Login"}
-        user_name = rpt["username"]
-
         transaction_id = int(data.transaction_id)
         vendor_remarks = data.vendor_remarks
-        user_remarks = data.user_remarks
         resolved = bool(data.resolved)
 
         # ---------------- FETCH RECORD ----------------
-        record = await hpcl_ceg_model.TasFaulty.get_all(
-            urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1),
-            resp_type="plain"
-        )
+        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1),
+                                                        resp_type="plain")
         row = record.get("data")
 
         if not row:
@@ -258,61 +263,38 @@ async def update_tas_faulty(data):
         if not process_instance_id:
             return {"status": False, "message": "Workflow instance not linked", "data": {}}
 
-        remarks = vendor_remarks or user_remarks
-        if not remarks:
-            return {"status": False, "message": "No remarks provided", "data": {}}
-        
+        # ---------------- TRIGGER CAMUNDA ----------------
         camunda_payload = {
             "messageName": "Resolved",
             "processInstanceId": process_instance_id,
             "processVariables": {
                 "resolved": {"value": resolved, "type": "Boolean"},
-                "remarks": {"value": remarks, "type": "String"}
+                "remarks": {"value": vendor_remarks, "type": "String"}
             }
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
-                                           json=camunda_payload,
-                                           timeout=10
-                                        )
+            response = await client.post(
+                f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
+                json=camunda_payload,
+                timeout=10
+            )
 
         if response.status_code not in (200, 204):
-            return {"status": False,  "message": "Workflow trigger failed", "data": response.text }
+            return {"status": False, "message": "Workflow trigger failed", "data": response.text}
 
-        now_ist = datetime.now(timezone(timedelta(hours=5, minutes=30)))
+        # ---------------- UPDATE RECORD ----------------
+        update_data = dict(record)
+        update_data.pop("id", None)
+        update_data["vendor_remarks"] = vendor_remarks
+        update_data["status"] = "Resolved" if resolved else "Rejected"
 
-        existing_history = row.get("faulty_history") or []
-
-        existing_history.append({
-            "user_name": user_name,
-            "updated_at": now_ist.isoformat(),
-            "status": "Resolved" if resolved else "Rejected",
-            "role": rpt.get("novex_role", []),
-            "remarks": remarks
-        })
-
-        update_payload = {
-            "id": transaction_id,
-            "status": "Resolved" if resolved else "Rejected",
-            "faulty_history": existing_history
-        }
-
-        if vendor_remarks:
-            update_payload["vendor_remarks"] = vendor_remarks
-
-        if user_remarks:
-            update_payload["user_remarks"] = user_remarks
-
-        await hpcl_ceg_model.TasFaulty(**update_payload).modify()
+        await hpcl_ceg_model.TasFaulty(id=transaction_id, **update_data).modify()
 
         return {
             "status": True,
             "message": "Workflow triggered and record updated successfully",
-            "data": {
-                "transaction_id": transaction_id,
-                "resolved": resolved
-            }
+            "data": {"transaction_id": transaction_id, "resolved": resolved}
         }
 
     except Exception as e:
@@ -6037,164 +6019,74 @@ async def get_bay_counts(data):
         "locations": locations_result
     }
 
-def normalize_location(text: str) -> str:
-    """Normalize location names for reliable comparison"""
-    if not text:
-        return ""
-
-    return (
-        text.strip()
-        .lower()
-        .replace("terminal", "")
-        .replace("plant", "")
-        .replace("location", "")
-        .replace("-", " ")
-        .replace("_", " ")
-        .strip()
-    )
-
-
-def extract_location(dev_name: str) -> str:
-    """Extract location from device name"""
-    return dev_name.split("@", 1)[-1].strip()
-
-
-
 async def operability_index_health_check(data) -> dict:
-    window_minutes = 60
-
-    filter_location = normalize_location(
-        getattr(data, "location_name", None) or ""
-    )
-    filter_zone = (getattr(data, "zone", None) or "").strip().lower()
+    """
+    Check ThingsBoard devices whose name starts with 'Operability Index@'
+    and report whether they are Live or Down based on latest telemetry timestamp
+    across ANY telemetry key within the last `window_minutes`.
+    """
+    window_minutes = 60  # default window
 
     jwt = await tb_utils.get_thingsboard_jwt()
     base_url = tb_utils.THINGSBOARD_URL.rstrip("/")
-    headers = {"X-Authorization": f"Bearer {jwt}"}
 
+    headers = {"X-Authorization": f"Bearer {jwt}"}
     page = 0
     page_size = 100
-    devices = []
+    devices: list[dict] = []
+
+    # Fetch devices matching textSearch 'Operability Index'
+    while True:
+        params = {"pageSize": page_size, "page": page, "textSearch": "Operability Index"}
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{base_url}/api/tenant/devices", headers=headers, params=params)
+            resp.raise_for_status()
+            device_data = resp.json()
+        chunk = device_data.get("data", []) if isinstance(device_data, dict) else []
+        if not chunk:
+            break
+        devices.extend(chunk)
+        if len(chunk) < page_size:
+            break
+        page += 1
+
+    # Keep only devices whose name starts with 'Operability Index@'
+    filtered = []
+    for d in devices:
+        name = (d.get("name") or "")
+        dev_id = (d.get("id") or {}).get("id")
+        if name.lower().startswith("operability index") and dev_id:
+            filtered.append({"name": name, "id": dev_id})
+
+    now_utc = datetime.now(timezone.utc)
+    cutoff_ms = int((now_utc - timedelta(minutes=window_minutes)).timestamp() * 1000)
+
+    results: list[dict] = []
 
     async with httpx.AsyncClient(timeout=10.0) as client:
-        while True:
-            params = {
-                "pageSize": page_size,
-                "page": page,
-                "textSearch": "Operability Index",
-            }
-
-            resp = await client.get(
-                f"{base_url}/api/tenant/devices",
-                headers=headers,
-                params=params,
-            )
-            resp.raise_for_status()
-
-            chunk = resp.json().get("data", [])
-
-            if not chunk:
-                break
-
-            devices.extend(chunk)
-
-            if len(chunk) < page_size:
-                break
-
-            page += 1
-
-        filtered = []
-        for d in devices:
-            name = (d.get("name") or "").strip()
-            dev_id = (d.get("id") or {}).get("id")
-
-            if name.lower().startswith("operability index") and dev_id:
-                filtered.append({"name": name, "id": dev_id})
-
-    
-        all_locations = await get_all_onboarded_locations()
-
-        name_to_zone = {}
-        for loc in all_locations:
-            loc_name = normalize_location(loc.get("name", ""))
-            loc_zone = (loc.get("zone") or "").strip()
-
-            if loc_name:
-                name_to_zone[loc_name] = loc_zone
-
-        def matches_location(dev_name: str) -> bool:
-            dev_loc = normalize_location(extract_location(dev_name))
-
-            # exact match OR flexible match
-            return (
-                dev_loc == filter_location
-                or filter_location in dev_loc
-                or dev_loc in filter_location
-            )
-
-        if filter_location:
-            filtered = [
-                dev for dev in filtered
-                if matches_location(dev["name"])
-            ]
-
-        elif filter_zone:
-            temp = []
-            for dev in filtered:
-                dev_loc = normalize_location(extract_location(dev["name"]))
-
-                dev_zone = None
-                for loc_name, zone in name_to_zone.items():
-                    if dev_loc == loc_name or dev_loc in loc_name or loc_name in dev_loc:
-                        dev_zone = zone
-                        break
-
-                if (dev_zone or "").lower() == filter_zone:
-                    temp.append(dev)
-
-            filtered = temp
-
-        now_utc = datetime.now(timezone.utc)
-        cutoff_ms = int(
-            (now_utc - timedelta(minutes=window_minutes)).timestamp() * 1000
-        )
-
-        results = []
-
         for dev in sorted(filtered, key=lambda x: x["name"].lower()):
             dev_id = dev["id"]
-            raw_loc = extract_location(dev["name"])
-            dev_loc = normalize_location(raw_loc)
-
-            dev_zone = None
-            for loc_name, zone in name_to_zone.items():
-                if dev_loc == loc_name or dev_loc in loc_name or loc_name in dev_loc:
-                    dev_zone = zone
-                    break
-
             url = f"{base_url}/api/plugins/telemetry/DEVICE/{dev_id}/values/timeseries"
 
             last_ts_ms = None
-
             try:
+                # No 'keys' param — fetch ALL telemetry keys
                 resp = await client.get(
                     url,
                     headers=headers,
                     params={"limit": 1, "orderBy": "DESC"},
                 )
-
+                print(resp)
                 if resp.status_code == 200:
                     telemetry = resp.json()
-
+                    # Find the most recent timestamp across all keys
                     latest_ts = None
                     for key_points in telemetry.values():
-                        if key_points:
+                        if key_points and isinstance(key_points, list):
                             ts = int(key_points[0].get("ts", 0))
                             if latest_ts is None or ts > latest_ts:
                                 latest_ts = ts
-
                     last_ts_ms = latest_ts
-
             except Exception:
                 last_ts_ms = None
 
@@ -6203,23 +6095,22 @@ async def operability_index_health_check(data) -> dict:
                 last_ts_str = None
             else:
                 status = "Live" if last_ts_ms >= cutoff_ms else "Down"
-
                 last_ts_str = datetime.fromtimestamp(
-                    last_ts_ms / 1000,
-                    tz=timezone.utc,
-                ).astimezone(
-                    timezone(timedelta(hours=5, minutes=30))
-                ).strftime("%Y-%m-%d %H:%M:%S")
+                    last_ts_ms / 1000.0, tz=timezone.utc
+                ).astimezone(timezone(timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d %H:%M:%S")
 
-            results.append({
-                "device_name": raw_loc,   
-                "last_ts_utc": last_ts_str,
-                "zone": dev_zone if dev_zone else "Unknown",
-                "status": status,
-                **({"Description": "The TAS vendor has been changed from AST to ICON, and the re-onboarding is pending."} if dev_loc == "mathura" else {}),
-            })
+            results.append(
+                {
+                    "device_name": dev["name"].split("@")[1],
+                    # "last_ts_ms": last_ts_ms,
+                    "last_ts_utc": last_ts_str,
+                    "status": status,
+                }
+            )
 
     return {
+        # "now_utc": now_utc.isoformat(),
+        # "window_minutes": window_minutes,
         "total_devices": len(filtered),
         "live_devices": sum(1 for r in results if r["status"] == "Live"),
         "devices": results,
@@ -6670,7 +6561,6 @@ async def get_interlock_testing_analysis(data):
         testing_query = f"""
             SELECT
                 sap_id,
-                device_name,
                 'TAS' AS bu,
                 location_name,
                 alert_section,
@@ -6685,7 +6575,6 @@ async def get_interlock_testing_analysis(data):
         non_testing_query = f"""
             SELECT
                 sap_id,
-                device_name,
                 'TAS' AS bu,
                 location_name,
                 alert_section,
@@ -6743,676 +6632,7 @@ async def get_interlock_testing_analysis(data):
             "testing_data": [],
             "non_testing_data": []
         }
-    
-async def location_table_24h_status(data=None):
-    from datetime import datetime, timezone
-
-    window_hours = 24
-    bu = "TAS"
-
-    TABLES = [
-        "host_unauthorised_flow",
-        "host_cancelled_tts",
-        "host_k_factor_changes",
-        "host_local_loaded_tts",
-        "host_bay_re_assignment",
-        "host_manual_fan_printed",
-        "host_over_loaded_tts",
-        "host_mfm_factor",
-        "master_status",
-        "host_standalone_tts",
-        "host_tas_user_details",
-        "host_live_tank_details",
-    ]
-
-    # 1) Get locations
-    loc_query = f"bu = '{bu}' and location_onboard = true"
-
-    zone = getattr(data, "zone", None)
-    location_name = getattr(data, "location_name", None)
-
-    if zone:
-        loc_query += f" AND zone = '{zone}'"
-    if location_name:
-        loc_query += f" AND name = '{location_name}'"
-
-    loc_params = urdhva_base.queryparams.QueryParams(
-        q=loc_query,
-        limit=1000,
-        fields='["sap_id","name","zone"]',
-    )
-
-    loc_resp = await hpcl_ceg_model.LocationMaster.get_all(loc_params, resp_type="plain")
-    loc_rows = loc_resp.get("data", []) if isinstance(loc_resp, dict) else []
-
-    sap_to_info = {
-        (r.get("sap_id") or "").strip(): {
-            "name": (r.get("name") or "").strip(),
-            "zone": (r.get("zone") or "").strip()
-        }
-        for r in loc_rows
-    }
-
-    sap_ids = [s for s in sap_to_info.keys() if s]
-    now = datetime.now(timezone.utc)
-
-    # Initialize structure
-    location_data = {
-        sap: {
-            "sap_id": sap,
-            "location_name": sap_to_info[sap]["name"],
-            "zone": sap_to_info[sap]["zone"],
-            "tables": []
-        }
-        for sap in sap_ids
-    }
-
-    # 2) Query each table
-    for table in TABLES:
-        query = f"""
-            SELECT
-                sap_id,
-                MAX(created_at) AS last_created_at,
-                COUNT(*) FILTER (
-                    WHERE created_at >= NOW() - INTERVAL '{window_hours} hours'
-                ) AS cnt_24h
-            FROM "{table}"
-            GROUP BY sap_id
-        """
-
-        try:
-            resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
-            data_rows = resp.get("data", [])
-        except Exception as e:
-            print(f"Error running query for table {table}: {e}")
-            data_rows = []
-
-        # Map stats
-        stats_by_sap = {}
-        for row in data_rows:
-            sap = str(row.get("sap_id") or "").strip()
-            if sap:
-                stats_by_sap[sap] = row
-
-        # Store raw status (IMPORTANT CHANGE)
-        for sap in sap_ids:
-            stat = stats_by_sap.get(sap, {})
-            cnt_24h = int(stat.get("cnt_24h") or 0)
-            last_created_at = stat.get("last_created_at")
-
-            is_online = cnt_24h > 0
-
-            if isinstance(last_created_at, datetime):
-                last_str = last_created_at.isoformat(sep=" ", timespec="seconds")
-            else:
-                last_str = str(last_created_at) if last_created_at else None
-
-            location_data[sap]["tables"].append({
-                "table_name": table,
-                "is_online": is_online,   # temp flag
-                "last_created_at": last_str,
-            })
-
-    # 3) FINAL STATUS LOGIC (MAIN PART 🔥)
-    for sap, loc in location_data.items():
-        tables = loc["tables"]
-
-        any_online = any(t["is_online"] for t in tables)
-
-        for t in tables:
-            if any_online:
-                if t["is_online"]:
-                    t["status"] = "Online"
-                else:
-                    t["status"] = "LAST UPDATED"
-            else:
-                t["status"] = "Offline"
-
-            # remove temp field
-            del t["is_online"]
-
-    # Final response
-    return {
-        "data": {
-            "now" : now.isoformat(),
-            "window_hours": window_hours,
-            "locations": list(location_data.values())
-        }
-    }
         
-
-
-async def get_master_status(data):
-    try:
-        data_required = True
-        sap_id = None
-
-        # -------- FILTERS --------
-        if data.filters:
-            for f in data.filters:
-                if f.key == "data_required":
-                    data_required = str(f.value).lower() == "true"
-                elif f.key == "sap_id":
-                    sap_id = f.value
-
-        # -------- OPTIONAL FILTERS --------
-        sap_filter = f"AND TRIM(sap_id) = '{str(sap_id).strip()}'" if sap_id else ""
-
-        zone_filter = (
-            f"AND LOWER(zone) = LOWER('{data.zone}')"
-            if data.zone else ""
-        )
-
-        # -------- SINGLE OPTIMIZED QUERY --------
-        final_query = f"""
-        WITH ref_date_cte AS (
-            SELECT COALESCE(
-                (SELECT CURRENT_DATE 
-                 WHERE EXISTS (
-                     SELECT 1 FROM master_status 
-                     WHERE created_at::date = CURRENT_DATE
-                     {sap_filter}
-                 )),
-                (SELECT MAX(created_at::date) 
-                 FROM master_status 
-                 WHERE active_server_name IS NOT NULL
-                 {sap_filter})
-            ) AS ref_date
-        ),
-
-        latest_data AS (
-            SELECT DISTINCT ON (sap_id)
-                sap_id,
-                active_server_name,
-                location_name,
-                created_at::date AS created_date
-            FROM master_status m, ref_date_cte r
-            WHERE m.created_at::date = r.ref_date
-            {sap_filter}
-            {zone_filter}
-            ORDER BY sap_id, created_at DESC
-        ),
-
-        ordered_data AS (
-            SELECT
-                sap_id,
-                active_server_name,
-                created_at::date AS created_date,
-                LAG(active_server_name) OVER (
-                    PARTITION BY sap_id ORDER BY created_at
-                ) AS prev_server
-            FROM master_status
-            WHERE active_server_name IS NOT NULL
-            {sap_filter}
-        ),
-
-        change_points AS (
-            SELECT *
-            FROM ordered_data
-            WHERE prev_server IS NOT NULL
-              AND active_server_name <> prev_server
-        ),
-
-        last_change AS (
-            SELECT DISTINCT ON (sap_id)
-                sap_id,
-                active_server_name AS changed_to,
-                prev_server AS changed_from,
-                created_date AS change_date
-            FROM change_points
-            ORDER BY sap_id, created_date DESC
-        )
-
-        SELECT 
-            l.sap_id,
-            l.active_server_name AS current_server,
-            lc.changed_from,
-            lc.change_date,
-
-            CASE 
-                WHEN l.active_server_name IS NULL THEN 'NO_SERVER'
-                WHEN lc.change_date IS NULL THEN 'NOT_CHANGED'
-                WHEN lc.change_date >= r.ref_date - INTERVAL '30 days'
-                    THEN 'CHANGED'
-                ELSE 'NOT_CHANGED'
-            END AS status
-
-        FROM latest_data l
-        LEFT JOIN last_change lc ON l.sap_id = lc.sap_id
-        CROSS JOIN ref_date_cte r
-        """
-
-        # -------- EXECUTION (ONLY ONE CALL) --------
-        result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
-        rows = result.get("data", [])
-
-        # -------- SPLIT IN PYTHON (FASTER) --------
-        changed_rows = []
-        not_changed_rows = []
-        no_server_rows = []
-
-        for row in rows:
-            if row["status"] == "CHANGED":
-                changed_rows.append(row)
-            elif row["status"] == "NO_SERVER":
-                no_server_rows.append(row)
-            else:
-                not_changed_rows.append(row)
-
-        # -------- COUNTS --------
-        response = {
-            "status": True,
-            "message": "Optimized active server analysis",
-
-            "changed_count": [{"total_count": len(changed_rows)}],
-            "not_changed_count": [{"total_count": len(not_changed_rows)}],
-            "no_server_count": [{"total_count": len(no_server_rows)}],
-
-            "changed_data": changed_rows if data_required else [],
-            "not_changed_data": not_changed_rows if data_required else [],
-            "no_server_data": no_server_rows if data_required else []
-        }
-
-        return response
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return {
-            "status": False,
-            "changed_count": [],
-            "not_changed_count": [],
-            "no_server_count": [],
-            "changed_data": [],
-            "not_changed_data": [],
-            "no_server_data": []
-        }
-        
-async def get_plc_master_status(data):
-    data_required = True
-    sap_id = None
-
-    # -------- FILTERS --------
-    if data and getattr(data, "filters", None):
-        for f in data.filters:
-            if f.key == "data_required":
-                data_required = str(f.value).lower() == "true"
-            elif f.key == "sap_id":
-                sap_id = f.value
-
-    THINGSBOARD_HOST = urdhva_base.settings.things_board_url
-    USERNAME = urdhva_base.settings.things_board_username
-    PASSWORD = urdhva_base.settings.things_board_password
-    MAX_VALUES = 50000
-
-    resp = requests.post(
-        f"{THINGSBOARD_HOST}/api/auth/login",
-        json={"username": USERNAME, "password": PASSWORD}
-    )
-    token = resp.json()["token"]
-
-    def tb_get(url, params=None):
-        headers = {"X-Authorization": f"Bearer {token}"}
-        return requests.get(f"{THINGSBOARD_HOST}{url}", headers=headers, params=params or {}).json()
-
-    devices = []
-    page = 0
-    while True:
-        d = tb_get("/api/tenant/devices", {"pageSize": 100, "page": page})
-        devices.extend([x for x in d.get("data", []) if x.get("type") == "PLC"])
-        if not d.get("hasNext"):
-            break
-        page += 1
-
-    now = datetime.now(timezone.utc)
-    last_30_days = now - timedelta(days=30)
-
-    changed_rows = []
-    not_changed_rows = []
-    no_server_rows = []
-
-    for device in devices:
-
-        device_id = device["id"]["id"]
-        device_name = device.get("name")
-
-        attributes = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes")
-        telemetry  = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries")
-
-        attr_data = {i["key"]: i["value"] for i in attributes} if attributes else {}
-        tele_data = {k: v[0]["value"] for k, v in telemetry.items() if v} if telemetry else {}
-
-        device_sap = attr_data.get("SAPID", "N/A")
-        # -------- SAP FILTER --------
-        if sap_id and str(device_sap).strip() != str(sap_id).strip():
-            continue
-
-        has_data = False
-        current_server = None
-        changed_from = None
-        change_date = None
-
-        plc_keys = [k for k in tele_data.keys() if "MASTER" in k.upper()]
-        all_history = []
-
-        for key in plc_keys:
-
-            resp = tb_get(
-                f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
-                {
-                    "keys": key,
-                    "startTs": 0,
-                    "endTs": int(now.timestamp()*1000),
-                    "limit": MAX_VALUES,
-                    "orderBy": "ASC"
-                }
-            )
-
-            history = [
-                {
-                    "ts": datetime.fromtimestamp(r["ts"]/1000, tz=timezone.utc),
-                    "value": int(float(r["value"])),
-                    "plc": key
-                }
-                for r in resp.get(key, [])
-                if r.get("value") is not None
-            ]
-
-            if history:
-                has_data = True
-
-            all_history.extend(history)
-
-        if not has_data:
-            no_server_rows.append({
-                "sap_id": device_sap,
-                "device_name": device_name,
-                "current_server": "",
-                "changed_from": "",
-                "change_date": "",
-                "status": "NO_SERVER"
-            })
-            continue
-
-        all_history = sorted(all_history, key=lambda x: x["ts"])
-
-        for rec in reversed(all_history):
-            if rec["value"] == 1:
-                current_server = rec["plc"]
-                break
-
-        if not current_server:
-            no_server_rows.append({
-                "sap_id": device_sap,
-                "device_name": device_name,
-                "current_server": "",
-                "changed_from": "",
-                "change_date": "",
-                "status": "NO_SERVER"
-            })
-            continue
-
-        last_30 = [h for h in all_history if h["ts"] >= last_30_days]
-        old_data = [h for h in all_history if h["ts"] < last_30_days]
-
-        prev = None
-        is_changed_30 = False
-
-        for rec in last_30:
-            if rec["value"] != 1:
-                continue
-
-            curr = rec["plc"]
-
-            if prev and curr != prev:
-                is_changed_30 = True
-                change_date = rec["ts"].strftime("%Y-%m-%d %H:%M:%S")
-                changed_from = prev
-
-            prev = curr
-
-        if is_changed_30:
-            changed_rows.append({
-                "sap_id": device_sap,
-                "device_name": device_name,
-                "current_server": current_server,
-                "changed_from": changed_from or "",
-                "change_date": change_date or "",
-                "status": "CHANGED"
-            })
-            continue
-
-        prev = None
-        old_change_date = None
-
-        for rec in old_data:
-            if rec["value"] != 1:
-                continue
-
-            curr = rec["plc"]
-
-            if prev and curr != prev:
-                old_change_date = rec["ts"]
-
-            prev = curr
-
-        not_changed_rows.append({
-            "sap_id": device_sap,
-            "device_name": device_name,
-            "current_server": current_server,
-            "changed_from": "",
-            "change_date": old_change_date.strftime("%Y-%m-%d %H:%M:%S") if old_change_date else "",
-            "status": "NOT_CHANGED"
-        })
-
-    # FINAL RESPONSE WITH COUNTS
-    return {
-        "changed_count": len(changed_rows),
-        "not_changed_count": len(not_changed_rows),
-        "no_server_count": len(no_server_rows),
-
-        "changed_data": changed_rows if data_required else [],
-        "not_changed_data": not_changed_rows if data_required else [],
-        "no_server_data": no_server_rows if data_required else []
-    }
-    
-async def verification_meters(data):
-    try:
-        filters = []
-        not_proved_filters = []
-
-        # -------- DEFAULTS --------
-        data_required = True
-        sap_id = None
-        bcu_number = None
-        year = None
-
-        # -------- READ FILTERS --------
-        if data.filters:
-            for f in data.filters:
-                if f.key == "sap_id":
-                    sap_id = f.value
-
-                elif f.key == "bcu_number":
-                    bcu_number = f.value
-
-                elif f.key == "year":
-                    if "," in str(f.value):
-                        year = [int(y.strip()) for y in str(f.value).split(",")]
-                    else:
-                        year = [int(f.value)]
-
-                elif f.key == "data_required":
-                    data_required = str(f.value).lower() == "true"
-
-        # -------- DEFAULT YEAR --------
-        today = datetime.now()
-
-        if not year:
-            year = [today.year]
-
-        # -------- DATE HANDLING (MAIN FIX) --------
-        if data.start_date and data.end_date:
-            start_date = data.start_date
-            end_date = data.end_date
-        else:
-            # multiple year support
-            min_year = min(year)
-            max_year = max(year)
-
-            start_date = f"{min_year}-01-01"
-            end_date = f"{max_year}-12-31"
-
-        # -------- CURRENT SEGMENT --------
-        month = today.month
-
-        if month in [1, 2, 3]:
-            current_segment = "Q1"
-        elif month in [4, 5, 6]:
-            current_segment = "Q2"
-        elif month in [7, 8, 9]:
-            current_segment = "Q3"
-        else:
-            current_segment = "Q4"
-
-        # -------- PROVER NORMALIZATION --------
-        normalized_truck = """
-            CASE 
-                WHEN LOWER(TRIM(truck_number)) LIKE '%prov%' THEN 'PROVER'
-                ELSE TRIM(truck_number)
-            END
-        """
-
-        # -------- FILTER CONDITIONS --------
-        prover_condition = """
-            LOWER(TRIM(truck_number)) LIKE '%prov%'
-        """
-
-        not_prover_condition = """
-            LOWER(TRIM(truck_number)) NOT LIKE '%prov%'
-        """
-
-        filters.append(prover_condition)
-        not_proved_filters.append(not_prover_condition)
-
-        # -------- APPLY FILTERS --------
-        if sap_id:
-            condition = f"TRIM(sap_id) = '{str(sap_id).strip()}'"
-            filters.append(condition)
-            not_proved_filters.append(condition)
-
-        if bcu_number:
-            condition = f"TRIM(bcu_number) = '{str(bcu_number).strip()}'"
-            filters.append(condition)
-            not_proved_filters.append(condition)
-
-        # -------- DATE FILTER (FINAL) --------
-        date_condition = f"""
-            created_at::date BETWEEN '{start_date}' AND '{end_date}'
-        """
-        filters.append(date_condition)
-        not_proved_filters.append(date_condition)
-
-        # -------- WHERE CLAUSE --------
-        where_clause = "WHERE " + " AND ".join(filters)
-        not_where_clause = "WHERE " + " AND ".join(not_proved_filters)
-
-        # -------- SEGMENT EXPRESSION --------
-        segment_expr = """
-            CASE
-                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 1 AND 3 THEN 'Q1'
-                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 4 AND 6 THEN 'Q2'
-                WHEN EXTRACT(MONTH FROM created_at) BETWEEN 7 AND 9 THEN 'Q3'
-                ELSE 'Q4'
-            END
-        """
-
-        # -------- PROVED QUERY --------
-        query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                sap_id,
-                bcu_number,
-                {normalized_truck} AS truck_number,
-                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
-                MIN(created_at) AS first_created_at
-            FROM host_local_loaded_tts
-            {where_clause}
-            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
-            ORDER BY segment
-        """
-
-        # -------- NOT PROVED QUERY --------
-        not_query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                sap_id,
-                bcu_number,
-                {normalized_truck} AS truck_number,
-                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
-                MIN(created_at) AS first_created_at
-            FROM host_local_loaded_tts
-            {not_where_clause}
-            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
-            ORDER BY segment
-        """
-
-        # -------- COUNT QUERIES --------
-        count_query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
-            FROM host_local_loaded_tts
-            {where_clause}
-            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
-            ORDER BY segment
-        """
-
-        not_count_query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
-            FROM host_local_loaded_tts
-            {not_where_clause}
-            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
-            ORDER BY segment
-        """
-
-        # -------- EXECUTION --------
-        proved_rows = []
-        not_proved_rows = []
-
-        if data_required:
-            res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
-            proved_rows = res.get("data", [])
-
-            not_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_query, limit=0)
-            not_proved_rows = not_res.get("data", [])
-
-        count_res = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
-        not_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_count_query, limit=0)
-
-        return {
-            "status": True,
-            "message": "Prover analysis fetched",
-            "current_segment": current_segment,
-            "proved_segment_counts": count_res.get("data", []),
-            "not_proved_segment_counts": not_count_res.get("data", []),
-            "proved_data": proved_rows if data_required else [],
-            "not_proved_data": not_proved_rows if data_required else []
-        }
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return {
-            "status": False,
-            "proved_data": [],
-            "not_proved_data": []
-        }
-
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -7434,11 +6654,7 @@ AnalyticsModelMapping = {
     "Gantry Override Analysis": gantry_override_analysis,
     "Run Daily Data Check": operability_index_health_check,
     "Tas_fire_engine":get_fire_engine_runtime_weekly,
-    "Interlock_testing":get_interlock_testing_analysis,
-    "Lrc_Master_status":get_master_status,
-    "Analog 24 hr window" : location_table_24h_status,
-    "Plc_Master_status":get_plc_master_status,
-    "Verification_of_meters":verification_meters
+    "Interlock_testing":get_interlock_testing_analysis
 
 }
 

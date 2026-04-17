@@ -63,7 +63,7 @@ tas_query = """ SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME a
                     ZE.EMP_CONTACT_NUMBER AS contact_number
                 FROM ZGRCCV_ROLE_STG ZR LEFT JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
                     LEFT JOIN EDW_DC_PLANT EPL on ZE.PLANT_CODE = EPL.PLANT
-                WHERE (ZE.PLANT_CODE like '1%') """
+                WHERE (ZE.PLANT_CODE like '1%' OR ZE.PLANT_CODE='3708') """
 
 # Add required roles in novex_role_master.csv
 ro_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 

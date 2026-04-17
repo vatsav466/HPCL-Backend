@@ -321,6 +321,9 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     ticket_severity: typing.Optional[str] = pydantic.Field("", **{})
     comment: typing.Optional[str] = pydantic.Field("", **{})
     update_id: str
+    file_attachment: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
+    file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})

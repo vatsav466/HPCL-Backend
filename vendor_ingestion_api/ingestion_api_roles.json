@@ -625,13 +625,76 @@
             ]
         },
         {
-            "name": "tas_location_listener",
+            "name": "tasagentservicestatus",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "TAS_Location_Listener",
+            "displayName": "TasAgentServiceStatus",
             "attributes": {},
             "uris": [
-                "/api/tas_location_listener/*"
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasagentservicestatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentServiceStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasagentservicestatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentServiceStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tas",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TAS",
+            "attributes": {},
+            "uris": [
+                "/api/tas/*"
             ],
             "scopes": [
                 {
@@ -655,13 +718,13 @@
             ]
         },
         {
-            "name": "tas_location_listener_readOnly",
+            "name": "tas_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "TAS_Location_Listener_readOnly",
+            "displayName": "TAS_readOnly",
             "attributes": {},
             "uris": [
-                "/api/tas_location_listener/*"
+                "/api/tas/*"
             ],
             "scopes": [
                 {
@@ -676,13 +739,13 @@
             ]
         },
         {
-            "name": "tas_location_listener_admin",
+            "name": "tas_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "TAS_Location_Listener_admin",
+            "displayName": "TAS_admin",
             "attributes": {},
             "uris": [
-                "/api/tas_location_listener/*"
+                "/api/tas/*"
             ],
             "scopes": [
                 {
