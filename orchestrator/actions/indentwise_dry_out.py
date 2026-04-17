@@ -1773,7 +1773,7 @@ class IndentDryOut:
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_delivered=True)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id"))
         indent_no = "','".join(self.params.get("indent_no").split(","))
@@ -1806,12 +1806,29 @@ class IndentDryOut:
                                  AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
                             ELSE 6
                         END AS status
-                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    FROM sch_inventory_forecast_dashboard_latest as sch
                     WHERE sch.volume > 0 and rosapcode = '{dealer_code}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        cris_resp = await function(query=query)
+        # cris_resp = await function(query=query)
+        max_retries = 5
+        retry_delay = 5
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                cris_resp = await function(query=query)
+                break  # success → exit loop
+
+            except Exception as e:
+                print(f"Attempt {attempt} failed")
+                traceback.print_exc()
+
+                if attempt == max_retries:
+                    print("Max retries reached. Returning empty dataframe.")
+                    cris_resp = None
+                else:
+                    await asyncio.sleep(retry_delay)
         if not cris_resp:
             return await self.is_product_delivered_ims(params=params)
         else:
@@ -2395,7 +2412,7 @@ class IndentDryOut:
     
     async def _check_ro_in_cris(self):
         dealer_code = str(self.params.get("dealer_id"))
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         product_code=self.params["product_code"]
         _prod = await self.prod_code_mapping()
@@ -2418,13 +2435,31 @@ class IndentDryOut:
                                  AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
                             ELSE 6
                         END AS status
-                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    FROM sch_inventory_forecast_dashboard_latest as sch
                     WHERE sch.volume > 0 and rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         #print("_check_ro_in_cris",query)
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        cris_resp = await function(query=query)
+        # cris_resp = await function(query=query)
+        max_retries = 5
+        retry_delay = 5
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                cris_resp = await function(query=query)
+                break  # success → exit loop
+
+            except Exception as e:
+                print(f"Attempt {attempt} failed")
+                traceback.print_exc()
+
+                if attempt == max_retries:
+                    print("Max retries reached. Returning empty dataframe.")
+                    cris_resp = None
+                else:
+                    await asyncio.sleep(retry_delay)
+
         if not cris_resp:
             return False
         else:
@@ -2432,7 +2467,7 @@ class IndentDryOut:
     
     async def _check_product_low_level(self):
         dealer_code = str(self.params.get("dealer_id"))
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         product_code=self.params["product_code"]
         _prod = await self.prod_code_mapping()
@@ -2455,13 +2490,31 @@ class IndentDryOut:
                                  AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
                             ELSE 6
                         END AS status
-                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    FROM sch_inventory_forecast_dashboard_latest as sch
                     WHERE rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         #print("reverse_mapping_query",query)
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        cris_resp = await function(query=query)
+        # cris_resp = await function(query=query)
+        max_retries = 5
+        retry_delay = 5
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                cris_resp = await function(query=query)
+                break  # success → exit loop
+
+            except Exception as e:
+                print(f"Attempt {attempt} failed")
+                traceback.print_exc()
+
+                if attempt == max_retries:
+                    print("Max retries reached. Returning empty dataframe.")
+                    cris_resp = None
+                else:
+                    await asyncio.sleep(retry_delay)
+
         if not cris_resp:
             return False
         else:
@@ -2497,34 +2550,22 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # cris_resp = await function(query=query)
         max_retries = 5
-        attempt = 0
-        cris_resp = None
+        retry_delay = 5
 
-        while attempt < max_retries:
+        for attempt in range(1, max_retries + 1):
             try:
                 cris_resp = await function(query=query)
-                table_count = len(cris_resp) if cris_resp else 0
+                break  # success → exit loop
 
-                if table_count == 0:
-                    raise ValueError("Table does not exist or empty response")
-                break
-
-            except Exception:
-                attempt += 1
-
-                print(f"\nAttempt {attempt} failed with error:")
+            except Exception as e:
+                print(f"Attempt {attempt} failed")
                 traceback.print_exc()
 
-                error_str = traceback.format_exc()
-
-                if "does not exist" in error_str:
-                    print("Detected missing table. Retrying...")
-
-                    if attempt >= max_retries:
-                        raise Exception(
-                            "Max retries reached: table 'sch_inventory_forecast_dashboard_latest' does not exist"
-                        )
-                    await asyncio.sleep(5)
+                if attempt == max_retries:
+                    print("Max retries reached. Returning empty dataframe.")
+                    cris_resp = None
+                else:
+                    await asyncio.sleep(retry_delay)
 
         if not cris_resp:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
