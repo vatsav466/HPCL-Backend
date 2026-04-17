@@ -980,7 +980,8 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         params.fields = [
             "id", "ticket_id", "ticket_state", "ticket_history", "linked_alert_id",
             "sap_id", "location_name", "zone", "category", "sub_category",
-            "start_date", "ticket_end_date", "comment_history"
+            "start_date", "ticket_end_date", "comment_history","file_attachment","file_attachment_name",
+            "file_attachment_id"
         ]
         resp = await Ticketing.get_all(params, resp_type='plain')
 

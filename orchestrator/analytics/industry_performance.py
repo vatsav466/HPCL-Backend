@@ -1,5 +1,4 @@
 import datetime
-
 import urdhva_base
 import re
 import json
@@ -1423,25 +1422,24 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     print("months from get_date_dfilters",months)
     #Added for the purpose of FY2025-2026 Apr ist
     
-    
-    fiscal_year_pre = '2026-2027'
-    fiscal_year_last = '2025-2026'
+    fiscal_year_pre = '2025-2026'
+    fiscal_year_last = '2024-2025'
     
     for each_filter in org_filters:
         
         if each_filter['key'].strip('"')  =='fiscal_year':
+            if each_filter['value'].strip('"') == '2024-2025':
+                fiscal_year_pre = '2024-2025'
+                fiscal_year_last = '2023-2024'
             if each_filter['value'].strip('"') == '2025-2026':
                 fiscal_year_pre = '2025-2026'
                 fiscal_year_last = '2024-2025'
-            if each_filter['value'].strip('"') == '2026-2027':
-                fiscal_year_pre = '2026-2027'
-                fiscal_year_last = '2025-2026'
             if 'in' in each_filter['cond']:
                 fiscal_year_pre = each_filter['value'].split(',')[-1]
                 fiscal_year_last = each_filter['value'].split(',')[0]
-            if '2024-2025,2025-2026' in each_filter['value'].strip('"'):
-                fiscal_year_pre = '2025-2026'
-                fiscal_year_last = '2024-2025'
+            if '2023-2024,2024-2025' in each_filter['value'].strip('"'):
+                fiscal_year_pre = '2024-2025'
+                fiscal_year_last = '2023-2024'
                 
     if fiscal_year_pre and not fiscal_year_last:
         filters.append({"key": "fiscal_year", "cond": "equals", "value": fiscal_year_pre})
@@ -1524,10 +1522,13 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter + ["coname"], "")
+    print("fiscal_year_+pre",fiscal_year_pre) 
+    print("fiscal_year_last",fiscal_year_last) 
     
     pd.DataFrame(resp_data).to_csv('/tmp/response.csv',index = False)
     print("writing data to csv")
-    
+    print("fiscal_year_+pre",fiscal_year_pre) 
+    print("fiscal_year_last",fiscal_year_last) 
     # Convert query result to DataFrame
     df = pd.DataFrame(resp_data)
 
@@ -1583,7 +1584,7 @@ WITH current_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS current_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2026-2027'
+    WHERE fiscal_year='2025-2026'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -1594,7 +1595,7 @@ last_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS last_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2025-2026'
+    WHERE fiscal_year='2024-2025'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -1761,10 +1762,10 @@ async def get_category_wise_cumulative_data(filters):
     for each_filter in org_filters:
         print("each_filter",each_filter)
         if each_filter['key'].strip('"')  =='fiscal_year':
+            if each_filter['value'].strip('"') == '2024-2025':
+                fiscal_years = ["2023-2024", "2024-2025"]
             if each_filter['value'].strip('"') == '2025-2026':
                 fiscal_years = ["2024-2025", "2025-2026"]
-            if each_filter['value'].strip('"') == '2026-2027':
-                fiscal_years = ["2025-2026", "2026-2027"]
     print("fiscal_years",fiscal_years)
     filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
@@ -1821,8 +1822,7 @@ async def get_category_wise_cumulative_data(filters):
     #         else:
     #             fiscal_years.append('2024-2025')
     if df.empty:
-        # fiscal_years = ["2024-2025", "2025-2026"] 
-        fiscal_years = ["2025-2026", "2026-2027"] # default fiscal years when no data
+        fiscal_years = ["2024-2025", "2025-2026"]  # default fiscal years when no data
     else:
         fiscal_years = sorted(df["fiscal_year"].unique())
         if len(fiscal_years) == 1:
@@ -2051,19 +2051,27 @@ async def generate_omc_compare_data(filters, drill_state):
     print("year_filters",year_filters)
     fiscal_year_pre = (f"{fiscal_year.FiscalYear.current().start.year}-"
                        f"{fiscal_year.FiscalYear.current().end.year}")
+    print("fiscal_year_pre---->",fiscal_year_pre)
     fiscal_year_last = (f"{fiscal_year.FiscalYear.current().prev_fiscal_year.start.year}-"
                         f"{fiscal_year.FiscalYear.current().prev_fiscal_year.end.year}")
+    print("fiscal_year_last--->",fiscal_year_last)
+
     if year_filters[0]['value'].strip('"') != fiscal_year_pre:
-        fiscal_year_pre = fiscal_year_last
-        fiscal_year_last = str(int(fiscal_year_last.split('-')[0])-1)+'-'+str(int(fiscal_year_last.split('-')[-1]) -1)
-        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": [fiscal_year_pre, fiscal_year_last]})
+        print("coming---->")
+        if abs(int(year_filters[0]['value'].split('-')[0]) - int(fiscal_year_pre.split('-')[0])) != 2:
+             print("coming in if")
+             fiscal_year_pre = fiscal_year_last
+             fiscal_year_last = str(int(fiscal_year_last.split('-')[0])-1)+'-'+str(int(fiscal_year_last.split('-')[-1]) -1)
+             filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": [fiscal_year_pre, fiscal_year_last]})
+        else:
+            fiscal_year_pre = '2024-2025'
+            fiscal_year_last = '2023-2024'
     else:
-        # filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2024-2025", "2025-2026"]})
-        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2025-2026", "2026-2027"]})
+        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2024-2025", "2025-2026"]})
     present_month = datetime.datetime.now().strftime('%b')
-    if present_month.lower() == 'apr':
-                fiscal_year_pre = fiscal_year_last
-                fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
+    #if present_month.lower() == 'apr':
+    #            fiscal_year_pre = fiscal_year_last
+    #            fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
     print("fiscal_year_pre",fiscal_year_pre)
     print("fiscal_year_last",fiscal_year_last)
     
@@ -2215,4 +2223,3 @@ async def generate_industry_recommendations():
     # Generating auto recommendations
     # Compare HPCL last year vs this year lower by state, district, product
     ...
-
