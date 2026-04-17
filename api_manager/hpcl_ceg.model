@@ -4349,8 +4349,10 @@ Model TableAnalytics crud_disable {
         group_by optional list str
         filters optional dict
         date_column optional str
-        date_from optional date
-        date_to optional date
+        date_from optional str
+        date_to optional str
+        date_after_now_interval optional str
+        date_before_now_interval optional str
         aggregations optional list str
         detail_fields optional list str
         order_by optional list str

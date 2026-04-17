@@ -11864,8 +11864,10 @@ class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
     group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     date_column: typing.Optional[str] = pydantic.Field("", **{})
-    date_from: typing.Optional[datetime.date] | None = None
-    date_to: typing.Optional[datetime.date] | None = None
+    date_from: typing.Optional[str] = None
+    date_to: typing.Optional[str] = None
+    date_after_now_interval: typing.Optional[str] = None
+    date_before_now_interval: typing.Optional[str] = None
     aggregations: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     detail_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
