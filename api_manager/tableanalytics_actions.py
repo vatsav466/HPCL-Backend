@@ -2,6 +2,7 @@ from hpcl_ceg_model import *
 import fastapi
 import ast
 import orchestrator.analytics.aggregate_query_gateway as query_aggregate_gateway
+import orchestrator.analytics.date_bounds as date_bounds
 import orchestrator.analytics.session_filters as session_filters
 
 router = fastapi.APIRouter(prefix='/tableanalytics')
@@ -36,4 +37,11 @@ async def tableanalytics_generate_data_aggregations(data: Tableanalytics_Generat
             except Exception as e:
                 print(e)
     _apply_tableanalytics_session_filters(data)
+    try:
+        df, dt = date_bounds.resolve_optional_date_pair(
+            data.get("date_from"), data.get("date_to")
+        )
+        data["date_from"], data["date_to"] = df, dt
+    except ValueError as e:
+        raise fastapi.HTTPException(status_code=422, detail=str(e)) from e
     return await query_aggregate_gateway.query_aggregate_gateway(**data)
