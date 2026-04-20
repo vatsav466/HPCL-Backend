@@ -22,13 +22,18 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
         rpt = urdhva_base.context.context.get('rpt', {})
 
         # Normalize roles (lowercase + remove spaces)
-        user_roles = [r.replace(" ", "").lower() for r in rpt.get("system_role", [])]
+        user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin']
+        allowed = ['admin', 'superadmin', 'creatorsod']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if is_allowed:
+            # Creator SOD was only for TAS
+            if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
+                is_allowed = False
 
         if not is_allowed:
             return {
@@ -120,13 +125,18 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         rpt = urdhva_base.context.context.get('rpt', {})
 
         # Normalize roles (lowercase + remove spaces)
-        user_roles = [r.replace(" ", "").lower() for r in rpt.get("system_role", [])]
+        user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin']
+        allowed = ['admin', 'superadmin', 'creatorsod']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if is_allowed:
+            # Creator SOD was only for TAS
+            if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
+                is_allowed = False
 
         if not is_allowed:
             return {
@@ -231,18 +241,32 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
         else:
             rpt = {}
 
-        if rpt and rpt.get('username','') not in ['admin','superadmin','dnc_user']:
+        user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
+
+        # Roles to check
+        allowed = ['admin', 'superadmin', 'creatorsod', 'dnc_user']
+
+        # Check
+        is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if not is_allowed:
             return {
-                "success": False, 
+                "success": False,
                 "message": "Not allowed to perform this operation"
             }
-        
+
         if not isinstance(data,dict):
             data = data.__dict__
         
-        query = f"""username = '{data.get('username','')}'
-                """
+        query = f"""username = '{data.get('username','')}'"""
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+
+        # Creator SOD was only for TAS
+        if 'creatorsod' in user_roles and user_data['data'][0]['bu'] != ['TAS']:
+            return {
+                "success": False,
+                "message": "Not allowed to perform this operation"
+            }
 
         delete_user = f"""delete from users where id='{user_data['data'][0]['id']}'
                        """
