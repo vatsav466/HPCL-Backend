@@ -4,11 +4,13 @@ import sys
 import socket
 import psycopg2
 import datetime
+import time
 import traceback
 import pandas as pd
 import polars as pl
 import mysql.connector
 import concurrent.futures
+import urdhva_base.utilities
 sys.path.append("/opt/ceg/algo")
 import utilities.helpers as helpers
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -493,6 +495,8 @@ def update_processed_plants(successful_plants):
 
 if __name__=="__main__":
     try:
+        print(f'Starting lpg production sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}')
+        start_time = time.time()
         # Create extraction log table if not exists
         create_extraction_log_table()
         
@@ -568,6 +572,11 @@ if __name__=="__main__":
         else:
             logger.error("No plants were successfully processed, skipping summary generation")
             print("No plants were successfully processed, skipping summary generation")
+
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f"\n{'='*50}\nTOTAL EXECUTION TIME: {total_time:.2f} sec ({total_time/60:.2f} min)\n{'='*50}", flush=True)
+        print(f'Completed lpg production sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}')
     except Exception as e:
         print("*-"*25)
         print("-- Exception in fetching the operations data -- ")
