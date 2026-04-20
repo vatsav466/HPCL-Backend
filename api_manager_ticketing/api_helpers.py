@@ -73,8 +73,10 @@ async def attach_file_common(
 
         try:
             # Save locally
+            content = await upload_file.read()
             with open(saved_file_path, "wb") as f:
-                f.write(await upload_file.read())
+                f.write(content)
+            await upload_file.close()
 
             # Upload to MinIO
             status, minio_path = minio_connector.upload_to_minio(
@@ -87,10 +89,19 @@ async def attach_file_common(
             if status:
                 existing_attachments.append(minio_path)
                 uploaded_paths.append(minio_path)
+            else:
+                print(f"MinIO upload failed for {saved_file_path}")
+        except Exception as e:
+            print(f"Error processing file {upload_file.filename}: {e}")
 
         finally:
-            if os.path.exists(saved_file_path):
-                os.remove(saved_file_path)
+            try:
+                if os.path.exists(saved_file_path):
+                    os.remove(saved_file_path)
+                else:
+                    print(f"File not found for deletion: {saved_file_path}")
+            except Exception as e:
+                print(f"Failed to delete {saved_file_path}: {e}")
 
     # Update DB once
     await model_class(
@@ -128,7 +139,6 @@ async def download_attachment_common(
 
     if isinstance(file_paths, str):
         try:
-            import json
             file_paths = json.loads(file_paths)
         except:
             file_paths = []
