@@ -473,12 +473,12 @@ class Postgresql(BaseAction):
         #         "status": False, "message": "Unable to connect to PostgresSQL",
         #         "data": []
         #     }
-        data = helpers.get_user_details(where_clause)
         if table_name in ['industry_performance','MOM_DAY_LEVEL_DATA','M60_LEVEL_METADATA']:
-        #for filter_key in access_filters:
-        #    print("filter_key",filter_key)
-        #    if filter_key.key =='SBU_Name':
-        #        access_filters[access_filters.index(filter_key)][filter_key.key] == 'sbu_name'
+            data = helpers.get_user_details(where_clause)
+            #for filter_key in access_filters:
+            #    print("filter_key",filter_key)
+            #    if filter_key.key =='SBU_Name':
+            #        access_filters[access_filters.index(filter_key)][filter_key.key] == 'sbu_name'
             for f in data:
                     
                     if table_name == 'industry_performance':
@@ -491,8 +491,17 @@ class Postgresql(BaseAction):
                     #            f.key = "sbu_name"
             if data and table_name == 'industry_performance':
                 data = [rec for rec in data if rec['key'] not in ['SalesArea_Name', 'Region_Name']]
-        if data:
-            where_clause = data
+            if data:
+                where_clause = data
+        else:
+            conditions = await urdhva_base.BasePostgresModel.get_clause_conditions()
+            if where_clause:
+                if isinstance(where_clause, dict):
+                    where_clause =[where_clause]
+            else:
+                where_clause = []
+            if conditions:
+                where_clause.extend(conditions)
         try:
             columns_mapping = dict()
             connection = await self.get_connection()
