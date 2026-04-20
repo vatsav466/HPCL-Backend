@@ -10916,6 +10916,7 @@ class CreateUserCreate(pydantic.BaseModel):
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
     is_ad_user: typing.Optional[bool] = pydantic.Field(False, )
     status: typing.Optional[bool] = pydantic.Field(False, )
+    lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class UpdateUserCreate(pydantic.BaseModel):
@@ -10928,6 +10929,7 @@ class UpdateUserCreate(pydantic.BaseModel):
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     novex_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class Usermaster_Create_UserParams(pydantic.BaseModel):
@@ -11862,8 +11864,10 @@ class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
     group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     date_column: typing.Optional[str] = pydantic.Field("", **{})
-    date_from: typing.Optional[datetime.date] | None = None
-    date_to: typing.Optional[datetime.date] | None = None
+    date_from: typing.Optional[str] = None
+    date_to: typing.Optional[str] = None
+    date_after_now_interval: typing.Optional[str] = None
+    date_before_now_interval: typing.Optional[str] = None
     aggregations: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     detail_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})

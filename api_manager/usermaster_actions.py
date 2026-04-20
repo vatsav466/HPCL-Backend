@@ -148,6 +148,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         
         data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
+        data_dict["manual_user"] = data.get('lock_for_auto_sync')
         params = urdhva_base.QueryParams(q="", limit=0, fields=json.dumps(['name']))
         role = await Roles.get_all(params, resp_type="plain")
         roles = []
