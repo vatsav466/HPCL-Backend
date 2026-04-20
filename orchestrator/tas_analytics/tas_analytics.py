@@ -7218,7 +7218,6 @@ async def get_plc_master_status(data):
 async def verification_meters(data):
     try:
         filters = []
-        not_proved_filters = []
 
         # -------- DEFAULTS --------
         data_required = True
@@ -7244,27 +7243,20 @@ async def verification_meters(data):
                 elif f.key == "data_required":
                     data_required = str(f.value).lower() == "true"
 
-        # -------- DEFAULT YEAR --------
         today = datetime.now()
 
         if not year:
             year = [today.year]
 
-        # -------- DATE HANDLING (MAIN FIX) --------
-        if data.start_date and data.end_date:
-            start_date = data.start_date
-            end_date = data.end_date
-        else:
-            # multiple year support
-            min_year = min(year)
-            max_year = max(year)
+        # -------- DATE RANGE --------
+        min_year = min(year)
+        max_year = max(year)
 
-            start_date = f"{min_year}-01-01"
-            end_date = f"{max_year}-12-31"
+        start_date = f"{min_year}-01-01"
+        end_date = f"{max_year}-12-31"
 
         # -------- CURRENT SEGMENT --------
         month = today.month
-
         if month in [1, 2, 3]:
             current_segment = "Q1"
         elif month in [4, 5, 6]:
@@ -7274,49 +7266,18 @@ async def verification_meters(data):
         else:
             current_segment = "Q4"
 
-        # -------- PROVER NORMALIZATION --------
-        normalized_truck = """
-            CASE 
-                WHEN LOWER(TRIM(truck_number)) LIKE '%prov%' THEN 'PROVER'
-                ELSE TRIM(truck_number)
-            END
-        """
-
-        # -------- FILTER CONDITIONS --------
-        prover_condition = """
-            LOWER(TRIM(truck_number)) LIKE '%prov%'
-        """
-
-        not_prover_condition = """
-            LOWER(TRIM(truck_number)) NOT LIKE '%prov%'
-        """
-
-        filters.append(prover_condition)
-        not_proved_filters.append(not_prover_condition)
-
-        # -------- APPLY FILTERS --------
+        # -------- FILTERS --------
         if sap_id:
-            condition = f"TRIM(sap_id) = '{str(sap_id).strip()}'"
-            filters.append(condition)
-            not_proved_filters.append(condition)
+            filters.append(f"TRIM(sap_id) = '{str(sap_id).strip()}'")
 
         if bcu_number:
-            condition = f"TRIM(bcu_number) = '{str(bcu_number).strip()}'"
-            filters.append(condition)
-            not_proved_filters.append(condition)
+            filters.append(f"TRIM(bcu_number) = '{str(bcu_number).strip()}'")
 
-        # -------- DATE FILTER (FINAL) --------
-        date_condition = f"""
-            created_at::date BETWEEN '{start_date}' AND '{end_date}'
-        """
-        filters.append(date_condition)
-        not_proved_filters.append(date_condition)
+        filters.append(f"created_at::date BETWEEN '{start_date}' AND '{end_date}'")
 
-        # -------- WHERE CLAUSE --------
         where_clause = "WHERE " + " AND ".join(filters)
-        not_where_clause = "WHERE " + " AND ".join(not_proved_filters)
 
-        # -------- SEGMENT EXPRESSION --------
+        # -------- SEGMENT --------
         segment_expr = """
             CASE
                 WHEN EXTRACT(MONTH FROM created_at) BETWEEN 1 AND 3 THEN 'Q1'
@@ -7333,86 +7294,325 @@ async def verification_meters(data):
                 EXTRACT(YEAR FROM created_at) AS year,
                 sap_id,
                 bcu_number,
-                {normalized_truck} AS truck_number,
-                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
-                MIN(created_at) AS first_created_at
+                location_name,
+                SUM(COALESCE(loaded_qty,0)) AS loaded_qty,
+                MIN(created_at) AS created_at
             FROM host_local_loaded_tts
             {where_clause}
-            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
-            ORDER BY segment
+            AND LOWER(TRIM(truck_number)) LIKE '%prov%'
+            GROUP BY segment, year, sap_id, bcu_number, location_name
         """
 
-        # -------- NOT PROVED QUERY --------
-        not_query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                sap_id,
-                bcu_number,
-                {normalized_truck} AS truck_number,
-                SUM(COALESCE(loaded_qty,0)) AS total_loaded_qty,
-                MIN(created_at) AS first_created_at
-            FROM host_local_loaded_tts
-            {not_where_clause}
-            GROUP BY segment, sap_id, bcu_number, EXTRACT(YEAR FROM created_at), {normalized_truck}
-            ORDER BY segment
-        """
-
-        # -------- COUNT QUERIES --------
+        # -------- COUNT QUERY --------
         count_query = f"""
             SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
-            FROM host_local_loaded_tts
-            {where_clause}
-            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
+                segment,
+                COUNT(*) AS total_count
+            FROM (
+                SELECT
+                    {segment_expr} AS segment,
+                    sap_id,
+                    bcu_number
+                FROM host_local_loaded_tts
+                {where_clause}
+                AND LOWER(TRIM(truck_number)) LIKE '%prov%'
+                GROUP BY segment, sap_id, bcu_number
+            ) t
+            GROUP BY segment
             ORDER BY segment
         """
 
-        not_count_query = f"""
-            SELECT
-                {segment_expr} AS segment,
-                EXTRACT(YEAR FROM created_at) AS year,
-                COUNT(DISTINCT (sap_id, bcu_number, {normalized_truck})) AS total_count
-            FROM host_local_loaded_tts
-            {not_where_clause}
-            GROUP BY segment,EXTRACT(YEAR FROM created_at) 
-            ORDER BY segment
-        """
-
-        # -------- EXECUTION --------
+        # -------- EXECUTE --------
         proved_rows = []
-        not_proved_rows = []
-
         if data_required:
             res = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
             proved_rows = res.get("data", [])
 
-            not_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_query, limit=0)
-            not_proved_rows = not_res.get("data", [])
-
         count_res = await hpcl_ceg_model.Alerts.get_aggr_data(count_query, limit=0)
-        not_count_res = await hpcl_ceg_model.Alerts.get_aggr_data(not_count_query, limit=0)
+
+        # =========================================================
+        # DATA STRUCTURE
+        # =========================================================
+
+        sap_wise_data = defaultdict(lambda: {
+            "total_bcus": [],
+            "segments": defaultdict(lambda: {
+                "proved_bcus": defaultdict(list)
+            })
+        })
+
+        # -------- PROVED DATA --------
+        for row in proved_rows:
+            sid = str(row.get("sap_id")).strip()
+            bcu = str(row.get("bcu_number")).strip()
+            segment = row.get("segment")
+
+            sap_wise_data[sid]["segments"][segment]["proved_bcus"][bcu].append({
+                "segment": segment,
+                "year": row.get("year"),
+                "sap_id": sid,
+                "bcu_number": bcu,
+                "location_name": row.get("location_name"),
+                "truck_number": "PROVER",
+                "loaded_qty": row.get("loaded_qty"),
+                "created_at": row.get("created_at")
+            })
+
+        # -------- JSON READ --------
+        json_folder = os.path.abspath(os.path.join(os.getcwd(), "..", "prod"))
+
+        try:
+            json_files = [f for f in os.listdir(json_folder) if f.endswith(".json")]
+        except:
+            json_files = []
+
+        for file in json_files:
+            sid = file.replace(".json", "")
+
+            if sap_id and str(sid) != str(sap_id):
+                continue
+
+            file_path = f"{json_folder}/{file}"
+
+            try:
+                with open(file_path, "r") as f:
+                    json_data = json.load(f)
+
+                for item in json_data.get("data", []):
+                    if item.get("device_type") == "Loading Point":
+
+                        name = item.get("device_name", "")
+
+                        if "BC-" in name:
+                            parts = name.split("_")
+                            if len(parts) > 1:
+                                bcu = parts[1].strip()
+                                sap_wise_data[sid]["total_bcus"].append(bcu)
+
+            except:
+                continue
+
+        # =========================================================
+        # FINAL BUILD
+        # =========================================================
+
+        final_output = defaultdict(list)
+
+        for sid, val in sap_wise_data.items():
+
+            total_set = set(val["total_bcus"])
+
+            for segment, seg_val in val["segments"].items():
+                location_name = None
+
+                for records in seg_val["proved_bcus"].values():
+                    if records:
+                        location_name = records[0].get("location_name")
+                        break
+
+                proved_dict = seg_val["proved_bcus"]
+                proved_keys = set(proved_dict.keys())
+
+                proved_details = []
+                not_proved_details = []
+
+                for bcu in total_set:
+
+                    if bcu in proved_dict:
+                        proved_details.append({
+                            "bcu_number": bcu,
+                            "status": "verification_done",
+                            "records": proved_dict[bcu]
+                        })
+                    else:
+                        not_proved_details.append({
+                            "bcu_number": bcu,
+                            "status": "verification_not_done"
+                        })
+
+                final_output[segment].append({
+                    "sap_id": sid,
+                    "location_name": location_name,   
+                    "total_bcus": len(total_set),
+                    "proved_bcus": len(proved_keys.intersection(total_set)),
+                    "not_proved_bcus": len(total_set - proved_keys),
+                    "proved_details": proved_details,
+                    "not_proved_details": not_proved_details
+                })
+
+        # =========================================================
+        # RESPONSE
+        # =========================================================
 
         return {
             "status": True,
-            "message": "Prover analysis fetched",
+            "message": "Quarter-wise Prover + BCU analysis",
             "current_segment": current_segment,
             "proved_segment_counts": count_res.get("data", []),
-            "not_proved_segment_counts": not_count_res.get("data", []),
-            "proved_data": proved_rows if data_required else [],
-            "not_proved_data": not_proved_rows if data_required else []
+            "quarter_wise_bcu_analysis": final_output
         }
 
     except Exception as e:
-        print(f"Error: {e}")
+        print("ERROR:", e)
         return {
             "status": False,
-            "proved_data": [],
-            "not_proved_data": []
+            "quarter_wise_bcu_analysis": []
         }
 
+
+async def get_recurrent_delay(data):
+    try:
+        data_required = True
+        sap_id = None
+        vehicle_no = None
+
+        start_date = data.start_date
+        end_date = data.end_date
+
+        # -------- FILTERS --------
+        if data.filters:
+            for f in data.filters:
+                if f.key == "data_required":
+                    data_required = str(f.value).lower() == "true"
+                elif f.key == "sap_id":
+                    sap_id = f.value
+                elif f.key == "vehicle_no":
+                    vehicle_no = f.value
+
+        # -------- OPTIONAL FILTERS --------
+        sap_filter = f"AND ts.\"LOCN_CODE\" = '{sap_id}'" if sap_id else ""
+        vehicle_filter_indent = f"AND ir.\"TRUCK_REGNO\" = '{vehicle_no}'" if vehicle_no else ""
+        vehicle_filter_swipe = f"AND ts.\"TRUCK_REGNO\" = '{vehicle_no}'" if vehicle_no else ""
+
+        date_filter = ""
+        if start_date and end_date:
+            date_filter = f"""
+            AND ir."INDENT_DATE"::date BETWEEN '{start_date}' AND '{end_date}'
+            """
+
+        # -------- MAIN QUERY --------
+        final_query = f"""
+        WITH indent_data AS (
+            SELECT
+                ir."TRUCK_REGNO",
+                CASE 
+                    WHEN ir."DELIVERY_DATE"::time = '00:00:00'
+                    THEN (ir."DELIVERY_DATE"::date + (ir."INDENT_DATE"::time)::interval)
+                    ELSE ir."DELIVERY_DATE"
+                END AS tt_time,
+                ir."INDENT_DATE"::date AS indent_date
+            FROM "IMS_SAP"."INDENT_REQUEST" ir
+            WHERE ir."TRUCK_REGNO" IS NOT NULL
+            {vehicle_filter_indent}
+            {date_filter}
+        ),
+
+        swipe_data AS (
+            SELECT
+                ts."TRUCK_REGNO",
+                ts."LOCN_CODE" AS sap_id,
+                ts."READER_ID" AS reader_id,
+                ts."LOADED_ON",
+                ts."LOADED_ON"::date AS loaded_date
+            FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts
+            WHERE ts."TRUCK_REGNO" IS NOT NULL
+            {vehicle_filter_swipe}
+            {sap_filter}
+        ),
+
+        joined_data AS (
+            SELECT
+                s.sap_id,
+                s."TRUCK_REGNO",
+                s.reader_id,
+                s."LOADED_ON",
+                i.tt_time,
+                EXTRACT(EPOCH FROM (s."LOADED_ON" - i.tt_time)) / 60 AS delay_minutes
+            FROM swipe_data s
+            JOIN indent_data i
+              ON s."TRUCK_REGNO" = i."TRUCK_REGNO"
+            AND s.loaded_date = i.indent_date
+            WHERE s.reader_id IN ('R1', 'R3')
+        ),
+
+        avg_data AS (
+            SELECT
+                reader_id,
+                AVG(delay_minutes) AS avg_delay
+            FROM joined_data
+            WHERE delay_minutes > 0   -- ✅ ONLY CHANGE
+            GROUP BY reader_id
+        )
+
+        SELECT j.*, a.avg_delay
+            FROM joined_data j
+            JOIN avg_data a
+            ON j.reader_id = a.reader_id
+            WHERE j.delay_minutes > 0
+            AND j.delay_minutes > a.avg_delay
+        """
+
+        # -------- EXECUTION --------
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
+        rows = result.get("data", [])
+
+        # -------- FORMAT FUNCTION --------
+        def format_delay(minutes):
+            if minutes is None:
+                return None
+
+            total_minutes = round(abs(minutes))
+            hours = total_minutes // 60
+            mins = total_minutes % 60
+
+            if minutes < 0:
+                return f"{hours} hr {mins} min Early"
+            else:
+                return f"{hours} hr {mins} min Delay"
+
+        # -------- SPLIT DATA --------
+        r1_data = []
+        r3_data = []
+
+        r1_avg = None
+        r3_avg = None
+
+        for row in rows:
+            row["delay_minutes"] = round(row["delay_minutes"], 2)
+            row["delay_time"] = format_delay(row["delay_minutes"])
+            row["avg_delay"] = round(row["avg_delay"], 2)
+
+            if row["reader_id"] == "R1":
+                r1_data.append(row)
+                r1_avg = row["avg_delay"]
+            elif row["reader_id"] == "R3":
+                r3_data.append(row)
+                r3_avg = row["avg_delay"]
+
+        # -------- RESPONSE --------
+        return {
+            "status": True,
+            "message": "Recurrent delay analysis (Above Average)",
+            "r1_avg_delay": r1_avg,
+            "r3_avg_delay": r3_avg,
+
+            "r1_delay_count": [{"total_count": len(r1_data)}],
+            "r3_delay_count": [{"total_count": len(r3_data)}],
+
+            "r1_delay_data": r1_data if data_required else [],
+            "r3_delay_data": r3_data if data_required else []
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "error": str(e),
+            "r1_delay_count": [],
+            "r3_delay_count": [],
+            "r1_delay_data": [],
+            "r3_delay_data": []
+        }
+        
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -7438,7 +7638,8 @@ AnalyticsModelMapping = {
     "Lrc_Master_status":get_master_status,
     "Analog 24 hr window" : location_table_24h_status,
     "Plc_Master_status":get_plc_master_status,
-    "Verification_of_meters":verification_meters
+    "Verification_of_meters":verification_meters,
+    "Recurrent_Delay":get_recurrent_delay
 
 }
 

@@ -36,6 +36,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -79,6 +90,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
@@ -1317,6 +1339,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -1363,6 +1396,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
@@ -1417,6 +1461,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -1466,6 +1521,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
@@ -1556,6 +1622,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -1602,6 +1679,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
@@ -1656,6 +1744,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -1702,6 +1801,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
@@ -1819,6 +1929,17 @@ async def sync_user_roles():
                 ]
             },
             {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
+                    }
+                ]
+            },
+            {
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
@@ -1865,6 +1986,17 @@ async def sync_user_roles():
                                 "title": "TAS Dashboard"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Ticketing Dashboard"
+                    },
+                    {
+                        "title": "PM Orders"
                     }
                 ]
             },
