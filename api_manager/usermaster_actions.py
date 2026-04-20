@@ -148,7 +148,9 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         
         data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
-        data_dict["manual_user"] = data.get('lock_for_auto_sync')
+        if 'lock_for_auto_sync' in data:
+            data_dict["manual_user"] = data['lock_for_auto_sync']
+            del data['lock_for_auto_sync']
         params = urdhva_base.QueryParams(q="", limit=0, fields=json.dumps(['name']))
         role = await Roles.get_all(params, resp_type="plain")
         roles = []
@@ -157,7 +159,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         
         changes = []
         for key, new_value in data_dict.items():
-            old_value = user_data['data'][0][key]
+            old_value = user_data['data'][0].get(key)
 
             # Condition only for novex_role
             if key == "novex_role":
