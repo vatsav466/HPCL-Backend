@@ -170,6 +170,13 @@
                     "sensor_type": "MOV OL"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-01.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "MOV-01",
+                    "sensor_type": "MOV OL"
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "MOV.MOV-02.OPEN_STATUS",
                     "normal_value": "0",
@@ -365,6 +372,13 @@
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.MOV-05.OPEN_STATUS",
                     "normal_value": "0",
+                    "sensor_id": "MOV-05",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-05.REMOTE_STATUS",
+                    "normal_value": "1",
                     "sensor_id": "MOV-05",
                     "sensor_type": "MOV OL"
                 },
@@ -568,6 +582,13 @@
                     "sensor_type": "MOV OL"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-08.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "MOV-08",
+                    "sensor_type": "MOV OL"
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "MOV.MOV-07.OPEN_STATUS",
                     "normal_value": "0",
@@ -763,6 +784,13 @@
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.MOV-11.OPEN_STATUS",
                     "normal_value": "0",
+                    "sensor_id": "MOV-11",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-11.REMOTE_STATUS",
+                    "normal_value": "1",
                     "sensor_id": "MOV-11",
                     "sensor_type": "MOV OL"
                 },
@@ -966,6 +994,13 @@
                     "sensor_type": "MOV OL"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-13.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "MOV-13",
+                    "sensor_type": "MOV OL"
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "MOV.MOV-14.OPEN_STATUS",
                     "normal_value": "0",
@@ -1165,6 +1200,13 @@
                     "sensor_type": "MOV OL"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-17.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "MOV-17",
+                    "sensor_type": "MOV OL"
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "MOV.MOV-18.OPEN_STATUS",
                     "normal_value": "0",
@@ -1358,6 +1400,13 @@
                 },
                 {
                     "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -1563,6 +1612,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1756,6 +1812,13 @@
                 },
                 {
                     "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -1961,6 +2024,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2154,6 +2224,13 @@
                 },
                 {
                     "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2359,6 +2436,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2552,6 +2636,13 @@
                 },
                 {
                     "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2753,6 +2844,13 @@
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.MOV-20.OPEN_STATUS",
                     "normal_value": "0",
+                    "sensor_id": "MOV-20",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV REMOTE STATUS OL",
+                    "sensor_tag": "MOV.MOV-20.REMOTE_STATUS",
+                    "normal_value": "1",
                     "sensor_id": "MOV-20",
                     "sensor_type": "MOV OL"
                 },
