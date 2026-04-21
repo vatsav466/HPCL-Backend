@@ -1,15 +1,25 @@
 import urdhva_base
 import datetime
+import hpcl_ceg_model
+import os
 import pandas as pd
 import numpy as np
 import urdhva_base.utilities
 import matplotlib.pyplot as plt
+import polars as pl
+import xlsxwriter
+import socket
+import psycopg2
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import utilities.helpers as helpers
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.reporting_services.lpg_reporting as lpg_reporting
+import orchestrator.dbconnector.credential_loader as credential_loader
 
+
+creds = credential_loader.get_credentials('APP_DB')
 
 lpg_day_wise_trend_exl_path = ""
 monthly_score_path = ""
@@ -17,6 +27,13 @@ plant_wise_score_path=""
 lpg_va_path = ""
 lpg_pq_path = ""
 
+DB_CONFIG = {
+    "host": creds["host"],
+    "port": creds["port"],
+    "database": creds["database"],
+    "user": creds["user"],
+    "password": creds["password"]
+}
 
 async def get_lpg_rejection():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
@@ -642,4 +659,260 @@ async def get_vts_lpg_blocked_counts():
         "lpg_day_wise_trend_exl_path": lpg_day_wise_trend_exl_path,
         "lpg_va_path": lpg_va_path,
         "lpg_pq_path": lpg_pq_path
+    }
+
+
+def check_socket(host, port):
+    try:
+        sock = socket.socket()
+        sock.settimeout(5)
+        result = sock.connect_ex((host, int(port)))
+        sock.close()
+        return result == 0
+    except Exception as e:
+        return False
+
+
+def get_tables(db_type):
+    if db_type == "mysql":
+        return "gd_pt_data", "production_data"
+    return "event_log", "production_log"
+
+
+def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False):
+    cur = conn.cursor()
+    start_date = datetime.datetime.now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    end_date = start_date + datetime.timedelta(days=1)
+    if is_central:
+
+        cur.execute("""
+            SELECT COUNT(*) FROM event_log
+            WHERE process_date >= %s AND process_date < %s
+            AND LOWER("Plant Name") = LOWER(%s)
+        """, (start_date, end_date, plant_name))
+        event_count = cur.fetchone()[0]
+
+        cur.execute("""
+            SELECT COUNT(*) FROM production_log
+            WHERE process_date >= %s AND process_date < %s
+            AND LOWER("Plant Name") = LOWER(%s)
+        """, (start_date, end_date, plant_name))
+        prod_count = cur.fetchone()[0]
+
+        cur.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT COUNT(*) OVER (PARTITION BY process_date, production_log_id) AS cnt
+                FROM production_log
+                WHERE process_date >= %s AND process_date < %s
+                AND LOWER("Plant Name") = LOWER(%s)
+            ) t WHERE cnt > 1
+        """, (start_date, end_date, plant_name))
+        prod_dup = cur.fetchone()[0]
+
+        cur.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT COUNT(*) OVER (PARTITION BY process_date, event_log_id) AS cnt
+                FROM event_log
+                WHERE process_date >= %s AND process_date < %s
+                AND LOWER("Plant Name") = LOWER(%s)
+            ) t WHERE cnt > 1
+        """, (start_date, end_date, plant_name))
+        event_dup = cur.fetchone()[0]
+
+    else:
+        cur.execute(f"""
+            SELECT COUNT(*) FROM {event_table}
+            WHERE process_date >= %s AND process_date < %s
+        """, (start_date, end_date))
+        event_count = cur.fetchone()[0]
+
+        cur.execute(f"""
+            SELECT COUNT(*) FROM {prod_table}
+            WHERE process_date >= %s AND process_date < %s
+        """, (start_date, end_date))
+        prod_count = cur.fetchone()[0]
+
+        cur.execute(f"""
+            SELECT COUNT(*) FROM (
+                SELECT COUNT(*) OVER (PARTITION BY process_date, production_log_id) AS cnt
+                FROM {prod_table}
+                WHERE process_date >= %s AND process_date < %s
+            ) t WHERE cnt > 1
+        """, (start_date, end_date))
+        prod_dup = cur.fetchone()[0]
+
+        cur.execute(f"""
+            SELECT COUNT(*) FROM (
+                SELECT COUNT(*) OVER (PARTITION BY process_date, event_log_id) AS cnt
+                FROM {event_table}
+                WHERE process_date >= %s AND process_date < %s
+            ) t WHERE cnt > 1
+        """, (start_date, end_date))
+        event_dup = cur.fetchone()[0]
+
+    cur.close()
+    return event_count, event_dup, prod_count, prod_dup
+
+
+def process_plant(plant):
+    plant_name = plant["PlantName"]
+    host = plant["host_ip"]
+    port = plant["port"]
+    db_type = plant.get("db_type", "postgres")
+
+    connection = check_socket(host, port)
+    if not connection:
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, "Socket Failed"]
+
+    try:
+        event_table, prod_table = get_tables(db_type)
+        # Plant DB
+        conn = psycopg2.connect(
+            host=host,
+            database=plant["db_database"],
+            user=plant["db_user"],
+            password=plant["db_password"],
+            port=port
+        )
+
+        p_event, p_event_dup, p_prod, p_prod_dup = get_counts(conn, event_table, prod_table)
+        conn.close()
+
+        # Central DB
+        conn = psycopg2.connect(**DB_CONFIG)
+
+        c_event, c_event_dup, c_prod, c_prod_dup = get_counts(conn, None, None, plant_name, True)
+        conn.close()
+
+        return [
+            plant_name, host, True, p_event, p_event_dup, p_prod, p_prod_dup,
+            c_event, c_event_dup, c_prod, c_prod_dup, "Connected"
+        ]
+
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg:
+            status = "Timeout"
+        elif "password authentication failed" in error_msg:
+            status = "Auth Failed"
+        elif "could not connect" in error_msg or "connection refused" in error_msg:
+            status = "Connection Failed"
+        elif "ssl negotiation" in error_msg or "invalid response to ssl" in error_msg:
+            status = "DB Mismatch"
+        elif "server closed the connection unexpectedly" in error_msg:
+            status = "Connection Closed"
+        else:
+            status = "Unknown Error"
+        print(f"  Error processing {plant_name}: {e}")
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, status]
+
+
+async def log_count_excel():
+    plants = pl.read_csv(os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..',
+                                          'orchestrator', 'sync_services','lpg',
+                                          'LPG_PLANTS_CREDENTIALS.csv'))
+    plants.columns = [c.strip() for c in plants.columns]
+
+    results = []
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [
+            executor.submit(process_plant, plant)
+            for plant in plants.iter_rows(named=True)
+        ]
+        for future in as_completed(futures):
+            result = future.result()
+            results.append(result)
+
+    output_path = "/tmp/lpg_logs_count.xlsx"
+    workbook = xlsxwriter.Workbook(output_path)
+    worksheet = workbook.add_worksheet("Count")
+
+    # ===== Formats =====
+    header_format = workbook.add_format({
+        "bold": True,
+        "align": "center",
+        "valign": "middle",
+        "border": 1
+    })
+
+    cell_format = workbook.add_format({
+        "border": 1,
+        "align": "center"
+    })
+
+    fail_format = workbook.add_format({
+        "border": 1,
+        "align": "center",
+        "font_color": "#9d0101",
+        "bold": True
+    })
+
+    dup_format = workbook.add_format({
+        "border": 1,
+        "align": "center",
+        "bg_color": "#FFF3CD",
+        "font_color": "#856404"
+    })
+
+    zero_log_format = workbook.add_format({
+        "border": 1,
+        "align": "center",
+        "bg_color": "#F8D7DA",
+        "font_color": "#721C24"
+    })
+
+    # ===== Headers (A1 style) =====
+    worksheet.merge_range("A1:A2", "Location", header_format)
+    worksheet.merge_range("B1:B2", "IP", header_format)
+    worksheet.merge_range("C1:C2", "Connection", header_format)
+
+    worksheet.merge_range("D1:G1", "Plant DB", header_format)
+    worksheet.write("D2", "Event_log", header_format)
+    worksheet.write("E2", "Event_duplicates", header_format)
+    worksheet.write("F2", "Production_log", header_format)
+    worksheet.write("G2", "Production_duplicates", header_format)
+
+    worksheet.merge_range("H1:K1", "Central DB", header_format)
+    worksheet.write("H2", "Event_log", header_format)
+    worksheet.write("I2", "Event_duplicates", header_format)
+    worksheet.write("J2", "Production_log", header_format)
+    worksheet.write("K2", "Production_duplicates", header_format)
+
+    worksheet.merge_range("L1:L2", "Status", header_format)
+
+    # ===== Write Data =====
+    for row_idx, row in enumerate(results, start=2):
+
+        log_cols = [3, 5, 7, 9]
+        duplicate_cols = [4, 6, 8, 10]
+        status = row[-1] if len(row) == 12 else None
+        connection = row[2]
+
+        for col_idx, value in enumerate(row):
+            fmt = cell_format
+
+            if col_idx == 2:
+                fmt = cell_format if connection else fail_format
+            elif col_idx == 11:
+                fmt = cell_format if status == "Connected" else fail_format
+            elif col_idx in log_cols and value in (0, "0"):
+                fmt = zero_log_format
+            elif col_idx in duplicate_cols and isinstance(value, (int, float)) and value > 0:
+                fmt = dup_format
+
+            worksheet.write(row_idx, col_idx, value, fmt)
+
+    # ===== Column Width =====
+    worksheet.set_column("A:A", 18)
+    worksheet.set_column("B:B", 20)
+    worksheet.set_column("C:C", 14)
+    worksheet.set_column("D:K", 18)
+    worksheet.set_column("L:L", 22)
+
+    workbook.close()
+
+    return {
+        "lpg_log_count": output_path
     }
