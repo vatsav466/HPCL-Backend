@@ -6751,6 +6751,11 @@ async def location_table_24h_status(data=None):
     bu = "TAS"
 
     TABLES = [
+        "host_sick_tts",
+        "host_suspected_loads",
+        "host_plt_details",
+        "host_day_end_details",
+        "host_day_end_summary",
         "host_unauthorised_flow",
         "host_cancelled_tts",
         "host_k_factor_changes",
