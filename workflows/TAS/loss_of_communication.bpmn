@@ -61,7 +61,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_1ibmv7f" sourceRef="Activity_1ysy1g1" targetRef="Event_0bdzh7s" />
   </bpmn:process>
-  <bpmn:message id="Message_3f7n145" name="interLockOk" />
+  <bpmn:message id="Message_3f7n145" name="Healthy" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="LossOfCommunication">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">

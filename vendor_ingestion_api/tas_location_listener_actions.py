@@ -8,6 +8,7 @@ from orchestrator.alerting.alert_manager import create_alert, close_alert
 import hpcl_ceg_model
 import traceback
 import pytz
+import httpx
 from orchestrator.alerting.listener.tas_duplicate_alert_check import duplicate_loss_of_comm_check
 
 router = fastapi.APIRouter(prefix='/tas_location_listener')
@@ -99,69 +100,62 @@ async def tas_location_listener_get_agent_comm_status(data: Tas_Location_Listene
 
         await TasAgentCommStatusCreate(**data1).create()
 
-        # if status == "failed":
-        #         processed_time = datetime.datetime.now(datetime.timezone.utc)
-        #         alert_history = [{
-        #                         "processed_time": processed_time.isoformat(),
-        #                         "allocated_time": processed_time.isoformat(),
-        #                         "action_msg": message,
-        #                         "action_type": "InterlockCreated",
-        #                     }]
+        if status == "failed":
+                processed_time = datetime.datetime.now(datetime.timezone.utc)
+                alert_history = [{
+                                "processed_time": processed_time.isoformat(),
+                                "allocated_time": processed_time.isoformat(),
+                                "action_msg": message,
+                                "action_type": "InterlockCreated",
+                            }]
                 
-        #         alert_data = {
-        #                 "bu" : "TAS",
-        #                 "sap_id": sap_id,
-        #                 "sop_id": "SOP099",
-        #                 "interlock_name" : "Loss Of Communication",
-        #                 "device_name" : "Novex Communication Loss",
-        #                 "alert_type": "TAS",
-        #                 "device_type": message,
-        #                 "severity": "critical",
-        #                 "alert_id": str(uuid.uuid1()),
-        #                 "alert_history": alert_history,
+                alert_data = {
+                        "bu" : "TAS",
+                        "sap_id": sap_id,
+                        "sop_id": "SOP099",
+                        "interlock_name" : "Loss Of Communication",
+                        "device_name": "Communication Loss",
+                        "alert_type": "TAS",
+                        "device_type": message,
+                        "severity": "critical",
+                        "alert_id": str(uuid.uuid1()),
+                        "alert_history": alert_history,
                                 
-        #                 }
+                        }
                 
-        #         is_duplicate = await duplicate_loss_of_comm_check(alert_data)
-        #         if is_duplicate:                     
-        #             success = await create_alert(alert_data)
-        #             if success:
-        #                     print(f"Alert created successfully for device: {alert_data['device_name']}")
-        #             else:
-        #                     print(f"Failed to create alert for device: {alert_data['device_name']}")
+                not_duplicate = await duplicate_loss_of_comm_check(alert_data)
+                if not_duplicate:                     
+                    success = await create_alert(alert_data)
+                    if success:
+                            print(f"Alert created successfully for device: {alert_data['device_name']}")
+                    else:
+                            print(f"Failed to create alert for device: {alert_data['device_name']}")
 
-        # if status == "success":
-        #         #close alert
-        #         query =f"device_name = 'Novex Communication Loss' and bu = 'TAS' and  sap_id = '{sap_id}' and alert_section = 'TAS' and alert_status != 'Close'"
-        #         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
-        #         resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
-        #         if not resp.get("data"):
-        #             print("No alerts found to close.")
-        #             return
-        #         else:
-        #             for alert in resp["data"]:
-        #                 processed_time = datetime.datetime.now(datetime.timezone.utc)
-        #                 alert_history = [{
-        #                             "processed_time": processed_time.isoformat(),
-        #                             "allocated_time": processed_time.isoformat(),
-        #                             "action_msg": message,
-        #                             "action_type": "InterlockCleared",
-        #                         }]
-        #                 alert_data = {
-        #                         "bu": alert.get("bu"),
-        #                         "sap_id": alert.get("sap_id"),
-        #                         "sop_id": alert.get("sop_id"),
-        #                         "alert_type": 'TAS',
-        #                         "interlock_name": alert.get("interlock_name", ""),
-        #                         "alert_id": alert.get("external_id", ""),
-        #                         "device_name": alert.get("device_name", ""),
-        #                         "alert_history": alert_history,
-        #                     }
-                        
-        #                 try:
-        #                     success = await close_alert(alert_data)
-        #                     print(f"Closed alert with external_id: {alert_data["alert_id"]} | Success: {success}")
-        #                 except Exception as e:
-        #                     print(f"Error closing alert with external_id: {alert_data["alert_id"]} | Exception: {e}")
-        #                     print(traceback.format_exc())
+        if status == "success":
+                #close alert
+                query =f"interlock_name = 'Loss Of Communication' and bu = 'TAS' and  sap_id = '{sap_id}' and alert_section = 'TAS' and alert_status != 'Close'"
+                params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
+                resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+                if not resp.get("data"):
+                    print("No alerts found to close.")
+                    return
+                async with httpx.AsyncClient() as client:
+                    for alert in resp["data"]:
+                        process_instance_id = alert.get("workflow_instance_id")
+                        workflow_url = alert.get("workflow_url")
+                        if process_instance_id and workflow_url:
+                            camunda_payload = {
+                                    "messageName": "Healthy",
+                                    "processInstanceId": process_instance_id
+                                }
+                            
+                            url = f"{workflow_url}/engine-rest/message"
+                            print(f"url----> {url}")
+                            try:
+                                response = await client.post(url=url, json=camunda_payload, timeout=10 )
+                                if response.status_code in [200, 204]:
+                                    print(f"Sent Healthy message to Camunda for alert ID: {alert.get('unique_id')}")
 
+                            except Exception as e:
+                                print(f"Error while sending message to Camunda for alert ID {alert.get('unique_id')}: {str(e)}")
+                                traceback.print_exc()
