@@ -7402,6 +7402,7 @@ async def verification_meters(data):
         # =========================================================
 
         final_output = defaultdict(list)
+        non_proved_segment_counts = defaultdict(int)   
 
         for sid, val in sap_wise_data.items():
 
@@ -7431,16 +7432,25 @@ async def verification_meters(data):
                         })
                     else:
                         not_proved_details.append({
+                            "sap_id": sid,
                             "bcu_number": bcu,
                             "status": "verification_not_done"
                         })
+                # calculate non proved count
+                not_proved_count = len(not_proved_details)
 
+                # calculate proved count (optional but clean)
+                proved_count = len(proved_details)
+
+                # accumulate segment-wise total
+                non_proved_segment_counts[segment] += not_proved_count
+                
                 final_output[segment].append({
                     "sap_id": sid,
-                    "location_name": location_name,   
+                    "location_name": location_name,
                     "total_bcus": len(total_set),
-                    "proved_bcus": len(proved_keys.intersection(total_set)),
-                    "not_proved_bcus": len(total_set - proved_keys),
+                    "proved_bcus": proved_count,
+                    "not_proved_bcus": not_proved_count,
                     "proved_details": proved_details,
                     "not_proved_details": not_proved_details
                 })
@@ -7454,6 +7464,13 @@ async def verification_meters(data):
             "message": "Quarter-wise Prover + BCU analysis",
             "current_segment": current_segment,
             "proved_segment_counts": count_res.get("data", []),
+
+            # ADDED THIS BLOCK
+            "not_proved_segment_counts": [
+                {"segment": seg, "total_count": count}
+                for seg, count in non_proved_segment_counts.items()
+            ],
+
             "quarter_wise_bcu_analysis": final_output
         }
 
@@ -7463,6 +7480,7 @@ async def verification_meters(data):
             "status": False,
             "quarter_wise_bcu_analysis": []
         }
+
 
 
 async def get_recurrent_delay(data):
