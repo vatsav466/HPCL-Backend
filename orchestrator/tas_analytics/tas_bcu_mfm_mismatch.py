@@ -2,7 +2,7 @@ import asyncio
 import json
 import urdhva_base
 import polars as pl
-import orchestrator.alerting.alert_factory as alert_factory
+from orchestrator.alerting import alert_factory
 import hpcl_ceg_model 
 
 
@@ -12,13 +12,10 @@ import hpcl_ceg_model
 # Remove forbidden fields that crash Pydantic
 # ===============================================
 def sanitize_alert_data(alert_data):
-    # These fields MUST exist but be NULL
-    alert_data["region"] = None
-    alert_data["district"] = None
-    alert_data["terminal_plant_id"] = None
-    alert_data["terminal_plant_name"] = None
-    alert_data["sales_area"] = None
-    alert_data["category"] = None
+    for key in ["region", "district", "terminal_plant_id", "terminal_plant_name", 
+                "sales_area", "category"]:
+        if not alert_data.get(key):
+            alert_data[key] = None
     return alert_data
 
 # ===============================================
