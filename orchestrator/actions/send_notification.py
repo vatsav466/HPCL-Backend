@@ -436,7 +436,7 @@ class SendNotification:
             "vehicle_number": self.alert_data.get("vehicle_number", ""),
             "location_name": self.alert_data.get("location_name", ""),
             "contract_valid_upto": self.alert_data.get("contract_valid_upto", "").strftime("%d.%m.%Y") if self.alert_data.get("contract_valid_upto") else "",
-            "days_remaining": int(self.params.get("days_remaining", 0)),
+            "days_remaining": int(self.params.get("days_remaining", 0) or 0),
         }
         return self.base_alert_data
 
