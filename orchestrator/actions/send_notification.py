@@ -774,7 +774,7 @@ class SendNotification:
                 cc_recipients=cc_recipients,
                 subject=subject,
                 body=body,
-                force_send=False,
+                force_send=True,
                 html_content=True,
             )
             logger.info(
@@ -872,7 +872,7 @@ class SendNotification:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 if self.mail_recipients:
-                    res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
+                    res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
                     return res
                 
             if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
@@ -883,9 +883,8 @@ class SendNotification:
                     self.mail_recipients = tas_recipients
                     tas_cc = []
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        # tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
-                        tas_cc = ["mohith.p@algofusiontech.com"]
-                    
+                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
+
                     args = {
                         "recipients": self.mail_recipients,
                         "subject": self.subject,
@@ -937,7 +936,7 @@ class SendNotification:
                                                                     recipients=self.mail_recipients, 
                                                                     cc_recipients=self.cc_recipients, 
                                                                     subject=self.subject, body=self.body, 
-                                                                    force_send=False, html_content=True)
+                                                                    force_send=True, html_content=True)
                     return res
             if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing']:
                 await self.update_notication_audit_log()
@@ -948,7 +947,7 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject, 
                                                                     body=self.body, 
-                                                                    force_send=False,
+                                                                    force_send=True,
                                                                     html_content=True)
                     return res
                 
@@ -958,8 +957,7 @@ class SendNotification:
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        # tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
-                        tas_cc = ["mohith.p@algofusiontech.com"]
+                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
                     
                     args = {
                         "recipients": self.mail_recipients,
@@ -1028,7 +1026,7 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject,
                                                                     body=self.body, 
-                                                                    force_send=False,
+                                                                    force_send=True,
                                                                     html_content=True)
                     return res
             self.mail_recipients = ['default@example.com']
