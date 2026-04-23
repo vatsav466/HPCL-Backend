@@ -786,6 +786,8 @@ class SendNotification:
         except Exception as e:
             logger.error(f"_send_vts_device_expiry_notification error: {str(e)}")
             logger.error(traceback.format_exc())
+    
+
 
     async def get_tas_recipients(self):
         try:
@@ -876,9 +878,25 @@ class SendNotification:
             if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
                 await self.update_notication_audit_log()
                 tas_recipients = await self.get_tas_recipients()
+
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
-                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    tas_cc = []
+                    if self.alert_data['interlock_name'] in ['Loss Of Communication']:
+                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
+
+                    args = {
+                        "recipients": self.mail_recipients,
+                        "subject": self.subject,
+                        "body": self.body,
+                        "force_send": True,
+                        "html_content": True
+                    }
+
+                    if tas_cc:
+                        args["cc_recipients"] = tas_cc
+
+                    res = await notification_module.publish_message(**args)
                     return res
             
             self.mail_recipients = ['default@example.com']
@@ -938,7 +956,21 @@ class SendNotification:
                 tas_recipients = await self.get_tas_recipients()
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
-                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    if self.alert_data['interlock_name'] in ['Loss Of Communication']:
+                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
+                    
+                    args = {
+                        "recipients": self.mail_recipients,
+                        "subject": self.subject,
+                        "body": self.body,
+                        "force_send": True,
+                        "html_content": True
+                    }
+
+                    if tas_cc:
+                        args["cc_recipients"] = tas_cc
+
+                    res = await notification_module.publish_message(**args)
                     return res
                 
             self.mail_recipients = ['default@example.com']
