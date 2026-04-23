@@ -104,7 +104,7 @@ async def publish_daily_novex_status_email():
     await send_notification(
         template_name="hp_pay.html",
         to_recipients=["rajkumar@hpcl.in","handakk@hpcl.in","shubhendugupta@hpcl.in"],
-        cc_recipients=["debeshp@hpcl.in"],
+        cc_recipients=["gkpatel@hpcl.in"],
         bcc_recipients=["rujutadoiphode@hpcl.in","purushm@hpcl.in","ashish.jayaswal@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
         inline_images={
