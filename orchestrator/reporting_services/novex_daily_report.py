@@ -547,7 +547,7 @@ async def send_notification(notification_data):
     # Send email
     ins = await notification_factory.get_notification_module("email")
     for recipient in [
-        ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
+        ["sanjayk@hpcl.in", "gkpatel@hpcl.in","gargam@hpcl.in"],
         ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
         ["rujutadoiphode@hpcl.in"],
         ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
