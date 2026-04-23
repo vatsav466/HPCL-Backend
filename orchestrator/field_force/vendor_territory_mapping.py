@@ -166,13 +166,18 @@ def get_user_perspectives():
     if not urdhva_base.ctx.exists():
         return []
     rpt = urdhva_base.context.context.get("rpt", {})
+    territory_mapping = []
+    territory, key = 'bu', 'bu'
+    if key in rpt and rpt[key]:
+        territory_mapping.append({"territory": territory, "values": rpt[key]}) 
     for territory, key in _USER_TERRITORY_KEYS:
         value = rpt.get(key)
         if value:
             # TODO: Compare with role (novex_role) for secondary validation
-            return [{"territory": territory, "values": value}]
+            territory_mapping.append({"territory": territory, "values": value})
+            return territory_mapping
     # TODO: Check role for secondary validation
-    return []
+    return territory_mapping
 
 
 def get_role_based_filters(vendor):

@@ -2602,10 +2602,10 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "LPG Insights"
@@ -2719,10 +2719,10 @@ async def sync_user_roles():
                 ]
             },
 {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "LPG Insights"
@@ -2970,10 +2970,10 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "LPG Insights"
@@ -3083,10 +3083,10 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "LPG Insights"
@@ -3264,7 +3264,7 @@ async def sync_user_roles():
     "Sales Performance": {
         "allowed_pages": [
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
                         "title": "Sales Performance"
@@ -3369,10 +3369,10 @@ async def sync_user_roles():
                 ]
             },
            {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "Retail Insights"
@@ -3419,10 +3419,10 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "Retail Insights"
@@ -3508,13 +3508,13 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
-                        "title": "Retail Insights"
+                            "title": "Retail Insights"
                         }
           ]
                     }
@@ -3743,10 +3743,10 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Sales Performance",
+                "menu_name": "Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance",
+                        "title": "Sales Performance",
                         "allowed_sub_menus": [
                         {
                         "title": "Retail Insights"
