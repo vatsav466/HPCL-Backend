@@ -8600,6 +8600,141 @@
                     "name": "generate_data_aggregations"
                 }
             ]
+        },
+        {
+            "name": "tankdiadetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TankDiaDetails",
+            "attributes": {},
+            "uris": [
+                "/api/tankdiadetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tankdiadetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TankDiaDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tankdiadetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tankdiadetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TankDiaDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tankdiadetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tankdetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TankDetails",
+            "attributes": {},
+            "uris": [
+                "/api/tankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_tank_details"
+                }
+            ]
+        },
+        {
+            "name": "tankdetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TankDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_tank_details"
+                }
+            ]
+        },
+        {
+            "name": "tankdetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TankDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_tank_details"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9493,6 +9628,10 @@
         {
             "name": "generate_data_aggregations",
             "displayName": "generate_data_aggregations"
+        },
+        {
+            "name": "get_tank_details",
+            "displayName": "get_tank_details"
         }
     ]
 }

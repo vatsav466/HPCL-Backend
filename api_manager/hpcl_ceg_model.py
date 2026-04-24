@@ -11873,6 +11873,98 @@ class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
     order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     skip: typing.Optional[int] = pydantic.Field(0, **{})
+        
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+class TankDiaDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tank_dia_details'
+    
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    state: Mapped[str] = mapped_column("state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_sap_code: Mapped[str] = mapped_column("location_sap_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    tank_no: Mapped[str] = mapped_column("tank_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    product: Mapped[str] = mapped_column("product", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    type: Mapped[str] = mapped_column("type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    gross_capacity_kl: Mapped[float] = mapped_column("gross_capacity_kl", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    peso_capacity_kl: Mapped[float] = mapped_column("peso_capacity_kl", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pumpable_volume_kl: Mapped[float] = mapped_column("pumpable_volume_kl", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    dead_stock_kl: Mapped[float] = mapped_column("dead_stock_kl", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    diameter: Mapped[float] = mapped_column("diameter", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    height: Mapped[float] = mapped_column("height", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_specific_limitations: Mapped[str] = mapped_column("location_specific_limitations", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    kl_per_mm: Mapped[float] = mapped_column("kl_per_mm", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class TankDiaDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tank_dia_details'
+    
+    zone: str
+    state: str
+    location_name: str
+    location_sap_code: str
+    tank_no: str
+    product: str
+    type: str
+    gross_capacity_kl: float
+    peso_capacity_kl: float
+    pumpable_volume_kl: float
+    dead_stock_kl: float
+    diameter: float
+    height: float
+    location_specific_limitations: str
+    kl_per_mm: float
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TankDiaDetailsSchema
+        upsert_keys = []
+
+
+class TankDiaDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tank_dia_details'
+    
+    zone: typing.Optional[str] | None = None
+    state: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    location_sap_code: typing.Optional[str] | None = None
+    tank_no: typing.Optional[str] | None = None
+    product: typing.Optional[str] | None = None
+    type: typing.Optional[str] | None = None
+    gross_capacity_kl: typing.Optional[float] | None = None
+    peso_capacity_kl: typing.Optional[float] | None = None
+    pumpable_volume_kl: typing.Optional[float] | None = None
+    dead_stock_kl: typing.Optional[float] | None = None
+    diameter: typing.Optional[float] | None = None
+    height: typing.Optional[float] | None = None
+    location_specific_limitations: typing.Optional[str] | None = None
+    kl_per_mm: typing.Optional[float] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TankDiaDetailsSchema
+        upsert_keys = []
+
+
+class TankDiaDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[TankDiaDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tankdetails_Get_Tank_DetailsParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

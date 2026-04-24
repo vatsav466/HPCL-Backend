@@ -2292,8 +2292,14 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await NaturalGasGVConnections.get_all(params, skip_secrets=True)
 
 
+@router.get('/tankdiadetails/{id}', response_model=TankDiaDetails, tags=['TankDiaDetails'])
+async def get(id: str):
+    return await TankDiaDetails.get(id, skip_secrets=True)
 
 
+@router.get('/tankdiadetails', response_model=TankDiaDetailsGetResp, tags=['TankDiaDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TankDiaDetails.get_all(params, skip_secrets=True)
 
 
 
