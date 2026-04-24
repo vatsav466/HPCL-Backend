@@ -10,13 +10,21 @@ router = fastapi.APIRouter(prefix='/tableanalytics')
 # Session territory filters are always merged (not exposed on the API model). Adjust here if needed.
 _TABLEANALYTICS_SESSION_VENDOR = "NOVEX"
 _TABLEANALYTICS_SESSION_MODEL = None  # None → same column map as vendor
-_TABLEANALYTICS_SESSION_COLUMN_PREFIX = "loc"  # joined table alias for NOVEX columns (region, zone, etc.)
+_TABLEANALYTICS_SESSION_COLUMN_PREFIX = ""  # joined table alias for NOVEX columns (region, zone, etc.)
+
+
+TABLE_VENDOR_MAPPING= {
+    "MOM_DAY_LEVEL_DATA": "TIBCO_SALES",
+    "industry_performance": "INDUSTRY",
+    "M60_LEVEL_METADATA": "TIBCO_SALES",
+}
 
 
 def _apply_tableanalytics_session_filters(data: dict) -> None:
-    """Always merge role-based territory filters into ``filters`` (``TERRITORY_COLUMN_BY_VENDOR``)."""
+    """Always merge role-based territory filters into `filters` (`TERRITORY_COLUMN_BY_VENDOR`)."""
+    vendor = TABLE_VENDOR_MAPPING.get(data.get("table"), _TABLEANALYTICS_SESSION_VENDOR)
     session_f = session_filters.session_territory_filters_for_gateway(
-        vendor=_TABLEANALYTICS_SESSION_VENDOR,
+        vendor=vendor,
         model=_TABLEANALYTICS_SESSION_MODEL,
         column_name_prefix=_TABLEANALYTICS_SESSION_COLUMN_PREFIX,
     )
