@@ -204,8 +204,8 @@ queries = {
         ROW_NUMBER() OVER (PARTITION BY hltd.tank_name, hltd.date_time::DATE ORDER BY hltd.date_time) AS rn
     FROM host_live_tank_details hltd LEFT JOIN location_master lm
 	ON hltd.sap_id = lm.sap_id
-    --WHERE date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day')
-    WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
+    WHERE date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day'
+    --WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
           {}
     ),
     combined AS (
@@ -291,8 +291,8 @@ queries = {
                 ROW_NUMBER() OVER (PARTITION BY hltd.tank_name, hltd.date_time::DATE ORDER BY hltd.date_time) AS rn
             FROM host_live_tank_details hltd JOIN location_master lm 
 			ON hltd.sap_id = lm.sap_id
-            --WHERE hltd.date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day'),
-            WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
+            WHERE hltd.date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day'
+            --WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
                   {}
         ),
         combined AS (
@@ -364,8 +364,8 @@ queries = {
         FROM (
             SELECT hltd.* FROM host_live_tank_details hltd LEFT JOIN location_master lm 
 			ON hltd.sap_id = lm.sap_id 
-            --WHERE date_time::DATE = CURRENT_DATE 
-            WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' AND DATE ' 2026-02-05' 
+            WHERE date_time::DATE = CURRENT_DATE 
+            --WHERE hltd.date_time::DATE BETWEEN DATE '2026-02-05' AND DATE ' 2026-02-05' 
                  {} 
             ) live_data
         LEFT JOIN public.tank_dia_details tank_details  
@@ -811,8 +811,8 @@ queries_old = {
                 LAG(curr_level) OVER (PARTITION BY tank_name, date_time::DATE ORDER BY date_time) AS prev_level,
                 ROW_NUMBER() OVER (PARTITION BY tank_name, date_time::DATE ORDER BY date_time) AS rn
             FROM host_live_tank_details
-            --WHERE date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day'),
-            WHERE date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
+            WHERE date_time::DATE BETWEEN CURRENT_DATE - INTERVAL '8 days' AND CURRENT_DATE - INTERVAL '1 day'
+            --WHERE date_time::DATE BETWEEN DATE '2026-02-05' - INTERVAL '8 days' AND DATE '2026-02-05' - INTERVAL '1 day'
                   {}
         ),
         combined AS (

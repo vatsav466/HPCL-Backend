@@ -127,8 +127,8 @@ async def action_stock_sustainability(filter_clause, connection_params):
 
     """
     # generate filter clause with current date
-    stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hardcoded date for testing 
-    #stock_clause = f"date_time::DATE = DATE '{date.today().strftime("%Y-%m-%d")}' {sap_id_filter}"
+    # stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hardcoded date for testing 
+    stock_clause = f"date_time::DATE = DATE '{date.today().strftime("%Y-%m-%d")}' {filter_clause}"
 
     # get net stock
     tank_data = await stock_dispatch_receipt(filter_clause=stock_clause, connection_params=connection_params)
@@ -158,8 +158,8 @@ async def action_product_wise_trends(filter_clause, connection_params):
         api response dictionary with product wise trends data 
     """
     # generate filter clause with current date
-    stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hard coded date for testing
-    # stock_clause = f"date_time::DATE = DATE '{date.today().strftime('%Y-%m-%d')}' {filter_clause}"
+    # stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hard coded date for testing
+    stock_clause = f"date_time::DATE = DATE '{date.today().strftime('%Y-%m-%d')}' {filter_clause}"
 
     # fetch stock/dispatch/receipt and average dispatch concurrently
     prod_avg_dispatch_query = tank_queries.queries.get("dispatch_average_prodwise", "").format(filter_clause)
