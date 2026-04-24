@@ -2,62 +2,74 @@ zone_mapping = {
     "CEN": {
         "IMS": "",
         "IMS_LPG": "",
-        "CRIS": "CENTRAL ZONE"
+        "CRIS": "CENTRAL ZONE",
+        "TIBCO_SALES":"Central Zone"
     },
     "ECZ": {
         "IMS": "",
         "IMS_LPG": "",
-        "CRIS": "EAST CENTRAL ZONE"
+        "CRIS": "EAST CENTRAL ZONE",
+        "TIBCO_SALES":"East Central Zone"
     },
     "EZ": {
         "IMS": "",
         "IMS_LPG": "EAS",
-        "CRIS": "EAST"
+        "CRIS": "EAST",
+        "TIBCO_SALES":"East"
     },
     "NCZ": {
         "IMS": "",
         "IMS_LPG": "NCL",
-        "CRIS": "NORTH CENTRAL RETAIL"
+        "CRIS": "NORTH CENTRAL RETAIL",
+        "TIBCO_SALES":"North Central Retail"
     },
     "NFZ": {
         "IMS": "",
         "IMS_LPG": "",
-        "CRIS": "NORTH FRONTIER ZONE"
+        "CRIS": "NORTH FRONTIER ZONE",
+        "TIBCO_SALES":"North Frontier Zone"
     },
     "NWF": {
         "IMS": "",
         "IMS_LPG": "",
-        "CRIS": "NORTH WEST FRONTIER"
+        "CRIS": "NORTH WEST FRONTIER",
+        "TIBCO_SALES":"North West Frontier"
     },
     "NWZ": {
         "IMS": "",
         "IMS_LPG": "NWL",
-        "CRIS": "NORTH WEST RETAIL ZO"
+        "CRIS": "NORTH WEST RETAIL ZO",
+        "TIBCO_SALES":"North West Retail Zo"
     },
     "NZ": {
         "IMS": "",
         "IMS_LPG": "NOR",
-        "CRIS": "NORTH"
+        "CRIS": "NORTH",
+        "TIBCO_SALES": "North"
     },
     "SCZ": {
         "IMS": "",
         "IMS_LPG": "SCL",
-        "CRIS": "SOUTH CENTRAL RETAIL"
+        "CRIS": "SOUTH CENTRAL RETAIL",
+        "TIBCO_SALES":"South Central Retail"
     },
     "SWZ": {
         "IMS": "",
         "IMS_LPG": "",
-        "CRIS": "SOUTH WESTERN ZONE"
+        "CRIS": "SOUTH WESTERN ZONE",
+        "TIBCO_SALES":"South Western Zone"
     },
     "SZ": {
         "IMS": "",
         "IMS_LPG": "SOU",
-        "CRIS": "SOUTH"
+        "CRIS": "SOUTH",
+        "TIBCO_SALES":"South"
     },
     "WZ": {
         "IMS": "",
         "IMS_LPG": "WES",
-        "CRIS": "WEST"
+        "CRIS": "WEST",
+        "TIBCO_SALES":"West"
     }
 }
 

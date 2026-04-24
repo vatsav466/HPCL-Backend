@@ -1,6 +1,6 @@
 import urdhva_base
 import polars as pl
-from datetime import datetime,timedelta, timezone
+from datetime import datetime,timedelta, timezone ,date
 import json
 import os
 import math
@@ -7636,6 +7636,220 @@ async def get_recurrent_delay(data):
             "r3_delay_data": []
         }
         
+async def get_tank_mode_analysis(data):
+    try:
+        filters = []
+        data_required = True
+        sap_id = None
+        tank_name = None
+        # Read Filters
+        if data.filters:
+            for f in data.filters:
+                if f.key == "sap_id":
+                    sap_id = f.value
+                elif f.key == "tank_name":
+                    tank_name = f.value
+                elif f.key == "data_required":
+                    data_required = str(
+                        f.value
+                    ).lower() == "true"
+        # Reference Date
+        if data.start_date:
+            ref_date = data.start_date
+        else:
+            ref_date = str(date.today())
+        ref_dt = datetime.strptime(
+            ref_date,
+            "%Y-%m-%d"
+        ).date()
+        
+        # Date Filter
+        filters.append(f"""
+            created_at::date BETWEEN
+            ('{ref_date}'::date - interval '10 days')
+            AND '{ref_date}'::date
+        """)
+        if sap_id:
+            filters.append(
+                f"TRIM(sap_id)='{str(sap_id).strip()}'"
+            )
+        if tank_name:
+            filters.append(
+                f"LOWER(tank_name)=LOWER('{tank_name}')"
+            )
+        where_clause = ""
+        if filters:
+            where_clause = (
+                "WHERE " +
+                " AND ".join(filters)
+            )
+            
+        # Main Query
+        query = f"""
+            SELECT DISTINCT
+                sap_id,
+                tank_name,
+                zone,
+                location_name,
+                tank_mode,
+                created_at,
+                created_at::date AS created_date
+            FROM public.host_live_tank_details
+            {where_clause}
+            ORDER BY
+                sap_id,
+                tank_name,
+                created_at
+        """
+        print(query)
+        rows = []
+        if data_required:
+            res = await hpcl_ceg_model.Alerts.get_aggr_data(
+                query,
+                limit=0
+            )
+            rows = res.get(
+                "data",
+                []
+            )
+            
+        # Group Records
+        grouped = {}
+        for row in rows:
+            key = (
+                row["sap_id"],
+                row["tank_name"]
+            )
+            grouped.setdefault(
+                key,
+                []
+            ).append(row)
+        changed_tank_mode_list = []
+        tank_mode_not_changed = []
+        
+        # Analyze
+        for key, records in grouped.items():
+            records = sorted(
+                records,
+                key=lambda x:
+                    x["created_at"]
+            )
+            latest_record = records[-1]
+            current_mode = (
+                latest_record["tank_mode"]
+                .strip()
+            )
+            if current_mode != "Dormant":
+                continue
+            previous_modes = [
+                r["tank_mode"].strip()
+                for r in records[:-1]
+            ]
+            
+            # NOT CHANGED
+            if (not previous_modes
+                or
+                all(
+                    m=="Dormant"
+                    for m in previous_modes
+                )
+            ):
+                window_start_date = (
+                    records[0]["created_date"]
+                )
+                
+                # find last non-Dormant before window
+                history_query = f"""
+                SELECT
+                    created_at::date as created_date
+                FROM public.host_live_tank_details
+                WHERE sap_id='{key[0]}'
+                AND tank_name='{key[1]}'
+                AND created_at <
+                '{window_start_date}'
+                AND tank_mode <> 'Dormant'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+                hist_res = await hpcl_ceg_model.Alerts.get_aggr_data(
+                    history_query,
+                    limit=0
+                )
+                hist_rows = hist_res.get(
+                    "data",
+                    []
+                )
+                if hist_rows:
+                    last_non_dormant_date = (
+                        hist_rows[0]["created_date"]
+                    )
+                    dormant_start_date = (
+                        last_non_dormant_date
+                        + timedelta(days=1)
+                    )
+                else:
+                    dormant_start_date = (
+                        window_start_date
+                    )
+                days_in_current_mode = (
+                    ref_dt - dormant_start_date
+                ).days
+                tank_mode_not_changed.append({
+                    "sap_id":
+                        key[0],
+                    "tank_name":
+                        key[1],
+                    "zone":
+                        latest_record["zone"],
+                    "location_name":
+                        latest_record[
+                            "location_name"
+                        ],
+                    "tank_mode":
+                        "Dormant",
+                    "last_changed_to_current_mode_date":
+                        str(
+                            dormant_start_date
+                        ),
+                    "days_since_change_to_current_mode":
+                        days_in_current_mode
+                })
+            # CHANGED
+            else:
+                mode_history = []
+                for r in records:
+                    mode_history.append({
+                        "created_at":
+                            str(r["created_at"]),
+                        "tank_mode":
+                            r["tank_mode"]
+                    })
+                changed_tank_mode_list.append({
+                    "sap_id": key[0],
+                    "tank_name": key[1],
+                    "zone": latest_record["zone"],
+                    "location_name":
+                        latest_record["location_name"],
+                    "current_tank_mode": "Dormant",
+                    "tank_mode_history": mode_history
+                })
+        # Response
+        return {
+            "status": True,
+            "message":"Tank mode analysis fetched",
+            "changed_tank_mode_count": len(changed_tank_mode_list),
+            "tank_mode_not_changed_count": len(tank_mode_not_changed),
+            "changed_tank_mode_list": changed_tank_mode_list,
+            "tank_mode_not_changed":tank_mode_not_changed
+        }
+    except Exception as e:
+        print(f"Error: {e}")
+        return {
+            "status": False,
+            "changed_tank_mode_list": [],
+            "tank_mode_not_changed": []
+        }
+        
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -7662,7 +7876,8 @@ AnalyticsModelMapping = {
     "Analog 24 hr window" : location_table_24h_status,
     "Plc_Master_status":get_plc_master_status,
     "Verification_of_meters":verification_meters,
-    "Recurrent_Delay":get_recurrent_delay
+    "Recurrent_Delay":get_recurrent_delay,
+    "Tank_Mode_status":get_tank_mode_analysis
 
 }
 

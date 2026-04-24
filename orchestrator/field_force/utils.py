@@ -34,6 +34,12 @@ TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
         "zone": "zone",
         "bu": "bu"
     },
+    "TIBCO_SALES": {
+        "sales_area": "SalesArea_Name",
+        "region": "Region_Name",
+        "zone": "Zone_Name",
+        "bu": "SBU_Name"
+    }
 }
 
 
