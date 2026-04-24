@@ -872,27 +872,33 @@ def get_plant_id(folder_path=None):
 
 async def get_product_availability(data):
     try:
+        terminal_plant_id = get_plant_id()
         conditions = []
-
+        product_filter = ""
+        ro_product_filter = ""
+        required_plant_ids = set()
         # -------------------------
         # CROSS FILTERS
         # -------------------------
         if data.cross_filters:
             for f in data.cross_filters:
-                if 'sap_id' in f.key and f.value:
+                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                    if f.value in terminal_plant_id:
+                        required_plant_ids.add(f.value)
+                elif 'zone' in f.key and f.value:
                     if f.cond in ["equals", "="]:
-                        conditions.append(f"lm.terminal_plant_id = '{f.value}'")
-
+                        conditions.append(f"lm.zone = '{f.value}'")
         # -------------------------
         # NORMAL FILTERS
         # -------------------------
-        product_filter = ""
-        ro_product_filter = ""
         if data.filters:
             for f in data.filters:
-                if 'sap_id' in f.key and f.value:
+                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                    if f.value in terminal_plant_id:
+                        required_plant_ids.add(f.value)
+                elif 'zone' in f.key and f.value:
                     if f.cond in ["equals", "="]:
-                        conditions.append(f"lm.terminal_plant_id = '{f.value}'")
+                        conditions.append(f"lm.zone = '{f.value}'")
 
                 elif f.key == "product_grp" and f.value:
                     product_values = [p.strip() for p in f.value.split(",")]
@@ -909,24 +915,28 @@ async def get_product_availability(data):
         # -------------------------
         # FINAL WHERE CLAUSE
         # -------------------------
+
+        if required_plant_ids:
+            plant_filter = f" AND lm.terminal_plant_id IN ({','.join([f"'{p}'" for p in required_plant_ids])})"
+        else:
+            plant_filter = f" AND lm.terminal_plant_id IN {terminal_plant_id}"
         where_clause = ""
         if conditions:
             where_clause += " AND " + " AND ".join(conditions)
 
-        terminal_plant_id = get_plant_id()
 
         ro_data_query = f"""
                             SELECT 
                                 lm.terminal_plant_id,
                                 ns.product_grp,
-                                ns.sap_id
+                                ns.sap_id, lm.zone
                             FROM location_master lm
                             JOIN nozzle_sales ns 
                                 ON ns.sap_id = lm.sap_id
                             WHERE lm.bu = 'RO'
-                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            {where_clause} {plant_filter}
                             {ro_product_filter}
-                            GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp
+                            GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp, lm.zone
                         """
         
         ro_names_query = f""" SELECT 
@@ -937,7 +947,7 @@ async def get_product_availability(data):
                                 ON lm_tas.sap_id = lm.terminal_plant_id
                             WHERE 
                             lm_tas.bu = 'TAS'
-                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            {where_clause} {plant_filter}
                             GROUP BY lm_tas.sap_id, 
                                 lm_tas.name
                             """
@@ -1014,7 +1024,7 @@ async def get_product_availability(data):
 
         if data.action == "ro_count":
 
-            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id"]).agg(
+            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id", "zone"]).agg(
                 [
                     (pl.col("stock_days") > 0).any().alias("has_stock"),
                     (pl.col("stock_days") == 0).any().alias("has_zero")
@@ -1046,14 +1056,14 @@ async def get_product_availability(data):
         # -------------------------
             pivot_stock_days = final_merge.pivot(
                 values="stock_days",
-                index=["terminal_plant_id", "sap_id"],
+                index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
                 aggregate_function="max"
             )
 
             product_cols = [
                 col for col in pivot_stock_days.columns
-                if col not in ["terminal_plant_id", "sap_id"]
+                if col not in ["terminal_plant_id", "sap_id", "zone"]
             ]
 
             # -------------------------
@@ -1061,7 +1071,7 @@ async def get_product_availability(data):
             # -------------------------
             pivot_capacity = final_merge.pivot(
                 values="total_capacity",
-                index=["terminal_plant_id", "sap_id"],
+                index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
                 aggregate_function="sum"
             )
@@ -1069,7 +1079,7 @@ async def get_product_availability(data):
             pivot_capacity = pivot_capacity.rename({
                 col: f"{col}_total_capacity"
                 for col in pivot_capacity.columns
-                if col not in ["terminal_plant_id", "sap_id"]
+                if col not in ["terminal_plant_id", "sap_id", "zone"]
             })
 
             # -------------------------
@@ -1077,7 +1087,7 @@ async def get_product_availability(data):
             # -------------------------
             pivot_ullage = final_merge.pivot(
                 values="available_ullage",
-                index=["terminal_plant_id", "sap_id"],
+                index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
                 aggregate_function="sum"
             )
@@ -1085,7 +1095,7 @@ async def get_product_availability(data):
             pivot_ullage = pivot_ullage.rename({
                 col: f"{col}_available_ullage"
                 for col in pivot_ullage.columns
-                if col not in ["terminal_plant_id", "sap_id"]
+                if col not in ["terminal_plant_id", "sap_id", "zone"]
             })
 
             # -------------------------
@@ -1093,7 +1103,7 @@ async def get_product_availability(data):
             # -------------------------
             pivot_stock = final_merge.pivot(
                 values="available_stock",
-                index=["terminal_plant_id", "sap_id"],
+                index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
                 aggregate_function="sum"
             )
@@ -1101,7 +1111,7 @@ async def get_product_availability(data):
             pivot_stock = pivot_stock.rename({
                 col: f"{col}_available_stock"
                 for col in pivot_stock.columns
-                if col not in ["terminal_plant_id", "sap_id"]
+                if col not in ["terminal_plant_id", "sap_id", "zone"]
             })
 
             # -------------------------
@@ -1109,9 +1119,9 @@ async def get_product_availability(data):
             # -------------------------
             pivot_all = (
                 pivot_stock_days
-                .join(pivot_capacity, on=["terminal_plant_id", "sap_id"], how="left")
-                .join(pivot_ullage, on=["terminal_plant_id", "sap_id"], how="left")
-                .join(pivot_stock, on=["terminal_plant_id", "sap_id"], how="left")
+                .join(pivot_capacity, on=["terminal_plant_id", "sap_id", "zone"], how="left")
+                .join(pivot_ullage, on=["terminal_plant_id", "sap_id", "zone"], how="left")
+                .join(pivot_stock, on=["terminal_plant_id", "sap_id", "zone"], how="left")
             )
 
             # -------------------------
@@ -1132,7 +1142,7 @@ async def get_product_availability(data):
             # -------------------------
             # 7. RO STATUS (overall)
             # -------------------------
-            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id"]).agg(
+            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id", "zone"]).agg(
                 [
                     (pl.col("stock_days") > 0).any().alias("has_stock"),
                     (pl.col("stock_days") == 0).any().alias("has_zero")
@@ -1150,8 +1160,8 @@ async def get_product_availability(data):
             # 8. FINAL JOIN (ADD STATUS)
             # -------------------------
             pivot_with_status = pivot_labeled.join(
-                ro_status.select(["terminal_plant_id", "sap_id", "status"]),
-                on=["terminal_plant_id", "sap_id"],
+                ro_status.select(["terminal_plant_id", "sap_id", "zone", "status"]),
+                on=["terminal_plant_id", "sap_id", "zone"],
                 how="left"
             )
 
