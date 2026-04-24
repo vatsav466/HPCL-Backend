@@ -872,29 +872,30 @@ def get_plant_id(folder_path=None):
 
 async def get_product_availability(data):
     try:
+        terminal_plant_id = get_plant_id()
         conditions = []
-
+        product_filter = ""
+        ro_product_filter = ""
+        required_plant_ids = set()
         # -------------------------
         # CROSS FILTERS
         # -------------------------
         if data.cross_filters:
             for f in data.cross_filters:
-                if 'sap_id' in f.key and f.value:
-                    if f.cond in ["equals", "="]:
-                        conditions.append(f"lm.terminal_plant_id = '{f.value}'")
+                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                    if f.value in terminal_plant_id:
+                        required_plant_ids.add(f.value)
                 elif 'zone' in f.key and f.value:
                     if f.cond in ["equals", "="]:
                         conditions.append(f"lm.zone = '{f.value}'")
         # -------------------------
         # NORMAL FILTERS
         # -------------------------
-        product_filter = ""
-        ro_product_filter = ""
         if data.filters:
             for f in data.filters:
-                if 'sap_id' in f.key and f.value:
-                    if f.cond in ["equals", "="]:
-                        conditions.append(f"lm.terminal_plant_id = '{f.value}'")
+                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                    if f.value in terminal_plant_id:
+                        required_plant_ids.add(f.value)
                 elif 'zone' in f.key and f.value:
                     if f.cond in ["equals", "="]:
                         conditions.append(f"lm.zone = '{f.value}'")
@@ -914,11 +915,15 @@ async def get_product_availability(data):
         # -------------------------
         # FINAL WHERE CLAUSE
         # -------------------------
+
+        if required_plant_ids:
+            plant_filter = f" AND lm.terminal_plant_id IN ({','.join([f"'{p}'" for p in required_plant_ids])})"
+        else:
+            plant_filter = f" AND lm.terminal_plant_id IN {terminal_plant_id}"
         where_clause = ""
         if conditions:
             where_clause += " AND " + " AND ".join(conditions)
 
-        terminal_plant_id = get_plant_id()
 
         ro_data_query = f"""
                             SELECT 
@@ -929,7 +934,7 @@ async def get_product_availability(data):
                             JOIN nozzle_sales ns 
                                 ON ns.sap_id = lm.sap_id
                             WHERE lm.bu = 'RO'
-                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            {where_clause} {plant_filter}
                             {ro_product_filter}
                             GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp, lm.zone
                         """
@@ -942,7 +947,7 @@ async def get_product_availability(data):
                                 ON lm_tas.sap_id = lm.terminal_plant_id
                             WHERE 
                             lm_tas.bu = 'TAS'
-                            AND lm.terminal_plant_id IN {terminal_plant_id} {where_clause}
+                            {where_clause} {plant_filter}
                             GROUP BY lm_tas.sap_id, 
                                 lm_tas.name
                             """
