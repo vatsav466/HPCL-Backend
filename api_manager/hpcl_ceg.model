@@ -4327,6 +4327,41 @@ Model NaturalGasGVConnections {
     Config=> {
         crud_operations='read'
     }
+
+}
+
+Model TankDiaDetails{
+    zone str
+    state str
+    location_name str
+    location_sap_code str
+    tank_no str
+    product str
+    type str
+    gross_capacity_kl float
+    peso_capacity_kl float
+    pumpable_volume_kl float
+    dead_stock_kl float
+    diameter float
+    height float
+    location_specific_limitations str
+    kl_per_mm float
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model TankDetails crud_disable{
+    Action=> get_tank_details{
+        filters optional list WidgetFilters
+        action str
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        payload optional dict
+    }
+
 }
 
 // Params for orchestrator.aggregate_query_gateway.query_aggregate_gateway
