@@ -956,6 +956,7 @@ class SendNotification:
                 tas_recipients = await self.get_tas_recipients()
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
+                    tas_cc = []
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
                         tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
                     
