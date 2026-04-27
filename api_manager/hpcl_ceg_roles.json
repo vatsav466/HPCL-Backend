@@ -8533,75 +8533,6 @@
             ]
         },
         {
-            "name": "tableanalytics",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "TableAnalytics",
-            "attributes": {},
-            "uris": [
-                "/api/tableanalytics/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "generate_data_aggregations"
-                }
-            ]
-        },
-        {
-            "name": "tableanalytics_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "TableAnalytics_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/tableanalytics/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "tableanalytics_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "TableAnalytics_admin",
-            "attributes": {},
-            "uris": [
-                "/api/tableanalytics/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "generate_data_aggregations"
-                }
-            ]
-        },
-        {
             "name": "tankdiadetails",
             "type": "all",
             "ownerManagedAccess": false,
@@ -8733,6 +8664,75 @@
                 },
                 {
                     "name": "get_tank_details"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "generate_data_aggregations"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tableanalytics_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TableAnalytics_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tableanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "generate_data_aggregations"
                 }
             ]
         }
@@ -9626,12 +9626,12 @@
             "displayName": "confirm_data_sync"
         },
         {
-            "name": "generate_data_aggregations",
-            "displayName": "generate_data_aggregations"
-        },
-        {
             "name": "get_tank_details",
             "displayName": "get_tank_details"
+        },
+        {
+            "name": "generate_data_aggregations",
+            "displayName": "generate_data_aggregations"
         }
     ]
 }

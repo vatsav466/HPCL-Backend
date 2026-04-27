@@ -892,7 +892,7 @@ Model Alerts {
         bu optional str
         alert_section optional str
         action_type AlertActionType
-        alert_id int min=1 max=9999999
+        alert_id int 
         action_msg optional str
         days optional int
         justificationType optional str
@@ -908,7 +908,7 @@ Model Alerts {
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
-        alert_id int min=1 max=9999999
+        alert_id int 
         excep_msg optional str
     }
     Action=> get_performance_index {
@@ -944,7 +944,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
-        alert_id int min=1 max=9999999
+        alert_id int 
         alert_section str
         interlock_name str
         category optional str
@@ -1248,7 +1248,7 @@ Model IndentDryOut {
     }
 
     Action=> get_alert_history {
-        alert_id int min=1 max=9999999
+        alert_id int 
     }
 
     Action=> get_dry_out_stats {
@@ -3861,7 +3861,7 @@ Model ViolationHistoryVts {
         bu optional str
         alert_section optional str
         action_type AlertActionType
-        alert_id int min=1 max=9999999
+        alert_id int 
         action_msg optional str
         days optional int
         justificationType optional str
@@ -3879,7 +3879,7 @@ Model ViolationHistoryVts {
 
     Action=> get_closed_alerts_details_vts {
         bu str
-        alert_id int min=1 max=9999999
+        alert_id int 
         alert_section str
         interlock_name str
     }

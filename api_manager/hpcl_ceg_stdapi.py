@@ -42,9 +42,9 @@ async def delete(id: str):
     return await UserLoginAudit.delete(id)
 
 
-#@router.get('/users/{id}', response_model=Users, tags=['Users'])
-#async def get(id: str):
-#    return await Users.get(id, skip_secrets=True)
+@router.get('/users/{id}', response_model=Users, tags=['Users'])
+async def get(id: str):
+    return await Users.get(id, skip_secrets=True)
 
 
 @router.get('/users', response_model=UsersGetResp, tags=['Users'])
@@ -2300,6 +2300,12 @@ async def get(id: str):
 @router.get('/tankdiadetails', response_model=TankDiaDetailsGetResp, tags=['TankDiaDetails'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TankDiaDetails.get_all(params, skip_secrets=True)
+
+
+
+
+
+
 
 
 
