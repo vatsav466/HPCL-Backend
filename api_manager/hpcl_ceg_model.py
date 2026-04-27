@@ -11846,6 +11846,39 @@ class Naturalgasgvconnections_Confirm_Data_SyncParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class SqlAggregationSpecCreate(pydantic.BaseModel):
+    output_alias: str
+    aggregate_fn: str
+    column: str
+
+
+class SqlOrderBySpecCreate(pydantic.BaseModel):
+    column: str
+    direction: str
+
+
+class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
+    table: str
+    base_table_alias: typing.Optional[str] = pydantic.Field("", **{})
+    joins: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    date_column: typing.Optional[str] = pydantic.Field("", **{})
+    date_from: typing.Optional[str] = pydantic.Field("", **{})
+    date_to: typing.Optional[str] = pydantic.Field("", **{})
+    date_after_now_interval: typing.Optional[str] = pydantic.Field("", **{})
+    date_before_now_interval: typing.Optional[str] = pydantic.Field("", **{})
+    aggregations: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    detail_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TankDiaDetailsSchema(UrdhvaPostgresBase):
     __tablename__ = 'tank_dia_details'
     
@@ -11933,39 +11966,6 @@ class Tankdetails_Get_Tank_DetailsParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-
-
-class SqlAggregationSpecCreate(pydantic.BaseModel):
-    output_alias: str
-    aggregate_fn: str
-    column: str
-
-
-class SqlOrderBySpecCreate(pydantic.BaseModel):
-    column: str
-    direction: str
-
-
-class Tableanalytics_Generate_Data_AggregationsParams(pydantic.BaseModel):
-    table: str
-    base_table_alias: typing.Optional[str] = pydantic.Field("", **{})
-    joins: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    group_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    filters: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
-    date_column: typing.Optional[str] = pydantic.Field("", **{})
-    date_from: typing.Optional[str] = pydantic.Field("", **{})
-    date_to: typing.Optional[str] = pydantic.Field("", **{})
-    date_after_now_interval: typing.Optional[str] = pydantic.Field("", **{})
-    date_before_now_interval: typing.Optional[str] = pydantic.Field("", **{})
-    aggregations: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    detail_fields: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    order_by: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    limit: typing.Optional[int] = pydantic.Field(0, **{})
-    skip: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
