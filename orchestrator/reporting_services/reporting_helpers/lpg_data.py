@@ -1,5 +1,5 @@
 import urdhva_base
-import datetime
+import datetime, zoneinfo
 import hpcl_ceg_model
 import os
 import pandas as pd
@@ -681,10 +681,10 @@ def get_tables(db_type):
 
 def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False):
     cur = conn.cursor()
-    start_date = datetime.datetime.now().replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    end_date = start_date + datetime.timedelta(days=1)
+    now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+
     if is_central:
 
         cur.execute("""
@@ -756,6 +756,74 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
     return event_count, event_dup, prod_count, prod_dup
 
 
+def get_missing_production_count(plant_conn, central_conn, prod_table, plant_name=None):
+    plant_cur = plant_conn.cursor()
+    central_cur = central_conn.cursor()
+
+    now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+
+    plant_cur.execute(f"""
+        SELECT production_log_id, process_date
+        FROM {prod_table}
+        WHERE process_date >= %s AND process_date < %s
+    """, (start_date, end_date))
+    plant_rows = plant_cur.fetchall()
+    if not plant_rows:
+        return 0
+    plant_ids = {(r[0], r[1]) for r in plant_rows}
+
+    central_cur.execute("""
+        SELECT production_log_id, process_date
+        FROM production_log
+        WHERE process_date >= %s AND process_date < %s
+        AND LOWER("Plant Name") = LOWER(%s)
+    """, (start_date, end_date, plant_name))
+    central_rows = central_cur.fetchall()
+    central_ids = {(r[0], r[1]) for r in central_rows}
+    
+    missing = plant_ids - central_ids
+    plant_cur.close()
+    central_cur.close()
+
+    return len(missing)
+
+
+def get_missing_event_count(plant_conn, central_conn, event_table, plant_name=None):
+    plant_cur = plant_conn.cursor()
+    central_cur = central_conn.cursor()
+
+    now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+
+    plant_cur.execute(f"""
+            SELECT event_log_id, process_date
+            FROM {event_table}
+            WHERE process_date >= %s AND process_date < %s
+        """, (start_date, end_date))
+    plant_rows = plant_cur.fetchall()
+    if not plant_rows:
+        return 0
+    plant_ids = {(r[0], r[1]) for r in plant_rows}
+
+    central_cur.execute("""
+            SELECT event_log_id, process_date
+            FROM event_log
+            WHERE process_date >= %s AND process_date < %s
+            AND LOWER("Plant Name") = LOWER(%s)
+        """, (start_date, end_date, plant_name))
+    central_rows = central_cur.fetchall()
+    central_ids = {(r[0], r[1]) for r in central_rows}
+    
+    missing = plant_ids - central_ids
+    plant_cur.close()
+    central_cur.close()
+
+    return len(missing)
+
+
 def process_plant(plant):
     plant_name = plant["PlantName"]
     host = plant["host_ip"]
@@ -764,31 +832,45 @@ def process_plant(plant):
 
     connection = check_socket(host, port)
     if not connection:
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, "Socket Failed"]
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, "Socket Failed"]
 
     try:
         event_table, prod_table = get_tables(db_type)
         # Plant DB
-        conn = psycopg2.connect(
+        plant_conn = psycopg2.connect(
             host=host,
             database=plant["db_database"],
             user=plant["db_user"],
             password=plant["db_password"],
             port=port
         )
-
-        p_event, p_event_dup, p_prod, p_prod_dup = get_counts(conn, event_table, prod_table)
-        conn.close()
+        p_event, p_event_dup, p_prod, p_prod_dup = get_counts(plant_conn, event_table, prod_table)
 
         # Central DB
-        conn = psycopg2.connect(**DB_CONFIG)
+        central_conn = psycopg2.connect(**DB_CONFIG)
 
-        c_event, c_event_dup, c_prod, c_prod_dup = get_counts(conn, None, None, plant_name, True)
-        conn.close()
+        c_event, c_event_dup, c_prod, c_prod_dup = get_counts(central_conn, None, None, plant_name, True)
+        
+        missing_prod = get_missing_production_count(
+            plant_conn=plant_conn,
+            central_conn=central_conn,
+            prod_table=prod_table,
+            plant_name=plant_name
+        )
+
+        missing_event = get_missing_event_count(
+            plant_conn=plant_conn,
+            central_conn=central_conn,
+            event_table=event_table,
+            plant_name=plant_name
+        )
+
+        plant_conn.close()
+        central_conn.close()
 
         return [
             plant_name, host, True, p_event, p_event_dup, p_prod, p_prod_dup,
-            c_event, c_event_dup, c_prod, c_prod_dup, "Connected"
+            c_event, c_event_dup, c_prod, c_prod_dup,  missing_event, missing_prod, "Connected"
         ]
 
     except Exception as e:
@@ -806,7 +888,7 @@ def process_plant(plant):
         else:
             status = "Unknown Error"
         print(f"  Error processing {plant_name}: {e}")
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, status]
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, status]
 
 
 async def log_count_excel():
@@ -880,27 +962,36 @@ async def log_count_excel():
     worksheet.write("J2", "Production_log", header_format)
     worksheet.write("K2", "Production_duplicates", header_format)
 
-    worksheet.merge_range("L1:L2", "Status", header_format)
+    worksheet.merge_range("L1:M1", "Missed Records", header_format)
+    worksheet.write("L2", "Event_log", header_format)
+    worksheet.write("M2", "Production_log", header_format)
+    worksheet.merge_range("N1:N2", "Status", header_format)
 
     # ===== Write Data =====
     for row_idx, row in enumerate(results, start=2):
 
         log_cols = [3, 5, 7, 9]
         duplicate_cols = [4, 6, 8, 10]
-        status = row[-1] if len(row) == 12 else None
+        status = row[-1] if len(row) == 14 else None
         connection = row[2]
+        missing_prod_col = 11
+        missing_event_col = 12
 
         for col_idx, value in enumerate(row):
             fmt = cell_format
 
             if col_idx == 2:
                 fmt = cell_format if connection else fail_format
-            elif col_idx == 11:
+            elif col_idx == 13:
                 fmt = cell_format if status == "Connected" else fail_format
             elif col_idx in log_cols and value in (0, "0"):
                 fmt = zero_log_format
             elif col_idx in duplicate_cols and isinstance(value, (int, float)) and value > 0:
                 fmt = dup_format
+            elif col_idx == missing_prod_col and isinstance(value, (int, float)) and value > 0:
+                fmt = dup_format   
+            elif col_idx == missing_event_col and isinstance(value, (int, float)) and value > 0:
+                fmt = dup_format   
 
             worksheet.write(row_idx, col_idx, value, fmt)
 
@@ -909,7 +1000,8 @@ async def log_count_excel():
     worksheet.set_column("B:B", 20)
     worksheet.set_column("C:C", 14)
     worksheet.set_column("D:K", 18)
-    worksheet.set_column("L:L", 22)
+    worksheet.set_column("L:M", 20)
+    worksheet.set_column("N:N", 22)
 
     workbook.close()
 
