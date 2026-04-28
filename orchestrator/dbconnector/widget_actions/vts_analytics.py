@@ -3875,7 +3875,7 @@ class VTSAnalyticsActions:
                 violation_query = violation_query_template.format(safe_value)
                 print(f"Executing trends query: {violation_query}")
 
-                response = await urdhva_base.BasePostgresModel.get_aggr_data(query=violation_query, skip_total=True)
+                response = await urdhva_base.BasePostgresModel.get_aggr_data(query=violation_query, limit=0, skip_total=True)
                 violation_data = response.get('data', [])
 
                 # ========== VIOLATION GROUPING LOGIC WITH POLARS ==========
@@ -3965,9 +3965,20 @@ class VTSAnalyticsActions:
                     safe_value = str(clicked_value).replace("'", "''")
                     query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
                     
-                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
+                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0, skip_total=True)
                     data = response.get('data', [])
                     
+                    # Handle distinct location\_name grouping or specific location filtering
+                    loc_val = payload.get("location_name")
+                    if loc_val and data:
+                        if loc_val is True:
+                            df = pl.DataFrame(data, infer_schema_length=None)
+                            if "location_name" in df.columns:
+                                grouped = df.group_by("location_name").agg(pl.len().alias("count"))
+                                data = grouped.to_dicts()
+                        elif isinstance(loc_val, str):
+                            data = [row for row in data if row.get("location_name") == loc_val]
+
                     # Check if download is requested
                     if payload.get("download") == "true":
                         df = pd.DataFrame(data)
