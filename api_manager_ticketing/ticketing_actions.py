@@ -981,7 +981,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "id", "ticket_id", "ticket_state", "ticket_history", "linked_alert_id",
             "sap_id", "location_name", "zone", "category", "sub_category",
             "start_date", "ticket_end_date", "comment_history","file_attachment","file_attachment_name",
-            "file_attachment_id"
+            "file_attachment_id","assignee_name","assignee_mail","ticket_end_date"
         ]
         resp = await Ticketing.get_all(params, resp_type='plain')
 
@@ -989,7 +989,36 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             return {"status": False, "message": f"Ticket {ticket_id} not found"}
 
         existing_ticket = resp["data"][0]
+        existing_history = existing_ticket.get("ticket_history", []) or []
+        tracked_fields = [
+            "ticket_state",
+            "category",
+            "sub_category",
+            "linked_alert_id",
+            "sap_id",
+            "location_name",
+            "zone",
+            "assignee_name",
+            "assignee_mail",
+            "re_assingee_employee_id",
+            "re_assingee_mail",
+            "ticket_end_date",
+            ]
 
+        changed_fields = {}
+        for field in tracked_fields:
+            if field == "ticket_end_date":
+                old_val = str(existing_ticket.get(field) or "").split("T")[0].split(" ")[0]
+                new_val = str(data_dict.get(field) or "").split("T")[0].split(" ")[0]
+            else:
+                old_val = clean_list(existing_ticket.get(field))
+                new_val = clean_list(data_dict.get(field))
+            if field in data_dict and old_val != new_val:
+                changed_fields[field] = {
+                    "old_value": old_val,
+                    "new_value": new_val
+                }
+                
         # Use payload value if sent, else use existing DB value
         if "auto_ticket_close" in data_dict:
             auto_close_flag_raw = data_dict.get("auto_ticket_close")
@@ -1002,7 +1031,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             auto_close_flag = True
 
         processed_time = datetime.utcnow()
-        existing_history = existing_ticket.get("ticket_history", []) or []
+        # existing_history = existing_ticket.get("ticket_history", []) or []
         last_allocated_time = processed_time.isoformat()
 
         if existing_history:
@@ -1099,6 +1128,11 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         data_dict["ticket_state"] = final_state
         print("final_state: ", final_state)
 
+        ticket_end_date = data_dict.get(
+            "ticket_end_date",
+            existing_ticket.get("ticket_end_date")
+        )
+        data_dict["ticket_end_date"] = ticket_end_date
         # ---------------- COMMENT HISTORY ----------------
 
         previous_state = existing_ticket.get("ticket_state")
@@ -1133,6 +1167,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "allocated_time": last_allocated_time,
             "processed_time": processed_time.isoformat(),
             "employee_id": employee_id,
+            "description": str(changed_fields),
             "remarks": data_dict.get("remarks"),
             "reason": data_dict.get("reason")
         }

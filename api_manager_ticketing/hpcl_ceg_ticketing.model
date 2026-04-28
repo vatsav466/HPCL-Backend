@@ -228,6 +228,7 @@ Model Ticketing {
         re_assingee_employee_id optional list str
         re_assingee_mail optional list str     
         reassigne_due_date optional str
+        ticket_end_date optional datetime
     }
 
     Action=> merge_ticket {

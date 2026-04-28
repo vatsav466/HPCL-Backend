@@ -6384,13 +6384,15 @@ async def get_fire_engine_runtime_weekly(data):
         segment_type = "week"
         data_required = True
         sap_id = None
+        zone = None
 
         # override from filters
         if data.filters:
             for f in data.filters:
                 if f.key == "sap_id":
                     sap_id = f.value
-
+                elif f.key == "zone":
+                    zone = f.value
                 elif f.key == "segment_type":
                     segment_type = f.value.lower()
 
@@ -6417,7 +6419,14 @@ async def get_fire_engine_runtime_weekly(data):
             condition = f"TRIM(sap_id) = '{str(sap_id).strip()}'"
             filters.append(condition)
             below_filters.append(condition)   
-
+            
+        # apply zone if found
+        if zone:
+            print("true")
+            condition = f"LOWER(zone) = LOWER('{str(zone).strip()}')"
+            filters.append(condition)
+            below_filters.append(condition)
+            
         # date filter
         if data.start_date and data.end_date:
             condition = f"""
@@ -6470,6 +6479,7 @@ async def get_fire_engine_runtime_weekly(data):
             SELECT
                 {segment_expr} AS segment,
                 sap_id,
+                zone,
                 device_name,
                 location_name,
                 total_run_time,
@@ -6484,6 +6494,7 @@ async def get_fire_engine_runtime_weekly(data):
             SELECT
                 {segment_expr} AS segment,
                 sap_id,
+                zone,
                 device_name,
                 location_name,
                 total_run_time,
@@ -6571,6 +6582,7 @@ async def get_interlock_testing_analysis(data):
         # ----------- DEFAULTS -----------
         interlock_names = []
         sap_id = None
+        zone =  None
         bu = None
         alert_section = None
         search = None 
@@ -6584,19 +6596,22 @@ async def get_interlock_testing_analysis(data):
                         interlock_names = f.value
                     else:
                         interlock_names = [i.strip() for i in f.value.split(",")]
-
+                        
                 elif f.key == "sap_id":
                     sap_id = f.value
-
+                
+                elif f.key == "zone":
+                    zone = f.value
+                    
                 elif f.key == "bu":
                     bu = f.value
-
+                    
                 elif f.key == "alert_section":
                     alert_section = f.value
-
+                    
                 elif f.key == "search":
                     search = f.value
-
+                    
                 elif f.key == "data_required":
                     data_required = str(f.value).lower() == "true"
 
@@ -6610,6 +6625,9 @@ async def get_interlock_testing_analysis(data):
         # ----------- SAP FILTER -----------
         if sap_id:
             add_condition(f"TRIM(sap_id) = '{str(sap_id).strip()}'")
+            
+        if zone:
+            add_condition(f"TRIM(zone) = '{str(zone).strip()}'")
 
         # ----------- BU FILTER -----------
         if bu:
@@ -6659,6 +6677,7 @@ async def get_interlock_testing_analysis(data):
         query = f"""
             SELECT DISTINCT
                 sap_id,
+                zone,
                 device_name,
                 created_at,
                 updated_at
@@ -6670,6 +6689,7 @@ async def get_interlock_testing_analysis(data):
         testing_query = f"""
             SELECT
                 sap_id,
+                zone,
                 device_name,
                 'TAS' AS bu,
                 location_name,
@@ -6685,6 +6705,7 @@ async def get_interlock_testing_analysis(data):
         non_testing_query = f"""
             SELECT
                 sap_id,
+                zone,
                 device_name,
                 'TAS' AS bu,
                 location_name,
@@ -6891,6 +6912,7 @@ async def get_master_status(data):
     try:
         data_required = True
         sap_id = None
+        zone = None
 
         # -------- FILTERS --------
         if data.filters:
@@ -6899,14 +6921,15 @@ async def get_master_status(data):
                     data_required = str(f.value).lower() == "true"
                 elif f.key == "sap_id":
                     sap_id = f.value
+                elif f.key == "zone":
+                    zone = f.value
 
         # -------- OPTIONAL FILTERS --------
         sap_filter = f"AND TRIM(sap_id) = '{str(sap_id).strip()}'" if sap_id else ""
 
-        zone_filter = (
-            f"AND LOWER(zone) = LOWER('{data.zone}')"
-            if data.zone else ""
-        )
+        zone_condition = ""
+        if zone:
+            zone_condition = f" AND LOWER(zone)=LOWER('{str(zone).strip()}') "
 
         # -------- SINGLE OPTIMIZED QUERY --------
         final_query = f"""
@@ -6917,24 +6940,28 @@ async def get_master_status(data):
                      SELECT 1 FROM master_status 
                      WHERE created_at::date = CURRENT_DATE
                      {sap_filter}
+                     {zone_condition}
                  )),
                 (SELECT MAX(created_at::date) 
                  FROM master_status 
                  WHERE active_server_name IS NOT NULL
-                 {sap_filter})
+                 {sap_filter}
+                 {zone_condition}
+                )
             ) AS ref_date
         ),
 
         latest_data AS (
             SELECT DISTINCT ON (sap_id)
                 sap_id,
+                zone,
                 active_server_name,
                 location_name,
                 created_at::date AS created_date
             FROM master_status m, ref_date_cte r
             WHERE m.created_at::date = r.ref_date
             {sap_filter}
-            {zone_filter}
+            {zone_condition}
             ORDER BY sap_id, created_at DESC
         ),
 
@@ -6949,6 +6976,7 @@ async def get_master_status(data):
             FROM master_status
             WHERE active_server_name IS NOT NULL
             {sap_filter}
+            {zone_condition}
         ),
 
         change_points AS (
@@ -6970,6 +6998,7 @@ async def get_master_status(data):
 
         SELECT 
             l.sap_id,
+            l.zone,
             l.active_server_name AS current_server,
             lc.changed_from,
             lc.change_date,
@@ -6986,7 +7015,7 @@ async def get_master_status(data):
         LEFT JOIN last_change lc ON l.sap_id = lc.sap_id
         CROSS JOIN ref_date_cte r
         """
-
+        print("final_query",final_query)
         # -------- EXECUTION (ONLY ONE CALL) --------
         result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
         rows = result.get("data", [])
@@ -7035,7 +7064,8 @@ async def get_master_status(data):
 async def get_plc_master_status(data):
     data_required = True
     sap_id = None
-
+    zone = None
+    
     # -------- FILTERS --------
     if data and getattr(data, "filters", None):
         for f in data.filters:
@@ -7043,7 +7073,9 @@ async def get_plc_master_status(data):
                 data_required = str(f.value).lower() == "true"
             elif f.key == "sap_id":
                 sap_id = f.value
-
+            elif f.key == "zone":
+                zone = f.value
+                
     THINGSBOARD_HOST = urdhva_base.settings.things_board_url
     USERNAME = urdhva_base.settings.things_board_username
     PASSWORD = urdhva_base.settings.things_board_password
@@ -7054,11 +7086,11 @@ async def get_plc_master_status(data):
         json={"username": USERNAME, "password": PASSWORD}
     )
     token = resp.json()["token"]
-
+    
     def tb_get(url, params=None):
         headers = {"X-Authorization": f"Bearer {token}"}
         return requests.get(f"{THINGSBOARD_HOST}{url}", headers=headers, params=params or {}).json()
-
+    
     devices = []
     page = 0
     while True:
@@ -7067,40 +7099,44 @@ async def get_plc_master_status(data):
         if not d.get("hasNext"):
             break
         page += 1
-
+        
     now = datetime.now(timezone.utc)
     last_30_days = now - timedelta(days=30)
-
     changed_rows = []
     not_changed_rows = []
     no_server_rows = []
-
+    zone_map_query = """
+        SELECT sap_id, zone
+        FROM location_master
+        """
+    zone_res = await hpcl_ceg_model.Alerts.get_aggr_data(zone_map_query, limit=0)
+    zone_map = {
+            str(r["sap_id"]).strip(): r.get("zone")
+            for r in zone_res.get("data", [])
+        }
+    
     for device in devices:
-
         device_id = device["id"]["id"]
         device_name = device.get("name")
-
         attributes = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes")
         telemetry  = tb_get(f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries")
-
         attr_data = {i["key"]: i["value"] for i in attributes} if attributes else {}
         tele_data = {k: v[0]["value"] for k, v in telemetry.items() if v} if telemetry else {}
-
         device_sap = attr_data.get("SAPID", "N/A")
+        device_zone = zone_map.get(str(device_sap).strip())
         # -------- SAP FILTER --------
         if sap_id and str(device_sap).strip() != str(sap_id).strip():
             continue
-
+        if zone and (not device_zone or str(device_zone).strip().lower() != str(zone).strip().lower()):
+            continue
+        
         has_data = False
         current_server = None
         changed_from = None
         change_date = None
-
         plc_keys = [k for k in tele_data.keys() if "MASTER" in k.upper()]
         all_history = []
-
         for key in plc_keys:
-
             resp = tb_get(
                 f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
                 {
@@ -7111,7 +7147,7 @@ async def get_plc_master_status(data):
                     "orderBy": "ASC"
                 }
             )
-
+            
             history = [
                 {
                     "ts": datetime.fromtimestamp(r["ts"]/1000, tz=timezone.utc),
@@ -7121,15 +7157,16 @@ async def get_plc_master_status(data):
                 for r in resp.get(key, [])
                 if r.get("value") is not None
             ]
-
+            
             if history:
                 has_data = True
-
+                
             all_history.extend(history)
-
+            
         if not has_data:
             no_server_rows.append({
                 "sap_id": device_sap,
+                "zone": device_zone,
                 "device_name": device_name,
                 "current_server": "",
                 "changed_from": "",
@@ -7137,14 +7174,14 @@ async def get_plc_master_status(data):
                 "status": "NO_SERVER"
             })
             continue
-
+        
         all_history = sorted(all_history, key=lambda x: x["ts"])
-
+        
         for rec in reversed(all_history):
             if rec["value"] == 1:
                 current_server = rec["plc"]
                 break
-
+            
         if not current_server:
             no_server_rows.append({
                 "sap_id": device_sap,
@@ -7155,29 +7192,25 @@ async def get_plc_master_status(data):
                 "status": "NO_SERVER"
             })
             continue
-
+        
         last_30 = [h for h in all_history if h["ts"] >= last_30_days]
         old_data = [h for h in all_history if h["ts"] < last_30_days]
-
         prev = None
         is_changed_30 = False
-
         for rec in last_30:
             if rec["value"] != 1:
                 continue
-
             curr = rec["plc"]
-
             if prev and curr != prev:
                 is_changed_30 = True
                 change_date = rec["ts"].strftime("%Y-%m-%d %H:%M:%S")
                 changed_from = prev
-
             prev = curr
-
+            
         if is_changed_30:
             changed_rows.append({
                 "sap_id": device_sap,
+                "zone": device_zone,
                 "device_name": device_name,
                 "current_server": current_server,
                 "changed_from": changed_from or "",
@@ -7185,36 +7218,33 @@ async def get_plc_master_status(data):
                 "status": "CHANGED"
             })
             continue
-
+        
         prev = None
         old_change_date = None
-
         for rec in old_data:
             if rec["value"] != 1:
                 continue
-
+            
             curr = rec["plc"]
-
             if prev and curr != prev:
                 old_change_date = rec["ts"]
-
             prev = curr
-
+            
         not_changed_rows.append({
             "sap_id": device_sap,
+            "zone": device_zone,
             "device_name": device_name,
             "current_server": current_server,
             "changed_from": "",
             "change_date": old_change_date.strftime("%Y-%m-%d %H:%M:%S") if old_change_date else "",
             "status": "NOT_CHANGED"
         })
-
+        
     # FINAL RESPONSE WITH COUNTS
     return {
         "changed_count": len(changed_rows),
         "not_changed_count": len(not_changed_rows),
         "no_server_count": len(no_server_rows),
-
         "changed_data": changed_rows if data_required else [],
         "not_changed_data": not_changed_rows if data_required else [],
         "no_server_data": no_server_rows if data_required else []
@@ -7227,6 +7257,7 @@ async def verification_meters(data):
         # -------- DEFAULTS --------
         data_required = True
         sap_id = None
+        zone = None
         bcu_number = None
         year = None
 
@@ -7235,7 +7266,8 @@ async def verification_meters(data):
             for f in data.filters:
                 if f.key == "sap_id":
                     sap_id = f.value
-
+                elif f.key == "zone":
+                    zone = f.value
                 elif f.key == "bcu_number":
                     bcu_number = f.value
 
@@ -7274,7 +7306,10 @@ async def verification_meters(data):
         # -------- FILTERS --------
         if sap_id:
             filters.append(f"TRIM(sap_id) = '{str(sap_id).strip()}'")
-
+            
+        if zone:
+            filters.append(f"TRIM(zone) = '{str(zone).strip()}'")
+            
         if bcu_number:
             filters.append(f"TRIM(bcu_number) = '{str(bcu_number).strip()}'")
 
@@ -7298,6 +7333,7 @@ async def verification_meters(data):
                 {segment_expr} AS segment,
                 EXTRACT(YEAR FROM created_at) AS year,
                 sap_id,
+                zone,
                 bcu_number,
                 location_name,
                 SUM(COALESCE(loaded_qty,0)) AS loaded_qty,
@@ -7305,7 +7341,7 @@ async def verification_meters(data):
             FROM host_local_loaded_tts
             {where_clause}
             AND LOWER(TRIM(truck_number)) LIKE '%prov%'
-            GROUP BY segment, year, sap_id, bcu_number, location_name
+            GROUP BY segment, year, sap_id, bcu_number, location_name, zone
         """
 
         # -------- COUNT QUERY --------
@@ -7356,6 +7392,7 @@ async def verification_meters(data):
                 "segment": segment,
                 "year": row.get("year"),
                 "sap_id": sid,
+                "zone": row.get("zone"),
                 "bcu_number": bcu,
                 "location_name": row.get("location_name"),
                 "truck_number": "PROVER",
@@ -7481,17 +7518,15 @@ async def verification_meters(data):
             "quarter_wise_bcu_analysis": []
         }
 
-
-
 async def get_recurrent_delay(data):
     try:
         data_required = True
         sap_id = None
+        zone = None
         vehicle_no = None
-
         start_date = data.start_date
         end_date = data.end_date
-
+        
         # -------- FILTERS --------
         if data.filters:
             for f in data.filters:
@@ -7499,20 +7534,21 @@ async def get_recurrent_delay(data):
                     data_required = str(f.value).lower() == "true"
                 elif f.key == "sap_id":
                     sap_id = f.value
+                elif f.key == "zone":
+                    zone = f.value
                 elif f.key == "vehicle_no":
                     vehicle_no = f.value
-
         # -------- OPTIONAL FILTERS --------
         sap_filter = f"AND ts.\"LOCN_CODE\" = '{sap_id}'" if sap_id else ""
+        zone_filter = f"AND LOWER(lm.zone)=LOWER('{str(zone).strip()}')" if zone else ""
         vehicle_filter_indent = f"AND ir.\"TRUCK_REGNO\" = '{vehicle_no}'" if vehicle_no else ""
         vehicle_filter_swipe = f"AND ts.\"TRUCK_REGNO\" = '{vehicle_no}'" if vehicle_no else ""
-
+        
         date_filter = ""
         if start_date and end_date:
             date_filter = f"""
             AND ir."INDENT_DATE"::date BETWEEN '{start_date}' AND '{end_date}'
             """
-
         # -------- MAIN QUERY --------
         final_query = f"""
         WITH indent_data AS (
@@ -7529,23 +7565,26 @@ async def get_recurrent_delay(data):
             {vehicle_filter_indent}
             {date_filter}
         ),
-
         swipe_data AS (
             SELECT
                 ts."TRUCK_REGNO",
                 ts."LOCN_CODE" AS sap_id,
+                lm.zone,
                 ts."READER_ID" AS reader_id,
                 ts."LOADED_ON",
                 ts."LOADED_ON"::date AS loaded_date
             FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts
+            LEFT JOIN location_master lm
+            ON TRIM(ts."LOCN_CODE") = TRIM(lm.sap_id)
             WHERE ts."TRUCK_REGNO" IS NOT NULL
             {vehicle_filter_swipe}
             {sap_filter}
+            {zone_filter}
         ),
-
         joined_data AS (
             SELECT
                 s.sap_id,
+                s.zone,
                 s."TRUCK_REGNO",
                 s.reader_id,
                 s."LOADED_ON",
@@ -7557,16 +7596,15 @@ async def get_recurrent_delay(data):
             AND s.loaded_date = i.indent_date
             WHERE s.reader_id IN ('R1', 'R3')
         ),
-
         avg_data AS (
             SELECT
                 reader_id,
                 AVG(delay_minutes) AS avg_delay
             FROM joined_data
-            WHERE delay_minutes > 0   -- ✅ ONLY CHANGE
+            WHERE delay_minutes > 0   -- ONLY CHANGE
             GROUP BY reader_id
         )
-
+        
         SELECT j.*, a.avg_delay
             FROM joined_data j
             JOIN avg_data a
@@ -7574,25 +7612,25 @@ async def get_recurrent_delay(data):
             WHERE j.delay_minutes > 0
             AND j.delay_minutes > a.avg_delay
         """
-
+        
         # -------- EXECUTION --------
         result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
         rows = result.get("data", [])
-
+        
         # -------- FORMAT FUNCTION --------
         def format_delay(minutes):
             if minutes is None:
                 return None
-
+            
             total_minutes = round(abs(minutes))
             hours = total_minutes // 60
             mins = total_minutes % 60
-
+            
             if minutes < 0:
                 return f"{hours} hr {mins} min Early"
             else:
                 return f"{hours} hr {mins} min Delay"
-
+            
         # -------- SPLIT DATA --------
         r1_data = []
         r3_data = []
@@ -7604,28 +7642,26 @@ async def get_recurrent_delay(data):
             row["delay_minutes"] = round(row["delay_minutes"], 2)
             row["delay_time"] = format_delay(row["delay_minutes"])
             row["avg_delay"] = round(row["avg_delay"], 2)
-
+            
             if row["reader_id"] == "R1":
                 r1_data.append(row)
                 r1_avg = row["avg_delay"]
             elif row["reader_id"] == "R3":
                 r3_data.append(row)
                 r3_avg = row["avg_delay"]
-
+                
         # -------- RESPONSE --------
         return {
             "status": True,
             "message": "Recurrent delay analysis (Above Average)",
             "r1_avg_delay": r1_avg,
             "r3_avg_delay": r3_avg,
-
             "r1_delay_count": [{"total_count": len(r1_data)}],
             "r3_delay_count": [{"total_count": len(r3_data)}],
-
             "r1_delay_data": r1_data if data_required else [],
             "r3_delay_data": r3_data if data_required else []
         }
-
+        
     except Exception as e:
         return {
             "status": False,
@@ -7641,12 +7677,15 @@ async def get_tank_mode_analysis(data):
         filters = []
         data_required = True
         sap_id = None
+        zone = None
         tank_name = None
         # Read Filters
         if data.filters:
             for f in data.filters:
                 if f.key == "sap_id":
                     sap_id = f.value
+                elif f.key == "zone":
+                    zone = f.value
                 elif f.key == "tank_name":
                     tank_name = f.value
                 elif f.key == "data_required":
@@ -7673,6 +7712,9 @@ async def get_tank_mode_analysis(data):
             filters.append(
                 f"TRIM(sap_id)='{str(sap_id).strip()}'"
             )
+        if zone:
+            filters.append(f"TRIM(zone) = '{str(zone).strip()}'")
+            
         if tank_name:
             filters.append(
                 f"LOWER(tank_name)=LOWER('{tank_name}')"
@@ -7688,6 +7730,7 @@ async def get_tank_mode_analysis(data):
         query = f"""
             SELECT DISTINCT
                 sap_id,
+                zone,
                 tank_name,
                 zone,
                 location_name,
