@@ -341,3 +341,38 @@ def format_interlocks_for_query(interlocks):
     """Format interlocks for IN clause"""
     return "','".join(interlocks)
 
+
+
+SEVERITY_WEIGHTS = {
+
+    "Plant ESD activated": {"severity": 1, "operation_load": 0.6},
+    "SafetyPLC_Communication fail": {"severity": 1, "operation_load": 0.6},
+    "ESD Command To Process PLC": {"severity": 1, "operation_load": 0.6},
+    "Tank leakage alarm": {"severity": 1, "operation_load": 0.1},
+    "HCD_20% LEL activated": {"severity": 1, "operation_load": 0.1},
+    "HCD_40% LEL activated": {"severity": 1, "operation_load": 0.1},
+    "Rim Seal system_Fault activated": {"severity": 1, "operation_load": 0.6},
+    "Two Fire Engine Running status": {"severity": 0.9, "operation_load": 0.6},
+    "Main Fire Engines not in REMOTE": {"severity": 0.8, "operation_load": 0.6},
+    "ROSOV_FailtoClose": {"severity": 0.7, "operation_load": 0.9},
+    "MOV_Close Status_Fail": {"severity": 0.7, "operation_load": 0.9},
+    "HCD_Fault activated": {"severity": 0.6, "operation_load": 0.1},
+    "Rim Seal system_Fault activated": {"severity": 0.6, "operation_load": 0.6},       
+    "HHH alarm from VFT": {"severity": 0.6, "operation_load": 0.3},       
+    "HHH alarm from Secondary Radar guage": {"severity": 0.5, "operation_load": 0.3},
+    "Dykevalve_Activated Hooter_Fail": {"severity": 0.5, "operation_load": 0.1},
+    "Gantry Permissive_Override": {"severity": 0.5, "operation_load": 1},
+    "BCU Permissive Off": {"severity": 0.4, "operation_load": 0.1},   
+    "Unauthorized Flow Alarm_BCU": {"severity": 0.4, "operation_load": 0.1},
+    "Unauthorized Flow Alarm Blend_BCU": {"severity": 0.4, "operation_load": 0.1},   
+    "TT Overloaded": {"severity": 0.4, "operation_load": 0.1},
+    "Secondary Radar_Under Maintenance": {"severity": 0.4, "operation_load": 0.1},
+    "HydrantPT_Under Maintenance": {"severity": 0.4, "operation_load": 0.1},
+    "JockeyPump_Under Maintenance": {"severity": 0.4, "operation_load": 0.1},
+    "Tank_Under Maintenance": {"severity": 0.4, "operation_load": 0.1},
+    "VFT_Under Maintenance": {"severity": 0.4, "operation_load": 0.1},
+    "High Flow Alarm Blend_BCU": {"severity": 0.2, "operation_load": 0.1},
+    "High Flow Alarm_BCU": {"severity": 0.2, "operation_load": 0.1},
+    "Low Flow alarm Blend_BCU": {"severity": 0.2, "operation_load": 0.1},
+    "Low Flow alarm_BCU": {"severity": 0.2, "operation_load": 0.1}
+}
