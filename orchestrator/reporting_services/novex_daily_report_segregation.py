@@ -96,7 +96,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["gkpatel@hpcl.in","sanjayk@hpcl.in","georget@hpcl.in"],
         subject="Novex Daily Report",
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in","ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in","ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -124,7 +124,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["adsul@hpcl.in","gbala@hpcl.in"],
         subject="Novex Daily Report: LPG",
         cc_recipients=["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in","pranawsinha@hpcl.in","rajkumar@hpcl.in", "sarangi@hpcl.in", "mvrmurthy@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in","adityapandey@hpcl.in","ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in","adityapandey@hpcl.in","ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
@@ -139,7 +139,7 @@ async def publish_daily_novex_status_email():
                        "SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in","crvkumar@hpcl.in","Tarunghisulal.chauhan@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
@@ -171,7 +171,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="ro_va_cleanliness.html",
-        to_recipients=["cvmallinath@hpcl.in","MdTausif.Anwar@hpcl.in","vimalkumar@hpcl.in"],
+        to_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","MdTausif.Anwar@hpcl.in","vimalkumar@hpcl.in"],
         subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
         cc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","ArpitaKanak.Bara@hpcl.in"],
         bcc_recipients=["venu@algofusiontech.com","yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com"],
