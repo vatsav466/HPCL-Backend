@@ -21,7 +21,9 @@ import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
 import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
+import orchestrator.analytics.sod_location_stats as sod_location_stats
 import requests
+import asyncio
 
 
 
@@ -7892,6 +7894,200 @@ async def get_tank_mode_analysis(data):
             "changed_tank_mode_list": [],
             "tank_mode_not_changed": []
         }
+
+async def calculate_safety_exposure_index_overview(data):
+    try:        
+        where_conditions = ["alert_section = 'TAS'"]
+        
+        if data.start_date and data.end_date:
+            start = str(data.start_date)
+            end   = str(data.end_date)
+
+            where_conditions.append(
+                f"(created_at::date >= '{start}' AND created_at::date <= '{end}' "
+                f"AND updated_at::date >= '{start}' AND updated_at::date <= '{end}')"
+            )
+
+            start_dt = datetime.strptime(start, "%Y-%m-%d")
+            end_dt   = datetime.strptime(end,   "%Y-%m-%d")
+            diff_hours = (end_dt - start_dt).total_seconds() / 3600
+            if diff_hours > 0:
+                observation_window = diff_hours
+
+        if data.zone:
+            where_conditions.append(f"zone = '{data.zone}'")
+
+        if data.interlock_name:
+            where_conditions.append(f"interlock_name = '{data.interlock_name}'")
+
+        # Get locations
+        if data.location_name:
+            all_locations = [data.location_name]
+        else:
+            locs = await get_all_onboarded_locations()
+            all_locations = [l.get("name") for l in locs if l.get("name")]
+
+        location_filter = ", ".join(f"'{l}'" for l in all_locations)
+        where_conditions.append(f"location_name IN ({location_filter})")
+
+        where_clause = " AND ".join(where_conditions)
+
+        # SINGLE BIG QUERY
+        query = f"""
+        SELECT zone, location_name, interlock_name,
+               created_at, updated_at,
+               alert_category, device_type,
+               alert_status, cause_effect
+        FROM Alerts
+        WHERE {where_clause}
+        """
+        print('query', query)
+
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        alerts = result.get("data", [])
+
+        if not alerts:
+            return {"status": True, "data": []}
+                
+        device_types = (
+            'HCD','Dyke','Hooter','Jockey Pump','VFT',
+            'PT','ROSOV','ESD','Radar','Fire Engine','Safety PLC','UPS'
+        )
+
+        sod_device_types = (
+            'HCD','Dyke','Hooter','Jockey Pump','VFT',
+            'PT Hydrant','Rosov','ESD','Secondary Radar','Fire Engine','Safety PLC'
+        )
+        
+        # GROUP BY LOCATION 
+        location_data = defaultdict(list)
+        for row in alerts:
+            location_data[row["location_name"]].append(row)
+
+        async def _process_location(loc, loc_alerts):       
+            zone = loc_alerts[0].get("zone", "") if loc_alerts else ""
+
+            grouped = defaultdict(lambda: {
+                "total_duration": 0,
+                "severity": 0,
+                "operational_load": 0
+            })
+            
+            # c1n - caculation1 numerator , c1d - calculation1 denominator
+            c1n = c1d = 0
+            c2n = c2d = 0
+
+            for row in loc_alerts:
+
+                interlock = row["interlock_name"]
+                if interlock in tas_queries.SEVERITY_WEIGHTS:
+                    weight    = tas_queries.SEVERITY_WEIGHTS[interlock]
+                    duration  = (row["updated_at"] - row["created_at"]).total_seconds() / 3600
+                    grouped[interlock]["total_duration"]  += duration
+                    grouped[interlock]["severity"]         = weight["severity"]
+                    grouped[interlock]["operational_load"] = weight["operation_load"]
+
+                if row["alert_category"] == "Safety" and row["device_type"] in device_types:
+                    c1n += 1
+                    if row["alert_status"] == "Close":
+                        c1d += 1
+
+                if row["alert_category"] == "Safety" and row["cause_effect"] == "Effect":
+                    c2d += 1
+                    if "fail" not in (row["interlock_name"] or "").lower():
+                        c2n += 1
+
+            summary = []
+            total_weighted_exposure = 0
+
+            for i, (interlock, values) in enumerate(grouped.items(), start=1):
+                D = round(values["total_duration"], 2)
+                S = values["severity"]
+                O = values["operational_load"]
+                exposure = D * S * O
+                total_weighted_exposure += exposure
+                summary.append({
+                    "event_no": i,
+                    "interlock_name": interlock,
+                    "duration_hours": D,
+                    "severity": S,
+                    "operational_load": O,
+                    "weighted_exposure": round(exposure, 2)
+                })
+
+            calculation1 = 0.2 * (c1n / c1d) if c1d > 0 else 0
+            calculation2 = 0.4 * (c2n / c2d) if c2d > 0 else 0
+
+            calculation3 = 0
+            try:
+                params = urdhva_base.queryparams.QueryParams(
+                    q=f"name = '{loc}'", limit=1
+                )
+                params.fields = ["sap_id"]
+
+                loc_resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
+                sap_id   = loc_resp.get("data", [{}])[0].get("sap_id")
+
+                sod      = await sod_location_stats.generate_sod_engineering_location_stats(sap_id)
+                sod_data = sod.get("data", [])
+
+                filtered = [item for item in sod_data if item.get("name") in sod_device_types]
+
+                total  = sum(item.get("total", 0)        for item in filtered)
+                faulty = sum(item.get("faulty", 0)       for item in filtered)
+                maint  = sum(item.get("maintanance", 0)  for item in filtered)
+
+                calculation3 = 0.4 * ((faulty + maint) / total) if total > 0 else 0
+
+            except Exception as e:
+                print(f"{loc} calc3 :", e)
+
+            sei          = round((total_weighted_exposure / observation_window if observation_window else 0), 1)
+            spi          = round((calculation1 + calculation2 + calculation3),2)
+            safety_index = (spi + (1 / sei)) if sei > 0 else spi
+            # print('safety_index',safety_index)
+
+            # Per-location output 
+            output = {
+                "location_name":            loc,
+                "zone":                     zone,
+                # "calculation1":             round(calculation1, 3),
+                # "calculation2":             round(calculation2, 3),
+                "calculation3":             round(calculation3, 3),
+                # "SEI":                      round(sei, 3),
+                "Safety_Index":             round(safety_index, 2),
+                "vendor_performance_score": round(100 - safety_index, 2),
+                "summary": summary,
+            }
+            
+            return output
+
+        # RUN ALL LOCATIONS IN PARALLEL
+        tasks = [
+            _process_location(loc, loc_alerts)
+            for loc, loc_alerts in location_data.items()
+        ]
+
+        final_output = await asyncio.gather(*tasks)
+        final_output = list(final_output)
+        # print('final_output',final_output)
+
+        safety_index_values  = [loc["Safety_Index"] for loc in final_output]
+        safety_index_count   = len(safety_index_values)
+        safety_index_sum     = sum(safety_index_values)
+        average_safety_index = round(safety_index_sum / safety_index_count, 2) if safety_index_count > 0 else 0
+
+        return {
+            "status": True,
+            "data":   final_output,
+            "aggregations": {
+                "average_safety_index": average_safety_index,
+                "safety_index_count":   safety_index_count,
+            }
+        }
+        
+    except Exception as e:
+        return {"status": False, "message": str(e), "data": []}
         
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -7920,7 +8116,8 @@ AnalyticsModelMapping = {
     "Plc_Master_status":get_plc_master_status,
     "Verification_of_meters":verification_meters,
     "Recurrent_Delay":get_recurrent_delay,
-    "Tank_Mode_status":get_tank_mode_analysis
+    "Tank_Mode_status":get_tank_mode_analysis,
+    "Safety Exposure Index":calculate_safety_exposure_index_overview
 
 }
 
