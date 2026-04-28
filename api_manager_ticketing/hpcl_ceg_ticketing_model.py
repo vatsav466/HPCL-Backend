@@ -338,6 +338,7 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
+    ticket_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

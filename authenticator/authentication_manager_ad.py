@@ -223,6 +223,11 @@ class AuthenticationManager:
         if await cls.verify_locked_check(f'{username.lower()}'):
             print(f"User {username} locked out")
             return False, "User locked out", {}
+        
+        # Is Active User
+        if not user_info.get('status'):
+            print(f"User {username} status not set")
+            return False, "User was disabled, Please contact administrator", {}
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
         if user_info.get('is_ad_user'):  # urdhva_base.settings.ldap_auth_enabled:
