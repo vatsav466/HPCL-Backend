@@ -138,12 +138,19 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
             if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
                 is_allowed = False
 
-        if not is_allowed:
+        if not data.get('username','') or not is_allowed:
             return {
                 "success": False, 
                 "message": "Not allowed to perform this operation"
             }
-        
+
+        # No one can change admin and superadmin
+        if data['username'].lower() in ["admin", "superadmin"]:
+            return {
+                "success": False,
+                "message": "Not allowed to perform this operation"
+            }
+
         if not isinstance(data.data,dict):
             data = data.data.__dict__
         
@@ -260,6 +267,19 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
         
         query = f"""username = '{data.get('username','')}'"""
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+
+        if not user_data.get("data"):
+            return {
+                "success": False,
+                "message": "Invalid information."
+            }
+
+        # No one can change admin and superadmin
+        if user_data['data'][0]['username'].lower() in ["admin", "superadmin"]:
+            return {
+                "success": False,
+                "message": "Not allowed to perform this operation"
+        }
 
         # Creator SOD was only for TAS
         if 'creatorsod' in user_roles and user_data['data'][0]['bu'] != ['TAS']:

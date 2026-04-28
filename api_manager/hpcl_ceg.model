@@ -4024,6 +4024,8 @@ Model UpdateUser internal {
     username optional str
     bu optional list str
     sap_id optional list str
+    first_name optional str
+    last_name optional str
     zone optional list str
     region optional list str
     state optional list str
@@ -4327,7 +4329,6 @@ Model NaturalGasGVConnections {
     Config=> {
         crud_operations='read'
     }
-
 }
 
 // Params for orchestrator.aggregate_query_gateway.query_aggregate_gateway
