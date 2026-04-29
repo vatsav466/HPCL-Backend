@@ -186,7 +186,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP021", "interlock_name": "UPS_Fail", "workflow_name": "CONTROL ROOM"},
                         {"sop_id": "SOP021", "interlock_name": "UPS_Lowbattery", "workflow_name": "CONTROL ROOM"},
                         {"sop_id": "SOP021", "interlock_name": "ProcessPLC_Communication fail", "workflow_name": "CONTROL ROOM"},
-                        {"sop_id": "SOP022", "interlock_name": "LRC Master Switchover required in 30 days", "workflow_name": "CONTROL ROOM"},
+                        {"sop_id": "SOP022", "interlock_name": "LRC server out of sync", "workflow_name": "CONTROL ROOM"},
                         {"sop_id": "SOP023", "interlock_name": "Firefighting system parameter", "workflow_name": "FIRE CRITICAL DATA"},
                         {"sop_id": "SOP023", "interlock_name": "Main Fire Engines not in REMOTE", "workflow_name": "FIRE CRITICAL DATA"},
                         {"sop_id": "SOP023", "interlock_name": "WATER Level below Reference Volume", "workflow_name": "FIRE CRITICAL DATA"},
