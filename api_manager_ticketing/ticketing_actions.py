@@ -91,6 +91,14 @@ CATEGORY_FUNCTIONAL_MAP = {
     "Asset Integrity": "HSE, M&I and Projects",
 }
 
+ZONAL_FUNCTIONAL_MAP = {
+            "Transportation Discipline": f"Zonal SOD Ticketing",
+            "VTS Live Tracking": f"Zonal SOD Ticketing",
+            "Inventory Management": f"Zonal SOD Ticketing",
+            "Safety Performance": f"Zonal SOD Ticketing",
+            "Asset Integrity": f"Zonal SOD Ticketing",
+        }
+
 
 async def _location_incharge_data(sap_ids: list[str]) -> tuple[set[str], set[str]]:
     if not sap_ids:
@@ -602,23 +610,44 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         if isinstance(category, list):
             category = category[0] if category else None
         functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
+        print("functional_area: ", functional_area)
+        bu = ticket_data.get("bu")
+        zonal_area = ZONAL_FUNCTIONAL_MAP.get(category)
 
         zones_list = ticket_data.get("zone") or []
         zones = ",".join([f"'{z}'" for z in zones_list if z])
+        sap_ids = ticket_data.get("sap_id")
+        print("sap_ids: ", sap_ids)
         employee_ids = []
-        if functional_area and zones:
+        if functional_area and zones and not sap_ids:
             role_condition = f"role LIKE '%{functional_area}%'"
             query = f"""
-                    SELECT zone, employee_id
-                    FROM ticket_user_mails
-                    WHERE {role_condition}
-                    AND zone IN ({zones})
-                    ORDER BY zone DESC
-                """
+                            SELECT zone, employee_id,role
+                            FROM ticket_user_mails
+                            WHERE {role_condition}
+                            AND zone IN ({zones})
+                            ORDER BY zone DESC
+                        """
             users_rec = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             users = users_rec.get("data", [])
             employee_ids = [u.get("employee_id") for u in users if u.get("employee_id")]
+            employee_roles = [zonal_area]
+        else:
+            sap_values = ",".join(f"'{s}'" for s in sap_ids if s)
+            query = f"""
+                                        SELECT zone, employee_id,role
+                                        FROM ticket_user_mails
+                                        WHERE sap_id IN ({sap_values})
+                                        AND zone IN ({zones})
+                                        ORDER BY zone DESC
+                                    """
+            users_rec = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            users = users_rec.get("data", [])
+            # employee_ids = [u.get("employee_id") for u in users if u.get("employee_id")]
+            employee_roles = [u.get("role") for u in users if u.get("role")]
+
         ticket_data["employee_id"] = employee_ids
+        ticket_data["employee_role"] = employee_roles
 
         # Linked alerts if provided
         clean_linked_ids = [x for x in (data.linked_alert_id or []) if str(x).strip()]
@@ -2221,6 +2250,7 @@ async def ticketing_process_escalations():
                 category = category_list[0] if isinstance(category_list, list) and category_list else category_list
 
                 functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
+                zonal_area = ZONAL_FUNCTIONAL_MAP.get(category)
                 if not functional_area:
                     continue
 
@@ -2238,11 +2268,13 @@ async def ticketing_process_escalations():
 
                 if rule_level == "L2":
                     role_condition = "role LIKE '%Zonal Head%'"
+                    employee_roles = ["Zonal Head SOD Ticketing"]
                 else:
                     role_condition = f"role LIKE '%{functional_area}%'"
+                    employee_roles = [zonal_area]
 
                 query = f"""
-                select zone, employee_id 
+                select zone, employee_id, role 
                 from ticket_user_mails 
                 where {role_condition}
                 and zone in ({zones})
@@ -2254,6 +2286,7 @@ async def ticketing_process_escalations():
                 # users = users_rec.get("data", [])
                 employee_ids = [u.get("employee_id") for u in users if u.get("employee_id")]
                 print("employee_ids: ",employee_ids)
+                # employee_roles = [u.get("role") for u in users if u.get("role")]
 
                 # if sla_days <= 0:
                 #    continue
@@ -2264,7 +2297,7 @@ async def ticketing_process_escalations():
                 print("rule: ", rule["level"])
 
                 if open_days > limit_days and ticket.get("escalation_level") != rule["level"]:
-                    await escalate_ticket(ticket, rule_level,employee_ids)
+                    await escalate_ticket(ticket, rule_level,employee_ids,employee_roles)
                     escalated_count += 1
                 print("rule level: ",rule["level"])
 
@@ -2281,7 +2314,7 @@ async def ticketing_process_escalations():
         }
 
 
-async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
+async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str],employee_roles: List[str]):
     now = datetime.now(ZoneInfo("Asia/Kolkata"))
     history = ticket.get("ticket_history") or []
 
@@ -2292,12 +2325,14 @@ async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
         "action_type": f"AutoEscalation {level}"
     })
     employee_id = employee_ids if employee_ids else []
+    employee_roles = employee_roles if employee_roles else []
 
     await Ticketing(
         id=ticket["id"],
         ticket_state="Escalated",
         escalation_level=level,
         employee_id=employee_id,
+        employee_role=employee_roles,
         ticket_history=history
     ).modify()
 

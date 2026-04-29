@@ -148,6 +148,7 @@ Model Ticketing {
     re_assingee_employee_id index_field optional list str
     re_assingee_mail optional list str
     reassigne_due_date optional str
+    employee_role optional list str
 
     Action=> get_ticket {
         ticket_id str
@@ -189,6 +190,7 @@ Model Ticketing {
         escalation_level optional str
         comment_history optional list CommentHistory
         employee_id optional list str
+        employee_role optional list str
     }
 
     Action=> close_ticket {
