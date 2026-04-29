@@ -268,7 +268,7 @@ async def generate_sod_engineering_location_stats(sap_id):
             "GANTRY BCU": "Gantry BCU", "MFM": "MFM", "AIR COMPRESSOR": "Air Compressor"
         }
 
-        query = f"sap_id = '{sap_id}' and active_server_name in ('LRCA', 'LRCB')"
+        query = f"sap_id = '{sap_id}'"
         params = urdhva_base.queryparams.QueryParams()
         params.limit = 1
         params.q = query
@@ -276,18 +276,22 @@ async def generate_sod_engineering_location_stats(sap_id):
         resp = await hpcl_ceg_model.MasterStatus.get_all(params, resp_type="plain")
 
         hardcoded_status = [
-            {"id": "lrca", "name": "LRCA", "status": "standby"},
-            {"id": "lrcb", "name": "LRCB", "status": "online"}
+            {"id": "lrca", "name": "LRCA", "status": "slave"},
+            {"id": "lrcb", "name": "LRCB", "status": "slave"}
         ]
-
+        
+        LRC_NAME_MAP = {
+            "lrca": "lrca", "lrc1": "lrca",
+            "lrcb": "lrcb", "lrc2": "lrcb"
+        }
         if resp.get("data"):
             df = pl.DataFrame(resp["data"]).select(["active_server_name", "status"])
             master_record = df.filter(pl.col("status").cast(pl.Int32) == 1).select("active_server_name")
             if master_record.height > 0:
-                master_id = master_record[0, "active_server_name"].lower()
+                raw_id = master_record[0, "active_server_name"].lower()
+                master_id = LRC_NAME_MAP.get(raw_id, raw_id) 
                 for server in hardcoded_status:
-                    if server["id"] in ["lrca", "lrcb"]:
-                        server["status"] = "master" if server["id"] == master_id else "slave"
+                    server["status"] = "master" if server["id"] == master_id else "slave"
 
         result_dict = {item["id"]: item for item in hardcoded_status}
 
