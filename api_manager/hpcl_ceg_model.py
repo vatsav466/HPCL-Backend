@@ -6432,7 +6432,7 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     
     status: Mapped[typing.Optional[int]] = mapped_column("status", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     location_code: Mapped[typing.Optional[str]] = mapped_column("location_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    active_server_name: Mapped[typing.Optional[str]] = mapped_column("active_server_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    active_server_name: Mapped[str] = mapped_column("active_server_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -6440,7 +6440,7 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
     date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(status, location_code, sap_id, date, name="master_status_status_location_code_sap_id_date"),)
+    __table_args__ = (UniqueConstraint(status, location_code, active_server_name, sap_id, date, name="master_status_statu_locat_activ_sapid_date"),)
 
 
 class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -6448,7 +6448,7 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     status: typing.Optional[int] = pydantic.Field(0, **{})
     location_code: typing.Optional[str] = pydantic.Field("", **{})
-    active_server_name: typing.Optional[str] = pydantic.Field("", **{})
+    active_server_name: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -6461,7 +6461,7 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
+        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id', 'date']
 
 
 class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
@@ -6469,7 +6469,7 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
     
     status: typing.Optional[int] = pydantic.Field(0, **{})
     location_code: typing.Optional[str] = pydantic.Field("", **{})
-    active_server_name: typing.Optional[str] = pydantic.Field("", **{})
+    active_server_name: typing.Optional[str] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -6482,7 +6482,7 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
+        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id', 'date']
 
 
 class MasterStatusGetResp(pydantic.BaseModel):
