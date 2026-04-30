@@ -1177,9 +1177,19 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             new_comment_entry = {
                 "updated_by": user_name,
                 "updated_time": datetime.now().isoformat(),
-                "ticket_msg": f"{previous_state} -> {final_state}"
+                "ticket_msg": f"{previous_state} -> {final_state}",
+                "comments": data_dict.get("comment"),
             }
             existing_comment_history.append(new_comment_entry)
+        else:
+            new_comment_entry = {
+                "updated_by": user_name,
+                "updated_time": datetime.now().isoformat(),
+                "ticket_msg": f"{final_state}",
+                "comments": data_dict.get("comment"),
+            }
+            existing_comment_history.append(new_comment_entry)
+
         data_dict["comment_history"] = existing_comment_history
 
         # -------------------------------------------------
