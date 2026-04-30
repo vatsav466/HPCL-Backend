@@ -79,7 +79,7 @@ class VTSLiveNoData:
             subject=f"VTS Issue: No {violation_code} Data Received",
             recipients=["mberde@aryaomnitalk.com"],
             cc_recipients=["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
-                           "pankajkarmakar@hpcl.in ", "ripaldingra@hpcl.in","rameshyadav.p@hpcl.in",
+                           "pankajkarmakar@hpcl.in ","rameshyadav.p@hpcl.in",
                            "gauravyadav1@hpcl.in","sreedhar.maddipati@algofusiontech.com",
                            "venu@algofusiontech.com","moufikali@algofusiontech.com", "manohar.v@algofusiontech.com"],
             html_content=True,
