@@ -1292,7 +1292,7 @@ tas_role_mapping={
                 "5": "PT60S"
             }
         },
-        "LRC Master Switchover required in 30 days": {
+        "LRC server out of sync": {
             "rolemailto": {
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
