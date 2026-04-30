@@ -48,6 +48,7 @@ class CommentHistoryCreate(pydantic.BaseModel):
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
     updated_time: typing.Optional[str] = pydantic.Field("", **{})
     ticket_msg: typing.Optional[str] = pydantic.Field("", **{})
+    comments: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class CreatedHistoryCreate(pydantic.BaseModel):

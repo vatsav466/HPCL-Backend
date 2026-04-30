@@ -87,6 +87,7 @@ Model CommentHistory internal {
     updated_by optional str
     updated_time optional str
     ticket_msg optional str
+    comments optional str
 }
 
 Model CreatedHistory internal {
