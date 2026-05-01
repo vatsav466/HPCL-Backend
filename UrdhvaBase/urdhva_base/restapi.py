@@ -204,7 +204,7 @@ async def get_baseurl(request: fastapi.Request, redirect_type="RedirectionUrl", 
 async def get_permission():
     rpt = urdhva_base.context.context.get('rpt', {})
     data = {"is_authenticated": False, "allowed_roles": []}
-    if rpt.get("username") and rpt.get("system_role") and rpt.get("novex_role"):
+    if rpt.get("username") and rpt.get("novex_role"):
         data['is_authenticated'] = True
         data["allowed_roles"] = rpt.get("allowed_roles", [])
     # data = {"me": ['read'], "logout": ["read"]}
