@@ -1008,3 +1008,342 @@ async def log_count_excel():
     return {
         "lpg_log_count": output_path
     }
+
+
+async def lpg_production_report():
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    yesterday_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    query = f"""SELECT * FROM public.lpg_plant_operations where process_date >= '{yesterday_date}' and process_date < '{current_date}' """ 
+    
+    stoppages_query = """SELECT
+                            a.erp_id,
+                            c.plant_id,
+                            c.carousal_id,
+                            c.rated_productivity,
+                            c.heads,
+                            ROUND(
+                                EXTRACT(EPOCH FROM (
+                                    (c.stop_time::time - c.start_time::time)
+                                    - COALESCE(SUM(b.stop_time::time - b.start_time::time), INTERVAL '0')
+                                )) / 3600,
+                                2
+                            ) AS total_hours
+                        FROM plants a
+                        JOIN carousals c
+                            ON c.plant_id = a.id
+                        LEFT JOIN breaks b
+                            ON b.plant_id = c.plant_id
+                            AND b.carousal_id = c.carousal_id
+
+                        GROUP BY
+                            a.erp_id,
+                            c.plant_id,
+                            c.carousal_id,
+                            c.start_time,
+                            c.stop_time,
+                            c.rated_productivity,
+                            c.heads;
+                    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+
+    stoppages = await function(query= stoppages_query)
+    stoppages_df = pl.DataFrame(stoppages)
+
+    from decimal import Decimal
+
+    def clean_decimals(data):
+        cleaned = []
+        for row in data:
+            new_row = {}
+            for k, v in row.items():
+                if isinstance(v, Decimal):
+                    new_row[k] = round(float(v), 2)
+                else:
+                    new_row[k] = v
+            cleaned.append(new_row)
+        return cleaned
+
+    clean_resp = clean_decimals(resp)
+
+    df = pl.DataFrame(clean_resp)
+    df = df.with_columns([
+        pl.col("sap_id").cast(pl.Utf8),
+        pl.col("carousel").cast(pl.Int64)  
+    ])
+
+    comp_df = stoppages_df.with_columns([
+        pl.col("erp_id").cast(pl.Utf8),
+        pl.col("carousal_id").cast(pl.Int64)  
+    ])
+    
+    df = df.join(comp_df, left_on=["sap_id", "carousel"], right_on=["erp_id","carousal_id"], how="left")
+    df = df.select([
+        pl.col("location_name").alias("Plant Name"),
+        pl.col("sap_id").alias("SAP Code"),
+        pl.col("zone").alias("Zone"),
+        pl.col("carousel").alias("Carousel"),
+        pl.col("filling_head").alias("Heads"),
+        pl.col("production_14_2kg").alias("14.2kg Cylinders"),
+        pl.col("production_19kg").alias("19kg Cylinders"),
+        pl.sum_horizontal([
+            pl.col("production_14_2kg").fill_null(0),
+            pl.col("production_19kg").fill_null(0)
+        ]).alias("Total Cylinders"),
+        pl.col("normal_total_production").alias("Normal Total Production"),
+        pl.col("normal_net_hours").alias("Normal Net Hours"),
+        pl.col("total_hours").alias("Total Stoppage Hours"),
+        (pl.col("total_hours").fill_null(0) - pl.col("normal_net_hours").fill_null(0)).round(2).alias("Stoppage Hours"),
+        pl.col("normal_productivity").alias("Normal Productivity"),
+        pl.col("break_total_production").alias("Break Total Production"),
+        pl.col("break_net_hours").alias("Break Net Hours"),
+        pl.col("break_productivity").alias("Break Productivity"),
+        pl.col("overtime_total_production").alias("Overtime Total Production"),
+        pl.col("overtime_net_hours").alias("Overtime Net Hours"),
+        pl.col("overtime_productivity").alias("Overtime Productivity"),
+        pl.col("cs_rejection").alias("Check Scale Rejection"),
+        pl.col("gd_rejection").alias("ELD"),
+        pl.col("pt_rejection").alias("ORT"),
+        pl.col("rated_productivity").alias("Comparision Normal Productivity")
+    ])
+    print("df select ---->\n", df)
+    
+    # Sort data
+    df = df.sort(["Plant Name", "SAP Code", "Zone", "Carousel"])
+
+    data = df.to_dicts()
+    headers = df.columns
+    exclude_cols = {
+        "Comparision Normal Productivity",
+        "Normal Net Hours",
+        "Total Stoppage Hours"
+    }
+    headers = [col for col in df.columns if col not in exclude_cols]
+
+    output_path = "/tmp/lpg_production_report.xlsx"
+
+    workbook = xlsxwriter.Workbook(output_path)
+    worksheet = workbook.add_worksheet("Report")
+
+    # ---------------- Formats ----------------
+    cell_format = workbook.add_format({
+        "align": "center",
+        "valign": "vcenter",
+        "border": 1,
+        "text_wrap": True
+    })
+
+    header_format = workbook.add_format({
+        "bold": True,
+        "align": "center",
+        "valign": "vcenter",
+        "border": 1,
+        "text_wrap": True
+    })
+    
+    red_format = workbook.add_format({
+        "bg_color": "#FFC7CE",   
+        "font_color": "#9C0006",
+        "align": "center",
+        "valign": "vcenter",
+        "border": 1
+    })
+
+    # ---------------- Headers ----------------
+    worksheet.merge_range("A1:A2", "Plant Name", header_format)
+    worksheet.merge_range("B1:B2", "SAP Code", header_format)
+    worksheet.merge_range("C1:C2", "Zone", header_format)
+
+    worksheet.merge_range("D1:D2", "Carousel", header_format)
+    worksheet.merge_range("E1:E2", "Heads", header_format)
+
+    worksheet.merge_range("F1:H1", "Bottling Summary", header_format)
+    worksheet.write("F2", "14.2kg Cylinders", header_format)
+    worksheet.write("G2", "19kg Cylinders", header_format)
+    worksheet.write("H2", "Total", header_format)
+
+    worksheet.merge_range("I1:K1", "Productivity - Normal Hours", header_format)
+    worksheet.write("I2", "Production", header_format)
+    worksheet.write("J2", "Stoppages (Hrs)", header_format)
+    worksheet.write("K2", "Productivity (cyls/hr)", header_format)
+
+    worksheet.merge_range("L1:N1", "Productivity - Break Hours", header_format)
+    worksheet.write("L2", "Production", header_format)
+    worksheet.write("M2", "Net Hours", header_format)
+    worksheet.write("N2", "Productivity (cyls/hr)", header_format)
+
+    worksheet.merge_range("O1:Q1", "Productivity - Overtime Hours", header_format)
+    worksheet.write("O2", "Production", header_format)
+    worksheet.write("P2", "Net Hours", header_format)
+    worksheet.write("Q2", "Productivity (cyls/hr)", header_format)
+
+
+    worksheet.merge_range("R1:T1", "QC Rejections (%)", header_format)
+    worksheet.write("R2", "Check Scale", header_format)
+    worksheet.write("S2", "ELD", header_format)
+    worksheet.write("T2", "ORT", header_format)
+
+    # ---------------- Write normal data first ----------------
+    row_num = 2
+
+    for row in data:
+
+        for col_idx, col_name in enumerate(headers[3:], start=3):
+            value = row[col_name]
+            if col_name == "Normal Productivity":
+                normal = row["Normal Productivity"]
+                comp = row["Comparision Normal Productivity"]
+
+                if comp is not None and normal is not None and comp > normal:
+                    worksheet.write(row_num, col_idx, value, red_format)
+                else:
+                    worksheet.write(row_num, col_idx, value, cell_format)
+            elif col_name == "Stoppage Hours":
+                worksheet.write(row_num, col_idx, value, red_format)
+            elif col_name == "Check Scale Rejection":
+                if value > 8:
+                    worksheet.write(row_num, col_idx, value, red_format)
+                else:
+                    worksheet.write(row_num, col_idx, value, cell_format)
+            elif col_name == "ELD":
+                if value > 6 or value < 1:
+                    worksheet.write(row_num, col_idx, value, red_format)
+                else:
+                    worksheet.write(row_num, col_idx, value, cell_format)
+
+            elif col_name == "ORT":
+                if value < 6 or value < 1:
+                    worksheet.write(row_num, col_idx, value, red_format)
+                else:
+                    worksheet.write(row_num, col_idx, value, cell_format)
+            else:
+                worksheet.write(row_num, col_idx, value, cell_format)
+
+        row_num += 1
+
+    # ---------------- Merge repeated values ----------------
+    
+    start_row = 2
+
+    for i in range(len(data)):
+
+        is_last = i == len(data) - 1
+
+        current = (
+            data[i]["Plant Name"],
+            data[i]["SAP Code"],
+            data[i]["Zone"]
+        )
+
+        next_value = None
+
+        if not is_last:
+            next_value = (
+                data[i + 1]["Plant Name"],
+                data[i + 1]["SAP Code"],
+                data[i + 1]["Zone"]
+            )
+
+        if is_last or current != next_value:
+
+            end_row = i + 2
+
+            plant_name = data[i]["Plant Name"]
+            sap_code = data[i]["SAP Code"]
+            zone = data[i]["Zone"]
+
+            if start_row < end_row:
+                # Merge Plant Name
+                worksheet.merge_range(
+                    start_row, 0,
+                    end_row, 0,
+                    plant_name,
+                    cell_format
+                )
+
+                # Merge SAP Code
+                worksheet.merge_range(
+                    start_row, 1,
+                    end_row, 1,
+                    sap_code,
+                    cell_format
+                )
+
+                # Merge Zone
+                worksheet.merge_range(
+                    start_row, 2,
+                    end_row, 2,
+                    zone,
+                    cell_format
+                )
+
+            else:
+                # Single row -> write normally
+                worksheet.write(start_row, 0, plant_name, cell_format)
+                worksheet.write(start_row, 1, sap_code, cell_format)
+                worksheet.write(start_row, 2, zone, cell_format)
+
+            # Move to next group
+            start_row = end_row + 1
+
+    # ---------------- Column Widths ----------------
+    worksheet.set_column(0, 0, 30)
+    worksheet.set_column(1, 2, 15)
+    worksheet.set_column(3, len(headers)-1, 15)
+
+    worksheet.set_row(0, 30)
+    worksheet.set_row(1, 30)
+    workbook.close()
+
+    print(f"Excel saved at: {output_path}")
+    
+    # html rowspan for merging cells with same Plant Name, SAP Code, Zone
+    final_data = []
+
+    i = 0
+    while i < len(data):
+
+        current = (
+            data[i]["Plant Name"],
+            data[i]["SAP Code"],
+            data[i]["Zone"]
+        )
+
+        group = [data[i]]
+        j = i + 1
+
+        while j < len(data):
+            nxt = (
+                data[j]["Plant Name"],
+                data[j]["SAP Code"],
+                data[j]["Zone"]
+            )
+            if nxt == current:
+                group.append(data[j])
+                j += 1
+            else:
+                break
+
+        rowspan = len(group)
+
+        for idx, row in enumerate(group):
+            new_row = row.copy()
+
+            if idx == 0:
+                new_row["rowspan"] = rowspan
+                new_row["show_merge"] = True
+            else:
+                new_row["show_merge"] = False
+
+            final_data.append(new_row)
+
+        i = j
+    data = final_data
+
+    return {
+        "data": data,
+        "lpg_production_report": output_path
+    } 
