@@ -325,20 +325,27 @@ async def get_sales_tmt(date_filter: str):
 
     date_condition = ""
 
-    # if date_filter == 'day':
-    #     date_condition = f""" AND "DAY_ID" = CURRENT_DATE - INTERVAL '1 day'"""
-
-    # elif date_filter == 'month':
-    #     date_condition = f"""AND "DAY_ID" >= date_trunc('month', CURRENT_DATE)
-    #         AND "DAY_ID" < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
-    #     """
-
     if date_filter == 'day':
-        date_condition = f""" AND "DAY_ID" = TO_CHAR(CURRENT_DATE - INTERVAL '1 day', 'YYYYMMDD')::bigint"""
+        date_condition = """AND "DAY_ID" = TO_CHAR(CURRENT_DATE - INTERVAL '1 day', 'YYYYMMDD')::bigint"""
 
     elif date_filter == 'month':
-        date_condition = f"""AND "DAY_ID" >= TO_CHAR(date_trunc('month', CURRENT_DATE), 'YYYYMMDD')::bigint
-            AND "DAY_ID" < TO_CHAR(CURRENT_DATE, 'YYYYMMDD')::bigint
+        date_condition = """
+            AND "DAY_ID" >= TO_CHAR(
+                CASE
+                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                    THEN date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+                    ELSE date_trunc('month', CURRENT_DATE)
+                END,
+                'YYYYMMDD'
+            )::bigint
+            AND "DAY_ID" < TO_CHAR(
+                CASE
+                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                    THEN date_trunc('month', CURRENT_DATE)
+                    ELSE CURRENT_DATE
+                END,
+                'YYYYMMDD'
+            )::bigint
         """
     
     sales_tmt_query = f"""

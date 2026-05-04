@@ -677,10 +677,12 @@ def _build_keyset_query(
         return f"""
             SELECT * FROM {source_table}
             WHERE process_date < NOW()
-              AND (
-                    process_date > '{ts_sql}'
-                 OR (process_date = '{ts_sql}' AND {id_col} > {int(cursor_id)})
-                  )
+              AND 
+                process_date >= '{ts_sql}'
+                # (
+                #     process_date > '{ts_sql}'
+                #  OR (process_date = '{ts_sql}' AND {id_col} > {int(cursor_id)})
+                #  )
             ORDER BY process_date ASC, {id_col} ASC
             LIMIT {lim}
         """
@@ -837,6 +839,10 @@ def sync_one_kind(
     cur_ts, cur_id, resume_src = get_resume_cursor_conn(
         app_conn, plant_name, kind, sap_s, app_table, id_col
     )
+
+    #fetching before 1 hr of last extracted date
+    cur_ts = cur_ts - dt.timedelta(hours=1)
+
     always_dedupe = os.environ.get("LPG_UNIFIED_ALWAYS_DEDUPE", "").lower() in (
         "1",
         "true",

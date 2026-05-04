@@ -138,6 +138,11 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
             if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
                 is_allowed = False
 
+        if not isinstance(data.data, dict):
+            data = data.data.__dict__
+        else:
+            data = data.data
+
         if not data.get('username','') or not is_allowed:
             return {
                 "success": False, 
@@ -150,9 +155,6 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
                 "success": False,
                 "message": "Not allowed to perform this operation"
             }
-
-        if not isinstance(data.data,dict):
-            data = data.data.__dict__
         
         query = f"""username = '{data.get('username','')}'"""
 
