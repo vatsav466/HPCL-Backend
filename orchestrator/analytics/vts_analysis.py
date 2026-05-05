@@ -22,6 +22,7 @@ import utilities.helpers as helpers
 import utilities.vts_mapping as vts_mapping
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
+import utilities.connection_mapping as connection_mapping
 import utilities.vts_instance_mapping as vts_instance_mapping
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.va_analysis as va_analysis
@@ -931,7 +932,12 @@ async def create_vts_alerts(enriched_data):
             entry["sap_id"] = str(entry["location_id"])
 
             if entry['location_type'] == 'TAS':
-                entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
+                if base_location_data.get(entry['tl_number'], ""):
+                    entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
+                else:
+                    base_locn = await get_base_location_details_ims(entry['tl_number'],entry["sap_id"])
+                    if base_locn:
+                        entry['base_location_id'] = base_locn
 
             if entry['location_type'] in ['LPG','TAS'] and entry.get("tt_type", "").lower() in ["bulk"]:
                 ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
@@ -1234,7 +1240,7 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
 # continuous_driving_count
 
 async def get_base_location_details():
-    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP"."VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' """
+    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP"."VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' AND "BASE_LOCN" IS NOT NULL AND "BASE_LOCN" <> '' """
     charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
         connection_id=1,
         action='get_data'
@@ -1242,6 +1248,37 @@ async def get_base_location_details():
     function = await charts_actions.charts_connection_vault_routing(charts_ins)
     base_location_data = await function(query=query, schema_name="IMS_SAP", table_name="VTS_TRUCK_DETAILS")
     return dict(zip(base_location_data["TRUCK_REGNNO"].to_list(), base_location_data["BASE_LOCN"].to_list()))
+
+async def get_base_location_details_ims(vehicle_number, sap_id):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+
+    base_location_resp = []
+    base_locn = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            base_location_query = f"""SELECT "LOCN_CODE", "TRUCK_REGNNO", "RECORD_STATUS", "BASE_LOCN" FROM "IMS_SAP"."TRUCK_DETAILS" 
+                                        WHERE "TRUCK_REGNNO" = '{vehicle_number}' AND "LOCN_CODE" = '{sap_id}' AND "RECORD_STATUS" = 'A' 
+                                        AND "BASE_LOCN" IS NOT NULL """
+            charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+                connection_id=connection_mapping.connection_mapping.get("ims", "1"),
+                action='execute_query'
+            )
+            function = await charts_actions.charts_connection_vault_routing(charts_ins)
+            base_location_resp = await function(query=base_location_query)
+            print("before return", base_location_resp)
+            break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+
+    if len(base_location_resp) > 0:
+        base_locn = base_location_resp[0].get("BASE_LOCN")
+
+    return base_locn
 
 def get_geofence_data():
     GEOFENCE_RENAME_MAP = {
