@@ -97,7 +97,7 @@ async def publish_daily_novex_status_email():
     # print("-------->status_data",status_data)
     await send_notification(
         template_name="seg1.html",
-        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
         subject="Novex Daily Report",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
@@ -112,7 +112,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg2.html",
-        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
         subject="Novex Daily Report: Retail",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
@@ -127,7 +127,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg3.html",
-        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
         subject="Novex Daily Report: LPG",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
@@ -141,7 +141,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg4.html",
-        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
@@ -157,7 +157,7 @@ async def publish_daily_novex_status_email():
 
     await send_notification(
         template_name="ro_va_cleanliness.html",
-        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
         subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
@@ -167,7 +167,7 @@ async def publish_daily_novex_status_email():
 
     await send_notification(
         template_name="nozzle_sales_trend.html",
-        to_recipients=["sachinkwarghane@hpcl.in", "purushm@hpcl.in", "adityapandey@hpcl.in", "ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"],
+        to_recipients=["sachinkwarghane@hpcl.in", "purushm@hpcl.in", "adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in"],
         subject="Nozzle sales of MS Sales and Power daily sales Trend monitoring",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
         bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
