@@ -83,6 +83,10 @@ import json
 import numpy as np
 from fastapi import HTTPException
 import asyncio
+import os
+import uuid
+import tempfile
+import utilities.minio_connector as minio_connector
 
 async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain, resp_format):
     try:
@@ -269,18 +273,68 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         if zones_output.empty and regions_output.empty and districts_output.empty:
             return False, {"zones": [], "regions": [], "districts": []}, None
 
-        file_path = "/opt/downloads/final_data_indus.csv" # Use a dynamic path if needed
-        # file_path = "/Users/apple/Downloads/final_data_indus.csv" # Local path for testing
+        # file_path = "/opt/downloads/final_data_indus.csv" # Use a dynamic path if needed
+        # file_path = "/Users/algofusion/Downloads/final_data_indus.csv" # Local path for testing
         
-        combined_df = pd.concat([zones_output, regions_output, districts_output], axis=0, ignore_index=True)
-        combined_df.to_csv(file_path, index=False)
+        # combined_df = pd.concat([zones_output, regions_output, districts_output], axis=0, ignore_index=True)
+        # combined_df.to_csv(file_path, index=False)
+
+        # return True, {
+        #     "zones": json.loads(zones_output.to_json(orient="records")),
+        #     "regions": json.loads(regions_output.to_json(orient="records")),
+        #     "districts": json.loads(districts_output.to_json(orient="records"))
+        # }, file_path
+        combined_df = pd.concat(
+            [zones_output, regions_output, districts_output],
+            axis=0,
+            ignore_index=True
+        )
+
+        # ================= CREATE TEMP FILE =================
+
+        temp_dir = tempfile.gettempdir()
+
+        file_name = f"final_data_indus_{uuid.uuid4().hex}.csv"
+
+        local_file_path = os.path.join(temp_dir, file_name)
+
+        combined_df.to_csv(local_file_path, index=False)
+
+        print("CSV saved:", local_file_path)
+
+        # ================= UPLOAD TO MINIO =================
+
+        unique_id = str(uuid.uuid4())
+
+        upload_status, upload_response = minio_connector.upload_to_minio(
+            "industry",          # bu
+            "reports",           # section
+            unique_id,           # unique_id
+            local_file_path      # filepath
+        )
+
+        if not upload_status:
+            raise HTTPException(
+                status_code=500,
+                detail=f"MinIO upload failed: {upload_response}"
+            )
+
+        print("Uploaded to MinIO:", upload_response)
+
+        # ================= REMOVE LOCAL FILE =================
+
+        if os.path.exists(local_file_path):
+            os.remove(local_file_path)
+
+        # ================= RETURN RESPONSE =================
 
         return True, {
             "zones": json.loads(zones_output.to_json(orient="records")),
             "regions": json.loads(regions_output.to_json(orient="records")),
-            "districts": json.loads(districts_output.to_json(orient="records"))
-        }, file_path
-
+            "districts": json.loads(districts_output.to_json(orient="records")),
+            "file_attachment": [upload_response],
+            "file_attachment_name": file_name
+        }, None
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1422,24 +1476,26 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     print("months from get_date_dfilters",months)
     #Added for the purpose of FY2025-2026 Apr ist
     
-    fiscal_year_pre = '2025-2026'
-    fiscal_year_last = '2024-2025'
+    # fiscal_year_pre = '2025-2026'
+    # fiscal_year_last = '2024-2025'
+    fiscal_year_pre = '2026-2027'
+    fiscal_year_last = '2025-2026'
     
     for each_filter in org_filters:
         
         if each_filter['key'].strip('"')  =='fiscal_year':
-            if each_filter['value'].strip('"') == '2024-2025':
-                fiscal_year_pre = '2024-2025'
-                fiscal_year_last = '2023-2024'
             if each_filter['value'].strip('"') == '2025-2026':
                 fiscal_year_pre = '2025-2026'
                 fiscal_year_last = '2024-2025'
+            if each_filter['value'].strip('"') == '2026-2027':
+                fiscal_year_pre = '2026-2027'
+                fiscal_year_last = '2025-2026'
             if 'in' in each_filter['cond']:
                 fiscal_year_pre = each_filter['value'].split(',')[-1]
                 fiscal_year_last = each_filter['value'].split(',')[0]
-            if '2023-2024,2024-2025' in each_filter['value'].strip('"'):
-                fiscal_year_pre = '2024-2025'
-                fiscal_year_last = '2023-2024'
+            if '2024-2025,2025-2026' in each_filter['value'].strip('"'):
+                fiscal_year_pre = '2025-2026'
+                fiscal_year_last = '2024-2025'
                 
     if fiscal_year_pre and not fiscal_year_last:
         filters.append({"key": "fiscal_year", "cond": "equals", "value": fiscal_year_pre})
@@ -1584,7 +1640,7 @@ WITH current_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS current_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2025-2026'
+    WHERE fiscal_year='2026-2027'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -1595,7 +1651,7 @@ last_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS last_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2024-2025'
+    WHERE fiscal_year='2025-2026'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -1762,10 +1818,10 @@ async def get_category_wise_cumulative_data(filters):
     for each_filter in org_filters:
         print("each_filter",each_filter)
         if each_filter['key'].strip('"')  =='fiscal_year':
-            if each_filter['value'].strip('"') == '2024-2025':
-                fiscal_years = ["2023-2024", "2024-2025"]
             if each_filter['value'].strip('"') == '2025-2026':
                 fiscal_years = ["2024-2025", "2025-2026"]
+            if each_filter['value'].strip('"') == '2026-2027':
+                fiscal_years = ["2025-2026", "2026-2027"]
     print("fiscal_years",fiscal_years)
     filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
@@ -1822,7 +1878,7 @@ async def get_category_wise_cumulative_data(filters):
     #         else:
     #             fiscal_years.append('2024-2025')
     if df.empty:
-        fiscal_years = ["2024-2025", "2025-2026"]  # default fiscal years when no data
+        fiscal_years = ["2025-2026", "2026-2027"]  # default fiscal years when no data
     else:
         fiscal_years = sorted(df["fiscal_year"].unique())
         if len(fiscal_years) == 1:
@@ -2064,10 +2120,10 @@ async def generate_omc_compare_data(filters, drill_state):
              fiscal_year_last = str(int(fiscal_year_last.split('-')[0])-1)+'-'+str(int(fiscal_year_last.split('-')[-1]) -1)
              filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": [fiscal_year_pre, fiscal_year_last]})
         else:
-            fiscal_year_pre = '2024-2025'
-            fiscal_year_last = '2023-2024'
+            fiscal_year_pre = '2025-2026'
+            fiscal_year_last = '2024-2025'
     else:
-        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2024-2025", "2025-2026"]})
+        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2025-2026", "2026-2027"]})
     present_month = datetime.datetime.now().strftime('%b')
     #if present_month.lower() == 'apr':
     #            fiscal_year_pre = fiscal_year_last
