@@ -881,9 +881,12 @@ class SendNotification:
 
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
-                    tas_cc = []
+
+                    tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
+                        for email in ["TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]:
+                            if email not in tas_cc:
+                                tas_cc.append(email)
 
                     args = {
                         "recipients": self.mail_recipients,
@@ -956,9 +959,11 @@ class SendNotification:
                 tas_recipients = await self.get_tas_recipients()
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
-                    tas_cc = []
+                    tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        tas_cc = ["ArpitaKanak.Bara@hpcl.in", "TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]
+                        for email in ["TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]:
+                            if email not in tas_cc:
+                                tas_cc.append(email)
                     
                     args = {
                         "recipients": self.mail_recipients,

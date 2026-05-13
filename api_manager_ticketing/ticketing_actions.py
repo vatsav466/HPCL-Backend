@@ -383,6 +383,13 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     employee_id = data.employee_id
 
     tdata = data.model_dump()
+    order_ids = tdata.get("order_id")
+    if order_ids in ("", None):
+        tdata["order_id"] = []
+    elif isinstance(order_ids, list):
+        tdata["order_id"] = [x for x in order_ids if x]
+    else:
+        tdata["order_id"] = [order_ids]
 
     # FIX 1: correct typo was re_asningee -> re_assingee
     for field in ["re_assingee_employee_id", "re_assingee_mail"]:
