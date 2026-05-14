@@ -1182,6 +1182,52 @@ async def get_product_availability(data):
                 "mixed_ro": mixed_ro.to_dicts()
             }
         
+        # ----------------
+        # zone wise count
+        # ----------------
+        if data.action == "zone_wise_count":
+            ro_status = final_merge.group_by(["sap_id", "zone"]).agg(
+                [
+                    (pl.col("stock_days") > 0).any().alias("has_stock"),
+                    (pl.col("stock_days") == 0).any().alias("has_zero")
+                ]
+            ).with_columns(
+                pl.when(pl.col("has_stock") & pl.col("has_zero"))
+                .then(pl.lit("Mixed"))
+                .when(pl.col("has_stock"))
+                .then(pl.lit("Active"))
+                .otherwise(pl.lit("Inactive"))
+                .alias("status")
+            )
+            zone_summary = (
+                ro_status
+                .group_by(["zone", "status"])
+                .agg(pl.count().alias("count"))
+            )
+            result = {}
+
+            for row in zone_summary.to_dicts():
+                zone = row["zone"]
+                status = row["status"]
+                count = row["count"]
+
+                if zone not in result:
+                    result[zone] = {
+                        "active": 0,
+                        "inactive": 0,
+                        "mixed": 0
+                    }
+
+                if status == "Active":
+                    result[zone]["active"] = count
+                elif status == "Inactive":
+                    result[zone]["inactive"] = count
+                elif status == "Mixed":
+                    result[zone]["mixed"] = count
+                    
+        return result
+
+    
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": str(e)}
