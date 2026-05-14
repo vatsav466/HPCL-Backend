@@ -150,6 +150,7 @@ Model Ticketing {
     re_assingee_mail optional list str
     reassigne_due_date optional str
     employee_role optional list str
+    order_id optional list str
 
     Action=> get_ticket {
         ticket_id str
@@ -192,6 +193,7 @@ Model Ticketing {
         comment_history optional list CommentHistory
         employee_id optional list str
         employee_role optional list str
+        order_id optional list str
     }
 
     Action=> close_ticket {
