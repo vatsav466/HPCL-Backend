@@ -44,7 +44,7 @@ async def generate_filters_cond(filters):
     return conds
 
 
-async def stock_dispatch_receipt(filter_clause, connection_params):
+async def stock_dispatch_receipt(filter_clause, connection_function):
     """
     Gets available stock data, product dispatch and receipt data from host_live_tank_details.
     Args:
@@ -55,13 +55,11 @@ async def stock_dispatch_receipt(filter_clause, connection_params):
     """
     # Build queries
     query_keys = ("dispatch", "receipt", "tank_details")
-    queries = [tank_queries.queries.get(key, "").format(filter_clause) for key in query_keys]
+    queries = [tank_queries.queries.get(key, "").format(condition=filter_clause) for key in query_keys]
 
     # Execute all queries concurrently
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
-    results = await asyncio.gather(*(function(query=q) for q in queries))
-    print(type(results))
-
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    results = await asyncio.gather(*(connection_function(query=q) for q in queries))
     # Process and return as polars DataFrames
     keys = ("dispatch", "receipt", "stock")
     return {
@@ -89,16 +87,16 @@ async def calculate_net_stock(tank_data):
 
     total_dispatch = dispatch["sum"].sum() if not dispatch.is_empty() else 0.0
     total_receipt  = receipt["sum"].sum()  if not receipt.is_empty()  else 0.0
-    print(stock)
+    
     total_stock    = (
         stock.filter(pl.col("available_stock_kl") > 0)["available_stock_kl"].sum()
         if not stock.is_empty() else 0.0
     )
-    print(total_stock)
+    
     return (total_stock + total_receipt) - total_dispatch
 
 
-async def tank_ullage(filter_clause, connection_params):
+async def tank_ullage(filter_clause, connection_function):
     """
     calculate tank ullage
     Args:
@@ -108,15 +106,48 @@ async def tank_ullage(filter_clause, connection_params):
         polars dataframe with tank ullage and tank capacity product wise 
     """
     ullage_query = tank_queries.queries.get('tank_ullage', '').format(filter_clause)
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
-    ullage_resp = await function(query=ullage_query)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    print("ullage query -->", ullage_query)
+    ullage_resp = await connection_function(query=ullage_query)
     ullage_data  = pl.DataFrame(process_rows(ullage_resp)).group_by("product").agg(
                         pl.col("ullage").sum(), pl.col("capacity").sum(), pl.col("dead_stock").sum()
             )
     return ullage_data
 
+async def action_tankwise_sustainability(filter_clause, connection_function):
+    """
+    calculates tankwise stock sustainability
+    Args:
+        filter_clause: list of filter clause 
+        connection_params: Charts_Connection_Vault_RoutingParams to establish db connection
+    Returns:
+         api response dictionary with tankwise stock sustainability
+    """
+    query = tank_queries.queries.get('tankwise_stock_sustainability').format(filter_clause[0], filter_clause[0], filter_clause[1], filter_clause[0])
 
-async def action_stock_sustainability(filter_clause, connection_params):
+    print(query)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    tankwise_resp = await connection_function(query=query)
+    tankwise_resp = process_rows(tankwise_resp)
+    tankwise_data = pl.DataFrame(process_rows(tankwise_resp)).with_columns(
+        (
+            (
+                pl.when(pl.col("available_stock_kl") < 0).then(0).otherwise(pl.col("available_stock_kl"))
+                + pl.col("total_receipt")
+                - pl.col("total_dispatch")
+            )
+            .round(2)
+            .alias("net_stock")
+        )
+    ).with_columns(
+        pl.when(pl.col("seven_day_avg") != 0)
+        .then((pl.col("net_stock") / pl.col("seven_day_avg")).round(2))
+        .otherwise(0)
+        .alias("stock_sustainability")
+    )
+    return {"status": True, "data": tankwise_data.to_dicts(), "message": "successfully retrieved data"}
+   
+async def action_stock_sustainability(filter_clause, connection_function):
     """
     calculates stock sustainability
     Args: 
@@ -127,17 +158,18 @@ async def action_stock_sustainability(filter_clause, connection_params):
 
     """
     # generate filter clause with current date
-    # stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hardcoded date for testing 
+    #stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hardcoded date for testing 
     stock_clause = f"date_time::DATE = DATE '{date.today().strftime("%Y-%m-%d")}' {filter_clause}"
 
     # get net stock
-    tank_data = await stock_dispatch_receipt(filter_clause=stock_clause, connection_params=connection_params)
+    tank_data = await stock_dispatch_receipt(filter_clause=stock_clause, connection_function=connection_function)
     net_stock = await calculate_net_stock(tank_data) 
 
     # get dispatch average
     dispatch_average_query = tank_queries.queries.get('dispatch_average', '').format(filter_clause)
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
-    avg_resp = await function(query=dispatch_average_query)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    avg_resp = await connection_function(query=dispatch_average_query)
+    print(avg_resp)
     avg = avg_resp[0].get('seven_day_avg', 0)
     dispatch_average = float(avg)
 
@@ -146,8 +178,17 @@ async def action_stock_sustainability(filter_clause, connection_params):
 
     return{"status": True, "data": stock_sustainability, "message": "successfully retrieved data"}
 
+async def action_stock_sustainability_tankwise(filter_clause, connection_function):
+    stock_clause = f"date_time::DATE = DATE '{date.today().strftime("%Y-%m-%d")}' {filter_clause}"
 
-async def action_product_wise_trends(filter_clause, connection_params):
+    # get net stock
+    tank_data = await stock_dispatch_receipt(filter_clause=stock_clause, connection_function=connection_function)
+    # net_stock = await calculate_net_stock(tank_data) 
+    print(tank_data['dispatch'])
+    print(tank_data['stock'])
+    print(tank_data['reeipt'])
+
+async def action_product_wise_trends(filter_clause, connection_function):
     """
     product wise bifurcation for available_stock, tank_dispatch, tank_receipt, seven_day_avg, net_stock, 
     stock_sustainability, ullage, capacity for given date range and sap id filter 
@@ -158,18 +199,18 @@ async def action_product_wise_trends(filter_clause, connection_params):
         api response dictionary with product wise trends data 
     """
     # generate filter clause with current date
-    # stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hard coded date for testing
+    #stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hard coded date for testing
     stock_clause = f"date_time::DATE = DATE '{date.today().strftime('%Y-%m-%d')}' {filter_clause}"
 
     # fetch stock/dispatch/receipt and average dispatch concurrently
     prod_avg_dispatch_query = tank_queries.queries.get("dispatch_average_prodwise", "").format(filter_clause)
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
 
     (data, prod_avg_resp) = await asyncio.gather(
-        stock_dispatch_receipt(filter_clause=stock_clause, connection_params=connection_params),
-        function(query=prod_avg_dispatch_query)
+        stock_dispatch_receipt(filter_clause=stock_clause, connection_function=connection_function),
+        connection_function(query=prod_avg_dispatch_query)
     )
-
+    
     # process dispatch
     dispatch_data = (
         data.get("dispatch", pl.DataFrame())
@@ -216,7 +257,6 @@ async def action_product_wise_trends(filter_clause, connection_params):
         .drop_nulls()
         .join(prod_avg_dispatch, on="product", how="full", coalesce=True)
     )
-
     # calculate net stock and sustainability in one with_columns call
     res = res.with_columns(
         (
@@ -235,14 +275,13 @@ async def action_product_wise_trends(filter_clause, connection_params):
         .alias("stock_sustainability")
     )
     # fetch ullage and join
-    ullage_data = await tank_ullage(filter_clause=filter_clause, connection_params=connection_params)
-    print(ullage_data)
+    ullage_data = await tank_ullage(filter_clause=filter_clause, connection_function=connection_function)
     res = res.join(ullage_data, on="product", how="left")
 
     return {"status": True, "data": res.to_dicts(), "message": "data fetched successfully"}
 
 
-async def action_daily_trends(filter_clause, connection_params):
+async def action_daily_trends(filter_clause, connection_function):
     """
         gets tank_dispatch, bcu_dispatch, tank_receipt, difference between tank_dispatch and bcu_dispatch
         for all products for a given date and sap id filter
@@ -252,14 +291,14 @@ async def action_daily_trends(filter_clause, connection_params):
         Returns:
             api response dictionary with product wise trends data 
     """
-    tank_dispatch = tank_queries.queries.get('dispatch', '').format(filter_clause)
-    tank_receipt = tank_queries.queries.get('receipt', '').format(filter_clause)
-    bcu_dispatch  = tank_queries.queries.get('bcu_total_dispatch', '').format(filter_clause)
+    tank_dispatch = tank_queries.queries.get('dispatch', '').format(condition=filter_clause)
+    tank_receipt = tank_queries.queries.get('receipt', '').format(condition=filter_clause)
+    bcu_dispatch  = tank_queries.queries.get('bcu_total_dispatch', '').format(condition=filter_clause)
 
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
-    tank_dispatch_resp = await function(query=tank_dispatch)
-    tank_reciept_resp  = await function(query=tank_receipt)
-    bcu_dispatch_resp = await function(query=bcu_dispatch)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    tank_dispatch_resp = await connection_function(query=tank_dispatch)
+    tank_reciept_resp  = await connection_function(query=tank_receipt)
+    bcu_dispatch_resp = await connection_function(query=bcu_dispatch)
 
     tank_dis_resp = [
         {k: float(v) if isinstance(v, Decimal) else v for k, v in row.items()}
@@ -317,7 +356,7 @@ async def action_daily_trends(filter_clause, connection_params):
     return {"status": True, "data": resp, "message": "data fetched successfully"}
 
 
-async def action_daywise_trends(filter_clause, connection_params):
+async def action_daywise_trends(filter_clause, connection_function):
     """
     daywise and product wise data for product dispatch, reciept, available_stock, dead_stock, capacity, ullage
     for given sap id and date filter
@@ -332,9 +371,9 @@ async def action_daywise_trends(filter_clause, connection_params):
     ullage_query = tank_queries.queries.get('ullage_daywise_trends', '').format(filter_clause)
     print("ullage query -->", ullage_query)
 
-    function = await charts_actions.charts_connection_vault_routing(connection_params)
-    products_res = await function(query=products_query)
-    ullage_res = await function(query=ullage_query)
+    # function = await charts_actions.charts_connection_vault_routing(connection_params)
+    products_res = await connection_function(query=products_query)
+    ullage_res = await connection_function(query=ullage_query)
 
     for daywise_data in products_res:
         daywise_data['product'] = tank_queries.product_name_mapping.get(daywise_data['product'], daywise_data['product'])
@@ -391,42 +430,60 @@ async def tank_analytics(filters, action, drill_state, cross_filters, payload):
         params = dashboard_studio_model.Charts_Connection_Vault_RoutingParams
         params.connection_id = 1
         params.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(params)
         
         if action == "stock_sustainability":  
-            return await action_stock_sustainability(sap_id_filter + zone_filter, params)   
+            return await action_stock_sustainability(sap_id_filter + zone_filter, function)   
             
         if action == "product_wise_trends":
             # add dead stock
-            return await action_product_wise_trends(sap_id_filter + zone_filter, params)
+            return await action_product_wise_trends(sap_id_filter + zone_filter, function)
     
         if action == "daily_trends":
-            return await action_daily_trends(filter_clause, params)
+            return await action_daily_trends(filter_clause, function)
         
         if action == 'daywise_trends': 
-            return await action_daywise_trends(filter_clause, params)
+            return await action_daywise_trends(filter_clause, function)
         
         if action == 'total_capacity' or action == 'total_ullage':
-            ullage = await tank_ullage(filter_clause=sap_id_filter + zone_filter, connection_params=params)
+            ullage = await tank_ullage(filter_clause=sap_id_filter + zone_filter, connection_function=function)
             data = ullage["ullage"].sum() if action == "total_ullage" else ullage['capacity'].sum()
             return {"status": True, "data": data, "message": "successfully retrieved data"}
         
+        if action == 'tankwise_sustainability':
+            filter_date = next(
+                (f.value for f in filters if f.key == 'date_time'),
+                date.today().strftime('%Y-%m-%d')
+            )
+            filter_clause = " AND ".join([value.replace('BETWEEN', '=') if key == 'date_time' else value for key, value in filter_conditions.items()])
+            average_filter_clause = " AND ".join([f"date_time::DATE BETWEEN DATE'{filter_date}' - INTERVAL '8 days' AND DATE '{filter_date}' - INTERVAL '1 day' " if key == 'date_time' else value for key, value in filter_conditions.items()])
+            return await action_tankwise_sustainability([filter_clause, average_filter_clause], function)
+
         if action == 'net_stock':
-            tank_data = await stock_dispatch_receipt(filter_clause=filter_clause, connection_params=params)
+            tank_data = await stock_dispatch_receipt(filter_clause=filter_clause, connection_function=function)
             net_stock = await calculate_net_stock(tank_data) 
             return{
                 "status" : True,
                 "data": net_stock,
                 "message": "fetched data successfully"
             }
-  
+        
         query_key = ACTION_MAP[action]
 
         query_template = tank_queries.queries.get(query_key, '')
-        query = query_template.format(filter_clause)
+        query = query_template.format(condition=filter_clause)
 
-        function = await charts_actions.charts_connection_vault_routing(params)
+        # function = await charts_actions.charts_connection_vault_routing(params)
         resp = await function(query=query)
 
+        if action == 'tank_status':
+            resp = process_rows(resp)
+            resp = pl.DataFrame(resp).group_by("product").agg([
+                pl.col("total_tank").sum(),
+                pl.col("tanks_in_use").sum(),
+                pl.col("tanks_not_in_use").sum()
+            ])
+            resp = resp.to_dicts()
         if action == 'total_product':
             resp = [
             {k: float(v) if isinstance(v, Decimal) else v for k, v in row.items()}
