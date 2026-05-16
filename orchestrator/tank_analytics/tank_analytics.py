@@ -1,5 +1,6 @@
 import urdhva_base
 import asyncio
+import math
 import polars as pl
 import charts_actions
 from decimal import Decimal
@@ -17,6 +18,21 @@ def process_rows(rows: list[dict]) -> list[dict]:
         }
         for row in rows
     ]
+
+def sanitize_for_json(obj):
+    """
+    Recursively replace float nan/inf with None so json.dumps never raises.
+    Polars to_dicts() can produce float('nan') for unmatched join rows even
+    after fill_null(), because NaN and null are distinct in Polars float columns.
+    """
+    import math
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_for_json(v) for v in obj]
+    return obj
 
 async def generate_filters_cond(filters):
     """
@@ -58,7 +74,6 @@ async def stock_dispatch_receipt(filter_clause, connection_function):
     queries = [tank_queries.queries.get(key, "").format(condition=filter_clause) for key in query_keys]
 
     # Execute all queries concurrently
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     results = await asyncio.gather(*(connection_function(query=q) for q in queries))
     # Process and return as polars DataFrames
     keys = ("dispatch", "receipt", "stock")
@@ -106,12 +121,20 @@ async def tank_ullage(filter_clause, connection_function):
         polars dataframe with tank ullage and tank capacity product wise 
     """
     ullage_query = tank_queries.queries.get('tank_ullage', '').format(filter_clause)
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     print("ullage query -->", ullage_query)
     ullage_resp = await connection_function(query=ullage_query)
-    ullage_data  = pl.DataFrame(process_rows(ullage_resp)).group_by("product").agg(
-                        pl.col("ullage").sum(), pl.col("capacity").sum(), pl.col("dead_stock").sum()
-            )
+    ullage_data = (
+        pl.DataFrame(process_rows(ullage_resp))
+        .filter(pl.col("product").is_not_null())   # drop rows with no tank_dia_details match
+        .group_by("product")
+        .agg(
+            pl.col("ullage").sum(),
+            pl.col("capacity").sum(),
+            pl.col("dead_stock").sum(),
+        )
+        .fill_nan(0)   # LEFT JOIN nulls become NaN in float cols after aggregation
+        .fill_null(0)  # catch any remaining Polars nulls
+    )
     return ullage_data
 
 async def action_tankwise_sustainability(filter_clause, connection_function):
@@ -126,7 +149,6 @@ async def action_tankwise_sustainability(filter_clause, connection_function):
     query = tank_queries.queries.get('tankwise_stock_sustainability').format(filter_clause[0], filter_clause[0], filter_clause[1], filter_clause[0])
 
     print(query)
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     tankwise_resp = await connection_function(query=query)
     tankwise_resp = process_rows(tankwise_resp)
     tankwise_data = pl.DataFrame(process_rows(tankwise_resp)).with_columns(
@@ -145,7 +167,7 @@ async def action_tankwise_sustainability(filter_clause, connection_function):
         .otherwise(0)
         .alias("stock_sustainability")
     )
-    return {"status": True, "data": tankwise_data.to_dicts(), "message": "successfully retrieved data"}
+    return {"status": True, "data": sanitize_for_json(tankwise_data.fill_nan(None).to_dicts()), "message": "successfully retrieved data"}
    
 async def action_stock_sustainability(filter_clause, connection_function):
     """
@@ -157,8 +179,6 @@ async def action_stock_sustainability(filter_clause, connection_function):
         api response dictionary with calculated stock_sustainability
 
     """
-    # generate filter clause with current date
-    #stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hardcoded date for testing 
     stock_clause = f"date_time::DATE = DATE '{date.today().strftime("%Y-%m-%d")}' {filter_clause}"
 
     # get net stock
@@ -167,14 +187,15 @@ async def action_stock_sustainability(filter_clause, connection_function):
 
     # get dispatch average
     dispatch_average_query = tank_queries.queries.get('dispatch_average', '').format(filter_clause)
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     avg_resp = await connection_function(query=dispatch_average_query)
     print(avg_resp)
     avg = avg_resp[0].get('seven_day_avg', 0)
     dispatch_average = float(avg)
 
-    # calculte stock sustainability
+    # calculate stock sustainability
     stock_sustainability = net_stock/dispatch_average if dispatch_average else 0
+    if isinstance(stock_sustainability, float) and (math.isnan(stock_sustainability) or math.isinf(stock_sustainability)):
+        stock_sustainability = 0
 
     return{"status": True, "data": stock_sustainability, "message": "successfully retrieved data"}
 
@@ -183,7 +204,6 @@ async def action_stock_sustainability_tankwise(filter_clause, connection_functio
 
     # get net stock
     tank_data = await stock_dispatch_receipt(filter_clause=stock_clause, connection_function=connection_function)
-    # net_stock = await calculate_net_stock(tank_data) 
     print(tank_data['dispatch'])
     print(tank_data['stock'])
     print(tank_data['reeipt'])
@@ -198,13 +218,10 @@ async def action_product_wise_trends(filter_clause, connection_function):
     Returns:
         api response dictionary with product wise trends data 
     """
-    # generate filter clause with current date
-    #stock_clause = f"date_time::DATE = DATE '2026-02-05' {filter_clause}" #hard coded date for testing
     stock_clause = f"date_time::DATE = DATE '{date.today().strftime('%Y-%m-%d')}' {filter_clause}"
 
     # fetch stock/dispatch/receipt and average dispatch concurrently
     prod_avg_dispatch_query = tank_queries.queries.get("dispatch_average_prodwise", "").format(filter_clause)
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
 
     (data, prod_avg_resp) = await asyncio.gather(
         stock_dispatch_receipt(filter_clause=stock_clause, connection_function=connection_function),
@@ -278,7 +295,7 @@ async def action_product_wise_trends(filter_clause, connection_function):
     ullage_data = await tank_ullage(filter_clause=filter_clause, connection_function=connection_function)
     res = res.join(ullage_data, on="product", how="left")
 
-    return {"status": True, "data": res.to_dicts(), "message": "data fetched successfully"}
+    return {"status": True, "data": sanitize_for_json(res.fill_nan(None).to_dicts()), "message": "data fetched successfully"}
 
 
 async def action_daily_trends(filter_clause, connection_function):
@@ -295,7 +312,6 @@ async def action_daily_trends(filter_clause, connection_function):
     tank_receipt = tank_queries.queries.get('receipt', '').format(condition=filter_clause)
     bcu_dispatch  = tank_queries.queries.get('bcu_total_dispatch', '').format(condition=filter_clause)
 
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     tank_dispatch_resp = await connection_function(query=tank_dispatch)
     tank_reciept_resp  = await connection_function(query=tank_receipt)
     bcu_dispatch_resp = await connection_function(query=bcu_dispatch)
@@ -353,7 +369,7 @@ async def action_daily_trends(filter_clause, connection_function):
         .select(["sap_id","product", "tank_dispatch", "bcu_dispatch", "tank_receipt", "difference"])
         .to_dicts()
     )
-    return {"status": True, "data": resp, "message": "data fetched successfully"}
+    return {"status": True, "data": sanitize_for_json(resp), "message": "data fetched successfully"}
 
 
 async def action_daywise_trends(filter_clause, connection_function):
@@ -371,7 +387,6 @@ async def action_daywise_trends(filter_clause, connection_function):
     ullage_query = tank_queries.queries.get('ullage_daywise_trends', '').format(filter_clause)
     print("ullage query -->", ullage_query)
 
-    # function = await charts_actions.charts_connection_vault_routing(connection_params)
     products_res = await connection_function(query=products_query)
     ullage_res = await connection_function(query=ullage_query)
 
@@ -407,15 +422,25 @@ async def action_daywise_trends(filter_clause, connection_function):
                             on=["product", "date_time"], 
                             how="left"
                         ).drop_nulls()
-    return {"status": True, "data": res.to_dicts(), "message": "data retrieved successfully"}
+    return {"status": True, "data": sanitize_for_json(res.fill_nan(None).to_dicts()), "message": "data retrieved successfully"}
+
+
+def _ok(data, message="data fetched successfully") -> dict:
+    """Single exit point for success responses — always sanitizes before returning."""
+    return {"status": True, "data": sanitize_for_json(data), "message": message}
+
+
+def _safe_scalar(value, fallback=0.0):
+    """Return fallback when a scalar float is nan/inf."""
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return fallback
+    return value
 
 
 async def tank_analytics(filters, action, drill_state, cross_filters, payload):
     """
     get_tank_details api action function
     """
-    # action map -> actions with common execution
-    # sum_actions -> actions inside action map with total count output
     ACTION_MAP = tank_queries.ACTION_MAP
     SUM_ACTIONS = tank_queries.SUM_ACTIONS
     try:
@@ -424,84 +449,93 @@ async def tank_analytics(filters, action, drill_state, cross_filters, payload):
         zone_filter = f"AND {filter_conditions['zone']}" if filter_conditions.get('zone', "") else ""
         filter_clause = " AND ".join([value for key, value in filter_conditions.items()])
         print("filter clause -->", filter_clause)
-        # filter_clause = " AND ".join(filter_conditions)
 
-        #connection to db
+        # connection to db
         params = dashboard_studio_model.Charts_Connection_Vault_RoutingParams
         params.connection_id = 1
         params.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(params)
-        
-        if action == "stock_sustainability":  
-            return await action_stock_sustainability(sap_id_filter + zone_filter, function)   
-            
+
+        if action == "stock_sustainability":
+            return await action_stock_sustainability(sap_id_filter + zone_filter, function)
+
         if action == "product_wise_trends":
-            # add dead stock
             return await action_product_wise_trends(sap_id_filter + zone_filter, function)
-    
+
         if action == "daily_trends":
             return await action_daily_trends(filter_clause, function)
-        
-        if action == 'daywise_trends': 
+
+        if action == 'daywise_trends':
             return await action_daywise_trends(filter_clause, function)
-        
-        if action == 'total_capacity' or action == 'total_ullage':
+
+        if action in ('total_capacity', 'total_ullage'):
             ullage = await tank_ullage(filter_clause=sap_id_filter + zone_filter, connection_function=function)
-            data = ullage["ullage"].sum() if action == "total_ullage" else ullage['capacity'].sum()
-            return {"status": True, "data": data, "message": "successfully retrieved data"}
-        
+            col = "ullage" if action == "total_ullage" else "capacity"
+            data = _safe_scalar(ullage[col].sum(), fallback=0.0)
+            return _ok(data, "successfully retrieved data")
+
         if action == 'tankwise_sustainability':
             filter_date = next(
                 (f.value for f in filters if f.key == 'date_time'),
                 date.today().strftime('%Y-%m-%d')
             )
-            filter_clause = " AND ".join([value.replace('BETWEEN', '=') if key == 'date_time' else value for key, value in filter_conditions.items()])
-            average_filter_clause = " AND ".join([f"date_time::DATE BETWEEN DATE'{filter_date}' - INTERVAL '8 days' AND DATE '{filter_date}' - INTERVAL '1 day' " if key == 'date_time' else value for key, value in filter_conditions.items()])
+            filter_clause = " AND ".join([
+                value.replace('BETWEEN', '=') if key == 'date_time' else value
+                for key, value in filter_conditions.items()
+            ])
+            average_filter_clause = " AND ".join([
+                f"date_time::DATE BETWEEN DATE'{filter_date}' - INTERVAL '8 days' AND DATE '{filter_date}' - INTERVAL '1 day' "
+                if key == 'date_time' else value
+                for key, value in filter_conditions.items()
+            ])
             return await action_tankwise_sustainability([filter_clause, average_filter_clause], function)
 
         if action == 'net_stock':
             tank_data = await stock_dispatch_receipt(filter_clause=filter_clause, connection_function=function)
-            net_stock = await calculate_net_stock(tank_data) 
-            return{
-                "status" : True,
-                "data": net_stock,
-                "message": "fetched data successfully"
-            }
-        
-        query_key = ACTION_MAP[action]
+            net_stock = _safe_scalar(await calculate_net_stock(tank_data), fallback=0.0)
+            return _ok(net_stock, "fetched data successfully")
 
+        query_key = ACTION_MAP[action]
         query_template = tank_queries.queries.get(query_key, '')
         query = query_template.format(condition=filter_clause)
-
-        # function = await charts_actions.charts_connection_vault_routing(params)
         resp = await function(query=query)
 
         if action == 'tank_status':
             resp = process_rows(resp)
-            resp = pl.DataFrame(resp).group_by("product").agg([
-                pl.col("total_tank").sum(),
-                pl.col("tanks_in_use").sum(),
-                pl.col("tanks_not_in_use").sum()
-            ])
-            resp = resp.to_dicts()
-        if action == 'total_product':
-            resp = [
-            {k: float(v) if isinstance(v, Decimal) else v for k, v in row.items()}
-            for row in resp
-            ]
-            resp = pl.DataFrame(resp)
             resp = (
-                resp.filter(pl.col("available_stock_kl") > 0)["available_stock_kl"].sum()
-                if not resp.is_empty() else 0.0
+                pl.DataFrame(resp)
+                .filter(pl.col("product").is_not_null())
+                .group_by("product")
+                .agg([
+                    pl.col("total_tank").sum(),
+                    pl.col("tanks_in_use").sum(),
+                    pl.col("tanks_not_in_use").sum()
+                ])
+                .fill_nan(0)
+                .fill_null(0)
+                .to_dicts()
             )
-           
+            return _ok(resp)
 
-        if action in SUM_ACTIONS.keys():
+        if action == 'total_product':
+            resp = [{k: float(v) if isinstance(v, Decimal) else v for k, v in row.items()} for row in resp]
+            df = pl.DataFrame(resp)
+            total = (
+                df.filter(pl.col("available_stock_kl") > 0)["available_stock_kl"]
+                .fill_nan(0).sum()
+                if not df.is_empty() else 0.0
+            )
+            return _ok(_safe_scalar(total, fallback=0.0))
+
+        if action in SUM_ACTIONS:
+            resp = process_rows(resp)
             total = sum(row.get(SUM_ACTIONS.get(action, 'sum')) or 0 for row in resp)
-            return {"status": True, "data": total, "message": "data fetched successfully"}
+            return _ok(total)
 
-        return {"status": True, "data": resp, "message": "data fetched successfully"}
+        # Generic fallback — process_rows converts Decimals, sanitize_for_json inside _ok handles NaN
+        return _ok(process_rows(resp))
 
     except Exception as e:
-        print(e)
-        return {"status": False, "data": [], "message": f"error: {e}"}
+        # asyncpg exceptions (e.g. UndefinedFunctionError) have a broken __str__; use repr().
+        print(repr(e))
+        return {"status": False, "data": [], "message": f"error: {repr(e)}"}
