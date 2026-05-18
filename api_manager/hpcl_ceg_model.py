@@ -11972,3 +11972,86 @@ class Tankdetails_Get_Tank_DetailsParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class email_usersSchema(UrdhvaPostgresBase):
+    __tablename__ = 'email_users'
+    
+    email_type: Mapped[str] = mapped_column("email_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    subject: Mapped[typing.Optional[str]] = mapped_column("subject", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    description: Mapped[typing.Optional[str]] = mapped_column("description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    enabled: Mapped[typing.Optional[bool]] = mapped_column("enabled", Boolean, index=False, nullable=True, default=True, primary_key=False, unique=False)
+    audience: Mapped[typing.Optional[str]] = mapped_column("audience", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    to_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("to_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    cc_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("cc_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    bcc_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("bcc_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class email_usersCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'email_users'
+    
+    email_type: str
+    bu: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(True, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = email_usersSchema
+        upsert_keys = []
+
+
+class email_users(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'email_users'
+    
+    email_type: typing.Optional[str] | None = None
+    bu: typing.Optional[str] | None = None
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(True, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = email_usersSchema
+        upsert_keys = []
+
+
+class email_usersGetResp(pydantic.BaseModel):
+    data: typing.List[email_users]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Email_Users_Add_UserParams(pydantic.BaseModel):
+    email_type: str
+    bu: str
+    name: str
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(False, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

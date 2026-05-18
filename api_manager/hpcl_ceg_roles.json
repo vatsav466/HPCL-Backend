@@ -8735,6 +8735,75 @@
                     "name": "get_tank_details"
                 }
             ]
+        },
+        {
+            "name": "email_users",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "email_users",
+            "attributes": {},
+            "uris": [
+                "/api/email_users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_user"
+                }
+            ]
+        },
+        {
+            "name": "email_users_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "email_users_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/email_users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "email_users_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "email_users_admin",
+            "attributes": {},
+            "uris": [
+                "/api/email_users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_user"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9632,6 +9701,10 @@
         {
             "name": "get_tank_details",
             "displayName": "get_tank_details"
+        },
+        {
+            "name": "add_user",
+            "displayName": "add_user"
         }
     ]
 }

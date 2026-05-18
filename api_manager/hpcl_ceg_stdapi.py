@@ -2302,4 +2302,12 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await TankDiaDetails.get_all(params, skip_secrets=True)
 
 
+@router.get('/email_users/{id}', response_model=email_users, tags=['email_users'])
+async def get(id: str):
+    return await email_users.get(id, skip_secrets=True)
+
+
+@router.get('/email_users', response_model=email_usersGetResp, tags=['email_users'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await email_users.get_all(params, skip_secrets=True)
 
