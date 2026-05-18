@@ -15,7 +15,7 @@ async def main():
 
     audience = sys.argv[1]
 
-    existing_users = await hpcl_ceg_model.email_users.get_all(resp_type='plain')
+    existing_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(resp_type='plain')
     print("existing_users----->\n", existing_users)
 
     enabled_types = set()

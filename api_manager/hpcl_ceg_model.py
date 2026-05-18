@@ -11974,8 +11974,8 @@ class Tankdetails_Get_Tank_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class email_usersSchema(UrdhvaPostgresBase):
-    __tablename__ = 'email_users'
+class DailyEmailNotificationUsersSchema(UrdhvaPostgresBase):
+    __tablename__ = 'daily_email_notification_users'
     
     email_type: Mapped[str] = mapped_column("email_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -11989,8 +11989,8 @@ class email_usersSchema(UrdhvaPostgresBase):
     bcc_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("bcc_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
-class email_usersCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'email_users'
+class DailyEmailNotificationUsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'daily_email_notification_users'
     
     email_type: str
     bu: str
@@ -12007,12 +12007,12 @@ class email_usersCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = email_usersSchema
+        schema_class = DailyEmailNotificationUsersSchema
         upsert_keys = []
 
 
-class email_users(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'email_users'
+class DailyEmailNotificationUsers(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'daily_email_notification_users'
     
     email_type: typing.Optional[str] | None = None
     bu: typing.Optional[str] | None = None
@@ -12029,17 +12029,17 @@ class email_users(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = email_usersSchema
+        schema_class = DailyEmailNotificationUsersSchema
         upsert_keys = []
 
 
-class email_usersGetResp(pydantic.BaseModel):
-    data: typing.List[email_users]
+class DailyEmailNotificationUsersGetResp(pydantic.BaseModel):
+    data: typing.List[DailyEmailNotificationUsers]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
 
-class Email_Users_Add_UserParams(pydantic.BaseModel):
+class Dailyemailnotificationusers_Add_RecipientsParams(pydantic.BaseModel):
     email_type: str
     bu: str
     name: str

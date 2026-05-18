@@ -74,7 +74,7 @@ SEGMENT_ALIASES: dict[str, str] = {
 
 
 async def get_email_users_by_type(email_type:str, audience: str):
-    all_users = await hpcl_ceg_model.email_users.get_all(resp_type='plain')
+    all_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(resp_type='plain')
     print("all uers from db ---->\n", all_users)
     result = {}
     for users in all_users["data"]:

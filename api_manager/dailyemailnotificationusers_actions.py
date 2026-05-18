@@ -1,4 +1,3 @@
-import hpcl_ceg_model
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
@@ -6,14 +5,13 @@ import re
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
-router = fastapi.APIRouter(prefix='/email_users')
+router = fastapi.APIRouter(prefix='/dailyemailnotificationusers')
 
 
-# Action add_user
-@router.post('/add_user', tags=['email_users'])
-async def email_users_add_user(data: Email_Users_Add_UserParams):
-    
-    existing_users = await hpcl_ceg_model.email_users.get_all(resp_type='plain')
+# Action add_recipients
+@router.post('/add_recipients', tags=['DailyEmailNotificationUsers'])
+async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificationusers_Add_RecipientsParams):
+    existing_users = await DailyEmailNotificationUsers.get_all(resp_type='plain')
     
     def normalize(value):
         if isinstance(value, list):
@@ -70,7 +68,6 @@ async def email_users_add_user(data: Email_Users_Add_UserParams):
         # DELETE LOGIC
         # ------------------------
         if action == "delete":
-
             def remove_emails(target_set, remove_list, label):
                 removed = []
                 for email in remove_list:
@@ -96,10 +93,8 @@ async def email_users_add_user(data: Email_Users_Add_UserParams):
             final_message = "; ".join(msg_parts + messages)
 
         if action == "delete":
-
             def remove_from_all(email):
                 removed_from = []
-
                 if email in to_set:
                     to_set.remove(email)
                     removed_from.append("TO")
@@ -173,7 +168,7 @@ async def email_users_add_user(data: Email_Users_Add_UserParams):
         # ------------------------
         # UPDATE DB
         # ------------------------
-        resp = await hpcl_ceg_model.email_users(
+        resp = await DailyEmailNotificationUsers(
             id=matched_user["id"],
             email_type=email_type,
             bu=matched_user["bu"],
@@ -196,7 +191,7 @@ async def email_users_add_user(data: Email_Users_Add_UserParams):
     # CREATE ONLY FOR ADD
     # ------------------------
     if action == "add":
-        resp = await hpcl_ceg_model.email_usersCreate(**dict(data)).create()
+        resp = await DailyEmailNotificationUsersCreate(**dict(data)).create()
         return {
             "status": "success",
             "message": "New record created",

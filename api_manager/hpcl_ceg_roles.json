@@ -8737,13 +8737,13 @@
             ]
         },
         {
-            "name": "email_users",
+            "name": "dailyemailnotificationusers",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "email_users",
+            "displayName": "DailyEmailNotificationUsers",
             "attributes": {},
             "uris": [
-                "/api/email_users/*"
+                "/api/dailyemailnotificationusers/*"
             ],
             "scopes": [
                 {
@@ -8759,18 +8759,18 @@
                     "name": "delete"
                 },
                 {
-                    "name": "add_user"
+                    "name": "add_recipients"
                 }
             ]
         },
         {
-            "name": "email_users_readOnly",
+            "name": "dailyemailnotificationusers_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "email_users_readOnly",
+            "displayName": "DailyEmailNotificationUsers_readOnly",
             "attributes": {},
             "uris": [
-                "/api/email_users/*"
+                "/api/dailyemailnotificationusers/*"
             ],
             "scopes": [
                 {
@@ -8779,13 +8779,13 @@
             ]
         },
         {
-            "name": "email_users_admin",
+            "name": "dailyemailnotificationusers_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "email_users_admin",
+            "displayName": "DailyEmailNotificationUsers_admin",
             "attributes": {},
             "uris": [
-                "/api/email_users/*"
+                "/api/dailyemailnotificationusers/*"
             ],
             "scopes": [
                 {
@@ -8801,7 +8801,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "add_user"
+                    "name": "add_recipients"
                 }
             ]
         }
@@ -9703,8 +9703,8 @@
             "displayName": "get_tank_details"
         },
         {
-            "name": "add_user",
-            "displayName": "add_user"
+            "name": "add_recipients",
+            "displayName": "add_recipients"
         }
     ]
 }

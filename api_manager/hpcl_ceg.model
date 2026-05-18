@@ -4428,7 +4428,7 @@ Model TankDetails crud_disable{
 
 }
 
-Model email_users {
+Model DailyEmailNotificationUsers {
 	email_type str // daily, retail, lpg, sod , nozzle etc
     bu str
     name optional str
@@ -4440,7 +4440,7 @@ Model email_users {
 	cc_recipients optional list str
 	bcc_recipients optional list str
 
-    Action=> add_user{
+    Action=> add_recipients {
         email_type str
         bu str
         name str
