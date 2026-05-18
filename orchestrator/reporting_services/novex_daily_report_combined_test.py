@@ -788,15 +788,15 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
             },
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "combined"):
-        recipients = await get_email_users_by_type("daily", "testing")
+        recipients = await get_email_users_by_type("combined", "testing")
         await _send_email_safe(
             "Email: Novex Daily Report combined (seg5.html)",
             failures,
             template_name="seg5.html",
-            to_recipients=recipients.get("daily_to", []),
+            to_recipients=recipients.get("combined_to", []),
             subject="Novex Daily Report",
-            cc_recipients=recipients.get("daily_cc", []),
-            bcc_recipients=recipients.get("daily_bcc", []),
+            cc_recipients=recipients.get("combined_cc", []),
+            bcc_recipients=recipients.get("combined_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
