@@ -45,6 +45,7 @@ async def main():
     cmd = [
         "python",
         script_path,
+        "true",
         audience,
         email_types_arg
     ]

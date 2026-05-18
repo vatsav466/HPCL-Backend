@@ -51,73 +51,6 @@ from orchestrator.reporting_services.reporting_helpers import (
 
 WRITE_TO_DB = False
 
-# --- Recipients from novex_daily_report_dryout_testing.py (testing) ---
-_TESTING_TO = ["sreedhar.maddipati@algofusiontech.com"]
-_TESTING_CC = ["venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com","arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in","vamsi.c@algofusiontech.com","pawann.k@algofusiontech.com",
-]
-_TESTING_BCC = [
-    "yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com",
-    "jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","mohith.p@algofusiontech.com",
-]
-
-# --- Recipients from novex_daily_report_dryout.py (employee) ---
-_EMPLOYEE_MAIN_TO = ["sachinkwarghane@hpcl.in", "purushm@hpcl.in", "adityapandey@hpcl.in"]
-_EMPLOYEE_MAIN_CC = ["venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com",
-    "yesu.p@algofusiontech.com","manohar.v@algofusiontech.com",
-]
-_EMPLOYEE_MAIN_BCC = ["gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com",
-    "vamsi.c@algofusiontech.com","pawann.k@algofusiontech.com","mohith.p@algofusiontech.com",
-]
-_EMPLOYEE_SOD_NOZZLE_TO = ["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in",
-]
-_EMPLOYEE_COMBINED_TO = ["sreedhar.maddipati@algofusiontech.com"]
-
-# --- Recipients from novex_daily_report_segregation.py (chairman) ---
-_CHAIRMAN_DAILY_TO = ["gkpatel@hpcl.in", "sanjayk@hpcl.in", "georget@hpcl.in"]
-_CHAIRMAN_DAILY_CC = ["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in",
-]
-_CHAIRMAN_DAILY_BCC = ["cvmallinath@hpcl.in", "amarnathsahu@hpcl.in", "adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"]
-
-_CHAIRMAN_RETAIL_TO = ["abalaji@hpcl.in"]
-_CHAIRMAN_RETAIL_CC = [
-    "anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in","sandesh.mane@hpcl.in","georget@hpcl.in","raksha.patidar@hpcl.in", "gkpatel@hpcl.in", "magarwal@hpcl.in"
-]
-_CHAIRMAN_RETAIL_BCC = ["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"
-]
-
-_CHAIRMAN_LPG_TO = ["adsul@hpcl.in", "gbala@hpcl.in"]
-_CHAIRMAN_LPG_CC = ["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in","pranawsinha@hpcl.in","rajkumar@hpcl.in", "sarangi@hpcl.in", "mvrmurthy@hpcl.in"
-]
-_CHAIRMAN_LPG_BCC = ["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in","adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in"
-]
-
-_CHAIRMAN_SOD_TO = ["CZ.OND.IC@hpcl.in","ECZ.OND.IC@hpcl.in","EZ.OND.IC@hpcl.in","NCZ.OND.IC@hpcl.in","NFZ.OND.IC@hpcl.in",
-    "NWF.OND.IC@hpcl.in","NWZ.OND.IC@hpcl.in","NZ.OND.IC@hpcl.in","SCRZ.OND.IC@hpcl.in","SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in",
-]
-_CHAIRMAN_SOD_CC = ["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in",
-    "Diwakar.Kumar@hpcl.in","crvkumar@hpcl.in","Tarunghisulal.chauhan@hpcl.in",
-]
-_CHAIRMAN_SOD_BCC = ["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","gkpatel@hpcl.in",
-    "adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in",
-]
-
-_CHAIRMAN_COMBINED_TO = ["sreedhar.maddipati@algofusiontech.com"]
-_CHAIRMAN_COMBINED_CC = ["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"]
-_CHAIRMAN_COMBINED_BCC = ["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com",
-    "jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com",
-]
-
-_CHAIRMAN_CLEAN_TO = ["cvmallinath@hpcl.in", "MdTausif.Anwar@hpcl.in", "vimalkumar@hpcl.in"]
-_CHAIRMAN_CLEAN_CC = ["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"
-]
-_CHAIRMAN_CLEAN_BCC = ["venu@algofusiontech.com", "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com"]
-
-_CHAIRMAN_NOZZLE_TO = ["sandesh.mane@hpcl.in"]
-_CHAIRMAN_NOZZLE_CC = ["sanjayk@hpcl.in", "gkpatel@hpcl.in"]
-_CHAIRMAN_NOZZLE_BCC = ["adityapandey@hpcl.in", "ArpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com",
-                        "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", 
-                        "poojitha.gumma@algofusiontech.com"]
-
 # --segments canonical keys: daily=seg1 (Novex Daily Report), retail, lpg, sod, combined=seg5, clean=MIS
 SEGMENT_ALIASES: dict[str, str] = {
     "daily": "daily",
@@ -797,7 +730,7 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
             to_recipients=recipients.get("lpg_to", []),
             subject="Novex Daily Report: LPG",
             cc_recipients=recipients.get("lpg_cc", []),
-            bcc_recipients=recipients.get("lpg_cc", []),
+            bcc_recipients=recipients.get("lpg_bcc", []),
             notification_data=status_data,
             inline_images={
                 "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
@@ -1007,7 +940,7 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "sod"):
-        recipients = await get_email_users_by_type("sod", "testing")
+        recipients = await get_email_users_by_type("sod", "employee")
         await _send_email_safe(
             "Email: Novex Daily Report: SOD (seg4.html)",
             failures,
@@ -1027,7 +960,7 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             ],
         )
     if _segment_set_wants(segments, "clean"):
-        recipients = await get_email_users_by_type("clean", "testing")
+        recipients = await get_email_users_by_type("clean", "employee")
         await _send_email_safe(
             "Email: Clean Toilet Picture upload | MIS (ro_va_cleanliness.html)",
             failures,
@@ -1039,7 +972,7 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             notification_data=status_data,
         )
     if _segment_set_wants(segments, "nozzle"):
-        recipients = await get_email_users_by_type("nozzle", "testing")
+        recipients = await get_email_users_by_type("nozzle", "employee")
         await _send_email_safe(
             "Email: Nozzle Sales Trend (nozzle_sales_trend.html)",
             failures,
@@ -1054,15 +987,15 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             },
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "combined"):
-        recipients = await get_email_users_by_type("daily", "testing")
+        recipients = await get_email_users_by_type("combined", "testing")
         await _send_email_safe(
             "Email: Novex Daily Report combined (seg5.html)",
             failures,
             template_name="seg5.html",
-            to_recipients=_EMPLOYEE_COMBINED_TO,
+            to_recipients=recipients.get("combined_to", []),
             subject="Novex Daily Report",
-            cc_recipients=_EMPLOYEE_MAIN_CC,
-            bcc_recipients=_EMPLOYEE_MAIN_BCC,
+            cc_recipients=recipients.get("combined_cc", []),
+            bcc_recipients=recipients.get("combined_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1080,11 +1013,12 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             ],
         )
     if failures:
+        recipients = await get_email_users_by_type("daily", "testing")
         await send_failure_summary_email(
             failures,
-            to_recipients=_TESTING_TO,
-            cc_recipients=_TESTING_CC,
-            bcc_recipients=_TESTING_BCC,
+            to_recipients=recipients.get("daily_to", []),
+            cc_recipients=recipients.get("daily_cc", []),
+            bcc_recipients=recipients.get("daily_bcc", [])
         )
 
 
@@ -1149,14 +1083,15 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
         _apply_sod_placeholders_for_partial_seg1(status_data)
 
     if _segment_set_wants(segments, "daily"):
+        recipients = await get_email_users_by_type("daily", "chairman")
         await _send_email_safe(
             "Email: Novex Daily Report (seg1.html)",
             failures,
             template_name="seg1.html",
-            to_recipients=_CHAIRMAN_DAILY_TO,
+            to_recipients= recipients.get("daily_to", []),
             subject="Novex Daily Report",
-            cc_recipients=_CHAIRMAN_DAILY_CC,
-            bcc_recipients=_CHAIRMAN_DAILY_BCC,
+            cc_recipients= recipients.get("daily_cc", []),
+            bcc_recipients= recipients.get("daily_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1166,14 +1101,15 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             attachments=[status_data.get("zone_wise_pdf_path")],
         )
     if _segment_set_wants(segments, "retail"):
+        recipients = await get_email_users_by_type("retail", "chairman")
         await _send_email_safe(
             "Email: Novex Daily Report: Retail (seg2.html)",
             failures,
             template_name="seg2.html",
-            to_recipients=_CHAIRMAN_RETAIL_TO,
+            to_recipients= recipients.get("retail_to", []),
             subject="Novex Daily Report: Retail",
-            cc_recipients=_CHAIRMAN_RETAIL_CC,
-            bcc_recipients=_CHAIRMAN_RETAIL_BCC,
+            cc_recipients= recipients.get("retail_cc", []),
+            bcc_recipients= recipients.get("retail_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1183,14 +1119,15 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             attachments=[status_data.get("zone_wise_pdf_path"), status_data.get("retail_sales_report")],
         )
     if _segment_set_wants(segments, "lpg"):
+        recipients = await get_email_users_by_type("lpg", "chairman")
         await _send_email_safe(
             "Email: Novex Daily Report: LPG (seg3.html)",
             failures,
             template_name="seg3.html",
-            to_recipients=_CHAIRMAN_LPG_TO,
+            to_recipients= recipients.get("lpg_to", []),
             subject="Novex Daily Report: LPG",
-            cc_recipients=_CHAIRMAN_LPG_CC,
-            bcc_recipients=_CHAIRMAN_LPG_BCC,
+            cc_recipients= recipients.get("lpg_cc", []),
+            bcc_recipients= recipients.get("lpg_bcc", []),
             notification_data=status_data,
             inline_images={
                 "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
@@ -1201,14 +1138,15 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "sod"):
+        recipients = await get_email_users_by_type("sod", "chairman")
         await _send_email_safe(
             "Email: Novex Daily Report: SOD (seg4.html)",
             failures,
             template_name="seg4.html",
-            to_recipients=_CHAIRMAN_SOD_TO,
+            to_recipients= recipients.get("sod_to", []),
             subject="Novex Daily Report: SOD",
-            cc_recipients=_CHAIRMAN_SOD_CC,
-            bcc_recipients=_CHAIRMAN_SOD_BCC,
+            cc_recipients= recipients.get("sod_cc", []),
+            bcc_recipients= recipients.get("sod_bcc", []),
             notification_data=status_data,
             inline_images={
                 "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
@@ -1220,14 +1158,15 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "combined"):
+        recipients = await get_email_users_by_type("combined", "daily")
         await _send_email_safe(
             "Email: Novex Daily Report combined (seg5.html)",
             failures,
             template_name="seg5.html",
-            to_recipients=_CHAIRMAN_COMBINED_TO,
+            to_recipients= recipients.get("combined_to", []),
             subject="Novex Daily Report",
-            cc_recipients=_CHAIRMAN_COMBINED_CC,
-            bcc_recipients=_CHAIRMAN_COMBINED_BCC,
+            cc_recipients= recipients.get("combined_cc", []),
+            bcc_recipients= recipients.get("combined_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1246,36 +1185,39 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             ],
         )
     if _segment_set_wants(segments, "clean"):
+        recipients = await get_email_users_by_type("clean", "chairman")
         await _send_email_safe(
             "Email: Clean Toilet Picture upload | MIS (ro_va_cleanliness.html)",
             failures,
             template_name="ro_va_cleanliness.html",
-            to_recipients=_CHAIRMAN_CLEAN_TO,
+            to_recipients= recipients.get("clean_to", []),
             subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
-            cc_recipients=_CHAIRMAN_CLEAN_CC,
-            bcc_recipients=_CHAIRMAN_CLEAN_BCC,
+            cc_recipients= recipients.get("clean_cc", []),
+            bcc_recipients= recipients.get("clean_bcc", []),
             notification_data=status_data,
         )
     if _segment_set_wants(segments, "nozzle"):
+        recipients = await get_email_users_by_type("nozzle", "chairman")
         await _send_email_safe(
             "Email: Nozzle Sales Trend (nozzle_sales_trend.html)",
             failures,
             template_name="nozzle_sales_trend.html",
-            to_recipients=_CHAIRMAN_NOZZLE_TO,
+            to_recipients= recipients.get("nozzle_to", []),
             subject="Nozzle sales of MS Sales and Power daily sales Trend monitoring",
-            cc_recipients=_CHAIRMAN_NOZZLE_CC,
-            bcc_recipients=_CHAIRMAN_NOZZLE_BCC,
+            cc_recipients= recipients.get("nozzle_cc", []),
+            bcc_recipients= recipients.get("nozzle_bcc", []),
             notification_data=status_data,
             inline_images={
                 "nozzle_trend_chart": f"{status_data.get('nozzle_trend_chart')}",
             },
         )
     if failures:
+        recipients = await get_email_users_by_type("daily", "testing")
         await send_failure_summary_email(
             failures,
-            to_recipients=_TESTING_TO,
-            cc_recipients=_TESTING_CC,
-            bcc_recipients=_TESTING_BCC,
+            to_recipients=recipients.get("daily_to", []),
+            cc_recipients=recipients.get("daily_cc", []),
+            bcc_recipients=recipients.get("daily_bcc", [])
         )
 
 
