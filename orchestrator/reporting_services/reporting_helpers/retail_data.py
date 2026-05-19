@@ -832,7 +832,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    zone_data = await function(query=loss_query)
+    # zone_data = await function(query=loss_query)
+    zone_data = await helpers.retry_async(function, retries=3, delay=10, query=loss_query)
     zone_fuel_df = pd.DataFrame(zone_data)
 
 
@@ -1035,7 +1036,8 @@ async def get_bi_hourly_intra_dryout():
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=intra_dryout_query)
+    # resp = await function(query=intra_dryout_query)
+    resp = await helpers.retry_async(function, retries=3, delay=10, query=intra_dryout_query)
     resp = {rec['stock_status']: rec['site_count'] for rec in resp}
     resp['partial_dryout'] = sum([resp[key] for key in ['hr_0_6', 'hr_6_12', 'hr_12_24']])
     resp['online'] = resp['offline'] = 0
@@ -1076,7 +1078,8 @@ async def get_ro_location_status():
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
+    # resp = await function(query=query)
+    resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     return resp
 
 
@@ -1086,7 +1089,8 @@ async def get_ro_locations_sch():
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
+    # resp = await function(query=query)
+    resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     resp = pl.DataFrame(resp)
     print("resp----> \n", resp)
     return resp
