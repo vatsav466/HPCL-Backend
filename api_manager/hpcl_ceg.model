@@ -4427,3 +4427,34 @@ Model TankDetails crud_disable{
     }
 
 }
+
+Model DailyEmailNotificationUsers {
+	email_type str // daily, retail, lpg, sod , nozzle etc
+    bu str
+    name optional str
+    subject optional str
+    description optional str
+    enabled optional default=true bool
+    audience optional str // testing, employee, chairman
+	to_recipients optional list str
+	cc_recipients optional list str
+	bcc_recipients optional list str
+
+    Action=> add_recipients {
+        email_type str
+        bu str
+        name str
+        subject optional str
+        description optional str
+        enabled optional bool
+        audience optional str
+        to_recipients optional list str
+        cc_recipients optional list str
+        bcc_recipients optional list str
+        action str
+    }
+    
+    Config=> {
+        crud_operations='read'
+    }
+}

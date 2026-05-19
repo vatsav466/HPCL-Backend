@@ -8735,6 +8735,75 @@
                     "name": "get_tank_details"
                 }
             ]
+        },
+        {
+            "name": "dailyemailnotificationusers",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_recipients"
+                }
+            ]
+        },
+        {
+            "name": "dailyemailnotificationusers_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dailyemailnotificationusers_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_recipients"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9632,6 +9701,10 @@
         {
             "name": "get_tank_details",
             "displayName": "get_tank_details"
+        },
+        {
+            "name": "add_recipients",
+            "displayName": "add_recipients"
         }
     ]
 }
