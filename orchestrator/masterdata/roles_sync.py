@@ -463,6 +463,20 @@ async def sync_user_roles():
         "name": "SOD",
         "status": True
     },
+    "Creator LPG":{
+        "allowed_pages": [
+              {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    },
+                ]
+            }  
+        ],
+        "name": "LPG",
+        "status": True
+    },
     "MRAP":{
         "allowed_pages": [
             {
