@@ -14,6 +14,7 @@ async def main():
         sys.exit(1)
 
     audience = sys.argv[1]
+    write_to_db = "true" if len(sys.argv) > 2 and sys.argv[2].lower() == "true" else "false"
 
     existing_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(resp_type='plain')
     print("existing_users----->\n", existing_users)
@@ -45,7 +46,7 @@ async def main():
     cmd = [
         "python",
         script_path,
-        "true",
+        write_to_db,
         audience,
         email_types_arg
     ]

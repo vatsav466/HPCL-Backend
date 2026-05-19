@@ -1271,6 +1271,9 @@ def _parse_args(args: argparse.Namespace) -> tuple[str, bool, list[str] | None]:
     if pos and pos[0].lower() == "true":
         write_db = True
         pos = pos[1:]
+    if pos and pos[0].lower() == "false":
+        write_db = False
+        pos = pos[1:]
     if args.audience is not None:
         if pos:
             raise SystemExit("Use either --audience or positional arguments, not both.")
