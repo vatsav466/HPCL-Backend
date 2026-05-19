@@ -271,3 +271,243 @@ async def fetch_data():
     nozzle_trend_chart = await plot_ms_sales_trend(nozzle_trend_df)
     print("nozzle trend chart --->\n", nozzle_trend_chart)
     return {"nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0], "nozzle_trend_chart": nozzle_trend_chart}
+
+
+async def nozzles_sales_top_performance():
+
+    nozzle_sales_top_query = f""" 
+                                SELECT
+                                    zone,
+                                    region,
+                                    sales_area,
+                                    sap_id,
+                                    location_name,
+
+                                    /* ================= CURRENT MONTH ================= */
+
+                                    ROUND(
+                                        SUM(sales_volume) FILTER (
+                                            WHERE product_grp IN ('POWER 99', 'POWER 95', 'POWER 100')
+                                            AND transaction_date >= 
+                                                CASE
+                                                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                                                    THEN date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+                                                    ELSE date_trunc('month', CURRENT_DATE)
+                                                END
+                                            AND transaction_date <
+                                                CASE
+                                                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                                                    THEN date_trunc('month', CURRENT_DATE)
+                                                    ELSE CURRENT_DATE
+                                                END
+                                        ) / 1000.0,
+                                        2
+                                    ) AS current_power_kl,
+
+                                    ROUND(
+                                        SUM(sales_volume) FILTER (
+                                            WHERE product_grp IN ('MS')
+                                            AND transaction_date >= 
+                                                CASE
+                                                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                                                    THEN date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+                                                    ELSE date_trunc('month', CURRENT_DATE)
+                                                END
+                                            AND transaction_date <
+                                                CASE
+                                                    WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date
+                                                    THEN date_trunc('month', CURRENT_DATE)
+                                                    ELSE CURRENT_DATE
+                                                END
+                                        ) / 1000.0,
+                                        2
+                                    ) AS current_ms_kl,
+
+                                    /* ================= LAST MONTH ================= */
+
+                                    ROUND(
+                                        SUM(sales_volume) FILTER (
+                                            WHERE product_grp IN ('POWER 99', 'POWER 95', 'POWER 100')
+                                            AND transaction_date >= 
+                                                CASE
+                                                    WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
+                                                    THEN date_trunc('year', CURRENT_DATE) + INTERVAL '3 month'
+                                                    ELSE date_trunc('year', CURRENT_DATE - INTERVAL '1 year') + INTERVAL '3 month'
+                                                END
+                                            AND transaction_date < CURRENT_DATE
+                                        ) / 1000.0,
+                                        2
+                                    ) AS ytd_power_kl,
+
+                                    ROUND(
+                                        SUM(sales_volume) FILTER (
+                                            WHERE product_grp = 'MS'
+                                            AND transaction_date >= 
+                                                CASE
+                                                    WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
+                                                    THEN date_trunc('year', CURRENT_DATE) + INTERVAL '3 month'
+                                                    ELSE date_trunc('year', CURRENT_DATE - INTERVAL '1 year') + INTERVAL '3 month'
+                                                END
+                                            AND transaction_date < CURRENT_DATE
+                                        ) / 1000.0,
+                                        2
+                                    ) AS ytd_ms_kl,
+
+                                    CASE
+                                        WHEN CURRENT_DATE = date_trunc('month', CURRENT_DATE)::date THEN
+                                            TO_CHAR(date_trunc('month', CURRENT_DATE - INTERVAL '1 month'), 'Mon''YY')
+                                        ELSE
+                                            TO_CHAR(date_trunc('month', CURRENT_DATE), 'FMDDth') || ' to ' ||
+                                            TO_CHAR(CURRENT_DATE - INTERVAL '1 day', 'FMDDth Mon''YY')
+                                    END AS current_date_label,
+
+                                    TO_CHAR(
+                                        CASE
+                                            WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4
+                                            THEN date_trunc('year', CURRENT_DATE) + INTERVAL '3 month'
+                                            ELSE date_trunc('year', CURRENT_DATE - INTERVAL '1 year') + INTERVAL '3 month'
+                                        END,
+                                        'DD Mon''YY'
+                                    ) || ' to ' ||
+                                    TO_CHAR(CURRENT_DATE - INTERVAL '1 day', 'DD Mon''YY') 
+                                    AS financial_year_label
+
+                                FROM nozzle_sales
+
+                                GROUP BY
+                                    zone,
+                                    region,
+                                    sales_area,
+                                    sap_id,
+                                    location_name;
+                        """
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    nozzle_sales = await function(query=nozzle_sales_top_query)
+    nozzle_sales_df = pl.DataFrame(nozzle_sales)
+    print("nozzle_sales_top_df = pd.DataFrame(nozzle_sales_top_bottom) ---->\n", nozzle_sales_df.head(5))
+    print("count of records in nozzle_sales_top_df ---->\n", nozzle_sales_df.shape[0])
+
+    location_details_query = f"""SELECT DISTINCT sap_id, zone, region, sales_area, name FROM location_master where bu = 'RO' """
+    location_data  = await urdhva_base.BasePostgresModel.get_aggr_data(location_details_query, limit=0)
+    loc_df = pl.DataFrame(location_data['data'])
+
+    nozzle_sales_df = nozzle_sales_df.join(loc_df, on = 'sap_id', how = "left")
+    print("completed the joining with lm")
+
+    nozzle_sales_top_df = nozzle_sales_df.filter(
+        (pl.col("current_ms_kl").is_not_null()) & 
+        (pl.col("current_ms_kl") != 0)
+    )
+
+    labels = nozzle_sales_df.select([
+        "current_date_label",
+        "financial_year_label"
+    ]).unique().to_dicts()[0]
+    print("labels ---->\n", labels)
+
+    nozzle_sales_top_df = nozzle_sales_top_df.filter(pl.col("zone").is_not_null())
+
+    nozzle_sales_top_df = (
+        nozzle_sales_top_df
+        .group_by(["zone", "region", "sales_area", "location_name", "sap_id"])
+        .agg([
+            pl.sum("current_ms_kl").alias("current_ms_kl"),
+            pl.sum("current_power_kl").alias("current_power_kl"),
+            (pl.sum("current_ms_kl") + pl.sum("current_power_kl")).alias("current_ms_total_kl"),
+            pl.sum("ytd_power_kl").alias("ytd_power_kl"), 
+            pl.sum("ytd_ms_kl").alias("ytd_ms_kl"),
+            (pl.sum("ytd_power_kl")+ pl.sum("ytd_ms_kl")).alias("ytd_ms_total_kl")
+        ])
+    )
+
+    nozzle_sales_top_df = (
+        nozzle_sales_top_df
+        .group_by(["zone", "region", "sales_area", "location_name", "sap_id"])
+        .agg(
+            current_power_kl = pl.col("current_power_kl").sum(),
+            current_ms_total_kl = pl.col("current_ms_total_kl").sum(),
+            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
+            ytd_power_kl = pl.col("ytd_power_kl").sum(),
+            ytd_ms_total_kl = pl.col("ytd_ms_total_kl").sum(),
+            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+        )
+    )    
+    
+    top_3_retail_outlets = (
+        nozzle_sales_top_df
+        .filter(pl.col("current_conversion_pct").is_not_null())
+        .sort("current_conversion_pct", descending=True)
+        .head(3)
+    )
+    print("top_3_retail_outlets ---->\n", top_3_retail_outlets.to_dicts())
+
+    top_3_sales_areas = (nozzle_sales_top_df
+        .group_by(["zone", "region", "sales_area"]).agg(
+            current_power_kl_sum = pl.col("current_power_kl").sum(),
+            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
+            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
+            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
+            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
+            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+        )
+    )
+    print("count of records in top_3_sales_areas before filtering nulls ---->\n", top_3_sales_areas.shape[0])
+    top_3_sales_areas = (
+        top_3_sales_areas
+        .filter(pl.col("current_conversion_pct").is_not_null())
+        .sort("current_conversion_pct", descending=True)
+        .head(3)
+    )
+    print("top_3_sales_areas ---->\n", top_3_sales_areas.to_dicts())
+
+
+    top_3_regions = (nozzle_sales_top_df
+        .group_by(["zone", "region"]).agg(
+            current_power_kl_sum = pl.col("current_power_kl").sum(),
+            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
+            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
+            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
+            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
+            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+        )
+    )
+    print("count of records in top_3_regions before filtering nulls ---->\n", top_3_regions.shape[0])
+    top_3_regions = (
+        top_3_regions
+        .filter(pl.col("current_conversion_pct").is_not_null())
+        .sort("current_conversion_pct", descending=True)
+        .head(3)
+    )
+    print("top_3_regions ---->\n", top_3_regions.to_dicts())
+
+    top_3_zones = (nozzle_sales_top_df
+        .filter(pl.col("zone").is_not_null())
+        .group_by(["zone"]).agg(
+            current_power_kl_sum = pl.col("current_power_kl").sum(),
+            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
+            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
+            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
+            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
+            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+        )
+    )
+    print("count of records in top_3_zones before filtering nulls ---->\n", top_3_zones.shape[0])
+    top_3_zones = (
+        top_3_zones
+        .filter(pl.col("current_conversion_pct").is_not_null())
+        .sort("current_conversion_pct", descending=True)
+        .head(3)
+    )
+    print("top_3_zones ---->\n", top_3_zones.to_dicts())      
+    
+    return {
+        "top_3_retail_outlets": top_3_retail_outlets.to_dicts(),
+        "top_3_sales_areas": top_3_sales_areas.to_dicts(),
+        "top_3_regions": top_3_regions.to_dicts(),
+        "top_3_zones": top_3_zones.to_dicts(),
+        "nozzle_present_month": labels["current_date_label"],
+        "nozzle_previous_month": labels["financial_year_label"]
+    }
