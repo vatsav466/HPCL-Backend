@@ -25,7 +25,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
@@ -128,7 +128,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
@@ -253,7 +253,7 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod', 'dnc_user']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'dnc_user', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
