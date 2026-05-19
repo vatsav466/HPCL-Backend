@@ -2302,4 +2302,12 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await TankDiaDetails.get_all(params, skip_secrets=True)
 
 
+@router.get('/dailyemailnotificationusers/{id}', response_model=DailyEmailNotificationUsers, tags=['DailyEmailNotificationUsers'])
+async def get(id: str):
+    return await DailyEmailNotificationUsers.get(id, skip_secrets=True)
+
+
+@router.get('/dailyemailnotificationusers', response_model=DailyEmailNotificationUsersGetResp, tags=['DailyEmailNotificationUsers'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DailyEmailNotificationUsers.get_all(params, skip_secrets=True)
 
