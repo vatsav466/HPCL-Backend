@@ -1318,9 +1318,10 @@ async def get_atg_ack(sap_id: str, product_code: str):
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    atg_resp = await function(
-        query=query
-    )
+    # atg_resp = await function(
+    #     query=query
+    # )
+    atg_resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     # print("atg_resp: ", atg_resp)
     atg_resp = pd.DataFrame(atg_resp)
     if 'item_name' in atg_resp.columns:
@@ -1458,10 +1459,10 @@ async def dry_out_diff():
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    cris_resp = await function(
-        query=cris_query
-    )
-
+    # cris_resp = await function(
+    #     query=cris_query
+    # )
+    cris_resp = await helpers.retry_async(function, retries=3, delay=10, query=cris_query)
     novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days, "
                    f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
@@ -1701,9 +1702,10 @@ async def get_tar_analysis(condition):
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    cust_resp = await function(
-        query=query
-    )
+    # cust_resp = await function(
+    #     query=query
+    # )
+    cust_resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     cust_resp = pd.DataFrame(cust_resp)
     cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
 
@@ -1900,7 +1902,8 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
+    # resp = await function(query=query)
+    resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     if not resp:
         return []
     df = pd.DataFrame(resp)
@@ -2024,9 +2027,10 @@ async def get_closed_outlet(conditions=None, dry_out_in_days='1'):
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    site_data = await function(
-        query=query
-    )
+    # site_data = await function(
+    #     query=query
+    # )
+    site_data = await helpers.retry_async(function, retries=3, delay=10, query=query)
     site_data = pd.DataFrame(site_data)
 
     query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
@@ -2131,9 +2135,10 @@ async def get_nozzle_sales(conditions=None, dry_out_in_days='1'):
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    site_data = await function(
-        query=query
-    )
+    # site_data = await function(
+    #     query=query
+    # )
+    site_data = await helpers.retry_async(function, retries=3, delay=10, query=query)
     site_data = pd.DataFrame(site_data)
     # print(site_data['erp_code'].unique().tolist())
     return len(site_data['erp_code'].unique().tolist()) if 'erp_code' in site_data.columns else 0
