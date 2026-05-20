@@ -321,7 +321,8 @@ async def send_disk_report(all_reports):
                     "yesu.p@algofusiontech.com",
                     "manohar.v@algofusiontech.com",
                     "mohith.p@algofusiontech.com",
-                    "pawann.k@algofusiontech.com"
+                    "pawann.k@algofusiontech.com",
+                    "poojitha.gumma@algofusiontech.com"
                 ],
                 "html_content": True,
                 "body": html_body,
