@@ -219,16 +219,11 @@ async def send_connectivity_mail(csv_path):
             await ins.publish_message(
                 subject=f"LPG - Not Connected Plants Report - {formatted_time}",
                 recipients=[
-                    "venu@algofusiontech.com",
-                    "yesu.p@algofusiontech.com",
-                    "mrudula.m@algofusiontech.com",                    
-                    "sachinkwarghane@hpcl.in", 
-                    "arpitakanak.bara@hpcl.in",
                     "avinashgaurav@hpcl.in",
                     "rishikeshdevidas.patil@hpcl.in",   
                     "randhir.kumar2@hpcl.in"
                 ],
-                cc_recipients=["yesu.p@algofusiontech.com"],
+                cc_recipients=["yesu.p@algofusiontech.com", "mrudula.m@algofusiontech.com", "venu@algofusiontech.com", "sachinkwarghane@hpcl.in", "arpitakanak.bara@hpcl.in"],
                 html_content=True,
                 body=html_body,
                 attachments=[csv_path],
