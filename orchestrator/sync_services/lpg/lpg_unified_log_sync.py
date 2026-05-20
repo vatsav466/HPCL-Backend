@@ -677,22 +677,14 @@ def _build_keyset_query(
         return f"""
             SELECT * FROM {source_table}
             WHERE process_date < NOW()
-              AND 
-                process_date >= '{ts_sql}'
-                # (
-                #     process_date > '{ts_sql}'
-                #  OR (process_date = '{ts_sql}' AND {id_col} > {int(cursor_id)})
-                #  )
+              AND process_date >= '{ts_sql}'
             ORDER BY process_date ASC, {id_col} ASC
             LIMIT {lim}
         """
     return f"""
         SELECT * FROM {source_table}
         WHERE process_date < NOW()
-          AND (
-                process_date > TIMESTAMP '{ts_sql}'
-             OR (process_date = TIMESTAMP '{ts_sql}' AND {id_col} > {int(cursor_id)})
-              )
+          AND process_date >= '{ts_sql}'
         ORDER BY process_date ASC, {id_col} ASC
         LIMIT {lim}
     """
