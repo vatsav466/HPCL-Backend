@@ -55,7 +55,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
         subject="Novex LPG Data Sync Report",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", 
-                       "jayaprakash.v@algofusiontech.com", "mrudula.m@algofusiontech.com", "vamsi.c@algofusiontech.com"],
+                      "mrudula.m@algofusiontech.com", "vamsi.c@algofusiontech.com"],
         bcc_recipients=[ "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
                         "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],   
         notification_data=status_data,
