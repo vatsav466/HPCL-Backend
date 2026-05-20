@@ -44,7 +44,7 @@ async def main():
     )
 
     cmd = [
-        "python",
+        sys.executable,
         script_path,
         write_to_db,
         audience,
