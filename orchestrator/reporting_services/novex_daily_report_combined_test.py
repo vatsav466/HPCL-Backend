@@ -1160,7 +1160,7 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "combined"):
-        recipients = await get_email_users_by_type("combined", "daily")
+        recipients = await get_email_users_by_type("combined", "chairman")
         await _send_email_safe(
             "Email: Novex Daily Report combined (seg5.html)",
             failures,
