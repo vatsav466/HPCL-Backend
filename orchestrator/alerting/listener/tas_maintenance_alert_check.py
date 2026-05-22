@@ -43,6 +43,7 @@ async def maintenance_alert_check(alert_data):
 
         # Only perform this check if the current alert's interlock name does NOT end with "Maintenance"
         if not interlock_name.endswith("Maintenance"):
+            await asyncio.sleep(3)
             logger.info(f"Checking for Tank_Under_Maintenance alert for device: {tas_device_name_for_query}")
 
             # Step 1 - Check if tank itself is under maintenance
@@ -64,6 +65,31 @@ async def maintenance_alert_check(alert_data):
                 return True
 
             logger.info(f"No Tank_Under_Maintenance alert found for device: {tas_device_name_for_query} - proceeding to equipment level check")
+
+            if interlock_name in ['MOV_Close Status', 'ROSOV_Close Status', 'ROSOV_Close Status_Fail', 'MOV_Close Status_Fail']:
+                effect_due_to = alert_data.get('Effect_Created_Dueto', '')
+                logger.info(f"Interlock '{interlock_name}' is MOV/ROSOV type - checking if triggered due to equipment '{effect_due_to}' under maintenance for device: {tas_device_name_for_query}")
+
+                effect_close_query = (
+                    f"""bu = 'TAS' and """
+                    f"""sap_id = '{alert_data.get('sap_id', '')}' and """
+                    f"""alert_section = 'TAS' and """
+                    f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
+                    f"""equipment_name = '{effect_due_to}' and """
+                    f"""interlock_name LIKE '%Maintenance%' and """
+                   f"""alert_status != 'Close'"""
+                )
+                logger.info(f"MOV/ROSOV effect due to maintenance check query: {effect_close_query}")
+
+                effect_params = urdhva_base.queryparams.QueryParams(q=effect_close_query)
+                effect_resp = await hpcl_ceg_model.Alerts.get_all(effect_params, resp_type='plain')
+
+                if effect_resp["data"]:
+                    logger.info(f"Interlock '{interlock_name}' on device '{tas_device_name_for_query}' is triggered due to equipment '{effect_due_to}' being under maintenance - skipping new alert")
+                    return True
+
+                logger.info(f"No maintenance alert found for effect equipment '{effect_due_to}' on device '{tas_device_name_for_query}' - proceeding to equipment level check")
+
 
             # Step 2 - Check equipment specific maintenance
             if current_equipment_name is not None and current_equipment_name in related_equipment_names:
@@ -193,6 +219,12 @@ async def close_tas_workflow(alert_data, message_type='Message'):
 
 async def create_under_maintenance_alert(alert_data):
     if alert_data['interlock_name'] == 'Tank_Under Maintenance':
+        tas_device_name = alert_data.get('device_name','')
+        if tas_device_name.endswith('_M'):
+            tas_device_name_for_query = tas_device_name[:-2]
+        else:
+            tas_device_name_for_query = tas_device_name
+        
         logger.info("*" * 100)
         logger.info(f"Processing Tank_Under Maintenance alert for: {alert_data['tas_device_name']}")
         logger.info("*" * 100)
@@ -204,7 +236,7 @@ async def create_under_maintenance_alert(alert_data):
             f"""bu = 'TAS' and """
             f"""sap_id = '{alert_data.get('sap_id', '')}' and """
             f"""alert_section = 'TAS' and """
-            f"""device_id = '{alert_data.get('device_id', '')}' and """
+            f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
             f"""created_at >= NOW() - INTERVAL '5 minutes' and """
             f"""alert_status != 'Close'"""
         )
