@@ -732,6 +732,7 @@ def _existing_source_ids(
     id_col: str,
     sap_id: str,
     ids: List[Any],
+    process_date = None,
     app_conn=None,
 ) -> set:
     if not ids:
@@ -750,9 +751,9 @@ def _existing_source_ids(
             cur.execute(
                 f"""
                 SELECT "{id_col}" FROM "{app_table}"
-                WHERE sap_id = %s AND "{id_col}" = ANY({arr})
+                WHERE sap_id = %s AND process_date >= %s AND "{id_col}" = ANY({arr})
                 """,
-                (str(sap_id),),
+                (str(sap_id), process_date,),
             )
             for row in cur.fetchall():
                 if row[0] is not None:
@@ -770,6 +771,7 @@ def _filter_new_rows(
     app_table: str,
     id_col: str,
     sap_id: str,
+    process_date = None,
     app_conn=None,
 ) -> pl.DataFrame:
     if data.is_empty() or id_col not in data.columns:
@@ -778,7 +780,7 @@ def _filter_new_rows(
     ids = [int(x) for x in ids_series.to_list()]
     if not ids:
         return data.head(0)
-    have = _existing_source_ids(app_table, id_col, sap_id, ids, app_conn=app_conn)
+    have = _existing_source_ids(app_table, id_col, sap_id, ids, process_date=process_date, app_conn=app_conn)
     if not have:
         return data
     return data.filter(~pl.col(id_col).is_in(list(have)))
@@ -833,7 +835,7 @@ def sync_one_kind(
     )
 
     #fetching before 1 hr of last extracted date
-    cur_ts = cur_ts - dt.timedelta(hours=1)
+    cur_ts = (cur_ts - dt.timedelta(hours=1)).replace(minute=0,second=0,microsecond=0,)
 
     always_dedupe = os.environ.get("LPG_UNIFIED_ALWAYS_DEDUPE", "").lower() in (
         "1",
@@ -957,6 +959,7 @@ def sync_one_kind(
                 app_table=app_table,
                 id_col=id_col,
                 sap_id=sap_s,
+                process_date=cur_ts,
                 app_conn=app_conn,
             )
             sec_dedupe += time.perf_counter() - t0
@@ -994,8 +997,13 @@ def sync_one_kind(
                 "(dedupe); cursor still advanced"
             )
 
-        cur_ts, cur_id = tail_ts, tail_id
-        _set_cursor_conn(app_conn, plant_name, kind, cur_ts, cur_id)
+        # cur_ts, cur_id = tail_ts, tail_id
+        # _set_cursor_conn(app_conn, plant_name, kind, cur_ts, cur_id)
+        
+        # update cursor ONLY after successful insert
+        if not to_insert.is_empty():
+            cur_ts, cur_id = _tail_cursor(to_insert, id_col,)
+            _set_cursor_conn(app_conn, plant_name, kind, cur_ts, cur_id)
 
         if len(chunk) < chunk_size:
             _sync_print(
