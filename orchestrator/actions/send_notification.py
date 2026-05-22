@@ -269,7 +269,15 @@ class SendNotification:
         if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
             subject_template = f"Outlet Unblocked"
             return subject_template
-
+              
+    async def get_subject_for_tas(self):
+        if self.params.get('messagetype','') in ['active'] and self.alert_data.get('interlock_name') in ['Loss Of Communication']:
+            subject_template = f"OPC DA connection failed - Communication Loss"
+            return subject_template
+        if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Loss Of Communication']:
+            subject_template = f"OPC DA connection success- Communication Established"
+            return subject_template  
+        
     async def _prepare_message_content(self, bu: str, message_type: str):
         """
         Prepare the message content for notifications, including the subject and body.
@@ -310,6 +318,9 @@ class SendNotification:
         
         if self.alert_data["interlock_name"] in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
             subject_template = await self.get_subject_for_ro()
+                        
+        if self.alert_data["interlock_name"] in ['Loss Of Communication'] and self.params.get('messagetype','') in ['active','resolved']:
+            subject_template = await self.get_subject_for_tas()
 
         # Append alert_section only if it exists and is different from BU
         if alert_section and bu != alert_section:
@@ -882,7 +893,7 @@ class SendNotification:
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
 
-                    tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
+                    tas_cc = ["ArpitaKanak.Bara@hpcl.in","vgupta@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
                         for email in ["TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]:
                             if email not in tas_cc:
@@ -959,7 +970,7 @@ class SendNotification:
                 tas_recipients = await self.get_tas_recipients()
                 if tas_recipients:
                     self.mail_recipients = tas_recipients
-                    tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
+                    tas_cc = ["ArpitaKanak.Bara@hpcl.in","vgupta@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
                         for email in ["TarunGhisulal.Chauhan@hpcl.in", "jays@hpcl.in"]:
                             if email not in tas_cc:
