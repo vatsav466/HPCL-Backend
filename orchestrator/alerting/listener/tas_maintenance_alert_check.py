@@ -27,7 +27,7 @@ async def maintenance_alert_check(alert_data):
         original_device_name = alert_data.get('device_name', '')
 
         # Extract tas_device_name
-        if re.match(r'^[A-Z]+-\d+_', original_device_name):
+        if re.match(r'^[A-Z]+-\d+_', original_device_name) and not original_device_name.startswith('TK-') :
             tas_device_name = original_device_name.split('_', 1)[1]
         else:
             tas_device_name = original_device_name
@@ -41,68 +41,70 @@ async def maintenance_alert_check(alert_data):
         else:
             tas_device_name_for_query = tas_device_name
 
-        if alert_data[interlock_name] in ['MOV_Close Status', 'ROSOV_Close Status', 'MOV_Close Status_Fail','ROSOV_Close Status_Fail']:
-            vft_radar_maintenance_query = (
+        # Only perform this check if the current alert's interlock name does NOT end with "Maintenance"
+        if not interlock_name.endswith("Maintenance"):
+            logger.info(f"Checking for Tank_Under_Maintenance alert for device: {tas_device_name_for_query}")
+
+            # Step 1 - Check if tank itself is under maintenance
+            tank_maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
                 f"""alert_section = 'TAS' and """
-                f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name if not tas_device_name.endswith('_M') else tas_device_name[:-2]}' and """
-                f"""equipment_name in ('VFT', 'RADAR') and """
-                f"""interlock_name LIKE '%Maintenance%' and """
+                f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
+                f"""interlock_name LIKE '%Tank_Under_Maintenance%' and """
                 f"""alert_status != 'Close'"""
             )
-            logger.info(f"VFT/RADAR maintenance check for MOV/ROSOV suppression: {vft_radar_maintenance_query}")
-            vft_radar_params = urdhva_base.queryparams.QueryParams(q=vft_radar_maintenance_query)
-            vft_radar_resp = await hpcl_ceg_model.Alerts.get_all(vft_radar_params, resp_type='plain')
-            if vft_radar_resp.get('data'):
-                logger.info("Active VFT/RADAR maintenance found – skipping MOV/ROSOV close status alert creation")
-                return True
-            
+            logger.info(f"Tank under maintenance check query: {tank_maintenance_query}")
 
-        # Only perform this check if the current alert's interlock name does NOT end with "Maintenance"
-        if not interlock_name.endswith("Maintenance"):
-            logger.info(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
-            logger.debug(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
-            
-            # Query for any alerts with the same equipment_name where interlock_name ends with "Maintenance"
-            if current_equipment_name in related_equipment_names and current_equipment_name is not None:
+            tank_maintenance_params = urdhva_base.queryparams.QueryParams(q=tank_maintenance_query)
+            tank_maintenance_resp = await hpcl_ceg_model.Alerts.get_all(tank_maintenance_params, resp_type='plain')
+
+            if tank_maintenance_resp["data"]:
+                logger.info(f"Device '{tas_device_name_for_query}' has an active Tank_Under_Maintenance alert - skipping new alert for equipment '{current_equipment_name}'")
+                return True
+
+            logger.info(f"No Tank_Under_Maintenance alert found for device: {tas_device_name_for_query} - proceeding to equipment level check")
+
+            # Step 2 - Check equipment specific maintenance
+            if current_equipment_name is not None and current_equipment_name in related_equipment_names:
+                logger.info(f"Checking equipment specific maintenance alert for equipment: {current_equipment_name}, device: {tas_device_name_for_query}")
+                
+
                 equipment_maintenance_query = (
                     f"""bu = 'TAS' and """
                     f"""sap_id = '{alert_data.get('sap_id', '')}' and """
                     f"""alert_section = 'TAS' and """
                     f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
-                    f""" equipment_name = '{current_equipment_name}' and """
+                    f"""equipment_name = '{current_equipment_name}' and """
                     f"""interlock_name LIKE '%Maintenance%' and """
                     f"""alert_status != 'Close'"""
                 )
+                logger.info(f"Equipment maintenance check query: {equipment_maintenance_query}")
+
+                equipment_maintenance_params = urdhva_base.queryparams.QueryParams(q=equipment_maintenance_query)
+                equipment_maintenance_resp = await hpcl_ceg_model.Alerts.get_all(equipment_maintenance_params, resp_type='plain')
+
+                if equipment_maintenance_resp["data"]:
+                    logger.info(f"Equipment '{current_equipment_name}' has an active maintenance alert for device '{tas_device_name_for_query}' - skipping new alert")
+                    return True
+
+                logger.info(f"No active maintenance alert found for equipment '{current_equipment_name}' on device '{tas_device_name_for_query}' - alert will be created")
+
             else:
-                equipment_maintenance_query = (
-                    f"""bu = 'TAS' and """
-                    f"""sap_id = '{alert_data.get('sap_id', '')}' and """
-                    f"""alert_section = 'TAS' and """
-                    f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
-                    f"""equipment_name in ('{equipment_names_str}') and """
-                    f"""interlock_name LIKE '%Maintenance%' and """
-                    f"""alert_status != 'Close'"""
-                )
-            logger.info(f"Equipment maintenance check query: {equipment_maintenance_query}")
-            logger.debug(f"Equipment maintenance check query: {equipment_maintenance_query}")
-            equipment_maintenance_params = urdhva_base.queryparams.QueryParams(q=equipment_maintenance_query)
-            equipment_maintenance_resp = await hpcl_ceg_model.Alerts.get_all(equipment_maintenance_params, resp_type='plain')
-            
-            if equipment_maintenance_resp["data"]:
-                logger.info(f"Equipment {current_equipment_name} has a maintenance alert - skipping new alert")
-                logger.info(f"Equipment {current_equipment_name} has a maintenance alert - skipping new alert")
-                return True  # Skip alert creation - maintenance alert exists for the same equipment
-        
-        # If we got here, no reason to skip the alert
-        logger.info(f"No blocking conditions found - alert will be created")
-        return False  # Create the alert
+                logger.info(f"Equipment '{current_equipment_name}' is not in related equipment list - no equipment level maintenance check needed")
+
+        logger.info(f"No blocking conditions found - alert will be created for equipment '{current_equipment_name}' on device '{tas_device_name_for_query}'")
+        return False  
+
+    except KeyError as e:
+        logger.error(f"Missing key in alert_data: {e}")
+        logger.error(traceback.format_exc())
+        return False  # Fail open - let alert through
         
     except Exception as e:
         logger.error(f"Error in maintenance alert check: {e}")
         logger.error(traceback.format_exc())
-        # In case of error, let the alert through by default
+        
         return False
 
 async def close_tas_workflow(alert_data, message_type='Message'):
