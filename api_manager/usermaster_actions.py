@@ -22,6 +22,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             }
 
         rpt = urdhva_base.context.context.get('rpt', {})
+        login_user_id= rpt.get("employee_id") or rpt.get("first_name")
 
         # Normalize roles (lowercase + remove spaces)
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
@@ -79,7 +80,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "status": data.get('status'),
             "is_ad_user": data.get('is_ad_user'),
             "contact_number": data.get('contact_number',''),
-            "login_user_id": data.get('login_user_id',''),        
+            "login_user_id": login_user_id,       
             "file_path": data.get('file_path','')         
         }).create()
         if user_response:
