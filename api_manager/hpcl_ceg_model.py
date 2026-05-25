@@ -10923,7 +10923,6 @@ class CreateUserCreate(pydantic.BaseModel):
     is_ad_user: typing.Optional[bool] = pydantic.Field(False, )
     status: typing.Optional[bool] = pydantic.Field(False, )
     lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
-    login_user_id: str
     file_path: typing.Optional[str] = pydantic.Field("", **{})
 
 

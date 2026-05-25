@@ -4022,7 +4022,6 @@ Model CreateUser internal {
     is_ad_user optional bool
     status optional bool
     lock_for_auto_sync optional bool
-    login_user_id str
     file_path optional str
 }
 
