@@ -7671,6 +7671,9 @@
                 },
                 {
                     "name": "delete_user"
+                },
+                {
+                    "name": "file_upload"
                 }
             ]
         },
@@ -7719,6 +7722,9 @@
                 },
                 {
                     "name": "delete_user"
+                },
+                {
+                    "name": "file_upload"
                 }
             ]
         },
@@ -9661,6 +9667,10 @@
         {
             "name": "delete_user",
             "displayName": "delete_user"
+        },
+        {
+            "name": "file_upload",
+            "displayName": "file_upload"
         },
         {
             "name": "tas_faulty_create",
