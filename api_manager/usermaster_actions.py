@@ -352,7 +352,7 @@ async def usermaster_file_upload(
 
         # Validate file extension
         file_extension = Path(upload_file.filename).suffix.lower()
-        allowed_extensions = [".png", ".jpg", ".jpeg", ".gif", ".csv", ".xlsx", ".xls", ".pdf", ".doc", ".docx"]
+        allowed_extensions = [".png", ".jpg", ".jpeg",".pdf", ".doc", ".docx"]
         if file_extension not in allowed_extensions:
             return {"success": False, "message": "Unsupported file type"}
 
