@@ -7392,7 +7392,7 @@ class GlobalAnalytics:
                 "        zone, location_name, sap_id, bcu_number, mfm_number",
                 "    FROM host_mfm_factor",
                 "    WHERE 1=1",
-                "    AND last_k_factor IS NOT NULL"
+                "    AND last_meter_factor IS NOT NULL"
             ]
             if zone_filter:
                 query_parts.append(f" AND zone = '{zone_filter}'")
