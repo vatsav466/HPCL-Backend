@@ -7826,16 +7826,63 @@ class GlobalAnalytics:
         if where_clauses:
             dynamic_where =" AND " + " AND ".join(where_clauses)
         
-        query = (f"SELECT COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
-                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
-                f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
-                f"alert_status != 'Close' and mark_as_false = true {dynamic_where} ")
+        # query = (f"SELECT COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
+        #         f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
+        #         f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
+        #         f"alert_status != 'Close' and mark_as_false = true {dynamic_where} ")
+        
+        query = f"""WITH classified AS (
+                    SELECT
+                        sap_id,
+                        dry_out_in_days,
+                        MIN(progress_rate) AS min_progress  -- ensures priority (1 > 2/3 > >3)
+                    FROM public.alerts
+                    WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                    AND alert_status != 'Close'
+                    AND mark_as_false = true
+                    {dynamic_where}
+                    GROUP BY sap_id, dry_out_in_days
+                )
+
+                SELECT
+                    -- ================= DRYOUT =================
+                    COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1') AS dryout_total,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '1' AND min_progress = 1
+                    ) AS dryout_indent_not_raised,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '1' AND min_progress IN (2, 3)
+                    ) AS dryout_pending_indent,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '1' AND min_progress > 3
+                    ) AS dryout_indent_wip,
+
+                    -- ================= INTRA DRYOUT =================
+                    COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '2' AND min_progress = 1
+                    ) AS intra_indent_not_raised,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '2' AND min_progress IN (2, 3)
+                    ) AS intra_pending_indent,
+
+                    COUNT(DISTINCT sap_id) FILTER (
+                        WHERE dry_out_in_days = '2' AND min_progress > 3
+                    ) AS intra_indent_wip
+
+                FROM classified;"""
+
         
         print("dry_out_analysis_count_query-------------", query)
 
@@ -7859,7 +7906,7 @@ class GlobalAnalytics:
             carry_fwd_df = pl.DataFrame(schema={ "dry_out_in_days": pl.Utf8,"category": pl.Utf8,})
         
         carry_fwd_dryout = carry_fwd_df.filter(pl.col("dry_out_in_days").fill_null("") == "1").height
-        carry_fwd_intraday = carry_fwd_df.filter(pl.col("dry_out_in_days").fill_null("") == "1").height
+        carry_fwd_intraday = carry_fwd_df.filter(pl.col("dry_out_in_days").fill_null("") == "2").height
         carry_fwd_cata = carry_fwd_df.filter(pl.col("category").fill_null("") != "").height if carry_fwd_df.height else 0
 
         resp_dict["carryForwardData"] = { "Carry Fwd DryOut Indents": carry_fwd_dryout,
