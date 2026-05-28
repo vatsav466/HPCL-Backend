@@ -1,8 +1,10 @@
+import urdhva_base
 import sys
 import ast
 import time
 import asyncio
 import psycopg2
+import argparse
 import pandas as pd
 import mysql.connector
 import multiprocessing
@@ -144,10 +146,14 @@ async def process_data(data):
     return data
 
 
-async def sync_location_master():
+async def sync_location_master(bus_list=None):
     connection = await get_db_connection()
     cursor = connection.cursor()
     for config in reporting_config.location_configs:
+        config_bu = config.get("bu", "").lower()
+        # Skip configs not passed in parser
+        if bus_list and config_bu not in bus_list:
+            continue
         data = await fetch_data(cursor, config.get("query"))
         for col in ["PLANT", "REPORTING_OFFICE"]:
             if col in data.columns:
@@ -167,4 +173,20 @@ async def sync_location_master():
 
 
 if __name__=="__main__":
-    asyncio.run(sync_location_master())
+
+    parser = argparse.ArgumentParser(
+        description="Sync Location Master by Business Unit"
+    )
+
+    parser.add_argument(
+        "--bu",
+        nargs="*",
+        default=None,
+        help="Example: --bu lpg ro tas"
+    )
+
+    args = parser.parse_args()
+
+    bus_list = [x.lower() for x in args.bu] if args.bu else None
+
+    asyncio.run(sync_location_master(bus_list))
