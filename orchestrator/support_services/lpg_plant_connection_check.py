@@ -5,6 +5,8 @@ import csv
 import asyncio
 import traceback
 import os
+import psycopg2
+import mysql.connector
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import orchestrator.notification_manager.notification_factory
@@ -53,6 +55,43 @@ def test_telnet_connection(host_ip, port, timeout=CONNECTION_TIMEOUT):
     except Exception as e:
         return False, f"Connection error: {e}"
 
+def test_db_connection(host_ip, port, db_name, username, password, db_type):
+    """To check database connectivity"""
+    conn = None
+    try:
+        db_type = str(db_type).strip().lower()
+        if db_type == "postgres":
+            conn = psycopg2.connect(
+                host=host_ip,
+                port=int(port),
+                database=db_name,
+                user=username,
+                password=password,
+                connect_timeout=CONNECTION_TIMEOUT
+            )
+        elif db_type == "mysql":
+            conn = mysql.connector.connect(
+                host=host_ip,
+                port=int(port),
+                database=db_name,
+                user=username,
+                password=password,
+                connection_timeout=CONNECTION_TIMEOUT
+            )
+        else:
+            return False, f"Unsupported DB type: {db_type}"
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        return True, "DB Connected"
+    except Exception as e:
+        return False, f"DB connection failed: {e}"
+
+    finally:
+        if conn:
+            conn.close()
 
 def check_plant_connectivity(plant_df):
     """Check connectivity for all plants and collect failed ones"""
@@ -71,8 +110,35 @@ def check_plant_connectivity(plant_df):
         # Test connection
         is_connected, status_message = test_telnet_connection(host_ip, port)
 
+        # If port connected then test DB connectivity
+        if is_connected:
+            try:
+                db_name = str(plant['db_database']).strip()
+                username = str(plant['db_user']).strip()
+                password = str(plant['db_password']).strip()
+                db_type = str(plant['db_type']).strip()
+                db_connected, db_message = test_db_connection(
+                    host_ip,
+                    port,
+                    db_name,
+                    username,
+                    password,
+                    db_type
+                )
+
+                if db_connected:
+                    print(f"{short_name}: Port + DB Connected successfully")
+                    continue
+                else:
+                    is_connected = False
+                    status_message = db_message
+
+            except Exception as e:
+                is_connected = False
+                status_message = f"DB connection error: {e}"
         if not is_connected:
             # Add to not connected list
+            failure_type = ("DB FAILURE" if "DB connection failed" in status_message or "DB connection error" in status_message else "PORT FAILURE")
             not_connected_plants.append({
                 's_no': len(not_connected_plants) + 1,
                 'erp_id': str(plant['erp_id']).strip(),
