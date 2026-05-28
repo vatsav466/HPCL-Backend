@@ -133,7 +133,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
         await send_email(
         template_name="dryout_sync_failure.html",   
             to_recipients=["sreedhar.maddipati@algofusiontech.com","bala@algofusiontech.com"],
-            cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"],
+            cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com"],
             bcc_recipients=["manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "mohith.p@algofusiontech.com", 
                         "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com"],
             subject="Daily Sync Failed - Cris Sales Sync",
