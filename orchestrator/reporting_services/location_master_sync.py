@@ -78,8 +78,8 @@ def _empty_bu_report(bu: str, **kwargs) -> Dict[str, Any]:
     )
     return base
 
-def count_app_db_users_for_bu(bu_upper: str) -> int:
-    """Count users in APP_DB for a business unit (``bu`` array contains ``bu_upper``)."""
+def count_app_db_locations_for_bu(bu_upper: str) -> int:
+    """Count locations in APP_DB for a business unit (``bu`` array contains ``bu_upper``)."""
     conn = _app_pg_conn()
     try:
         cur = conn.cursor()
@@ -100,7 +100,7 @@ def count_app_db_users_for_bu(bu_upper: str) -> int:
         conn.close()
 
 
-def render_novex_users_sync_report_html(
+def render_novex_locations_sync_report_html(
     report_rows: List[Dict[str, Any]],
     *,
     sync_start_ist: str,
@@ -245,8 +245,8 @@ async def sync_location_master(bus_list=None,send_email=True):
         if not config.get("query"):
             print(f"Skipping BU {config_bu.upper()} → No query found")
 
-            old_location_count = count_app_db_users_for_bu(config_bu.upper())
-            new_record_count = count_app_db_users_for_bu(config_bu.upper())
+            old_location_count = count_app_db_locations_for_bu(config_bu.upper())
+            new_record_count = count_app_db_locations_for_bu(config_bu.upper())
             report_rows.append(
                 _empty_bu_report(
                     config_bu,
@@ -257,7 +257,7 @@ async def sync_location_master(bus_list=None,send_email=True):
             )
             continue
 
-        old_location_count = count_app_db_users_for_bu(config_bu.upper())
+        old_location_count = count_app_db_locations_for_bu(config_bu.upper())
         data = await fetch_data(cursor, config.get("query"))
         for col in ["PLANT", "REPORTING_OFFICE"]:
             if col in data.columns:
@@ -274,7 +274,7 @@ async def sync_location_master(bus_list=None,send_email=True):
         data = await process_data(data)
         await clear_existing_location_master(config.get("bu", ""), data)
         await insert_location_data(data.to_dict(orient="records"))
-        new_record_count = count_app_db_users_for_bu(config_bu.upper())
+        new_record_count = count_app_db_locations_for_bu(config_bu.upper())
         print("new_record_count---->\n", new_record_count)
         report_rows.append(
             _empty_bu_report(
@@ -291,7 +291,7 @@ async def sync_location_master(bus_list=None,send_email=True):
     if send_email:
         environment = urdhva_base.settings.environment.upper() or "PROD"
         print("report_rows---->", report_rows)
-        html = render_novex_users_sync_report_html(
+        html = render_novex_locations_sync_report_html(
             report_rows,
             sync_start_ist= sync_start_ist,
             sync_end_ist= sync_end_ist,
