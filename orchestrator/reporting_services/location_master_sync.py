@@ -1,17 +1,40 @@
+import urdhva_base
 import sys
 import ast
 import time
 import asyncio
 import psycopg2
+import argparse
 import pandas as pd
+import jinja2
 import mysql.connector
 import multiprocessing
+from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 sys.path.append("/opt/ceg/algo")
 import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 import orchestrator.reporting_services.reporting_config as reporting_config
+import orchestrator.notification_manager.notification_factory as notification_factory
+
+
+
+_REPORTING_DIR = Path(__file__).resolve().parent
+_TEMPLATES_DIR = _REPORTING_DIR / "templates"
+
+# Syncable business units (lowercase keys used in reporting_config and CLI).
+EMAIL_RECIPIENTS = {
+    "to_receipts": ["venu@algofusiontech.com"],
+    "cc_receipts": ["moufikali@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com",
+                    "yesu.p@algofusiontech.com", "poojitha.gumma@algofusiontech.com",
+                    "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com",
+                    "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
+                    "vamsi.c@algofusiontech.com"],
+    "cc_receipts": [],
+    "bcc_receipts": [],
+}
 
 
 async def get_db_connection():
@@ -31,6 +54,71 @@ async def get_db_connection():
                 database=creds['database']
             )
     return connection
+
+def _app_pg_conn():
+    creds = credential_loader.get_credentials("APP_DB")
+    return psycopg2.connect(
+        host=creds["host"],
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        port=creds["port"],
+    )
+
+def _empty_bu_report(bu: str, **kwargs) -> Dict[str, Any]:
+    base = {
+        "bu": bu.upper(),
+        "status": "pending",
+        "old_synced_count": 0,
+        "new_synced_count": 0
+    }
+    base.update(kwargs)
+    base["total_records_synced"] = int(base.get("records_upserted") or 0) + int(
+        base.get("records_upserted_dealers") or 0
+    )
+    return base
+
+def count_app_db_locations_for_bu(bu_upper: str) -> int:
+    """Count locations in APP_DB for a business unit (``bu`` array contains ``bu_upper``)."""
+    conn = _app_pg_conn()
+    try:
+        cur = conn.cursor()
+        query = """
+            SELECT COUNT(*) 
+            FROM location_master
+            WHERE bu = %s
+        """
+        print("Final Query:", query.replace("%s", f"'{bu_upper}'"))
+
+        cur.execute(query, (bu_upper,))
+
+        (n,) = cur.fetchone()
+        print(f"BU: {bu_upper} → Count: {n}")
+        cur.close()
+        return int(n or 0)
+    finally:
+        conn.close()
+
+
+def render_novex_locations_sync_report_html(
+    report_rows: List[Dict[str, Any]],
+    *,
+    sync_start_ist: str,
+    sync_end_ist: str,
+    environment: str,
+) -> str:
+    """Render HTML email-style report using Jinja2 (timestamps are IST strings)."""
+    path = _TEMPLATES_DIR / "novex_location_master_sync.html"
+    if not path.is_file():
+        raise FileNotFoundError(f"Report template missing: {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        template = jinja2.Template(f.read())
+    return template.render(
+        report_rows=report_rows,
+        sync_start_ist=sync_start_ist,
+        sync_end_ist=sync_end_ist,
+        environment=environment
+    )
 
 
 async def fetch_data(cursor, query, getData=False, params=None):
@@ -144,10 +232,32 @@ async def process_data(data):
     return data
 
 
-async def sync_location_master():
+async def sync_location_master(bus_list=None,send_email=True):
     connection = await get_db_connection()
+    report_rows: List[Dict[str, Any]] = []
+    sync_start_ist = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
     cursor = connection.cursor()
     for config in reporting_config.location_configs:
+        config_bu = config.get("bu", "").lower()
+        # Skip configs not passed in parser
+        if bus_list and config_bu not in bus_list:
+            continue
+        if not config.get("query"):
+            print(f"Skipping BU {config_bu.upper()} → No query found")
+
+            old_location_count = count_app_db_locations_for_bu(config_bu.upper())
+            new_record_count = count_app_db_locations_for_bu(config_bu.upper())
+            report_rows.append(
+                _empty_bu_report(
+                    config_bu,
+                    status="skipped",
+                    old_synced_count=old_location_count,
+                    new_synced_count=new_record_count
+                )
+            )
+            continue
+
+        old_location_count = count_app_db_locations_for_bu(config_bu.upper())
         data = await fetch_data(cursor, config.get("query"))
         for col in ["PLANT", "REPORTING_OFFICE"]:
             if col in data.columns:
@@ -164,7 +274,59 @@ async def sync_location_master():
         data = await process_data(data)
         await clear_existing_location_master(config.get("bu", ""), data)
         await insert_location_data(data.to_dict(orient="records"))
+        new_record_count = count_app_db_locations_for_bu(config_bu.upper())
+        print("new_record_count---->\n", new_record_count)
+        report_rows.append(
+            _empty_bu_report(
+                config_bu,
+                status="success",
+                old_synced_count=old_location_count,
+                new_synced_count= new_record_count
+                )
+            )
+        
+        sync_end_ist = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
+
+    
+    if send_email:
+        environment = urdhva_base.settings.environment.upper() or "PROD"
+        print("report_rows---->", report_rows)
+        html = render_novex_locations_sync_report_html(
+            report_rows,
+            sync_start_ist= sync_start_ist,
+            sync_end_ist= sync_end_ist,
+            environment=environment
+        )
+
+        ins = await notification_factory.get_notification_module("email")
+        await ins.publish_message(
+            subject="Novex Location Details Sync Report(From Tibco)",
+            recipients=EMAIL_RECIPIENTS['to_receipts'],
+            cc_recipients=EMAIL_RECIPIENTS['cc_receipts'] or [],
+            bcc_recipients=EMAIL_RECIPIENTS['bcc_receipts'] or [],
+            html_content=True,
+            body=html,
+            force_send=True,
+            inline_images={},
+            attachments=[]
+        )
 
 
 if __name__=="__main__":
-    asyncio.run(sync_location_master())
+
+    parser = argparse.ArgumentParser(
+        description="Sync Location Master by Business Unit"
+    )
+
+    parser.add_argument(
+        "--bu",
+        nargs="*",
+        default=None,
+        help="Example: --bu lpg ro tas"
+    )
+
+    args = parser.parse_args()
+
+    bus_list = [x.lower() for x in args.bu] if args.bu else None
+
+    asyncio.run(sync_location_master(bus_list))
