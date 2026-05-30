@@ -4318,6 +4318,11 @@ Model LpgOperationsInsights {
         drill_state optional str
         metric_type str   
     }
+    Action=> lpg_car_download {
+        filters optional list WidgetFilters
+        cross_filters optional list WidgetFilters
+        drill_state optional str
+    }
 }
 
 Model NaturalGasGVConnections {

@@ -8,8 +8,12 @@ import mysql.connector
 import urdhva_base.utilities
 import utilities.helpers as helpers
 from datetime import datetime,timedelta, timezone
+from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import widget_actions
+import utilities.connection_mapping as connection_mapping
+from charts_actions import charts_connection_vault_routing
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Material Codes for Domestic and Non-Domestic Sales
@@ -515,3 +519,298 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
 
     except Exception as e:
         return {"status": False, "message": str(e)}
+    
+
+async def lpg_car_download(data):
+    """ downloading the lpg plant Carousel"""
+    
+    start_date = None
+    end_date = None
+    all_conditions = []
+    where_clause = []
+    final_where_clause = ""
+
+    if data.cross_filters:
+        for filter in data.cross_filters:
+
+            # -------- DATE FILTER --------
+            if "DATE" in filter.key:
+
+                filter_values = filter.value if filter.value else filter.val
+                if not filter_values:
+                    continue
+
+                if isinstance(filter_values, str):
+                    dates = [d.strip() for d in filter_values.split(",") if d.strip()]
+                elif isinstance(filter_values, list):
+                    dates = filter_values
+                else:
+                    continue
+
+                start_date = dates[0]
+                end_date = dates[-1]
+
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+
+                print("start_date----->\n", start_date)
+                print("end_date---->\n", end_date)
+                continue
+
+            # -------- NON-DATE FILTER --------
+            vals = []
+
+            if filter.val:
+                if isinstance(filter.val, list):
+                    vals = filter.val
+                elif isinstance(filter.val, str):
+                    vals = [v.strip() for v in filter.val.split(",") if v.strip()]
+
+            elif filter.value:
+                if isinstance(filter.value, list):
+                    vals = filter.value
+                elif isinstance(filter.value, str):
+                    vals = [v.strip() for v in filter.value.split(",") if v.strip()]
+
+            if not vals:
+                continue
+
+            if len(vals) == 1:
+                condition = f"{filter.key} = '{vals[0]}'"
+            else:
+                vals_str = ",".join([f"'{v}'" for v in vals])
+                condition = f"{filter.key} IN ({vals_str})"
+
+            all_conditions.append(condition)
+
+    # ---------------- NORMAL FILTERS ----------------
+    if data.filters:
+        conditions = []
+
+        for rec in data.filters:
+
+            vals = []
+
+            if rec.val:
+                if isinstance(rec.val, list):
+                    vals = rec.val
+                elif isinstance(rec.val, str):
+                    vals = [v.strip() for v in rec.val.split(",") if v.strip()]
+
+            elif rec.value:
+                if isinstance(rec.value, list):
+                    vals = rec.value
+                elif isinstance(rec.value, str):
+                    vals = [v.strip() for v in rec.value.split(",") if v.strip()]
+
+            if not vals:
+                continue
+
+            if len(vals) == 1:
+                condition = f"{rec.key} = '{vals[0]}'"
+            else:
+                vals_str = ",".join([f"'{v}'" for v in vals])
+                condition = f"{rec.key} IN ({vals_str})"
+
+            conditions.append(condition)
+
+        if conditions:
+            all_conditions.extend(conditions)
+
+    # ---------------- FINAL WHERE ----------------
+    final_where_clause_car = ""
+
+    if where_clause:
+        all_conditions.extend(where_clause)
+
+    if all_conditions:
+        final_where_clause = " AND " + " AND ".join(all_conditions)
+        final_where_clause_car = " WHERE " + " AND ".join(all_conditions)
+
+    print("final_where_clause---->\n", final_where_clause)
+    print("final_where_clause_car---->\n", final_where_clause_car)
+    query = f"""
+        SELECT * FROM public.lpg_plant_operations 
+        where process_date >= '{start_date}' 
+        and process_date < '{end_date}' 
+        {final_where_clause}
+        """ 
+    print("query ----->\n", query)
+
+    car_query = f"""SELECT * FROM carousals_bkp {final_where_clause_car}"""
+    print("query ----->\n", car_query)
+               
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    
+    from decimal import Decimal
+
+    def clean_data(data):
+        cleaned = []
+        for row in data:
+            new_row = {}
+            for k, v in row.items():
+                if v == "NULL":   # 🔥 handle this
+                    new_row[k] = None
+                elif isinstance(v, Decimal):
+                    new_row[k] = round(float(v), 2)
+                else:
+                    new_row[k] = v
+            cleaned.append(new_row)
+        return cleaned
+
+    clean_resp = clean_data(resp)
+    data = pl.DataFrame(clean_resp)
+    # print("the lpg plant operations data ---->\n", data.to_dicts())
+
+    car_data = await function(query= car_query)
+    car_df = pl.DataFrame(car_data)
+    # print("car df----<", car_df.to_dicts())
+    def calculate_hours(time_range_str):
+        import json
+        time_ranges = json.loads(time_range_str)
+        total_seconds = 0
+
+        for t in time_ranges:
+            start = datetime.strptime(t["start_time"], "%H:%M:%S")
+            stop = datetime.strptime(t["stop_time"], "%H:%M:%S")
+            diff = (stop - start).total_seconds()
+            total_seconds += diff
+        # convert seconds → hours
+        return round(total_seconds / 3600, 2)
+    
+    car_df = car_df.with_columns([
+        pl.col("production_hrs")
+        .map_elements(calculate_hours)
+        .alias("production_hours"),
+
+        pl.col("breaks")
+        .map_elements(calculate_hours)
+        .alias("break_available_hours")
+    ])
+
+    # Derived column
+    car_df = car_df.with_columns([
+        (pl.col("production_hours") - pl.col("break_available_hours"))
+        .round(2)
+        .alias("normal_available_hrs")
+    ])
+
+    # print("df ---->\n", car_df.to_dicts())
+
+    df = car_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
+    data = data.with_columns([
+        pl.col("sap_id").cast(pl.Utf8),
+        pl.col("carousel").cast(pl.Int64)  
+    ])
+    df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
+
+    # print("final data ----->\n", df.to_dicts())
+
+    df = df.select([
+        pl.col("sap_id").alias("sap_id"),
+        pl.col("location_name").alias("location_name"),
+        pl.col("carousal_id").alias("carousal"),
+        pl.col("heads").alias("heads"),
+        pl.col("production_14_2kg").alias("production_14_2kg"),
+        pl.col("production_19kg").alias("production_19kg"),
+        pl.sum_horizontal([
+            pl.col("production_14_2kg").fill_null(0),
+            pl.col("production_19kg").fill_null(0)
+        ]).alias("Total Cylinders"),
+        pl.col("normal_total_production").alias("normal_total_production"),
+        pl.col("normal_available_hrs").alias("normal_available_hrs"),
+        pl.col("normal_net_hours").alias("normal_net_hours"),
+        pl.col("normal_productivity").alias("normal_productivity"),
+        pl.col("break_total_production").alias("break_total_production"),
+        pl.col("break_available_hours").alias("break_available_hours"),
+        pl.col("break_net_hours").alias("break_net_hours"),
+        pl.col("break_productivity").alias("break_productivity"),
+        pl.col("overtime_total_production").alias("overtime_total_production"),
+        pl.col("overtime_net_hours").alias("overtime_net_hours"),
+        pl.col("overtime_productivity").alias("overtime_productivity"),
+        pl.col("cs_rejection").alias("cs_rejection"),
+        pl.col("gd_rejection").alias("gd_rejection"),
+        pl.col("pt_rejection").alias("pt_rejection"),
+    ])
+
+
+    # print("df ---- selecting ---->\n", df.to_dicts())
+
+    df_grouped = df.group_by(["sap_id", "location_name", "carousal", "heads"]).agg([
+        pl.col("production_14_2kg").sum().alias("production_14_2kg"),
+        pl.col("production_19kg").sum().alias("production_19kg"),
+        pl.col("Total Cylinders").sum().alias("Total Cylinders"),
+
+        pl.col("normal_total_production").sum().alias("normal_total_production"),
+        pl.col("normal_available_hrs").sum().alias("normal_available_hrs"),
+        pl.col("normal_net_hours").sum().alias("normal_net_hours"),
+        pl.col("normal_productivity").sum().alias("normal_productivity"),
+
+        pl.col("break_total_production").sum().alias("break_total_production"),
+        pl.col("break_available_hours").sum().alias("break_available_hours"),
+        pl.col("break_net_hours").sum().alias("break_net_hours"),
+        pl.col("break_productivity").sum().alias("break_productivity"),
+
+        pl.col("overtime_total_production").sum().alias("overtime_total_production"),
+        pl.col("overtime_net_hours").sum().alias("overtime_net_hours"),
+        pl.col("overtime_productivity").sum().alias("overtime_productivity"),
+
+        pl.col("cs_rejection").sum().alias("cs_rejection"),
+        pl.col("gd_rejection").sum().alias("gd_rejection"),
+        pl.col("pt_rejection").sum().alias("pt_rejection"),
+    ])
+
+    # print("Grouped DF ---->\n", df_grouped.to_dicts())
+
+    result = []
+    group_map = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+
+    rows = df_grouped.to_dicts()
+
+    for row in rows:
+        plant = row["location_name"]
+        car = f"Car {row['carousal']}"
+
+        # ---------------- Bottling ----------------
+        group_map[("Bottling Summary", "14.2kg Cylinders")][plant][car] = row["production_14_2kg"]
+        group_map[("Bottling Summary", "19kg Cylinders")][plant][car] = row["production_19kg"]
+        group_map[("Bottling Summary", "Total Cylinders")][plant][car] = row["Total Cylinders"]
+
+        # ---------------- Normal ----------------
+        group_map[("Productivity - Normal Hours", "Production")][plant][car] = row["normal_total_production"]
+        group_map[("Productivity - Normal Hours", "Available Hours")][plant][car] = row["normal_available_hrs"]
+        group_map[("Productivity - Normal Hours", "Net Bottling Hours")][plant][car] = row["normal_net_hours"]
+        group_map[("Productivity - Normal Hours", "Productivity (Cyl/hr)")][plant][car] = row["normal_productivity"]
+
+        # ---------------- Break ----------------
+        group_map[("Productivity - Break Hours", "Production")][plant][car] = row["break_total_production"]
+        group_map[("Productivity - Break Hours", "Available Hours")][plant][car] = row["break_available_hours"]
+        group_map[("Productivity - Break Hours", "Net Bottling Hours")][plant][car] = row["break_net_hours"]
+        group_map[("Productivity - Break Hours", "Productivity (Cyl/hr)")][plant][car] = row["break_productivity"]
+
+        # ---------------- Overtime ----------------
+        group_map[("Productivity - Overtime Hours", "Production")][plant][car] = row["overtime_total_production"]
+        group_map[("Productivity - Overtime Hours", "Net Bottling Hours")][plant][car] = row["overtime_net_hours"]
+        group_map[("Productivity - Overtime Hours", "Productivity (Cyl/hr)")][plant][car] = row["overtime_productivity"]
+
+        # ---------------- Rejections ----------------
+        group_map[("Check Scale Summary", "Rejection - Percentage")][plant][car] = row["cs_rejection"]
+        group_map[("Electronic Leak Detector Summary", "Rejection - Percentage")][plant][car] = row["gd_rejection"]
+        group_map[("O-Ring Tester Summary", "Rejection - Percentage")][plant][car] = row["pt_rejection"]
+
+
+    # ---------------- FINAL FORMAT ----------------
+    for (group, param), plant_data in group_map.items():
+        obj = {
+            "parameter_group": group,
+            "parameter": param
+        }
+        for plant, cars in plant_data.items():
+            obj[plant] = cars
+
+        result.append(obj)
+
+    return result
