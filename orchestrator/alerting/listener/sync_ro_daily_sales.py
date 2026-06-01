@@ -140,7 +140,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             final_data=final_data
         )
         print(traceback.format_exc())
-        print("Exception in retrieving daily ro sales: ", resp(e))
+        print("Exception in retrieving daily ro sales: ", repr(e))
         return None
 
 async def execute_daily_sales():
