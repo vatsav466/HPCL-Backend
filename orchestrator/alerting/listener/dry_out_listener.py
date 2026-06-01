@@ -306,15 +306,22 @@ class DryoutCollector:
                     "file_path": minio_path if minio_path else ""
                 }
                 await hpcl_ceg_model.CrisDryOutSyncCreate(**dryout_records).create()
+            await send_email(
+                template_name="dryout_sync_failure.html",   
+                to_recipients=["poojitha.gumma@algofusiontech.com"],
+                cc_recipients=["vamsi.c@algofusiontech.com"],
+                subject="Daily Sync Failed - Dry Out Listerner",
+                # final_data=final_data
+            )
 
         except Exception as e:
             tb = traceback.format_exc()
-            logger.error(f"Data Sync Failed {e}")
+            logger.error("Data Sync Failed.")
             date = urdhva_base.utilities.get_present_time()
             formatted = date.strftime("%d %b %Y, %I:%M %p")
             final_data = {
                 "generated_time": formatted,
-                "error_message": str(e),
+                "error_message": repr(e),
                 "traceback": tb
             }
             print("final data ----<>\n", final_data)
@@ -328,7 +335,7 @@ class DryoutCollector:
                 final_data=final_data
             )
 
-            return {"status": False, "message": "Failed", "error": str(e)}
+            return {"status": False, "message": "Failed", "error": repr(e)}
 
 
 async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_recipients,  final_data=None, attachments=None):

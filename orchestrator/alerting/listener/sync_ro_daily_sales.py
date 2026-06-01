@@ -121,12 +121,12 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
     
     except Exception as e:
         tb = traceback.format_exc()
-        logger.error(f"Exception in retrieving daily ro sales: {e}")
+        logger.error("Exception in retrieving daily ro sales.")
         date = urdhva_base.utilities.get_present_time()
         formatted = date.strftime("%d %b %Y, %I:%M %p")
         final_data = {
             "generated_time": formatted,
-            "error_message": str(e),
+            "error_message": repr(e),
             "traceback": tb
         }
         print("final data ----<>\n", final_data)
@@ -140,7 +140,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             final_data=final_data
         )
         print(traceback.format_exc())
-        print("Exception in retrieving daily ro sales: ", str(e))
+        print("Exception in retrieving daily ro sales: ", resp(e))
         return None
 
 async def execute_daily_sales():
