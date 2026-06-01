@@ -16,7 +16,9 @@ async def main():
     audience = sys.argv[1]
     write_to_db = "true" if len(sys.argv) > 2 and sys.argv[2].lower() == "true" else "false"
 
-    existing_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(resp_type='plain')
+    existing_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(
+        urdhva_base.queryparams.QueryParams(q=f"audience='{audience}'", limit=0),
+        resp_type='plain')
     print("existing_users----->\n", existing_users)
 
     enabled_types = set()

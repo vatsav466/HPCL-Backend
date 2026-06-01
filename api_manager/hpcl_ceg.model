@@ -262,6 +262,10 @@ Model Users {
     manual_user bool
     contact_number optional str
 
+
+    login_user_id str                                 // account created by               
+    file_path optional str
+
     // API to list out created users
     Action=> fetch_users {
         search_string str
@@ -4018,6 +4022,7 @@ Model CreateUser internal {
     is_ad_user optional bool
     status optional bool
     lock_for_auto_sync optional bool
+    file_path optional str
 }
 
 Model UpdateUser internal {
@@ -4046,6 +4051,11 @@ Model UserMaster crud_disable {
 
     Action=> delete_user {
         username optional str
+    }
+
+    Action=> file_upload {
+        username  str
+        bu optional list str
     }
 }
 

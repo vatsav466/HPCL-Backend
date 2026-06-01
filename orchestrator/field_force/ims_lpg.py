@@ -869,6 +869,7 @@ _LPG_INDENT_ACTION_ALIASES: Dict[str, str] = {
     "indents_delivered": "get_delivered",
     "r2_swiped": "get_r2_swiped",
     "r3_swiped": "get_r3_swiped",
+    "indent_order_delivery_summary": "get_indent_order_delivery_summary",
 }
 
 
@@ -898,7 +899,8 @@ def _lpg_indent_action_handlers() -> Dict[str, Callable[..., Any]]:
         "get_invoice_created": get_invoice_created,
         "get_delivered": get_delivered,
         "get_r2_swiped": get_r2_swiped,
-        "get_r3_swiped": get_r3_swiped
+        "get_r3_swiped": get_r3_swiped,
+        "get_indent_order_delivery_summary": get_indent_order_delivery_summary,
     }
 
 
@@ -947,3 +949,151 @@ async def get_indent_details(
         page_size=data.limit,
         include_total=True,
     )
+
+
+async def get_indent_order_delivery_summary(
+    widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]] = None,
+    level_filter: Optional[field_force_model.LevelFilterCreate] = None,
+    drill_filter: Optional[field_force_model.DrillFilterCreate] = None,
+    *,
+    table_data: bool = False,
+):
+    all_conditions = []
+    start_date = None
+    end_date = None
+
+    if widget_filters:
+        for filter in widget_filters:
+            if "DATE" in filter.key.upper():
+                if filter.value:
+                    dates = filter.value.split(",")
+                elif filter.values:
+                    dates = filter.values if isinstance(filter.values, list) else [filter.values]
+                else:
+                    continue
+                start_date = dates[0]
+                end_date = dates[-1]
+                continue
+            if filter.values:
+                vals = filter.values if isinstance(filter.values, list) else [filter.values]
+            elif filter.value:
+                vals = filter.value.split(",")
+            else:
+                continue
+
+            field_map = {
+                "LOCN_CODE": 'r."LOCN_CODE"',
+                "CYLINDER_TYPE": 'p."PROD"'
+            }
+
+            column = field_map.get(filter.key.upper(), f'r."{filter.key}"')
+            if filter.key.upper() == "CYLINDER_TYPE":
+                cylinder_map = {
+                    "14.2 KG": ["0949036"],
+                    "19 KG": ["0948064"],
+                    "ALL": ["0949036", "0948064"]
+                }
+                vals = cylinder_map.get(vals[0], cylinder_map["ALL"])
+
+            if len(vals) == 1:
+                all_conditions.append(f"{column}='{vals[0]}'")
+            else:
+                all_conditions.append(f"{column} IN {tuple(vals)}")
+
+    if start_date:
+        all_conditions.append(f'r."PROD_REQD_DT">=DATE \'{start_date}\'')
+    if end_date:
+        all_conditions.append(f'r."PROD_REQD_DT"<DATE \'{end_date}\'')
+
+    conditions = " AND " + " AND ".join(all_conditions) if all_conditions else ""
+    query = f"""
+        SELECT
+            r."LOCN_CODE",
+            TRUNC(r."PROD_REQD_DT") AS process_date,
+            r."INDENT_NO",
+
+            SUM(CASE WHEN p."PROD"='0949036' THEN NVL(p."QTY",0) ELSE 0 END) AS ordered_qty_14_2,
+            SUM(CASE WHEN p."PROD"='0949036' THEN NVL(p."PROD_ALLOTQTY",0) ELSE 0 END) AS delivered_qty_14_2,
+
+            SUM(CASE WHEN p."PROD"='0948064' THEN NVL(p."QTY",0) ELSE 0 END) AS ordered_qty_19,
+            SUM(CASE WHEN p."PROD"='0948064' THEN NVL(p."PROD_ALLOTQTY",0) ELSE 0 END) AS delivered_qty_19,
+
+            SUM(NVL(p."QTY",0)) AS total_ordered_qty,
+            SUM(NVL(p."PROD_ALLOTQTY",0)) AS total_delivered_qty
+
+        FROM "LPGIMS_SAP"."INDENT_REQUEST" r
+
+        JOIN "LPGIMS_SAP"."INDENT_PRODUCTS" p
+        ON r."LOCN_CODE"=p."LOCN_CODE"
+        AND r."INDENT_NO"=p."INDENT_NO"
+
+        WHERE
+            r."VALID_INDENT_FLAG" IN ('Y','H')
+            AND r."CANCEL_INDENT" IS NULL
+            AND (r."INDENT_EXECUTABLE_TIME" IS NOT NULL OR r."DELIVERY_DATE" IS NOT NULL)
+            {conditions}
+
+        GROUP BY
+            r."LOCN_CODE",
+            TRUNC(r."PROD_REQD_DT"),
+            r."INDENT_NO"
+
+        ORDER BY
+            process_date,
+            r."LOCN_CODE",
+            r."INDENT_NO"
+        """
+
+    resp = await execute_ims_query(query)
+    rows = resp.get("data", []) if isinstance(resp, dict) else resp
+    if table_data:
+
+        return {
+            "data": rows,
+            "total": len(rows),
+            "count": len(rows)
+        }
+
+    summary = {}
+    for row in rows:
+        key = (row["LOCN_CODE"], str(row["PROCESS_DATE"]))
+
+        if key not in summary:
+            summary[key] = {
+                "LOCN_CODE": row["LOCN_CODE"],
+                "PROCESS_DATE": row["PROCESS_DATE"],
+                "ORDERED_INDENTS_14_2": 0,
+                "ORDERED_QTY_14_2": 0,
+                "DELIVERED_QTY_14_2": 0,
+                "ORDERED_INDENTS_19": 0,
+                "ORDERED_QTY_19": 0,
+                "DELIVERED_QTY_19": 0,
+                "TOTAL_ORDERED_INDENTS": 0,
+                "TOTAL_ORDERED_QTY": 0,
+                "TOTAL_DELIVERED_QTY": 0
+            }
+        item = summary[key]
+        if row["ORDERED_QTY_14_2"] > 0:
+            item["ORDERED_INDENTS_14_2"] += 1
+
+        if row["ORDERED_QTY_19"] > 0:
+            item["ORDERED_INDENTS_19"] += 1
+
+        item["ORDERED_QTY_14_2"] += row["ORDERED_QTY_14_2"]
+        item["DELIVERED_QTY_14_2"] += row["DELIVERED_QTY_14_2"]
+
+        item["ORDERED_QTY_19"] += row["ORDERED_QTY_19"]
+        item["DELIVERED_QTY_19"] += row["DELIVERED_QTY_19"]
+
+        item["TOTAL_ORDERED_INDENTS"] += 1
+        item["TOTAL_ORDERED_QTY"] += row["TOTAL_ORDERED_QTY"]
+        item["TOTAL_DELIVERED_QTY"] += row["TOTAL_DELIVERED_QTY"]
+
+    result = list(summary.values())
+
+    return {
+        "data": result,
+        "total": len(result),
+        "count": 0
+    }
+
