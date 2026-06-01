@@ -746,71 +746,106 @@ async def lpg_car_download(data):
 
         pl.col("normal_total_production").sum().alias("normal_total_production"),
         pl.col("normal_available_hrs").sum().alias("normal_available_hrs"),
-        pl.col("normal_net_hours").sum().alias("normal_net_hours"),
-        pl.col("normal_productivity").sum().alias("normal_productivity"),
+        pl.col("normal_net_hours").sum().round(2).alias("normal_net_hours"),
 
         pl.col("break_total_production").sum().alias("break_total_production"),
         pl.col("break_available_hours").sum().alias("break_available_hours"),
-        pl.col("break_net_hours").sum().alias("break_net_hours"),
-        pl.col("break_productivity").sum().alias("break_productivity"),
+        pl.col("break_net_hours").sum().round(2).alias("break_net_hours"),
 
         pl.col("overtime_total_production").sum().alias("overtime_total_production"),
-        pl.col("overtime_net_hours").sum().alias("overtime_net_hours"),
-        pl.col("overtime_productivity").sum().alias("overtime_productivity"),
+        pl.col("overtime_net_hours").sum().round(2).alias("overtime_net_hours"),
 
         pl.col("cs_rejection").sum().alias("cs_rejection"),
         pl.col("gd_rejection").sum().alias("gd_rejection"),
         pl.col("pt_rejection").sum().alias("pt_rejection"),
     ])
 
-    # print("Grouped DF ---->\n", df_grouped.to_dicts())
+    df_grouped = df_grouped.with_columns([
+        pl.when(pl.col("normal_net_hours") > 0)
+            .then((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
+            .otherwise(0)
+            .alias("normal_productivity"),
 
-    result = []
-    group_map = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+        pl.when(pl.col("break_net_hours") > 0)
+            .then((pl.col("break_total_production") / pl.col("break_net_hours")).round(2))
+            .otherwise(0)
+            .alias("break_productivity"),
 
-    rows = df_grouped.to_dicts()
+        pl.when(pl.col("overtime_net_hours") > 0)
+            .then((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
+            .otherwise(0)
+            .alias("overtime_productivity"),
+    ])
 
-    for row in rows:
-        plant = row["location_name"]
-        car = f"Car {row['carousal']}"
+    df_grouped.write_csv("/Users/algofusion/Downloads/df_grouped.csv")
 
-        # ---------------- Bottling ----------------
-        group_map[("Bottling Summary", "14.2kg Cylinders")][plant][car] = row["production_14_2kg"]
-        group_map[("Bottling Summary", "19kg Cylinders")][plant][car] = row["production_19kg"]
-        group_map[("Bottling Summary", "Total Cylinders")][plant][car] = row["Total Cylinders"]
+    print("Grouped DF ---->\n", df_grouped.to_dicts())
 
-        # ---------------- Normal ----------------
-        group_map[("Productivity - Normal Hours", "Production")][plant][car] = row["normal_total_production"]
-        group_map[("Productivity - Normal Hours", "Available Hours")][plant][car] = row["normal_available_hrs"]
-        group_map[("Productivity - Normal Hours", "Net Bottling Hours")][plant][car] = row["normal_net_hours"]
-        group_map[("Productivity - Normal Hours", "Productivity (Cyl/hr)")][plant][car] = row["normal_productivity"]
+    plants_output = []
 
-        # ---------------- Break ----------------
-        group_map[("Productivity - Break Hours", "Production")][plant][car] = row["break_total_production"]
-        group_map[("Productivity - Break Hours", "Available Hours")][plant][car] = row["break_available_hours"]
-        group_map[("Productivity - Break Hours", "Net Bottling Hours")][plant][car] = row["break_net_hours"]
-        group_map[("Productivity - Break Hours", "Productivity (Cyl/hr)")][plant][car] = row["break_productivity"]
+    # group by plant
+    for plant_name, plant_df in df_grouped.group_by("location_name"):
 
-        # ---------------- Overtime ----------------
-        group_map[("Productivity - Overtime Hours", "Production")][plant][car] = row["overtime_total_production"]
-        group_map[("Productivity - Overtime Hours", "Net Bottling Hours")][plant][car] = row["overtime_net_hours"]
-        group_map[("Productivity - Overtime Hours", "Productivity (Cyl/hr)")][plant][car] = row["overtime_productivity"]
+        cars_list = []
 
-        # ---------------- Rejections ----------------
-        group_map[("Check Scale Summary", "Rejection - Percentage")][plant][car] = row["cs_rejection"]
-        group_map[("Electronic Leak Detector Summary", "Rejection - Percentage")][plant][car] = row["gd_rejection"]
-        group_map[("O-Ring Tester Summary", "Rejection - Percentage")][plant][car] = row["pt_rejection"]
+        # group by car inside plant
+        for car_name, car_df in plant_df.group_by("carousal"):
+
+            row = car_df.to_dicts()[0]
+
+            car_data = {
+                "carName": car_name,
+
+                "bottlingSummary": {
+                    "14_2kgCylinders": row.get("production_14_2kg", 0),
+                    "19kgCylinders": row.get("production_19kg", 0),
+                    "total": row.get("Total Cylinders", 0)
+                },
+
+                "normalHours": {
+                    "production": row.get("normal_total_production", 0),
+                    "availableHours": row.get("normal_available_hrs", 0),
+                    "stoppagesHours": 0, 
+                    "netBottlingHours": row.get("normal_net_hours", 0),
+                    "productivity": row.get("normal_productivity", 0)
+                },
+
+                "breakHours": {
+                    "production": row.get("break_total_production", 0),
+                    "availableHours": row.get("break_available_hours", 0),
+                    "stoppagesHours": 0, 
+                    "netBottlingHours": row.get("break_net_hours", 0),
+                    "productivity": row.get("break_productivity", 0)
+                },
+
+                "overtimeHours": {
+                    "production": row.get("overtime_total_production", 0),
+                    "stoppagesHours": 0, 
+                    "netBottlingHours": row.get("overtime_net_hours", 0),
+                    "productivity": row.get("overtime_productivity", 0)
+                },
+                "checkScaleSummary": {
+                    "RejectionPercentage": row.get("cs_rejection", 0)
+                }, 
+                "electronicLeakDetectorSummary": {
+                    "RejectionPercentage": row.get("gd_rejection", 0)
+                },
+                "O-RingTesterSummary": {
+                    "RejectionPercentage": row.get("pt_rejection", 0)
+                }
+            }
+
+            cars_list.append(car_data)
+
+        plants_output.append({
+            "plantName": plant_name,
+            "cars": cars_list
+        })
 
 
-    # ---------------- FINAL FORMAT ----------------
-    for (group, param), plant_data in group_map.items():
-        obj = {
-            "parameter_group": group,
-            "parameter": param
-        }
-        for plant, cars in plant_data.items():
-            obj[plant] = cars
+    final_response = {
+        "plants": plants_output
+    }
 
-        result.append(obj)
-
-    return result
+    print(final_response)
+    return final_response
