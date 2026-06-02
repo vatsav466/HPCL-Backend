@@ -306,13 +306,6 @@ class DryoutCollector:
                     "file_path": minio_path if minio_path else ""
                 }
                 await hpcl_ceg_model.CrisDryOutSyncCreate(**dryout_records).create()
-            await send_email(
-                template_name="dryout_sync_failure.html",   
-                to_recipients=["poojitha.gumma@algofusiontech.com"],
-                cc_recipients=["vamsi.c@algofusiontech.com"],
-                subject="Daily Sync Failed - Dry Out Listerner",
-                # final_data=final_data
-            )
 
         except Exception as e:
             tb = traceback.format_exc()
