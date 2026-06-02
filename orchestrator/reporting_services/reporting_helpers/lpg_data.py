@@ -1028,7 +1028,7 @@ async def log_count_excel():
                 fmt = dup_format 
             elif col_idx in event_max_date or col_idx in prod_max_date:
                 if isinstance(raw_value, datetime.datetime):
-                    if raw_value.date() != today:
+                    if raw_value.date() < today:
                         fmt = fail_format
 
             worksheet.write(row_idx, col_idx, value, fmt)
