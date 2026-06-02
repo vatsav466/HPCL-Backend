@@ -94,12 +94,12 @@ async def indent_sync_ro_daily_dryout():
     
     except Exception as e:
         tb = traceback.format_exc()
-        logger.error(f"Data Sync Failed {e}")
+        logger.error("Data Sync Failed.")
         date = urdhva_base.utilities.get_present_time()
         formatted = date.strftime("%d %b %Y, %I:%M %p")
         final_data = {
             "generated_time": formatted,
-            "error_message": str(e),
+            "error_message": repr(e),
             "traceback": tb
         }
         print("final data ----<>\n", final_data)
@@ -112,7 +112,7 @@ async def indent_sync_ro_daily_dryout():
             subject="Daily Sync Failed - Dryout Raw Data",
             final_data=final_data
         )
-        return {"status": False, "message": "Data Sync Failed", "data": e}
+        return {"status": False, "message": "Data Sync Failed", "data": repr(e)}
 
 
 async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_recipients,  final_data=None, attachments=None):

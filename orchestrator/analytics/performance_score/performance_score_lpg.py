@@ -525,7 +525,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         score = 100 - ((max_val - val) / (max_val - min_val) * 100)
                         msg = (
                             f"Productivity of {head} Carousel {carousel} is {val}. "
-                            f"Calculation : ((max_value: {max_val} - productivity: {val}) / "
+                            f"Calculation : 100 - ((max_value: {max_val} - productivity: {val}) / "
                             f"(max_value: {max_val} - min_value: {min_val}) * 100)"
                         )
                         break
