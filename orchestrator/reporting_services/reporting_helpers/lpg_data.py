@@ -1094,7 +1094,9 @@ async def log_count_excel():
         missing_event_col = 16
         event_max_date = [5, 11]
         prod_max_date = [8, 14]
-        today = datetime.datetime.now().date()
+        now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+        today = now.date()
+        t = now - datetime.timedelta(hours=2)
 
         for col_idx, value in enumerate(row):
             if isinstance(value, tuple):
@@ -1121,7 +1123,7 @@ async def log_count_excel():
                 fmt = dup_format 
             elif col_idx in event_max_date or col_idx in prod_max_date:
                 if isinstance(raw_value, datetime.datetime):
-                    if raw_value.date() != today:
+                    if raw_value.date() < today or raw_value < t:
                         fmt = fail_format
 
             worksheet.write(row_idx, col_idx, value, fmt)

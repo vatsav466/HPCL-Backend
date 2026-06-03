@@ -66,6 +66,7 @@ class VTSAlertsListener:
             subject="VTS Issue: No Data Received from ingest_data API",
             recipients=["mberde@aryaomnitalk.com"],
             cc_recipients= ["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
+                             "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
                             "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
             bcc_recipients= [],
             html_content=True,
