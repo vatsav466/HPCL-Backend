@@ -1493,3 +1493,14 @@ async def calculate_productivity(productivity):
     except Exception as e:
         return pd.DataFrame()
     
+
+async def retry_async(func, retries=3, delay=10, **kwargs):
+    for attempt in range(1, retries + 1):
+        try:
+            data = await func(**kwargs)
+            return data
+        except Exception as e:
+            if attempt == retries:
+                raise
+            print(f"Attempt {attempt} failed: {repr(e)}. Retrying in {delay}s...")
+            await asyncio.sleep(delay)

@@ -262,6 +262,10 @@ Model Users {
     manual_user bool
     contact_number optional str
 
+
+    login_user_id str                                 // account created by               
+    file_path optional str
+
     // API to list out created users
     Action=> fetch_users {
         search_string str
@@ -4018,6 +4022,7 @@ Model CreateUser internal {
     is_ad_user optional bool
     status optional bool
     lock_for_auto_sync optional bool
+    file_path optional str
 }
 
 Model UpdateUser internal {
@@ -4046,6 +4051,11 @@ Model UserMaster crud_disable {
 
     Action=> delete_user {
         username optional str
+    }
+
+    Action=> file_upload {
+        username  str
+        bu optional list str
     }
 }
 
@@ -4426,4 +4436,35 @@ Model TankDetails crud_disable{
         payload optional dict
     }
 
+}
+
+Model DailyEmailNotificationUsers {
+	email_type str // daily, retail, lpg, sod , nozzle etc
+    bu str
+    name optional str
+    subject optional str
+    description optional str
+    enabled optional default=true bool
+    audience optional str // testing, employee, chairman
+	to_recipients optional list str
+	cc_recipients optional list str
+	bcc_recipients optional list str
+
+    Action=> add_recipients {
+        email_type str
+        bu str
+        name str
+        subject optional str
+        description optional str
+        enabled optional bool
+        audience optional str
+        to_recipients optional list str
+        cc_recipients optional list str
+        bcc_recipients optional list str
+        action str
+    }
+    
+    Config=> {
+        crud_operations='read'
+    }
 }

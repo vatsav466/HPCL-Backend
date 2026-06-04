@@ -4,6 +4,8 @@ from hpcl_ceg_model import *
 import json
 import fastapi
 import traceback
+from pathlib import Path
+import utilities.minio_connector as minio_connector
 import authenticator.authentication_manager_ad as authentication_manager_ad
 
 router = fastapi.APIRouter(prefix='/usermaster')
@@ -20,12 +22,13 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             }
 
         rpt = urdhva_base.context.context.get('rpt', {})
+        login_user_id= rpt.get("employee_id") or rpt.get("first_name")
 
         # Normalize roles (lowercase + remove spaces)
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
@@ -76,7 +79,9 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "manual_user": True,
             "status": data.get('status'),
             "is_ad_user": data.get('is_ad_user'),
-            "contact_number": data.get('contact_number','')
+            "contact_number": data.get('contact_number',''),
+            "login_user_id": login_user_id,       
+            "file_path": data.get('file_path','')         
         }).create()
         if user_response:
             if rpt:
@@ -128,7 +133,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
@@ -253,7 +258,7 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
         user_roles = [r.replace(" ", "").lower() for r in rpt.get("novex_role", [])]
 
         # Roles to check
-        allowed = ['admin', 'superadmin', 'creatorsod', 'dnc_user']
+        allowed = ['admin', 'superadmin', 'creatorsod', 'dnc_user', 'creatorlpg']
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
@@ -325,3 +330,58 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
             "success": False, 
             "message": f"Failed to Delete User {data.get('username')} "
         }
+
+
+# Action file_upload
+@router.post('/file_upload', tags=['UserMaster'])
+async def usermaster_file_upload(
+    username: str = fastapi.Form(...),
+    bu: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)):
+    
+    try:        
+        if isinstance(bu, str):
+            bu_list = [b.strip() for b in bu.split(",")]
+        else:
+            bu_list = bu if bu else []
+
+        bu_str = "_".join(bu_list) if bu_list else "None"
+    
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, bu_str)
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        # Validate file extension
+        file_extension = Path(upload_file.filename).suffix.lower()
+        allowed_extensions = [".png", ".jpg", ".jpeg",".pdf", ".doc", ".docx"]
+        if file_extension not in allowed_extensions:
+            return {"success": False, "message": "Unsupported file type"}
+
+        # Save temporary file
+        file_name = upload_file.filename
+        temp_file_path = os.path.join(UPLOAD_DIR, file_name)
+        with open(temp_file_path, "wb") as f:
+            f.write(await upload_file.read())
+
+        # Upload to MinIO
+        status, minio_path = minio_connector.upload_to_minio(
+            username , bu_str, "True",  temp_file_path
+        )
+
+        # Clean up
+        try:
+            os.remove(temp_file_path)
+        except OSError:
+            pass
+        
+
+        if status:
+            return {
+                "success": True, "file_path": minio_path,
+                "message": "File uploaded successfully"
+            }
+        else:
+            return { "success": False, "message": "Failed to upload file to storage" }
+
+    except Exception as e:
+        print("traceback :", traceback.format_exc())
+        return { "success": False, "message": f"An error occurred while uploading file: {str(e)}" }

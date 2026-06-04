@@ -194,6 +194,8 @@ class UsersSchema(UrdhvaPostgresBase):
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     manual_user: Mapped[bool] = mapped_column("manual_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     contact_number: Mapped[typing.Optional[str]] = mapped_column("contact_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    login_user_id: Mapped[str] = mapped_column("login_user_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    file_path: Mapped[typing.Optional[str]] = mapped_column("file_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
@@ -221,6 +223,8 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     status: bool
     manual_user: bool
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    login_user_id: str
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -254,6 +258,8 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     status: typing.Optional[bool] | None = None
     manual_user: typing.Optional[bool] | None = None
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    login_user_id: typing.Optional[str] | None = None
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -10917,6 +10923,7 @@ class CreateUserCreate(pydantic.BaseModel):
     is_ad_user: typing.Optional[bool] = pydantic.Field(False, )
     status: typing.Optional[bool] = pydantic.Field(False, )
     lock_for_auto_sync: typing.Optional[bool] = pydantic.Field(False, )
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class UpdateUserCreate(pydantic.BaseModel):
@@ -10952,6 +10959,15 @@ class Usermaster_Update_UserParams(pydantic.BaseModel):
 
 class Usermaster_Delete_UserParams(pydantic.BaseModel):
     username: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Usermaster_File_UploadParams(pydantic.BaseModel):
+    username: str
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -11968,6 +11984,89 @@ class Tankdetails_Get_Tank_DetailsParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class DailyEmailNotificationUsersSchema(UrdhvaPostgresBase):
+    __tablename__ = 'daily_email_notification_users'
+    
+    email_type: Mapped[str] = mapped_column("email_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    subject: Mapped[typing.Optional[str]] = mapped_column("subject", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    description: Mapped[typing.Optional[str]] = mapped_column("description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    enabled: Mapped[typing.Optional[bool]] = mapped_column("enabled", Boolean, index=False, nullable=True, default=True, primary_key=False, unique=False)
+    audience: Mapped[typing.Optional[str]] = mapped_column("audience", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    to_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("to_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    cc_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("cc_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    bcc_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("bcc_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class DailyEmailNotificationUsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'daily_email_notification_users'
+    
+    email_type: str
+    bu: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(True, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DailyEmailNotificationUsersSchema
+        upsert_keys = []
+
+
+class DailyEmailNotificationUsers(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'daily_email_notification_users'
+    
+    email_type: typing.Optional[str] | None = None
+    bu: typing.Optional[str] | None = None
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(True, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DailyEmailNotificationUsersSchema
+        upsert_keys = []
+
+
+class DailyEmailNotificationUsersGetResp(pydantic.BaseModel):
+    data: typing.List[DailyEmailNotificationUsers]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Dailyemailnotificationusers_Add_RecipientsParams(pydantic.BaseModel):
+    email_type: str
+    bu: str
+    name: str
+    subject: typing.Optional[str] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    enabled: typing.Optional[bool] = pydantic.Field(False, )
+    audience: typing.Optional[str] = pydantic.Field("", **{})
+    to_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bcc_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

@@ -1,13 +1,18 @@
 import urdhva_base
 import pytz
+import os
+import jinja2
 import asyncio
 import traceback
 import datetime
 import polars as pl
 import pandas as pd
+import hpcl_ceg_model
 import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
+import orchestrator.notification_manager.notification_factory
+
 
 logger = urdhva_base.logger.Logger.getInstance("dry_out_sync")
 
@@ -86,10 +91,59 @@ async def indent_sync_ro_daily_dryout():
         )
 
         return {"status": True, "message": "Data Synced Successfully", "data": []}
+    
     except Exception as e:
-        logger.error(f"Data Sync Failed {e}")
-        print(traceback.format_exc())
-        return {"status": False, "message": "Data Sync Failed", "data": e}
+        tb = traceback.format_exc()
+        logger.error("Data Sync Failed.")
+        date = urdhva_base.utilities.get_present_time()
+        formatted = date.strftime("%d %b %Y, %I:%M %p")
+        final_data = {
+            "generated_time": formatted,
+            "error_message": repr(e),
+            "traceback": tb
+        }
+        print("final data ----<>\n", final_data)
+        await send_email(
+        template_name="dryout_sync_failure.html",
+            to_recipients=["sreedhar.maddipati@algofusiontech.com","bala@algofusiontech.com"],
+            cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com"],
+            bcc_recipients=["manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "mohith.p@algofusiontech.com", 
+                        "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com"],
+            subject="Daily Sync Failed - Dryout Raw Data",
+            final_data=final_data
+        )
+        return {"status": False, "message": "Data Sync Failed", "data": repr(e)}
+
+
+async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_recipients,  final_data=None, attachments=None):
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+
+    # Load HTML template
+    template_path = os.path.join(
+        os.path.dirname(hpcl_ceg_model.__file__),
+        '..', 'orchestrator', 'reporting_services',
+        'templates', template_name
+        )
+
+    with open(template_path, "r") as f:
+        template = jinja2.Template(f.read())
+
+    html_body = template.render(**final_data)
+
+    # Send email
+    await ins.publish_message(
+        subject=subject,
+        recipients=to_recipients if to_recipients else [],
+        cc_recipients=cc_recipients if cc_recipients else [],
+        bcc_recipients= bcc_recipients if bcc_recipients else [],
+        html_content=True,
+        body=html_body,
+        force_send=True,
+        inline_images={},
+        attachments=attachments or []
+    )
+
+
 
 if __name__ == "__main__":
     asyncio.run(indent_sync_ro_daily_dryout())

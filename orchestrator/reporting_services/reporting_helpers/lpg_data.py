@@ -35,16 +35,93 @@ DB_CONFIG = {
     "password": creds["password"]
 }
 
+
 async def get_lpg_rejection():
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+
+    date = urdhva_base.utilities.get_present_time()
+
+    # Yesterday
+    date_yes = helpers.get_time_stamp_by_delta(
+        date,
+        days=1,
+        with_month_start_day=False,
+        date_time_format=None
+    )
+
+    # Current Month Start
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes,
+        days=0,
+        with_month_start_day=True,
+        date_time_format="%Y-%m-%d"
+    )
+
+    current_month_filter = f"""
+        created_at::DATE >= '{month_start}'
+        AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+    """
+
+    financial_year_filter = f"""
+       created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    query = f""" SELECT count(interlock_name) as total_count FROM alerts where interlock_name in ('O-Ring Leak Rejection','Valve Leak Rejection','Check Scale Rejection') and created_at>='{today}' """
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+
+    query = f"""
+        SELECT
+
+            -- Current Month LPG PQ Alerts
+            COUNT(
+                CASE
+                    WHEN {current_month_filter}
+                    THEN interlock_name
+                END
+            ) AS pq_total_lpg,
+
+            -- Financial Year LPG PQ Alerts
+            COUNT(
+                CASE
+                    WHEN {financial_year_filter}
+                    THEN interlock_name
+                END
+            ) AS total_pq_alerts_fy
+        FROM alerts
+
+        WHERE interlock_name IN (
+            'O-Ring Leak Rejection',
+            'Valve Leak Rejection',
+            'Check Scale Rejection'
+        ) AND alert_status != 'Close'
+    """
+
+    print("query----->\n", query)
+
     rejections = await function(query=query)
+
     if rejections:
-        return {"pq_critical_lpg": rejections[-1]["total_count"], "pq_high_lpg": 0}
-    return {"pq_critical_lpg": 0, "pq_high_lpg": 0}
+        result = rejections[-1]
+
+        return {
+            "pq_critical_lpg": result["pq_total_lpg"],
+            "pq_high_lpg": 0,
+            "pq_total_lpg": result["pq_total_lpg"],
+            "pq_total_fy_lpg": result["total_pq_alerts_fy"]
+        }
+
+    return {
+        "pq_critical_lpg": 0,
+        "pq_high_lpg": 0,
+        "pq_total_lpg": 0,
+        "pq_total_fy_lpg": 0
+    }
 
 
 async def lpg_top_bottom_score_plants():
@@ -342,8 +419,10 @@ async def get_va_path():
     query = f"""
         SELECT
             location_name AS "Plant Wise VA Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -359,6 +438,8 @@ async def get_va_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -416,21 +497,29 @@ async def get_va_path():
 
 
 async def get_pq_path():
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    # Making sure alerts considering only after May 31st in prod
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     query = f"""
         SELECT
             location_name AS "Plant Wise PQ Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_section = 'LPG'
-        AND created_at>='{today}'
+        AND {date_filter}
         AND interlock_name IN (
             'O-Ring Leak Rejection',
             'Valve Leak Rejection',
             'Check Scale Rejection'
-        )
+        ) AND alert_status != 'Close'
         GROUP BY location_name
 
         UNION ALL
@@ -439,17 +528,21 @@ async def get_pq_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_section = 'LPG'
-        AND created_at>='{today}'
+        AND {date_filter}
         AND interlock_name IN (
             'O-Ring Leak Rejection',
             'Valve Leak Rejection',
             'Check Scale Rejection'
-        )
+        ) AND alert_status != 'Close'
         ORDER BY sort_order
     """
+
+    print("query----->\n", query)
 
     Charts_Connection_Vault_RoutingParams.connection_id = (
         connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -692,14 +785,26 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
             WHERE process_date >= %s AND process_date < %s
             AND LOWER("Plant Name") = LOWER(%s)
         """, (start_date, end_date, plant_name))
-        event_count = cur.fetchone()[0]
+        event_count = cur.fetchone()
+
+        cur.execute("""
+                    SELECT MAX(process_date) FROM event_log
+                    WHERE LOWER("Plant Name") = LOWER(%s)
+                """, (plant_name,))
+        event_max = cur.fetchone()
 
         cur.execute("""
             SELECT COUNT(*) FROM production_log
             WHERE process_date >= %s AND process_date < %s
             AND LOWER("Plant Name") = LOWER(%s)
         """, (start_date, end_date, plant_name))
-        prod_count = cur.fetchone()[0]
+        prod_count = cur.fetchone()
+
+        cur.execute("""
+                    SELECT MAX(process_date) FROM production_log
+                    WHERE LOWER("Plant Name") = LOWER(%s)
+                """, (plant_name,))
+        prod_max = cur.fetchone()
 
         cur.execute("""
             SELECT COUNT(*) FROM (
@@ -709,7 +814,7 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
                 AND LOWER("Plant Name") = LOWER(%s)
             ) t WHERE cnt > 1
         """, (start_date, end_date, plant_name))
-        prod_dup = cur.fetchone()[0]
+        prod_dup = cur.fetchone()
 
         cur.execute("""
             SELECT COUNT(*) FROM (
@@ -719,20 +824,28 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
                 AND LOWER("Plant Name") = LOWER(%s)
             ) t WHERE cnt > 1
         """, (start_date, end_date, plant_name))
-        event_dup = cur.fetchone()[0]
+        event_dup = cur.fetchone()
 
     else:
         cur.execute(f"""
             SELECT COUNT(*) FROM {event_table}
             WHERE process_date >= %s AND process_date < %s
         """, (start_date, end_date))
-        event_count = cur.fetchone()[0]
+        event_count = cur.fetchone()
+
+        cur.execute(f"""
+            SELECT MAX(process_date) FROM {event_table} """)
+        event_max = cur.fetchone()
 
         cur.execute(f"""
             SELECT COUNT(*) FROM {prod_table}
             WHERE process_date >= %s AND process_date < %s
         """, (start_date, end_date))
-        prod_count = cur.fetchone()[0]
+        prod_count = cur.fetchone()
+
+        cur.execute(f"""
+            SELECT MAX(process_date) FROM {prod_table}""")
+        prod_max = cur.fetchone()
 
         cur.execute(f"""
             SELECT COUNT(*) FROM (
@@ -741,7 +854,7 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
                 WHERE process_date >= %s AND process_date < %s
             ) t WHERE cnt > 1
         """, (start_date, end_date))
-        prod_dup = cur.fetchone()[0]
+        prod_dup = cur.fetchone()
 
         cur.execute(f"""
             SELECT COUNT(*) FROM (
@@ -750,10 +863,10 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
                 WHERE process_date >= %s AND process_date < %s
             ) t WHERE cnt > 1
         """, (start_date, end_date))
-        event_dup = cur.fetchone()[0]
+        event_dup = cur.fetchone()
 
     cur.close()
-    return event_count, event_dup, prod_count, prod_dup
+    return event_count, event_dup, event_max, prod_count, prod_dup, prod_max
 
 
 def get_missing_production_count(plant_conn, central_conn, prod_table, plant_name=None):
@@ -832,7 +945,7 @@ def process_plant(plant):
 
     connection = check_socket(host, port)
     if not connection:
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, "Socket Failed"]
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, "Socket Failed"]
 
     try:
         event_table, prod_table = get_tables(db_type)
@@ -844,13 +957,12 @@ def process_plant(plant):
             password=plant["db_password"],
             port=port
         )
-        p_event, p_event_dup, p_prod, p_prod_dup = get_counts(plant_conn, event_table, prod_table)
-
+        p_event, p_event_dup, p_event_max, p_prod, p_prod_dup, p_prod_max = get_counts(plant_conn, event_table, prod_table)
         # Central DB
         central_conn = psycopg2.connect(**DB_CONFIG)
 
-        c_event, c_event_dup, c_prod, c_prod_dup = get_counts(central_conn, None, None, plant_name, True)
-        
+        c_event, c_event_dup, c_event_max, c_prod, c_prod_dup, c_prod_max = get_counts(central_conn, None, None, plant_name, True)
+       
         missing_prod = get_missing_production_count(
             plant_conn=plant_conn,
             central_conn=central_conn,
@@ -869,8 +981,8 @@ def process_plant(plant):
         central_conn.close()
 
         return [
-            plant_name, host, True, p_event, p_event_dup, p_prod, p_prod_dup,
-            c_event, c_event_dup, c_prod, c_prod_dup,  missing_event, missing_prod, "Connected"
+            plant_name, host, True, p_event, p_event_dup, p_event_max, p_prod, p_prod_dup, p_prod_max,
+            c_event, c_event_dup, c_event_max, c_prod, c_prod_dup, c_prod_max, missing_event, missing_prod, "Connected"
         ]
 
     except Exception as e:
@@ -888,7 +1000,7 @@ def process_plant(plant):
         else:
             status = "Unknown Error"
         print(f"  Error processing {plant_name}: {e}")
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, status]
+        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, status]
 
 
 async def log_count_excel():
@@ -950,39 +1062,56 @@ async def log_count_excel():
     worksheet.merge_range("B1:B2", "IP", header_format)
     worksheet.merge_range("C1:C2", "Connection", header_format)
 
-    worksheet.merge_range("D1:G1", "Plant DB", header_format)
+    worksheet.merge_range("D1:I1", "Plant DB", header_format)
     worksheet.write("D2", "Event_log", header_format)
     worksheet.write("E2", "Event_duplicates", header_format)
-    worksheet.write("F2", "Production_log", header_format)
-    worksheet.write("G2", "Production_duplicates", header_format)
+    worksheet.write("F2", "Event_max_date", header_format)
+    worksheet.write("G2", "Production_log", header_format)
+    worksheet.write("H2", "Production_duplicates", header_format)
+    worksheet.write("I2", "Production_max_date", header_format)
 
-    worksheet.merge_range("H1:K1", "Central DB", header_format)
-    worksheet.write("H2", "Event_log", header_format)
-    worksheet.write("I2", "Event_duplicates", header_format)
-    worksheet.write("J2", "Production_log", header_format)
-    worksheet.write("K2", "Production_duplicates", header_format)
-
-    worksheet.merge_range("L1:M1", "Missed Records", header_format)
-    worksheet.write("L2", "Event_log", header_format)
+    worksheet.merge_range("J1:O1", "Central DB", header_format)
+    worksheet.write("J2", "Event_log", header_format)
+    worksheet.write("K2", "Event_duplicates", header_format)
+    worksheet.write("L2", "Event_max_date", header_format)
     worksheet.write("M2", "Production_log", header_format)
-    worksheet.merge_range("N1:N2", "Status", header_format)
+    worksheet.write("N2", "Production_duplicates", header_format)
+    worksheet.write("O2", "Production_max_date", header_format)
+
+    worksheet.merge_range("P1:Q1", "Missed Records", header_format)
+    worksheet.write("P2", "Event_log", header_format)
+    worksheet.write("Q2", "Production_log", header_format)
+    worksheet.merge_range("R1:R2", "Status", header_format)
 
     # ===== Write Data =====
     for row_idx, row in enumerate(results, start=2):
 
-        log_cols = [3, 5, 7, 9]
-        duplicate_cols = [4, 6, 8, 10]
-        status = row[-1] if len(row) == 14 else None
+        log_cols = [3, 6, 9, 12]
+        duplicate_cols = [4, 7, 10, 13]
+        status = row[-1] if len(row) == 18 else None
         connection = row[2]
-        missing_prod_col = 11
-        missing_event_col = 12
+        missing_prod_col = 15
+        missing_event_col = 16
+        event_max_date = [5, 11]
+        prod_max_date = [8, 14]
+        now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+        today = now.date()
+        t = now - datetime.timedelta(hours=2)
 
         for col_idx, value in enumerate(row):
+            if isinstance(value, tuple):
+                value = value[0] if value else None
+
+            raw_value = value
+
+            if isinstance(value, datetime.datetime):
+                value = value.strftime("%Y-%m-%d %H:%M:%S")
+
             fmt = cell_format
 
             if col_idx == 2:
                 fmt = cell_format if connection else fail_format
-            elif col_idx == 13:
+            elif col_idx == 17:
                 fmt = cell_format if status == "Connected" else fail_format
             elif col_idx in log_cols and value in (0, "0"):
                 fmt = zero_log_format
@@ -991,7 +1120,11 @@ async def log_count_excel():
             elif col_idx == missing_prod_col and isinstance(value, (int, float)) and value > 0:
                 fmt = dup_format   
             elif col_idx == missing_event_col and isinstance(value, (int, float)) and value > 0:
-                fmt = dup_format   
+                fmt = dup_format 
+            elif col_idx in event_max_date or col_idx in prod_max_date:
+                if isinstance(raw_value, datetime.datetime):
+                    if raw_value.date() < today or raw_value < t:
+                        fmt = fail_format
 
             worksheet.write(row_idx, col_idx, value, fmt)
 
@@ -999,9 +1132,9 @@ async def log_count_excel():
     worksheet.set_column("A:A", 18)
     worksheet.set_column("B:B", 20)
     worksheet.set_column("C:C", 14)
-    worksheet.set_column("D:K", 18)
-    worksheet.set_column("L:M", 20)
-    worksheet.set_column("N:N", 22)
+    worksheet.set_column("D:O", 18)
+    worksheet.set_column("P:Q", 20)
+    worksheet.set_column("R:R", 22)
 
     workbook.close()
 

@@ -2,14 +2,18 @@ import urdhva_base
 import asyncio
 import traceback
 import datetime
+import os
+import jinja2
 import polars as pl
 import pandas as pd
 import charts_actions
+import hpcl_ceg_model
 import urdhva_base.redispool
 import dashboard_studio_model
 import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 import utilities.helpers as helpers
+import orchestrator.notification_manager.notification_factory
 
 logger = urdhva_base.logger.Logger.getInstance("cris_sales_sync_log")
 
@@ -114,10 +118,29 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
                 conflict_columns=conflict_columnsList
             )
         return until #tr_daily_sales.sort("transaction_date", desc)[0]
+    
     except Exception as e:
-        logger.error(f"Exception in retrieving daily ro sales: {e}")
+        tb = traceback.format_exc()
+        logger.error("Exception in retrieving daily ro sales.")
+        date = urdhva_base.utilities.get_present_time()
+        formatted = date.strftime("%d %b %Y, %I:%M %p")
+        final_data = {
+            "generated_time": formatted,
+            "error_message": repr(e),
+            "traceback": tb
+        }
+        print("final data ----<>\n", final_data)
+        await send_email(
+        template_name="dryout_sync_failure.html",   
+            to_recipients=["sreedhar.maddipati@algofusiontech.com","bala@algofusiontech.com"],
+            cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com"],
+            bcc_recipients=["manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "mohith.p@algofusiontech.com", 
+                        "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com"],
+            subject="Daily Sync Failed - Cris Sales Sync",
+            final_data=final_data
+        )
         print(traceback.format_exc())
-        print("Exception in retrieving daily ro sales: ", str(e))
+        print("Exception in retrieving daily ro sales: ", repr(e))
         return None
 
 async def execute_daily_sales():
@@ -133,6 +156,35 @@ async def execute_daily_sales():
     synced_date = await indent_dryout_sync_ro_daily_sales(last_synced_time, sync_until)
     if synced_date:
         await redis_ins.set("cris_daily_sales_sync_time", synced_date)
+
+async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_recipients,  final_data=None, attachments=None):
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+
+    # Load HTML template
+    template_path = os.path.join(
+        os.path.dirname(hpcl_ceg_model.__file__),
+        '..', 'orchestrator', 'reporting_services',
+        'templates', template_name
+        )
+
+    with open(template_path, "r") as f:
+        template = jinja2.Template(f.read())
+
+    html_body = template.render(**final_data)
+
+    # Send email
+    await ins.publish_message(
+        subject=subject,
+        recipients=to_recipients if to_recipients else [],
+        cc_recipients=cc_recipients if cc_recipients else [],
+        bcc_recipients= bcc_recipients if bcc_recipients else [],
+        html_content=True,
+        body=html_body,
+        force_send=True,
+        inline_images={},
+        attachments=attachments or []
+    )
+
 
 
 if __name__ == "__main__":

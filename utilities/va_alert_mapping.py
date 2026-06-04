@@ -838,10 +838,10 @@ VA_Alert_Mapping = {
                     "value": 1,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
@@ -849,10 +849,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
@@ -860,10 +860,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 }
             }
@@ -878,10 +878,10 @@ VA_Alert_Mapping = {
                     "value": 1,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
@@ -889,10 +889,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
@@ -900,10 +900,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 }
             }
@@ -930,8 +930,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
-                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -986,8 +986,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
-                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT1H"
                 }
             }
@@ -1002,10 +1002,10 @@ VA_Alert_Mapping = {
                     "value": 1,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
@@ -1013,10 +1013,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
@@ -1024,10 +1024,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
                                     f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
-                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 }
             }
@@ -1054,8 +1054,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 15,
-                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
-                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT1H"
                 }
             }
@@ -1082,8 +1082,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
-                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQO Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT6H"
                 }
             }

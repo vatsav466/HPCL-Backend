@@ -7671,6 +7671,9 @@
                 },
                 {
                     "name": "delete_user"
+                },
+                {
+                    "name": "file_upload"
                 }
             ]
         },
@@ -7719,6 +7722,9 @@
                 },
                 {
                     "name": "delete_user"
+                },
+                {
+                    "name": "file_upload"
                 }
             ]
         },
@@ -8735,6 +8741,75 @@
                     "name": "get_tank_details"
                 }
             ]
+        },
+        {
+            "name": "dailyemailnotificationusers",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_recipients"
+                }
+            ]
+        },
+        {
+            "name": "dailyemailnotificationusers_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dailyemailnotificationusers_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DailyEmailNotificationUsers_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dailyemailnotificationusers/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_recipients"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9594,6 +9669,10 @@
             "displayName": "delete_user"
         },
         {
+            "name": "file_upload",
+            "displayName": "file_upload"
+        },
+        {
             "name": "tas_faulty_create",
             "displayName": "tas_faulty_create"
         },
@@ -9632,6 +9711,10 @@
         {
             "name": "get_tank_details",
             "displayName": "get_tank_details"
+        },
+        {
+            "name": "add_recipients",
+            "displayName": "add_recipients"
         }
     ]
 }
