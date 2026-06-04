@@ -2311,3 +2311,23 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await DailyEmailNotificationUsers.get_all(params, skip_secrets=True)
 
+
+@router.get('/lpgcarousals/{id}', response_model=LpgCarousals, tags=['LpgCarousals'])
+async def get(id: str):
+    return await LpgCarousals.get(id, skip_secrets=True)
+
+
+@router.get('/lpgcarousals', response_model=LpgCarousalsGetResp, tags=['LpgCarousals'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgCarousals.get_all(params, skip_secrets=True)
+
+
+@router.get('/lpgplantsmaster/{id}', response_model=LpgPlantsMaster, tags=['LpgPlantsMaster'])
+async def get(id: str):
+    return await LpgPlantsMaster.get(id, skip_secrets=True)
+
+
+@router.get('/lpgplantsmaster', response_model=LpgPlantsMasterGetResp, tags=['LpgPlantsMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgPlantsMaster.get_all(params, skip_secrets=True)
+

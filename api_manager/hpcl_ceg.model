@@ -4468,3 +4468,100 @@ Model DailyEmailNotificationUsers {
         crud_operations='read'
     }
 }
+
+
+Model ShiftHrs internal {
+    shift_name str
+    start_time str
+    stop_time str
+    description optional str
+
+}
+
+Model BreakHrs internal {
+    shift_name str
+    start_time str
+    stop_time str
+    description optional str
+
+}
+
+Model LpgCarousals {
+    sap_id int
+    carousal_id int
+    heads int
+    rated_productivity int
+    production_hrs list ShiftHrs
+    breaks list BreakHrs
+
+    Action=> create_carousal {
+        sap_id int
+        carousal_id int
+        heads int
+        rated_productivity int
+        production_hrs list ShiftHrs
+        breaks list BreakHrs
+    }
+
+    Action=> update_carousal {
+        sap_id int
+        carousal_id int
+        heads optional int
+        rated_productivity optional int
+        production_hrs optional list ShiftHrs
+        breaks optional list BreakHrs
+    }
+
+    Action=> delete_carousal {
+        sap_id int
+        carousal_id int
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model LpgPlantsMaster{
+    sap_id int
+    ip_address str 
+    port_no int
+    username str
+    password secret
+    db_name str
+    db_type str
+    name optional str
+    plant_name optional str
+    region optional str
+    zone optional str
+
+    Action=> create_location {
+        sap_id int
+        ip_address str 
+        port_no int
+        username str
+        password secret
+        db_name str
+        db_type str
+        name optional str
+    }
+    
+    Action=> update_location {
+        sap_id int
+        ip_address optional str 
+        port_no optional int
+        username optional str
+        password optional secret
+        db_name optional str
+        db_type optional str
+        name optional str
+    }
+    
+    Action=> delete_location {
+        sap_id int
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
