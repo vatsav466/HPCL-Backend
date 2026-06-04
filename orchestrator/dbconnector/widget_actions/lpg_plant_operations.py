@@ -1030,7 +1030,11 @@ class LPGOperationsActions:
                     if key not in productivityData:
                         productivityData[key] = {}
                     productivityData[key][phase] = {}
-                    if phase != 'overtime':
+
+                    if totalProduction == 0:
+                        productivityData[key][phase]['net_hours'] = 0
+
+                    elif phase != 'overtime':
                         maxHours = production_hours_data[key]['max_op_hours'][phase]
                         productivityData[key][phase]['net_hours'] = abs(
                             float(maxHours) - float(gapHours))
