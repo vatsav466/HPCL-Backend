@@ -650,9 +650,12 @@ async def lpg_car_download(data):
     def clean_data(data):
         cleaned = []
         for row in data:
+            # print("row ---->\n", row)
             new_row = {}
             for k, v in row.items():
-                if v == "NULL":   # 🔥 handle this
+                if v is pd.NaT or str(v) == "NaT":
+                    new_row[k] = None
+                elif v == "NULL":
                     new_row[k] = None
                 elif isinstance(v, Decimal):
                     new_row[k] = round(float(v), 2)
@@ -662,6 +665,7 @@ async def lpg_car_download(data):
         return cleaned
 
     clean_resp = clean_data(resp)
+    # print("clean+resp ---->\n", clean_resp)
     data = pl.DataFrame(clean_resp)
     # print("the lpg plant operations data ---->\n", data.to_dicts())
 
@@ -707,7 +711,7 @@ async def lpg_car_download(data):
     ])
     df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
 
-    # print("final data ----->\n", df.to_dicts())
+    print("final data ----->\n", df.to_dicts())
 
     df = df.select([
         pl.col("sap_id").alias("sap_id"),
@@ -722,13 +726,16 @@ async def lpg_car_download(data):
         ]).alias("Total Cylinders"),
         pl.col("normal_total_production").alias("normal_total_production"),
         pl.col("normal_available_hrs").alias("normal_available_hrs"),
+        pl.col("normal_gaps").alias("normal_gaps"),
         pl.col("normal_net_hours").alias("normal_net_hours"),
         pl.col("normal_productivity").alias("normal_productivity"),
         pl.col("break_total_production").alias("break_total_production"),
         pl.col("break_available_hours").alias("break_available_hours"),
+        pl.col("break_gaps").alias("break_gaps"),
         pl.col("break_net_hours").alias("break_net_hours"),
         pl.col("break_productivity").alias("break_productivity"),
         pl.col("overtime_total_production").alias("overtime_total_production"),
+        pl.col("overtime_gaps").alias("overtime_gaps"),
         pl.col("overtime_net_hours").alias("overtime_net_hours"),
         pl.col("overtime_productivity").alias("overtime_productivity"),
         pl.col("cs_rejection").alias("cs_rejection"),
@@ -746,18 +753,21 @@ async def lpg_car_download(data):
 
         pl.col("normal_total_production").sum().alias("normal_total_production"),
         pl.col("normal_available_hrs").sum().alias("normal_available_hrs"),
+        pl.col("normal_gaps").sum().alias("normal_gaps"),
         pl.col("normal_net_hours").sum().round(2).alias("normal_net_hours"),
 
         pl.col("break_total_production").sum().alias("break_total_production"),
         pl.col("break_available_hours").sum().alias("break_available_hours"),
+        pl.col("break_gaps").sum().alias("break_gaps"),
         pl.col("break_net_hours").sum().round(2).alias("break_net_hours"),
 
         pl.col("overtime_total_production").sum().alias("overtime_total_production"),
+        pl.col("overtime_gaps").sum().alias("overtime_gaps"),
         pl.col("overtime_net_hours").sum().round(2).alias("overtime_net_hours"),
 
-        pl.col("cs_rejection").sum().alias("cs_rejection"),
-        pl.col("gd_rejection").sum().alias("gd_rejection"),
-        pl.col("pt_rejection").sum().alias("pt_rejection"),
+        pl.col("cs_rejection").sum().round(2).alias("cs_rejection"),
+        pl.col("gd_rejection").sum().round(2).alias("gd_rejection"),
+        pl.col("pt_rejection").sum().round(2).alias("pt_rejection"),
     ])
 
     df_grouped = df_grouped.with_columns([
@@ -805,7 +815,7 @@ async def lpg_car_download(data):
                 "normalHours": {
                     "production": row.get("normal_total_production", 0),
                     "availableHours": row.get("normal_available_hrs", 0),
-                    "stoppagesHours": 0, 
+                    "stoppagesHours": row.get("normal_gaps", 0), 
                     "netBottlingHours": row.get("normal_net_hours", 0),
                     "productivity": row.get("normal_productivity", 0)
                 },
@@ -813,14 +823,14 @@ async def lpg_car_download(data):
                 "breakHours": {
                     "production": row.get("break_total_production", 0),
                     "availableHours": row.get("break_available_hours", 0),
-                    "stoppagesHours": 0, 
+                    "stoppagesHours": row.get("break_gaps", 0), 
                     "netBottlingHours": row.get("break_net_hours", 0),
                     "productivity": row.get("break_productivity", 0)
                 },
 
                 "overtimeHours": {
                     "production": row.get("overtime_total_production", 0),
-                    "stoppagesHours": 0, 
+                    "stoppagesHours": row.get("overtime_gaps", 0), 
                     "netBottlingHours": row.get("overtime_net_hours", 0),
                     "productivity": row.get("overtime_productivity", 0)
                 },
