@@ -173,7 +173,7 @@ async def get_vts_sod_blocked_counts():
 
     # Write to Excel
     global sod_day_wise_trend_exl_path
-    output_file = "/tmp/SOD Plant Day Wise Trend.xlsx"
+    output_file = "/tmp/SOD Plant Scores Day Wise Trend.xlsx"
     sod_day_wise_trend_exl_path = output_file
     excel_df.to_excel(
         output_file,
@@ -634,7 +634,7 @@ async def sod_percentage():
 
         # Write to Exce
         global tas_day_wise_trend_exl_path
-        output_file = "/tmp/SOD Plant Day Wise Trend.xlsx"
+        output_file = "/tmp/SOD Plant Scores Day Wise Trend.xlsx"
         tas_day_wise_trend_exl_path = output_file
         excel_df.to_excel(
             output_file,
@@ -672,8 +672,10 @@ async def get_va_path():
     query = f"""
         SELECT
             location_name AS "Plant Wise VA Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -689,6 +691,8 @@ async def get_va_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -762,8 +766,10 @@ async def get_emlock_path():
     query = f"""
         SELECT
             location_name AS "Plant Wise EMLock Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -779,6 +785,8 @@ async def get_emlock_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -852,8 +860,10 @@ async def get_tas_path():
     query = f"""
         SELECT
             location_name AS "Plant Wise SOD Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -869,6 +879,8 @@ async def get_tas_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -895,19 +907,19 @@ async def get_tas_path():
     df = df.drop(columns=["sort_order"])
 
     global tas_tas_path
-    tas_tas_path = "/tmp/Plant Wise SOD Alerts.xlsx"
+    tas_tas_path = "/tmp/Plant Wise TAS Alerts.xlsx"
 
     with pd.ExcelWriter(tas_tas_path, engine="xlsxwriter") as writer:
         df.to_excel(
             writer,
-            sheet_name="Plant Wise SOD Alerts",
+            sheet_name="Plant Wise TAS Alerts",
             index=False,
             startrow=1,
             header=False   #important
         )
 
         workbook = writer.book
-        worksheet = writer.sheets["Plant Wise SOD Alerts"]
+        worksheet = writer.sheets["Plant Wise TAS Alerts"]
 
         header_format = workbook.add_format({
             "bold": True,
