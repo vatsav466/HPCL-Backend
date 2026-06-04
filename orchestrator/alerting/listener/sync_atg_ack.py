@@ -31,6 +31,29 @@ async def cris_product_mapping():
     return product_mapping
 
 async def sync_atg_ack():
+    """
+    This function extracts today’s delivery records from CRIS, maps CRIS product codes
+    to product names, adds a UTC sync timestamp, and loads the transformed dataset into
+    `HPCL_HOS.atg_ack_confirmation` in the Novex database.
+
+    Source tables: (CRIS DB)
+        - HPCL_HOS.tr_delivery_data (trd)
+        - HPCL_HOS.ms_site (ms)
+
+    Target table: (NOVEX DB)
+        - HPCL_HOS.atg_ack_confirmation
+
+    Process:
+        1. Extract records for the current UTC date with valid volume and enabled status
+        2. Transform product numbers to item names using a predefined mapping
+        3. Add `sync_time` as a timezone-naive UTC timestamp
+        4. Recreate the target table and load the transformed data
+
+    Notes:
+        - The target table is dropped and recreated on each run
+        - Historical data is not retained
+        - Uses asynchronous database operations
+    """
 
     try:
 
@@ -93,7 +116,7 @@ async def sync_atg_ack():
             inplace=True
         )
         
-        sync_time = sync_time = datetime.datetime.now(datetime.timezone.utc)
+        sync_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
         atg_resp["sync_time"] = sync_time
 
@@ -116,11 +139,33 @@ async def sync_atg_ack():
         # ======================================
         # Save Historical Data
         # ======================================
-
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
-            connection_mapping.connection_mapping.get("hpcl_ceg","1")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
         )
 
+        # drop the table before upsert
+        drop_query="""DROP TABLE IF EXISTS "HPCL_HOS".atg_ack_confirmation"""
+
+        create_query = """
+            CREATE TABLE "HPCL_HOS".atg_ack_confirmation (
+                site_id TEXT,
+                sap_ro_code TEXT,
+                tank_no BIGINT,
+                product_no BIGINT,
+                item_name TEXT,
+                recptentrydate TIMESTAMP,
+                sync_time TIMESTAMP,
+                CONSTRAINT uk_atg_ack UNIQUE (site_id, sap_ro_code)
+            );
+            """
+        
+        # Deleting table
+        await function(query=drop_query)
+
+        # Create table
+        await function(query=create_query)
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "upsert_data"
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -131,11 +176,7 @@ async def sync_atg_ack():
             records=atg_resp.to_dicts(),
             conflict_columns=[
                 "site_id",
-                "sap_ro_code",
-                "tank_no",
-                "product_no",
-                "item_name",
-                "recptentrydate"
+                "sap_ro_code"
             ]
         )
         return {
