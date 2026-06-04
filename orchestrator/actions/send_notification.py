@@ -895,7 +895,7 @@ class SendNotification:
 
                     tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
+                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
                             if email not in tas_cc:
                                 tas_cc.append(email)
 
@@ -972,7 +972,7 @@ class SendNotification:
                     self.mail_recipients = tas_recipients
                     tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
+                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
                             if email not in tas_cc:
                                 tas_cc.append(email)
                     
