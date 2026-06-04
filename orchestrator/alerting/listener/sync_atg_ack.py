@@ -91,7 +91,6 @@ async def sync_atg_ack():
         # ======================================
         # Convert To DataFrame
         # ======================================
-
         atg_resp = pd.DataFrame(atg_resp)
         print("atg_resp ----->\n", atg_resp)
         if atg_resp.empty:
@@ -105,7 +104,6 @@ async def sync_atg_ack():
         # ======================================
         # Product Mapping
         # ======================================
-
         atg_resp["item_name"] = (atg_resp["item_name"].astype(str))
 
         atg_resp.replace(
@@ -123,7 +121,6 @@ async def sync_atg_ack():
         # ======================================
         # Schema
         # ======================================
-
         atg_schema = {
             "site_id": pl.String,
             "sap_ro_code": pl.String,
@@ -135,7 +132,6 @@ async def sync_atg_ack():
         }
 
         atg_resp = pl.DataFrame(atg_resp, schema=atg_schema)
-
 
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -159,11 +155,11 @@ async def sync_atg_ack():
             );
             """
         
-        # Deleting table
+        # Delete table
         await function(query=drop_query)
-
         # Create table
         await function(query=create_query)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "upsert_data"
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
