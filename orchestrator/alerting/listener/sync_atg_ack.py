@@ -136,9 +136,7 @@ async def sync_atg_ack():
 
         atg_resp = pl.DataFrame(atg_resp, schema=atg_schema)
 
-        # ======================================
-        # Save Historical Data
-        # ======================================
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(
