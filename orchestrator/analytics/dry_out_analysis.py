@@ -1350,6 +1350,18 @@ async def current_month_frequent_drout_terminals(data):
 #     return atg_resp.to_dict(orient='records')
 
 async def get_atg_ack(sap_id: str, product_code: str):
+    """
+    Fetches today's ATG acknowledgment records for a given SAP RO code
+    and product from the `HPCL_HOS.atg_ack_confirmation` table.
+
+    Filters data by:
+    - sap_ro_code (sap_id)
+    - item_name (product_code)
+    - current UTC date
+
+    Returns:
+        List[dict]: Matching records, or empty list if no data found.
+    """
     to_day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
     query = f"""
