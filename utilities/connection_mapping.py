@@ -373,22 +373,8 @@ alert_action = {
             "alert_section": "VA",
             "close_alert_func": "va_alert_closer",
             "actions": {
-                "Justify": {
-                    "name": "Justification",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
-                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
-                },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
-                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
-                },
-                "Approve": {
-                    "name": "Approved",
                     "close_alert": True,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
@@ -397,13 +383,6 @@ alert_action = {
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
-                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
-                },
-                "Reject": {
-                    "name": "Rejected",
-                    "close_alert": False,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
                               "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
@@ -555,22 +534,8 @@ alert_action = {
             "alert_section": "VA",
             "close_alert_func": "va_alert_closer",
             "actions": {
-                "Justify": {
-                    "name": "Justification",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
-                },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
-                },
-                "Approve": {
-                    "name": "Approved",
                     "close_alert": True,
                     "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
                               "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
@@ -579,13 +544,6 @@ alert_action = {
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
-                },
-                "Reject": {
-                    "name": "Rejected",
-                    "close_alert": False,
                     "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
                               "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
                               "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
