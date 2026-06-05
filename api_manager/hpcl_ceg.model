@@ -4132,7 +4132,7 @@ Model NozzleSales {
     region optional index_field str
     sales_area optional index_field str
     product_grp unique_field index_field str
-    sales_volume index_field float
+    sales_volume unique_field index_field float
 
     Config=> {
         crud_operations='read'
