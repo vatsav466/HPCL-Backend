@@ -35,16 +35,93 @@ DB_CONFIG = {
     "password": creds["password"]
 }
 
+
 async def get_lpg_rejection():
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+
+    date = urdhva_base.utilities.get_present_time()
+
+    # Yesterday
+    date_yes = helpers.get_time_stamp_by_delta(
+        date,
+        days=1,
+        with_month_start_day=False,
+        date_time_format=None
+    )
+
+    # Current Month Start
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes,
+        days=0,
+        with_month_start_day=True,
+        date_time_format="%Y-%m-%d"
+    )
+
+    current_month_filter = f"""
+        created_at::DATE >= '{month_start}'
+        AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+    """
+
+    financial_year_filter = f"""
+       created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    query = f""" SELECT count(interlock_name) as total_count FROM alerts where interlock_name in ('O-Ring Leak Rejection','Valve Leak Rejection','Check Scale Rejection') and created_at>='{today}' """
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+
+    query = f"""
+        SELECT
+
+            -- Current Month LPG PQ Alerts
+            COUNT(
+                CASE
+                    WHEN {current_month_filter}
+                    THEN interlock_name
+                END
+            ) AS pq_total_lpg,
+
+            -- Financial Year LPG PQ Alerts
+            COUNT(
+                CASE
+                    WHEN {financial_year_filter}
+                    THEN interlock_name
+                END
+            ) AS total_pq_alerts_fy
+        FROM alerts
+
+        WHERE interlock_name IN (
+            'O-Ring Leak Rejection',
+            'Valve Leak Rejection',
+            'Check Scale Rejection'
+        ) AND alert_status != 'Close'
+    """
+
+    print("query----->\n", query)
+
     rejections = await function(query=query)
+
     if rejections:
-        return {"pq_critical_lpg": rejections[-1]["total_count"], "pq_high_lpg": 0}
-    return {"pq_critical_lpg": 0, "pq_high_lpg": 0}
+        result = rejections[-1]
+
+        return {
+            "pq_critical_lpg": result["pq_total_lpg"],
+            "pq_high_lpg": 0,
+            "pq_total_lpg": result["pq_total_lpg"],
+            "pq_total_fy_lpg": result["total_pq_alerts_fy"]
+        }
+
+    return {
+        "pq_critical_lpg": 0,
+        "pq_high_lpg": 0,
+        "pq_total_lpg": 0,
+        "pq_total_fy_lpg": 0
+    }
 
 
 async def lpg_top_bottom_score_plants():
@@ -342,8 +419,10 @@ async def get_va_path():
     query = f"""
         SELECT
             location_name AS "Plant Wise VA Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -359,6 +438,8 @@ async def get_va_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_status = 'Open'
@@ -416,21 +497,29 @@ async def get_va_path():
 
 
 async def get_pq_path():
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    # Making sure alerts considering only after May 31st in prod
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     query = f"""
         SELECT
             location_name AS "Plant Wise PQ Alerts",
-            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
-            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical(Open)",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Medium') AS "Medium(Open)",
+            COUNT(*) FILTER (WHERE severity = 'Low') AS "Low(Open)",
             1 AS sort_order
         FROM alerts
         WHERE alert_section = 'LPG'
-        AND created_at>='{today}'
+        AND {date_filter}
         AND interlock_name IN (
             'O-Ring Leak Rejection',
             'Valve Leak Rejection',
             'Check Scale Rejection'
-        )
+        ) AND alert_status != 'Close'
         GROUP BY location_name
 
         UNION ALL
@@ -439,17 +528,21 @@ async def get_pq_path():
             'Total',
             COUNT(*) FILTER (WHERE severity = 'Critical'),
             COUNT(*) FILTER (WHERE severity = 'High'),
+            COUNT(*) FILTER (WHERE severity = 'Medium'),
+            COUNT(*) FILTER (WHERE severity = 'Low'),
             2 AS sort_order
         FROM alerts
         WHERE alert_section = 'LPG'
-        AND created_at>='{today}'
+        AND {date_filter}
         AND interlock_name IN (
             'O-Ring Leak Rejection',
             'Valve Leak Rejection',
             'Check Scale Rejection'
-        )
+        ) AND alert_status != 'Close'
         ORDER BY sort_order
     """
+
+    print("query----->\n", query)
 
     Charts_Connection_Vault_RoutingParams.connection_id = (
         connection_mapping.connection_mapping.get("hpcl_ceg", "1")

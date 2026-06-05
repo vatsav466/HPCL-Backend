@@ -51,6 +51,10 @@
             width: 300px;
         }
         .logo { margin: 15px 0; }
+        .alerts {
+            background-color: rgb(255, 255, 0);
+            color: black;
+        }
     </style>
 </head>
 
@@ -111,21 +115,27 @@
             <table>
                 <tbody>
                 <tr>
-                    <th>SBU</th>
-                    <th>Alert Category</th>
-                    <th>Critical</th>
-                    <th>High</th>
+                    <th class="alerts" >SBU</th>
+                    <th class="alerts">Alert Category</th>
+                    <th class="alerts">OPEN ALERTS: Critical</th>
+                    <th class="alerts">OPEN ALERTS: High</th>
+                    <th class="alerts">TOTAL OPEN ALERTS</th>
+                    <th class="alerts">OVERALL OPEN ALERTS(Since Go live)</th>
                 </tr>
                 <tr>
                     <td rowspan="2">LPG</td>
                     <td>Video Analytics</td>
                     <td>{{va_critical_lpg}}</td>
                     <td>{{va_high_lpg}}</td>
+                    <td>{{va_total_lpg}}</td>
+                    <td>{{va_total_fy_lpg}}</td>
                 </tr>
                 <tr>
                     <td>Production Quality</td>
                     <td>{{pq_critical_lpg}}</td>
                     <td>{{pq_high_lpg}}</td>
+                    <td>{{pq_total_lpg}}</td>
+                    <td>{{pq_total_fy_lpg}}</td>
                 </tr>
                 </tbody>
             </table>
