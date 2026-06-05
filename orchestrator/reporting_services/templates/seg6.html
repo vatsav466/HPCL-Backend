@@ -89,6 +89,7 @@
                 <th colspan="2">High</th>
                 <th colspan="2">Medium</th>
                 <th colspan="2">Low</th>
+                <th rowspan="2" style="width: 80px;">Total Open</th>
                 <th rowspan="2" style="width: 100px;">Grand Total</th>
             </tr>
             <tr>
@@ -125,12 +126,15 @@
                 <td>{{ row.open_low }}</td>
                 <td>{{ row.close_low }}</td>
 
+                <td style="font-weight: bold;">
+                    {{ row.open_critical + row.open_high + row.open_medium + row.open_low }}
+                </td>
                 <!-- Grand Total -->
                 <td style="font-weight: bold; color: #003366;">{{ row.grand_total }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="12" style="color: #666666; padding: 20px;">No onboarded locations found.</td>
+                <td colspan="13" style="color: #666666; padding: 20px;">No onboarded locations found.</td>
             </tr>
             {% endfor %}
 
@@ -146,6 +150,9 @@
                 <td>{{ totals.close_medium }}</td>
                 <td>{{ totals.open_low }}</td>
                 <td>{{ totals.close_low }}</td>
+                <td style="font-weight: bold;">
+                    {{ totals.open_critical + totals.open_high + totals.open_medium + totals.open_low }}
+                </td>
                 <td style="font-size: 14px; font-weight: bold; color: #003366;">{{ totals.grand_total }}</td>
             </tr>
             {% endif %}
