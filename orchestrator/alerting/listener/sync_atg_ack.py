@@ -151,7 +151,7 @@ async def sync_atg_ack():
                 item_name TEXT,
                 recptentrydate TIMESTAMP,
                 sync_time TIMESTAMP,
-                CONSTRAINT uk_atg_ack UNIQUE (site_id, sap_ro_code)
+                CONSTRAINT uk_atg_ack UNIQUE (site_id, sap_ro_code, item_name)
             );
             """
         
@@ -170,7 +170,8 @@ async def sync_atg_ack():
             records=atg_resp.to_dicts(),
             conflict_columns=[
                 "site_id",
-                "sap_ro_code"
+                "sap_ro_code",
+                "item_name"
             ]
         )
         return {
