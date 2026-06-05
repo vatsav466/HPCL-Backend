@@ -3799,6 +3799,88 @@ async def sync_user_roles():
         ],
         "name": "Pipeline",
         "status": True
+    }, 
+    "HQO CMD Office": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Industry",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Industry Performance"
+                            },
+                            {
+                                "title": "Retail Industry Performance"
+                            },
+                            {
+                                "title": "Lpg Industry Performance"
+                            },
+                            {
+                                "title": "I&C Industry Performance"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Marketing Summary"
+                            },
+                            {
+                                "title": "Retail Insights"
+                            },
+                            {
+                                "title": "LPG Insights"
+                            },
+                            {
+                                "title": "I&C Insights"
+                            },
+                            {
+                                "title": "I&C Campaign"
+                            },
+                            {
+                                "title": "Lubes Insights"
+                            },
+                            {
+                                "title": "Aviation Insights"
+                            },
+                            {
+                                "title": "PetChem Insights"
+                            },
+                            {
+                                "title": "GAS Insights"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            }
+        ]
     }
 }
     await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}
