@@ -1502,5 +1502,5 @@ async def retry_async(func, retries=3, delay=10, **kwargs):
         except Exception as e:
             if attempt == retries:
                 raise
-            print(f"Attempt {attempt} failed: {e}. Retrying in {delay}s...")
+            print(f"Attempt {attempt} failed: {repr(e)}. Retrying in {delay}s...")
             await asyncio.sleep(delay)
