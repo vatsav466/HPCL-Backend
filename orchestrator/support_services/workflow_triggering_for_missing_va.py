@@ -103,7 +103,7 @@ async def trigger_workflow_for_missing_data():
         else:
             not_running_alerts.append(alert.get('id'))
             try:
-                #await Camunda().start_workflow(payload, workflow_id, camunda_url=CAMUNDA_BASE_URL)
+                await Camunda().start_workflow(payload, workflow_id, camunda_url=CAMUNDA_BASE_URL)
                 print(f"Workflow triggered successfully for alert id {alert.get('id')}")
             except Exception as e:
                 print(f"Failed to trigger workflow for alert id {alert.get('id')}. Error: {str(e)}")
