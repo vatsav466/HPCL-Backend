@@ -11183,7 +11183,7 @@ class NozzleSalesSchema(UrdhvaPostgresBase):
     product_grp: Mapped[str] = mapped_column("product_grp", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sales_volume: Mapped[float] = mapped_column("sales_volume", Numeric, index=True, nullable=False, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(transaction_date, sap_id, product_grp, name="nozzle_sales_transaction_date_sap_id_product_grp"),)
+    __table_args__ = (UniqueConstraint(transaction_date, sap_id, product_grp, sales_volume, name="nozzle_sales_transaction_date_sap_id_product_grp_sales_volume"),)
 
 
 class NozzleSalesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -11204,7 +11204,7 @@ class NozzleSalesCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = NozzleSalesSchema
-        upsert_keys = ['transaction_date', 'sap_id', 'product_grp']
+        upsert_keys = ['transaction_date', 'sap_id', 'product_grp', 'sales_volume']
 
 
 class NozzleSales(urdhva_base.postgresmodel.PostgresModel):
@@ -11225,7 +11225,7 @@ class NozzleSales(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = NozzleSalesSchema
-        upsert_keys = ['transaction_date', 'sap_id', 'product_grp']
+        upsert_keys = ['transaction_date', 'sap_id', 'product_grp', 'sales_volume']
 
 
 class NozzleSalesGetResp(pydantic.BaseModel):
