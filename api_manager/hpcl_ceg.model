@@ -1439,14 +1439,17 @@ Model LpgPlantOperations {
     sales_area optional str
     // normal hours
     normal_net_hours optional float
+    normal_gap_hrs optional float
     normal_total_production optional float
     normal_productivity optional float
     // break hours
     break_net_hours optional float
+    break_gap_hrs optional float
     break_total_production optional float
     break_productivity optional float
     // overtime hours
     overtime_net_hours optional float
+    overtime_gap_hrs optional float
     overtime_total_production optional float
     overtime_productivity optional float
     // total hours
@@ -1457,6 +1460,9 @@ Model LpgPlantOperations {
     cs_handled optional float
     cs_sortout optional float
     cs_rejection optional float
+    cs_underfilled optional float
+    cs_overfilled optional float  
+    cs_other_errors optional float    
     // gd rejection
     gd_handled optional float
     gd_sortout optional float
@@ -1468,6 +1474,11 @@ Model LpgPlantOperations {
     // bottiling summary
     production_14_2kg optional default=0 float
     production_19kg optional default=0 float
+    fst_cyl_production optional datetime
+    lst_cyl_production optional datetime
+    total_bottling_hours optional float
+    net_bottling_hours optional float
+    stoppage_hours optional float
 
     Action=> check_connection_status {        
         sap_id str
@@ -4469,7 +4480,6 @@ Model DailyEmailNotificationUsers {
     }
 }
 
-
 Model ShiftHrs internal {
     shift_name str
     start_time str
@@ -4561,6 +4571,9 @@ Model LpgPlantsMaster{
         sap_id int
     }
 
+    Action=> plant_details {
+        sap_id optional int
+    }
     Config=> {
         crud_operations='read'
     }

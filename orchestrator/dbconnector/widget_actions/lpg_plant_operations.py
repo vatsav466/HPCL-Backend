@@ -245,31 +245,42 @@ class LPGOperationsActions:
         else:
             return 0
 
-    async def get_carousals_config(plant_short_name):
-        plant_id = await LPGOperationsActions.get_plant_id_by_short_name(plant_short_name)
-
-        query = f""" SELECT carousal_id, heads, rated_productivity, start_time, stop_time FROM public.carousals WHERE plant_id = {plant_id} """
+    async def get_carousals_config(sap_id):
+        query = f""" SELECT carousal_id, heads, rated_productivity, production_hrs, breaks FROM public.lpg_carousals WHERE sap_id = {sap_id} """
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if result['data']:
-            result = result['data']
-        else:
+        if not result["data"]:
             return False
         config = {}
-        for row in result:
-            config[row['carousal_id']] = {
-                'heads': row['heads'],
-                'stdOutput': row['rated_productivity'],
-                'times': {
-                    'start': row['start_time'],
-                    'end': row['stop_time'],
-                    'breaks': await LPGOperationsActions.get_breaks(plant_id, row['carousal_id'])
+        for row in result["data"]:
+            production_hrs = row["production_hrs"]
+            breaks = row["breaks"]
+            if isinstance(production_hrs, str):
+                production_hrs = json.loads(production_hrs)
+            if isinstance(breaks, str):
+                breaks = json.loads(breaks)
+            shift = production_hrs[0]
+            config[row["carousal_id"]] = {
+                "heads": row["heads"],
+                "stdOutput": row["rated_productivity"],
+                "times": {
+                    "start": shift["start_time"],
+                    "end": shift["stop_time"],
+                    "breaks": [
+                        {
+                            "from": b["start_time"],
+                            "to": b["stop_time"]
+                        }
+                        for b in breaks
+                    ]
                 }
             }
         return config
 
     async def get_carousals(type: str, sap_id: str):
-        plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=sap_id)
-        carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=sap_id)
+        # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        print(f"Fetching carousal config for sap_id: {sap_id}")
+        carousal_config = await LPGOperationsActions.get_carousals_config(sap_id= sap_id)
         keys = list(carousal_config.keys())
         if type == 'string':
             return ", ".join(map(str, keys))
@@ -549,8 +560,9 @@ class LPGOperationsActions:
 
     #################### Productivity ####################
     async def get_start_end_times(carousal, data):
-        plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
-        carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
+        # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        carousal_config = await LPGOperationsActions.get_carousals_config(data["sap_id"])
         if carousal_config is None:
             raise Exception("Error Processing Request", 1)
         return {
@@ -859,8 +871,9 @@ class LPGOperationsActions:
         return phases
 
     async def get_phases(data):
-        plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
-        carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
+        # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
+        carousal_config = await LPGOperationsActions.get_carousals_config(data["sap_id"])
         if carousal_config is None:
             raise Exception("Error Processing Request")
         phases = await LPGOperationsActions.config_to_phases(carousal_config)
@@ -1015,6 +1028,103 @@ class LPGOperationsActions:
                                                                                           data)
         return ot_production
 
+    async def get_prodash_hours(carousal, data):
+        """
+        Calculate bottling hrs, stoppage hrs, net bottling hrs,
+        first cylinder and last cylinder.
+        """
+        query = f"""
+        WITH base AS (
+
+            SELECT
+                process_date,
+                LAG(process_date) OVER(ORDER BY process_date) prev_time
+
+            FROM production_log
+
+            WHERE process_date BETWEEN
+                '{data["from_date"]} 00:00:00'
+                AND
+                '{data["to_date"]} 23:59:59'
+
+            AND sap_id={data["sap_id"]}
+            AND process_id IN (2,22)
+            AND cyl_type IN (1,2)
+            AND system_id={carousal}
+
+        )
+
+        SELECT
+
+            MIN(process_date) AS first_cylinder,
+
+            MAX(process_date) AS last_cylinder,
+
+            ROUND(
+                (
+                    EXTRACT(
+                        EPOCH FROM (
+                            MAX(process_date)
+                            -
+                            MIN(process_date)
+                        )
+                    ) / 3600
+                ),
+                4
+            ) AS bottling_hours,
+
+            ROUND(
+                (
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN
+                                EXTRACT(
+                                    EPOCH FROM (
+                                        process_date
+                                        -
+                                        prev_time
+                                    )
+                                ) > 60
+
+                                THEN
+                                EXTRACT(
+                                    EPOCH FROM (
+                                        process_date
+                                        -
+                                        prev_time
+                                    )
+                                )
+
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) / 3600
+                ),
+                4
+            ) AS stoppage_hours
+
+        FROM base
+        """
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+        if result["data"]:
+            row = result["data"][0]
+            row["bottling_hours"] = round(float(row["bottling_hours"] or 0),4)
+            row["stoppage_hours"] = round(float(row["stoppage_hours"] or 0),4)
+            row["net_bottling_hours"] = round(row["bottling_hours"] - row["stoppage_hours"], 4)
+            return row
+
+        return {
+            "first_cylinder": None,
+            "last_cylinder": None,
+            "bottling_hours": 0,
+            "stoppage_hours": 0,
+            "net_bottling_hours": 0
+        }
+
     async def get_productivity(data: dict):
         try:
             bottling_data = await LPGOperationsActions.bottling_data(data)
@@ -1023,18 +1133,29 @@ class LPGOperationsActions:
             phases = ['normal', 'break', 'overtime']
             productivityData = {}
             for key, value in bottling_data.items():
+                prodash_hours = await LPGOperationsActions.get_prodash_hours(key, data)
+                if not prodash_hours:
+                    prodash_hours = {"first_cylinder": None, "last_cylinder": None, "bottling_hours": 0, "stoppage_hours": 0, "net_bottling_hours": 0}
+
+                productivityData[key] = {}
+                # Prodash Metrics
+                productivityData[key]["first_cylinder"] = prodash_hours["first_cylinder"]
+                productivityData[key]["last_cylinder"] = prodash_hours["last_cylinder"]
+                productivityData[key]["bottling_hours"] = float(prodash_hours["bottling_hours"] or 0)
+                productivityData[key]["stoppage_hours"] = float(prodash_hours["stoppage_hours"] or 0)
+                productivityData[key]["net_bottling_hours"] = float(prodash_hours["net_bottling_hours"] or 0)
+
                 for phase in phases:
                     totalProduction = bottling_data[key][phase]['prod_14_2'] + 1.25 * \
                                       bottling_data[key][phase]['prod_19']
                     gapHours = production_hours_data[key]["total_" + phase + "_gap"]
-                    if key not in productivityData:
-                        productivityData[key] = {}
-                    productivityData[key][phase] = {}
-
+                    
+                    # No Production => Net Hours = 0
                     if totalProduction == 0:
-                        productivityData[key][phase]['net_hours'] = 0
-
-                    elif phase != 'overtime':
+                        productivityData[key][phase] = {"net_hours": 0, "total_production": 0, "gaps": float(gapHours or 0), "productivity": 0}
+                        continue
+                    productivityData[key][phase] = {}
+                    if phase != 'overtime':
                         maxHours = production_hours_data[key]['max_op_hours'][phase]
                         productivityData[key][phase]['net_hours'] = abs(
                             float(maxHours) - float(gapHours))
@@ -1048,12 +1169,14 @@ class LPGOperationsActions:
                         productivityData[key][phase]['net_hours'] = abs(
                             total_pre_shift_time + total_post_shift_time - gapHours)
                     productivityData[key][phase]['total_production'] = totalProduction
+                    productivityData[key][phase]['gaps'] = float(gapHours or 0)
                     if not (productivityData[key][phase]['net_hours']):
                         productivityData[key][phase]['productivity'] = 0
                     else:
                         productivityData[key][phase]['productivity'] = abs(round(
                             float(totalProduction) / float(
                                 productivityData[key][phase]['net_hours']), 2))
+            print("Productivity Data :", productivityData)
             return productivityData
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))

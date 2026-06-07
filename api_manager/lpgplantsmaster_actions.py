@@ -92,3 +92,50 @@ async def lpgplantsmaster_delete_location(data: Lpgplantsmaster_Delete_LocationP
 
     except Exception as e:
         return {"status": False, "message": str(e), "data": None}
+
+
+# Action plant_details
+@router.post('/plant_details', tags=['LpgPlantsMaster'])
+async def lpgplantsmaster_plant_details(data: Lpgplantsmaster_Plant_DetailsParams):
+    try:
+        plants = await hpcl_ceg_model.LpgPlantsMaster.get_all(urdhva_base.QueryParams(), resp_type="plain")
+        result = []
+        for plant in plants["data"]:
+            sap_id = plant["sap_id"]
+            # Carousel count
+            carousels = await hpcl_ceg_model.LpgCarousals.get_all(urdhva_base.QueryParams(q=f"sap_id={sap_id}"), resp_type="plain")
+            # Connection Status
+            connection_status = False
+            try:
+                status_resp = await lpgplantoperations_check_connection_status(Lpgplantoperations_Check_Connection_StatusParams(sap_id=str(sap_id)))
+                connections = status_resp.get("data", {}).get("connection_status", [])
+                if connections:
+                    connection_status = any(x.get("status", False) for x in connections)
+
+            except Exception:
+                pass
+
+            result.append({
+                "sap_id": sap_id,
+                "plant_name": plant.get("plant_name"),
+                "ip_address": plant.get("ip_address"),
+                "port": plant.get("port_no"),
+                "username": plant.get("username"),
+                "db_type": plant.get("db_type"),
+                "db_name": plant.get("db_name"),
+                "carousals": len(carousels["data"]),
+                "status": connection_status
+            })
+
+        return {
+            "status": True,
+            "message": "success",
+            "data": result
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": str(e),
+            "data": []
+        }

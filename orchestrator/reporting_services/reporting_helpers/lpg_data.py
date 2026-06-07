@@ -1004,10 +1004,23 @@ def process_plant(plant):
 
 
 async def log_count_excel():
-    plants = pl.read_csv(os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..',
-                                          'orchestrator', 'sync_services','lpg',
-                                          'LPG_PLANTS_CREDENTIALS.csv'))
-    plants.columns = [c.strip() for c in plants.columns]
+    query = """
+        SELECT id, sap_id, plant_name, ip_address, port_no, username, password, db_name, db_type, zone, region
+        FROM lpg_plants_master
+        ORDER BY id ASC
+    """
+    result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+    rows = result.get("data", []) if result else []
+    for row in rows:
+        row["erp_id"] = row.get("sap_id")
+        row["PlantName"] = row.get("plant_name")
+        row["host_ip"] = row.get("ip_address")
+        row["port"] = row.get("port_no")
+        row["db_user"] = row.get("username")
+        row["db_password"] = row.get("password")
+        row["db_database"] = row.get("db_name")
+        row["SiteRegion"] = row.get("region")
+    plants = pl.from_dicts(rows) if rows else pl.DataFrame()
 
     results = []
     with ThreadPoolExecutor(max_workers=10) as executor:

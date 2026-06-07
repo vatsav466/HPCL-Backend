@@ -8922,6 +8922,9 @@
                 },
                 {
                     "name": "delete_location"
+                },
+                {
+                    "name": "plant_details"
                 }
             ]
         },
@@ -8970,6 +8973,9 @@
                 },
                 {
                     "name": "delete_location"
+                },
+                {
+                    "name": "plant_details"
                 }
             ]
         }
@@ -9901,6 +9907,10 @@
         {
             "name": "delete_location",
             "displayName": "delete_location"
+        },
+        {
+            "name": "plant_details",
+            "displayName": "plant_details"
         }
     ]
 }
