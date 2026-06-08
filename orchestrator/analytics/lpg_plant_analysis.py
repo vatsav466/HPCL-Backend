@@ -833,8 +833,6 @@ async def lpg_car_download(data):
 
     ])
 
-    # df_grouped.write_csv("/Users/algofusion/Downloads/df_grouped.csv")
-
     print("Grouped DF ---->\n", df_grouped.to_dicts())
 
     plants_output = []
