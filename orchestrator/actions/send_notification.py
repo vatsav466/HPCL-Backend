@@ -1178,6 +1178,9 @@ class SendNotification:
             alert_data["assigned_user_roles"] = list(set(updated_roles))
         else:
             alert_data["assigned_user_roles"] = self.update_alert["assigned_user_roles"]
+        
+        if self.alert_data.get("bu") == "TAS" and not (self.alert_data.get("interlock_name") or "").strip().endswith("Maintenance"):
+            alert_data["assigned_user_roles"] = alert_data.get("assigned_user_roles", [])
 
         # Update alert_data with required fields
         alert_data.update({
