@@ -12,8 +12,10 @@ from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import widget_actions
 import utilities.connection_mapping as connection_mapping
-from charts_actions import charts_connection_vault_routing
-from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+import charts_actions
+import dashboard_studio_model
+# from charts_actions import charts_connection_vault_routing
+# from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Material Codes for Domestic and Non-Domestic Sales
@@ -649,9 +651,9 @@ async def lpg_car_download(data):
     car_query = f"""SELECT * FROM carousals_bkp {final_where_clause_car}"""
     print("query ----->\n", car_query)
                
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    charts_actions.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(charts_actions.Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
     
     from decimal import Decimal
@@ -831,7 +833,7 @@ async def lpg_car_download(data):
 
     ])
 
-    df_grouped.write_csv("/Users/algofusion/Downloads/df_grouped.csv")
+    # df_grouped.write_csv("/Users/algofusion/Downloads/df_grouped.csv")
 
     print("Grouped DF ---->\n", df_grouped.to_dicts())
 
