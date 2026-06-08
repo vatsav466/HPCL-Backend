@@ -553,6 +553,7 @@ async def lpg_car_download(data):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
 
+
                 print("start_date----->\n", start_date)
                 print("end_date---->\n", end_date)
                 continue
@@ -629,11 +630,19 @@ async def lpg_car_download(data):
 
     print("final_where_clause---->\n", final_where_clause)
     print("final_where_clause_car---->\n", final_where_clause_car)
-    query = f"""
-        SELECT * FROM public.lpg_plant_operations 
-        where process_date >= '{start_date}' 
-        and process_date < '{end_date}' 
-        {final_where_clause}
+
+    if start_date == end_date:
+        query = f"""
+            SELECT * FROM public.lpg_plant_operations 
+            WHERE process_date::date = '{start_date}'
+            {final_where_clause}
+            """
+    else:
+        query = f"""
+            SELECT * FROM public.lpg_plant_operations 
+            where process_date >= '{start_date}' 
+            and process_date < '{end_date}' 
+            {final_where_clause}
         """ 
     print("query ----->\n", query)
 
@@ -711,7 +720,7 @@ async def lpg_car_download(data):
     ])
     df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
 
-    print("final data ----->\n", df.to_dicts())
+    # print("final data ----->\n", df.to_dicts())
 
     df = df.select([
         pl.col("sap_id").alias("sap_id"),
@@ -726,20 +735,29 @@ async def lpg_car_download(data):
         ]).alias("Total Cylinders"),
         pl.col("normal_total_production").alias("normal_total_production"),
         pl.col("normal_available_hrs").alias("normal_available_hrs"),
-        pl.col("normal_gaps").alias("normal_gaps"),
+        pl.col("normal_gap_hrs").alias("normal_gaps"),
         pl.col("normal_net_hours").alias("normal_net_hours"),
         pl.col("normal_productivity").alias("normal_productivity"),
         pl.col("break_total_production").alias("break_total_production"),
         pl.col("break_available_hours").alias("break_available_hours"),
-        pl.col("break_gaps").alias("break_gaps"),
+        pl.col("break_gap_hrs").alias("break_gaps"),
         pl.col("break_net_hours").alias("break_net_hours"),
         pl.col("break_productivity").alias("break_productivity"),
         pl.col("overtime_total_production").alias("overtime_total_production"),
-        pl.col("overtime_gaps").alias("overtime_gaps"),
+        pl.col("overtime_gap_hrs").alias("overtime_gaps"),
         pl.col("overtime_net_hours").alias("overtime_net_hours"),
         pl.col("overtime_productivity").alias("overtime_productivity"),
+        pl.col("cs_handled").alias("cs_total_cylinders_checked"),
+        pl.col("cs_underfilled").alias("cs_underweight"),
+        pl.col("cs_overfilled").alias("cs_overweight"),
+        pl.col("cs_other_errors").alias("cs_other_errors"),
+        pl.col("cs_sortout").alias("cs_total"),
         pl.col("cs_rejection").alias("cs_rejection"),
+        pl.col("gd_handled").alias("gd_total_cylinders_checked"),
+        pl.col("gd_sortout").alias("gd_total"),
         pl.col("gd_rejection").alias("gd_rejection"),
+        pl.col("pt_handled").alias("pt_total_cylinders_checked"),
+        pl.col("pt_sortout").alias("pt_total"),
         pl.col("pt_rejection").alias("pt_rejection"),
     ])
 
@@ -765,12 +783,21 @@ async def lpg_car_download(data):
         pl.col("overtime_gaps").sum().alias("overtime_gaps"),
         pl.col("overtime_net_hours").sum().round(2).alias("overtime_net_hours"),
 
-        pl.col("cs_rejection").sum().round(2).alias("cs_rejection"),
-        pl.col("gd_rejection").sum().round(2).alias("gd_rejection"),
-        pl.col("pt_rejection").sum().round(2).alias("pt_rejection"),
+        pl.col("cs_total_cylinders_checked").sum().round(2).alias("cs_total_cylinders_checked"),
+        pl.col("cs_underweight").sum().round(2).alias("cs_underweight"),
+        pl.col("cs_overweight").sum().round(2).alias("cs_overweight"),
+        pl.col("cs_other_errors").sum().round(2).alias("cs_other_errors"),
+        pl.col("cs_total").sum().round(2).alias("cs_total"),
+
+        pl.col("gd_total_cylinders_checked").sum().round(2).alias("gd_total_cylinders_checked"),
+        pl.col("gd_total").sum().round(2).alias("gd_total"),
+
+        pl.col("pt_total_cylinders_checked").sum().round(2).alias("pt_total_cylinders_checked"),
+        pl.col("pt_total").sum().round(2).alias("pt_total"),
     ])
 
     df_grouped = df_grouped.with_columns([
+        # Productivity calculation
         pl.when(pl.col("normal_net_hours") > 0)
             .then((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
             .otherwise(0)
@@ -785,6 +812,23 @@ async def lpg_car_download(data):
             .then((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
             .otherwise(0)
             .alias("overtime_productivity"),
+        
+        # Rejection calculation
+        pl.when(pl.col("cs_total_cylinders_checked") > 0)
+            .then((pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("cs_rejection"),
+
+        pl.when(pl.col("gd_total_cylinders_checked") > 0)
+            .then((pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("gd_rejection"),
+
+        pl.when(pl.col("pt_total_cylinders_checked") > 0)
+            .then((pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("pt_rejection"),
+
     ])
 
     df_grouped.write_csv("/Users/algofusion/Downloads/df_grouped.csv")
@@ -835,12 +879,21 @@ async def lpg_car_download(data):
                     "productivity": row.get("overtime_productivity", 0)
                 },
                 "checkScaleSummary": {
+                    "TotalCylindersChecked": row.get("cs_total_cylinders_checked"),
+                    "RejectionUnderweight": row.get("cs_underweight"),
+                    "RejectionOverweight": row.get("cs_overweight"),
+                    "RejectionOtherErrors": row.get("cs_other_errors"),
+                    "RejectionTotal": row.get("cs_total"),
                     "RejectionPercentage": row.get("cs_rejection", 0)
                 }, 
                 "electronicLeakDetectorSummary": {
+                    "TotalCylindersChecked": row.get("gd_total_cylinders_checked"),
+                    "RejectionTotal": row.get("gd_total"),
                     "RejectionPercentage": row.get("gd_rejection", 0)
                 },
                 "O-RingTesterSummary": {
+                    "TotalCylindersChecked": row.get("pt_total_cylinders_checked"),
+                    "RejectionTotal": row.get("pt_total"),
                     "RejectionPercentage": row.get("pt_rejection", 0)
                 }
             }
