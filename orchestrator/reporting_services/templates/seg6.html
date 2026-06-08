@@ -13,7 +13,7 @@
 
         h2 {
             color: #003366;
-            margin: 20px 0 10px 0;
+            margin: 0 0 10px 0;
             font-size: 22px;
             font-weight: 700;
         }
@@ -59,12 +59,6 @@
         .total-row td {
             font-size: 13px;
         }
-
-        .loc-none { background-color: #38761d; color: white; }
-        .loc-low { background-color: #bf9000; color: white; }
-        .loc-medium { background-color: #b45f06; color: white; }
-        .loc-high { background-color: #ea9999; color: black; }
-        .loc-critical { background-color: #ff0000; color: white; }
     </style>
 </head>
 
@@ -162,39 +156,6 @@
                 <td style="font-size: 14px; font-weight: bold; color: #003366;">{{ totals.grand_total }}</td>
             </tr>
             {% endif %}
-        </tbody>
-    </table>
-
-    <hr>
-    
-    <h2>Loss of Communication (LOC) Summary</h2>
-    <p style="font-size: 12px; color: #333333; margin-bottom: 15px;">
-        Summary of connectivity outages detected today (Threshold: {{gap_threshold}} min).
-    </p>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 50px;">Sl No</th>
-                <th class="text-left">Location Name</th>
-                <th style="width: 120px;">Outage Count</th>
-                <th style="width: 150px;">Total Downtime</th>
-                <th style="width: 120px;">Severity</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for loc in loc_summary %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td class="text-left">{{ loc.name }}</td>
-                <td>{{ loc.count }}</td>
-                <td>{{ loc.downtime }}</td>
-                <td class="loc-{{ loc.severity_class }}">{{ loc.severity }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" style="color: #666666; padding: 20px;">No communication loss detected today.</td>
-            </tr>
-            {% endfor %}
         </tbody>
     </table>
 
