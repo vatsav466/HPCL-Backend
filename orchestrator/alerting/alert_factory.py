@@ -217,9 +217,12 @@ class AlertFactory:
             alert_level = "level - 1"
             if alert_data.get("alert_section",'') in ["VA"]:
                 if alert_data.get("alert_section",'') == "VA":
-                    alert_level = await va_analysis.get_va_levels(
-                        bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
-                    )
+                    if alert_data.get('bu','') in ['LPG'] and alert_data.get("interlock_name","") not in ["Fire","LPG Leakages","LPG Leakages thru Filling Gun"]:
+                        alert_level = "level - 1"
+                    else:
+                        alert_level = await va_analysis.get_va_levels(
+                            bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                            )
             elif alert_data.get("alert_section",'') in ["LPG"] and alert_data.get("interlock_name","") in ["Valve Leak Rejection","Check Scale Rejection","O-Ring Leak Rejection"]:
                 alert_level = await va_analysis.get_lpg_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
