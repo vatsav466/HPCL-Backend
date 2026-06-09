@@ -217,7 +217,7 @@ class AlertFactory:
             alert_level = "level - 1"
             if alert_data.get("alert_section",'') in ["VA"]:
                 if alert_data.get("alert_section",'') == "VA":
-                    if alert_data.get('bu','') in ['LPG'] and alert_data.get("interlock_name","") not in ["Fire","LPG Leakages","LPG Leakages thru Filling Gun"]:
+                    if alert_data.get('bu','') in ['LPG'] and alert_data.get("interlock_name","") not in ["LPG Leakages","LPG Leakages thru Filling Gun"]:
                         alert_level = "level - 1"
                     else:
                         alert_level = await va_analysis.get_va_levels(
