@@ -55,7 +55,7 @@
 </head>
 
 <body>
-    <h2>Novex Today - Daily Report</h2>
+    <h2>Novex Today - Daily Report: Retail</h2>
     <p><strong>Date:</strong> {{today_date}} | <strong>Day:</strong> {{today_week}}</p>
     <hr>
     <h3>Retail Summary</Summary></h3>
@@ -97,7 +97,7 @@
         </tbody>
     </table>
     <h5>1.1. Last 30 days trend of estimated nozzle sales (MS/HSD) in TMT</h5>
-    <h6>Connected Sites on {{yesterday_date}} - {{nozzel_previous_day[0]['count']}} [{{nozzle_sales_percentage}}%]</h6>
+    <h6>Connected Sites on {{yesterday_date}} [6AM] - {{nozzel_previous_day[0]['count']}} [{{nozzle_sales_percentage}}% of 25131 which is the Total no of Retail Outlets as on 31st May 2026]</h6>
     <div class="logo">
         <img src="cid:nozzel_sales_chart", alt="Daily Product Wise Nozzle Sales (in TMT)" width="1000" height="auto">
     </div>
@@ -195,15 +195,26 @@
     <table>
         <thead>
             <tr>
-                {% for col in zone_wise_summary.columns %}
+                <th rowspan="2">Zone wise ROs</th>
+
+                {% for col in zone_columns[1:] %}
                     <th>{{ col }}</th>
                 {% endfor %}
             </tr>
+
+            <tr>
+                {% for col in zone_columns[1:] %}
+                    <th>{{ zone_totals[col] }}</th>
+                {% endfor %}
+            </tr>
         </thead>
+
         <tbody>
-            {% for row in zone_wise_summary.to_dict(orient='records') %}
-            <tr {% if loop.index == 1 %}style="border: 1px solid #ddd; text-align: left; padding-top: 1px; padding-bottom: 1px; padding-left: 8px; padding-right: 8px; font-size: 12px; background-color: #003366; color: white; font-weight: bold;"{% endif %}>
-                {% for col in zone_wise_summary.columns %}
+            {% for row in zone_daily %}
+            <tr>
+                <td>{{ row[zone_columns[0]] }}</td>
+
+                {% for col in zone_columns[1:] %}
                     <td>{{ row[col] }}</td>
                 {% endfor %}
             </tr>

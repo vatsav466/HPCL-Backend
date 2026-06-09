@@ -23,7 +23,23 @@ zone_map = {
     "COR": "COR",
     "ECZ": "ECZ",
     "SWZ": "SWZ",
-    "CEN": "CEN"
+    "CEN": "CEN",
+    "NORTH CENTRAL RETAIL": "NCZ",
+    "SOUTH CENTRAL RETAIL": "SCZ",
+    "WEST ZONE": "WZ",
+    "BHUBANESWAR ZONE": "Bhubaneswar Zone",
+    "NOIDA (UP-WEST) ZONE": "Noida Zone",
+    "EAST ZONE": "EZ",
+    "COCHIN ZONE": "Cochin Zone",
+    "PATNA ZONE": "Patna Zone",
+    "NORTH WEST RETAIL ZO": "NWZ",
+    "GUWAHATI ZONE": "Guwahati Zone",
+    "JAIPUR ZONE": "Jaipur Zone",
+    "CHANDIGARH ZONE": "Chandigarh Zone",
+    "SOUTH ZONE": "SZ",
+    "BENGALURU ZONE": "Bengaluru Zone",
+    "BHOPAL ZONE": "Bhopal Zone",
+    "NORTH ZONE": "NZ"
 }
 
 novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
@@ -185,18 +201,18 @@ location_configs = [
         "bu": "ro",
         "query": """                               
                 SELECT
-                    zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc, 
+                    zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc AS ZZONE, 
                     zca.deliv_plant AS terminal_plant_id, deliv.PLANT_DESC as terminal_plant_name, zso.SALES_OFFICE_DESC, 
-                    zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2,
+                    zso.SALES_GROUP_DESC, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2,
                     zcs.ADDRESS3, zcs.ADDRESS4, zcs.ADDRESS5, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
                     zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.OUTLET_TYPE,
                     zcs.permanent_Account_number, zca.sales_grp, zca.sales_off
                 FROM ZSDCV_CUST_SA_STG zca 
                     INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
                     INNER join ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
-                    zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off AND zso.sales_group=zca.sales_grp
+                    zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off -- AND zso.sales_group=zca.sales_grp
                     INNER join EDW_DC_PLANT plt on zso.PLANT=plt.PLANT
-                    INNER join EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
+                    LEFT join EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
                 WHERE 
                     zca.deliv_plant <> '' AND zca.sales_org='7000' AND zca.DIST_CHANNEL=11 
                     AND zca.division in (11,12) AND zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
