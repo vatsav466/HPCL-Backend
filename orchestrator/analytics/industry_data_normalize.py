@@ -8,6 +8,7 @@ base_path = f"{os.path.dirname(fiscal_year.__file__)}/../orchestrator/masters"
 Industry_performance_23_24 = f"{base_path}/industry_data_23-24.csv"
 Industry_performance_24_25 = f"{base_path}/industry_data_24-25.csv"
 Industry_performance_25_26 = f"{base_path}/industry_data_25-26.csv"
+Industry_performance_26_27 = f"{base_path}/industry_data_26-27.csv"
 #Industry_performance_25_26 = f"/tmp/industry_data_25-26.csv"
 
 
@@ -45,13 +46,15 @@ def fetch_industry_raw_data(actual=True, history=True, start_month=None, end_mon
     df_a = pd.DataFrame()
     df_h = pd.DataFrame()
     if actual:
-        df_a = pd.read_csv(Industry_performance_25_26)
+        # df_a = pd.read_csv(Industry_performance_25_26)
+        df_a = pd.read_csv(Industry_performance_26_27)
         #df_a = df_a[df_a['CATEGORY'] != 'O']
-        df_a['FIN_YEAR'] = "2025-2026"
+        df_a['FIN_YEAR'] = "2026-2027"
     if history:
-        df_h = pd.read_csv(Industry_performance_24_25)
+        # df_h = pd.read_csv(Industry_performance_24_25)
+        df_a = pd.read_csv(Industry_performance_25_26)
         #df_h = df_h[df_h['CATEGORY'] != 'O']
-        df_h['FIN_YEAR'] = "2023-2024"
+        df_h['FIN_YEAR'] = "2025-2026"
     df = pd.concat([df_a, df_h], ignore_index=True, sort=False)
     df['COMNAME'] = df['COMNAME'].apply(lambda x: Company_Mapping.get(x, x))
     columns = list(set(list(df.columns)) - set(Months))

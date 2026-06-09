@@ -525,6 +525,73 @@ async def fetch_retail_sales():
     return all_data
 
 
+# async def get_dry_out_count():
+#     query = """
+#                     WITH dates AS (
+#                     SELECT CURRENT_DATE::date AS report_date
+#                     ),
+#                     distinct_alerts AS (
+#                     SELECT DISTINCT ON (a.sap_id)
+#                         a.id,
+#                         a.sap_id,
+#                         COALESCE(a.zone, lm.zone) AS raw_zone,
+#                         a.created_at::date AS created_date
+#                     FROM alerts a
+#                     LEFT JOIN location_master lm ON a.sap_id = lm.sap_id
+#                     WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+#                         AND a.mark_as_false = true
+#                         AND a.product_code IN ('2811000','2812000','2822000')
+#                         AND a.dry_out_in_days = '1'
+#                         AND a.indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
+#                     ORDER BY a.sap_id, a.progress_rate ASC, a.id
+#                     ),
+#                     normalized AS (
+#                     SELECT
+#                         id,
+#                         sap_id,
+#                         created_date,
+#                         CASE
+#                         WHEN raw_zone IN ('CEN','CZ') THEN 'CZ'
+#                         WHEN raw_zone = 'ECZ' THEN 'ECZ'
+#                         WHEN raw_zone = 'EZ' THEN 'EZ'
+#                         WHEN raw_zone IN ('NCR','NCZ') THEN 'NCZ'
+#                         WHEN raw_zone = 'NFZ' THEN 'NFZ'
+#                         WHEN raw_zone = 'NWF' THEN 'NWFZ'
+#                         WHEN raw_zone IN ('NWR','NWZ') THEN 'NWZ'
+#                         WHEN raw_zone = 'NZ' THEN 'NZ'
+#                         WHEN raw_zone IN ('SCR','SCZ') THEN 'SCZ'
+#                         WHEN raw_zone = 'SWZ' THEN 'SWZ'
+#                         WHEN raw_zone = 'SZ' THEN 'SZ'
+#                         WHEN raw_zone = 'WZ' THEN 'WZ'
+#                         ELSE 'OTHERS'
+#                         END AS zone
+#                     FROM distinct_alerts
+#                     )
+#                     SELECT
+#                     d.report_date AS "report_date",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'CZ')  AS "CZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'ECZ') AS "ECZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'EZ')  AS "EZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NCZ') AS "NCZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NFZ') AS "NFZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWFZ') AS "NWFZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWZ') AS "NWZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NZ')  AS "NZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SCZ') AS "SCZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SWZ') AS "SWZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SZ')  AS "SZ",
+#                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'WZ')  AS "WZ",
+#                     COUNT(DISTINCT n.sap_id) AS "Grand Total",
+#                     ARRAY_AGG(n.id) AS all_ids
+#                     FROM dates d
+#                     LEFT JOIN normalized n ON n.created_date <= d.report_date
+#                     GROUP BY d.report_date
+#                     ORDER BY d.report_date
+#                 """
+#     dry_out_report_count = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+#     return dry_out_report_count
+
+
 async def get_dry_out_count():
     query = """
                     WITH dates AS (
@@ -551,36 +618,44 @@ async def get_dry_out_count():
                         sap_id,
                         created_date,
                         CASE
-                        WHEN raw_zone IN ('CEN','CZ') THEN 'CZ'
-                        WHEN raw_zone = 'ECZ' THEN 'ECZ'
-                        WHEN raw_zone = 'EZ' THEN 'EZ'
-                        WHEN raw_zone IN ('NCR','NCZ') THEN 'NCZ'
-                        WHEN raw_zone = 'NFZ' THEN 'NFZ'
-                        WHEN raw_zone = 'NWF' THEN 'NWFZ'
-                        WHEN raw_zone IN ('NWR','NWZ') THEN 'NWZ'
-                        WHEN raw_zone = 'NZ' THEN 'NZ'
-                        WHEN raw_zone IN ('SCR','SCZ') THEN 'SCZ'
-                        WHEN raw_zone = 'SWZ' THEN 'SWZ'
-                        WHEN raw_zone = 'SZ' THEN 'SZ'
+                        WHEN raw_zone = 'NCZ' THEN 'NCZ'
+                        WHEN raw_zone = 'SCZ' THEN 'SCZ'
                         WHEN raw_zone = 'WZ' THEN 'WZ'
+                        WHEN raw_zone = 'Bhubaneswar Zone' THEN 'Bhubaneswar Zone'
+                        WHEN raw_zone = 'Noida Zone' THEN 'Noida Zone'
+                        WHEN raw_zone = 'EZ' THEN 'EZ'
+                        WHEN raw_zone = 'Cochin Zone' THEN 'Cochin Zone'
+                        WHEN raw_zone = 'Patna Zone' THEN 'Patna Zone'
+                        WHEN raw_zone = 'NWZ' THEN 'NWZ'
+                        WHEN raw_zone = 'Guwahati Zone' THEN 'Guwahati Zone'
+                        WHEN raw_zone = 'Jaipur Zone' THEN 'Jaipur Zone'
+                        WHEN raw_zone = 'Chandigarh Zone' THEN 'Chandigarh Zone'
+                        WHEN raw_zone = 'SZ' THEN 'SZ'
+                        WHEN raw_zone = 'Bengaluru Zone' THEN 'Bengaluru Zone'
+                        WHEN raw_zone = 'Bhopal Zone' THEN 'Bhopal Zone'
+                        WHEN raw_zone = 'NZ' THEN 'NZ'
                         ELSE 'OTHERS'
                         END AS zone
                     FROM distinct_alerts
                     )
                     SELECT
                     d.report_date AS "report_date",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'CZ')  AS "CZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'ECZ') AS "ECZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'EZ')  AS "EZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NCZ') AS "NCZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NFZ') AS "NFZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWFZ') AS "NWFZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWZ') AS "NWZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NZ')  AS "NZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NCZ')  AS "NCZ",
                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SCZ') AS "SCZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SWZ') AS "SWZ",
-                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SZ')  AS "SZ",
                     COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'WZ')  AS "WZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Bhubaneswar Zone') AS "Bhubaneswar Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Noida Zone') AS "Noida Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'EZ') AS "EZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Cochin Zone') AS "Cochin Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Patna Zone')  AS "Patna Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWZ') AS "NWZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Guwahati Zone') AS "Guwahati Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Jaipur Zone')  AS "Jaipur Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Chandigarh Zone')  AS "Chandigarh Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SZ')  AS "SZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Bengaluru Zone')  AS "Bengaluru Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'Bhopal Zone')  AS "Bhopal Zone",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NZ')  AS "NZ",
                     COUNT(DISTINCT n.sap_id) AS "Grand Total",
                     ARRAY_AGG(n.id) AS all_ids
                     FROM dates d
@@ -662,10 +737,17 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         elif stat['section'] == 'Indent Raised':
             indent_raised = stat['value']
 
-    query = f"""
+   # query = f"""
+   #      SELECT dry_out_date, dry_out_zone, dry_out_count
+   #      FROM dry_out_daily_report
+   #      WHERE dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
+   #      AND dry_out_date::DATE < (date_trunc('month', CURRENT_DATE) + interval '1 month')
+   #  """
+    query = f""" 
         SELECT dry_out_date, dry_out_zone, dry_out_count
         FROM dry_out_daily_report
-        WHERE dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
+        WHERE dry_out_date::DATE >= '2026-06-09'
+        -- dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
         AND dry_out_date::DATE < (date_trunc('month', CURRENT_DATE) + interval '1 month')
     """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -675,7 +757,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     data = pd.DataFrame(resp_target)
 
-    zones = ["CZ", "ECZ", "EZ", "NCZ", "NFZ", "NWFZ", "NWZ", "NZ", "SCZ", "SWZ", "SZ", "WZ"]
+    zones = ["Bengaluru Zone", "Bhopal Zone", "Bhubaneswar Zone", "Chandigarh Zone" ,"Cochin Zone", "EZ", 
+             "Guwahati Zone", "Jaipur Zone", "NCZ", "Noida Zone", "NWZ", "NZ", "Patna Zone", "SCZ","SZ", "WZ"]
 
     # Parse dry_out_zone JSON
     data['dry_out_zone'] = data['dry_out_zone'].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
@@ -725,24 +808,29 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     # Convert zone counts to int
     pivot[zones] = pivot[zones].astype(int)
 
+
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'CZ': 2487,
-        'ECZ': 1878,
-        'EZ': 1178,
-        'NCZ': 2979,
-        'NFZ': 1538,
-        'NWFZ': 1888,
-        'NWZ': 1377,
-        'NZ': 1437,
-        'SCZ': 2827,
-        'SWZ': 2530,
-        'SZ': 1923,
-        'WZ': 2657
+        'Bengaluru Zone': 1724,
+        'Bhopal Zone' : 1711,
+        'Bhubaneswar Zone' : 1425,
+        'Chandigarh Zone' : 1557,
+        'Cochin Zone': 880,
+        'EZ': 734,
+        'Guwahati Zone': 481,
+        'Jaipur Zone': 1914,
+        'NCZ': 1597,
+        'Noida Zone' : 1713,
+        'NWZ': 1400,
+        'NZ': 1196,
+        'Patna Zone': 1317,
+        'SCZ': 2857,
+        'SZ': 1939,
+        'WZ': 2686
     }
 
     default_ro_values = {
-        'Day wise No. of Dryout ROs': 'Zone wise ROs',
+        'Day wise No. of Dryout ROs': 'Zone wise Total ROs',
         'Grand Total': sum(val for key, val in default_ro_values_base.items() if key in zones)
     }
     for col in zones:
@@ -762,13 +850,16 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     # Print final pivot table without index
     print("\n===== Zone-wise Dryout ROs =====")
     print(pivot.to_string(index=False))
-
+    pivot_final = pivot
+    zone_totals = pivot_final.iloc[0].to_dict()
+    zone_daily = pivot_final.iloc[1:].to_dict(orient="records")
+   
 
     # Prepare and print summary (date-wise dryout count)
     summary_df = pivot.copy()
     summary_df["Day wise No. of Dryout ROs"] = pd.to_datetime(summary_df["Day wise No. of Dryout ROs"], errors="coerce").dt.strftime("%b %-d").fillna(summary_df["Day wise No. of Dryout ROs"])
     summary_df = summary_df.rename(columns={"Day wise No. of Dryout ROs": "Date", "Grand Total": "Dry out Count"})[["Date", "Dry out Count"]]
-    summary_df = summary_df[summary_df["Date"] != "Zone wise ROs"]
+    summary_df = summary_df[summary_df["Date"] != "Zone wise Total ROs"]
     summary_df["Dry out Count"] = summary_df["Dry out Count"].astype(int)
     summary_df = summary_df[~summary_df["Date"].str.contains("Day wise", na=False)]
     #summary_df = summary_df.iloc[:-1]
@@ -961,7 +1052,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     print("dry_out :", dry_out)
     return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
             'dry_out_trends': summary_df.to_dict(orient='records'),
-            'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
+             "zone_totals": zone_totals, "zone_daily": zone_daily, "zone_columns": list(pivot_final.columns), 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
             'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
             'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage}
 
