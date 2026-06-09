@@ -12320,3 +12320,25 @@ class Lpgplantsmaster_Plant_DetailsParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Lpgplantsmaster_Test_ConnectionParams(pydantic.BaseModel):
+    sap_id: typing.Optional[int] = pydantic.Field(0, **{})
+    ip_address: str
+    port_no: int
+    username: str
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
+    db_name: str
+    db_type: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lpgplantsmaster_Download_Plant_And_Carousal_DetailsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

@@ -1169,6 +1169,9 @@ def main() -> None:
     if not rows:
         raise RuntimeError("No rows found in lpg_plants_master")
     for row in rows:
+        if str(row["password"]).startswith("enc#_"):
+            row["password"] = urdhva_base.types.Secret(row["password"]).get_secret()
+
         row["erp_id"] = row.get("sap_id")
         row["PlantName"] = row.get("plant_name")
         row["host_ip"] = row.get("ip_address")

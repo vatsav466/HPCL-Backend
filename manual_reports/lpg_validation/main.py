@@ -21,9 +21,11 @@ async def run_on_plant_db(details):
     """
     result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=1)
     data = result.get("data", [])[0] if result and result.get("data") else {}
+    password = data.get("password", "")
+    if password and str(password).startswith("enc#_"):
+        password = urdhva_base.types.Secret(password).get_secret()
     plant_conn = await connect_to_plant_db(
-        data["ip_address"], data["port_no"], data["db_name"], data["username"], data["password"]
-    )
+        data["ip_address"], data["port_no"], data["db_name"], data["username"], password)
     data = await process_plant_concurrent(data,details,plant_conn,True)
     return data
 

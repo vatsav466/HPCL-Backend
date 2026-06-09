@@ -1012,12 +1012,16 @@ async def log_count_excel():
     result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
     rows = result.get("data", []) if result else []
     for row in rows:
+        password = row.get("password")
+        if password and str(password).startswith("enc#_"):
+            password = urdhva_base.types.Secret(password).get_secret()
+
         row["erp_id"] = row.get("sap_id")
         row["PlantName"] = row.get("plant_name")
         row["host_ip"] = row.get("ip_address")
         row["port"] = row.get("port_no")
         row["db_user"] = row.get("username")
-        row["db_password"] = row.get("password")
+        row["db_password"] = password
         row["db_database"] = row.get("db_name")
         row["SiteRegion"] = row.get("region")
     plants = pl.from_dicts(rows) if rows else pl.DataFrame()

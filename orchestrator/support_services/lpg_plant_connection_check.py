@@ -32,6 +32,11 @@ async def load_plant_data():
         if not rows:
             print("No rows found in lpg_plants_master")
             return None
+        # Decrypt password if encrypted
+        for row in rows:
+            if str(row["password"]).startswith("enc#_"):
+                row["password"] = urdhva_base.types.Secret(row["password"]).get_secret()
+                
         df = pd.DataFrame(rows)
         df["erp_id"] = df["sap_id"]
         df["short_name"] = df["plant_name"]

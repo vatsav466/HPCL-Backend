@@ -337,7 +337,7 @@ class LPGOperationsActions:
                 for sys_id, stats in carousal_wise_data.items():
                     if stats['handled'] > 0:
                         stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100,
-                                                        2)
+                                                        4)
                     else:
                         stats['rejection_rate'] = 0.0
 
@@ -398,7 +398,7 @@ class LPGOperationsActions:
                 for sys_id, stats in carousal_wise_data.items():
                     if stats['handled'] > 0:
                         stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100,
-                                                        2)
+                                                        4)
                     else:
                         stats['rejection_rate'] = 0.0
 
@@ -479,7 +479,7 @@ class LPGOperationsActions:
                     'sortout': int(totalSortout[id]),
                     'commErrorSortout': int(commErrorSortout[id]),
                     'rejection_rate': round((int(totalSortout[id]) / int(total[id])) * 100,
-                                            2) if int(total[id]) > 0 else 0.0
+                                            4) if int(total[id]) > 0 else 0.0
                 }
 
             return refData
@@ -551,7 +551,7 @@ class LPGOperationsActions:
                 refData["handled"] += int(total[id])
                 refData["sortout"] += int(totalSortout[id])
             refData["rejection_rate"] = round(
-                (int(refData["sortout"]) / int(refData["handled"])) * 100, 2)
+                (int(refData["sortout"]) / int(refData["handled"])) * 100, 4)
             return refData
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
@@ -1175,7 +1175,7 @@ class LPGOperationsActions:
                     else:
                         productivityData[key][phase]['productivity'] = abs(round(
                             float(totalProduction) / float(
-                                productivityData[key][phase]['net_hours']), 2))
+                                productivityData[key][phase]['net_hours']), 4))
             print("Productivity Data :", productivityData)
             return productivityData
         except Exception as e:
@@ -1402,7 +1402,7 @@ class LPGOperationsActions:
             return False, "No data found"
 
         production_data = await calculate_productivity(production_data)
-        total_production = round(production_data["total_production"].sum(), 2)
+        total_production = round(production_data["total_production"].sum(), 4)
 
         today_date = datetime.strptime(data["from_date"], "%Y-%m-%d")
         yesterday_date = today_date - timedelta(days=1)
@@ -1417,12 +1417,12 @@ class LPGOperationsActions:
 
         if yesterday_data:
             yesterday_data = await calculate_productivity(yesterday_data)
-            yesterday_total = round(yesterday_data["total_production"].sum(), 2)
+            yesterday_total = round(yesterday_data["total_production"].sum(), 4)
         else:
             yesterday_total = 0
 
         change_percent = round(((total_production / yesterday_total) - 1) * 100,
-                               2) if yesterday_total > 0 else 0
+                               4) if yesterday_total > 0 else 0
 
         print("Production:", total_production)
 
@@ -1441,7 +1441,7 @@ class LPGOperationsActions:
 
         total_production = production_data["total_production"].sum()
         total_hours = production_data["total_net_hours"].sum()
-        total_productivity = round(total_production / total_hours, 2) if total_hours > 0 else 0
+        total_productivity = round(total_production / total_hours, 4) if total_hours > 0 else 0
 
         today_date = datetime.strptime(data["from_date"], "%Y-%m-%d")
         yesterday_date = today_date - timedelta(days=1)
@@ -1459,12 +1459,12 @@ class LPGOperationsActions:
             y_total_prod = yesterday_data["total_production"].sum()
             y_total_hours = yesterday_data["total_net_hours"].sum()
             yesterday_productivity = round(y_total_prod / y_total_hours,
-                                           2) if y_total_hours > 0 else 0
+                                           4) if y_total_hours > 0 else 0
         else:
             yesterday_productivity = 0
 
         change_percent = round(((total_productivity / yesterday_productivity) - 1) * 100,
-                               2) if yesterday_productivity > 0 else 0
+                               4) if yesterday_productivity > 0 else 0
 
         print("Productivity:", total_productivity)
 
@@ -1585,7 +1585,7 @@ class LPGOperationsActions:
                 for cid in carousals:
                     col = f"c{cid}"
                     window_sum = window_df[col].sum() if col in window_df else 0
-                    rate = round(window_sum * hourly_factor, 2)
+                    rate = round(window_sum * hourly_factor, 4)
                     output[f"c{cid}_rate"].append(rate)
 
             # 🔹 Overall Adjusted Productivity
@@ -1594,7 +1594,7 @@ class LPGOperationsActions:
                 if rates:
                     output["overall"][f"c{cid}"] = round(
                         (sum(rates) / len(rates)) * adjustment_factor,
-                        2
+                        4
                     )
 
             print("*" * 40)

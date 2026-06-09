@@ -4574,6 +4574,19 @@ Model LpgPlantsMaster{
     Action=> plant_details {
         sap_id optional int
     }
+
+    Action=> test_connection {
+        sap_id optional int
+        ip_address str
+        port_no int
+        username str
+        password optional secret
+        db_name str
+        db_type str
+    }
+
+    Action=> download_plant_and_carousal_details {
+    }
     Config=> {
         crud_operations='read'
     }
