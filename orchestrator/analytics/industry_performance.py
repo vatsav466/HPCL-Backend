@@ -2,13 +2,19 @@ import datetime
 import urdhva_base
 import re
 import json
+import asyncio
+import os
+import uuid
+import tempfile
 import pandas as pd
 import numpy as np
 from typing import List, Dict
+from fastapi import HTTPException
 from collections import defaultdict
 import utilities.helpers as helpers
 import dateutil.parser as dt_parser
 import utilities.fiscal_year as fiscal_year
+import utilities.minio_connector as minio_connector
 import orchestrator.analytics.m60_performance as m60
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -78,15 +84,6 @@ def generate_group_by_conditions(filters, cross_filters, cumulative=False, drill
         group_by_filter.extend(['sbu_name', 'productname'])
     return group_by_filter
 
-import pandas as pd
-import json
-import numpy as np
-from fastapi import HTTPException
-import asyncio
-import os
-import uuid
-import tempfile
-import utilities.minio_connector as minio_connector
 
 async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain, resp_format):
     try:
@@ -273,17 +270,6 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         if zones_output.empty and regions_output.empty and districts_output.empty:
             return False, {"zones": [], "regions": [], "districts": []}, None
 
-        # file_path = "/opt/downloads/final_data_indus.csv" # Use a dynamic path if needed
-        # file_path = "/Users/algofusion/Downloads/final_data_indus.csv" # Local path for testing
-        
-        # combined_df = pd.concat([zones_output, regions_output, districts_output], axis=0, ignore_index=True)
-        # combined_df.to_csv(file_path, index=False)
-
-        # return True, {
-        #     "zones": json.loads(zones_output.to_json(orient="records")),
-        #     "regions": json.loads(regions_output.to_json(orient="records")),
-        #     "districts": json.loads(districts_output.to_json(orient="records"))
-        # }, file_path
         combined_df = pd.concat(
             [zones_output, regions_output, districts_output],
             axis=0,
