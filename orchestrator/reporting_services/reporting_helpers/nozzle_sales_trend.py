@@ -169,30 +169,30 @@ async def fetch_data():
 
                     mar AS (
                         SELECT
-                            ROUND(((((AVG(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
-                            ROUND(((((AVG(power))/1411.0)/1000.0)/0.89), 2) AS power,
-                            ROUND(((((AVG(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
-                            ROUND(((((AVG(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
+                            ROUND((((AVG(ms))/1411.0)/0.89), 2) AS ms,
+                            ROUND((((AVG(power))/1411.0)/0.89), 2) AS power,
+                            ROUND((((AVG(hsd))/1210.0)/0.89), 2) AS hsd,
+                            ROUND((((AVG(turbo))/1210.0)/0.89), 2) AS turbo
                         FROM base
                         WHERE "transaction_date" BETWEEN DATE '2026-03-01' AND DATE '2026-03-19'
                     ),
 
                     apr AS (
                         SELECT
-                            ROUND(((((AVG(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
-                            ROUND(((((AVG(power))/1411.0)/1000.0)/0.89), 2) AS power,
-                            ROUND(((((AVG(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
-                            ROUND(((((AVG(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
+                            ROUND((((AVG(ms))/1411.0)/0.89), 2) AS ms,
+                            ROUND((((AVG(power))/1411.0)/0.89), 2) AS power,
+                            ROUND((((AVG(hsd))/1210.0)/0.89), 2) AS hsd,
+                            ROUND((((AVG(turbo))/1210.0)/0.89), 2) AS turbo
                         FROM base
                         WHERE "transaction_date" BETWEEN DATE '2026-03-20' AND DATE '2026-03-31'
                     ),
 
                     yday AS (
                         SELECT
-                            ROUND(((((AVG(ms))/1411.0)/1000.0)/0.89), 2) AS ms,
-                            ROUND(((((AVG(power))/1411.0)/1000.0)/0.89), 2) AS power,
-                            ROUND(((((AVG(hsd))/1210.0)/1000.0)/0.89), 2) AS hsd,
-                            ROUND(((((AVG(turbo))/1210.0)/1000.0)/0.89), 2) AS turbo
+                            ROUND((((AVG(ms))/1411.0)/0.89), 2) AS ms,
+                            ROUND((((AVG(power))/1411.0)/0.89), 2) AS power,
+                            ROUND((((AVG(hsd))/1210.0)/0.89), 2) AS hsd,
+                            ROUND((((AVG(turbo))/1210.0)/0.89), 2) AS turbo
                         FROM base
                         WHERE "transaction_date" BETWEEN DATE '2026-04-01' AND CURRENT_DATE - INTERVAL '1 day'
                     )
