@@ -130,9 +130,29 @@ class TelemetryService:
         except Exception as e:
             print(f"Error processing tags data: {e}")
             return False
-            
         
 
+async def publish_to_test_queue(sap_id, message):
+    queue_name = f"test_queue_{sap_id}"
+    try:
+        connection = await aio_pika.connect_robust(
+            host=RABBITMQ_HOST, virtualhost=RABBITMQ_VHOST,
+            login=RABBITMQ_USER, password=RABBITMQ_PASSWORD,
+            heartbeat=60
+        )
+        async with connection:
+            channel = await connection.channel()
+            queue = await channel.declare_queue(queue_name, durable=True)
+            await channel.default_exchange.publish(
+                aio_pika.Message(body=json.dumps(message).encode()),
+                routing_key=queue_name
+            )
+            print(f"Message published to {queue_name}: {message}")
+    except Exception as e:
+        print(f"Error publishing message to {queue_name}: {str(e)}")
+                 
+        
+ 
 async def rabbitmq_listener(sap_id):
     """Handles RabbitMQ connection and message listening asynchronously."""
     queue_name = f"{RABBITMQ_PREFIX_QUEUE}{sap_id}"
@@ -152,6 +172,11 @@ async def rabbitmq_listener(sap_id):
                         try:
                             body = json.loads(message.body)
                             print(f"Received message on {queue_name}: {body}")
+                           
+                            #push the data to test_queue for testing purpose
+                            if urdhva_base.settings.publish_to_test_queue_enabled:
+                                await publish_to_test_queue(sap_id, body)
+
                             location_id = body.get("location_id")
                             SITE_ID = location_id
                             tags_data = body.get("tags_data", {})
