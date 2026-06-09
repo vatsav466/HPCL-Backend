@@ -369,12 +369,27 @@ def _build_where(
     if filters:
         for key, val in filters.items():
             c = _column_ref(key, kind="filter column")
-            if isinstance(val, (list, tuple, set)):
+            if isinstance(val, dict):
+                operator = str(val.get("operator", "")).lower()
+                value = val.get("value")
+
+                if operator == "like":
+                    parts.append(f"{c} LIKE {_sql_literal(value)}")
+
+                elif operator == "ilike":
+                    parts.append(f"{c} ILIKE {_sql_literal(value)}")
+
+                else:
+                    raise ValueError(f"Unsupported filter operator: {operator}")
+
+            elif isinstance(val, (list, tuple, set)):
                 if not val:
                     parts.append("FALSE")
                     continue
+
                 inner = ", ".join(_sql_literal(x) for x in val)
                 parts.append(f"{c} IN ({inner})")
+
             else:
                 parts.append(f"{c} = {_sql_literal(val)}")
     dc_for_dates: typing.Optional[str] = None
