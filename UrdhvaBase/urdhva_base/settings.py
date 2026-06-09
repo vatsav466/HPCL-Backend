@@ -215,6 +215,7 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_vhost: str = "hpcl_ceg"
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
+    publish_to_test_queue_enabled: bool = False
 
 
     # ThingsBoard
