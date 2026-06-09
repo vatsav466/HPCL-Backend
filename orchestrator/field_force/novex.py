@@ -851,7 +851,7 @@ async def get_loss_of_sales_volume(data):
                 loss_df
                 .group_by("stock_date", "product_group")
                 .agg(
-                    pl.col("loss_of_sale").sum().alias("loss_of_sale")
+                    (pl.col("loss_of_sale").sum()/1000).alias("loss_of_sale")
                 )
                 .sort(["stock_date", "product_group"])
             )
@@ -884,7 +884,7 @@ async def get_loss_of_sales_volume(data):
                     loss_df
                     .group_by("month_date", "product_group")
                     .agg(
-                        pl.col("loss_of_sale").sum().alias("loss_of_sale")
+                        (pl.col("loss_of_sale").sum()/1000).alias("loss_of_sale")
                     )
                     .sort("month_date","product_group")
                 )
