@@ -26,7 +26,7 @@ filtering and reporting.
 
 Environment:
 
-* ``LPG_PLANTS_CREDENTIALS_PATH`` — optional path to the plants CSV.
+* Plant credentials are loaded from ``lpg_plants_master`` via ``LpgPlantsMaster.get_aggr_data``.
 * ``LPG_UNIFIED_CHUNK_SIZE`` — rows per plant fetch (default ``25000``).
 * ``LPG_UNIFIED_MAX_CHUNKS`` — safety cap per plant per kind per run (default ``500``).
 * ``LPG_UNIFIED_START_TS`` — ISO timestamp only when nothing else defines a resume
@@ -81,6 +81,7 @@ Run::
 """
 from __future__ import annotations
 
+import asyncio
 import concurrent.futures
 import datetime as dt
 import json
@@ -100,6 +101,8 @@ import polars as pl
 import psycopg2
 import urdhva_base
 
+sys.path.append("/opt/ceg/algo")
+import hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 logger = urdhva_base.logger.Logger.getInstance("lpg_unified_log_sync")
@@ -137,20 +140,6 @@ TABLE_EXTRACTION_EVENT = "lpg_eventlog_extraction_log"
 TABLE_EXTRACTION_PRODUCTION = "lpg_plant_extraction_log"
 LogKind = str  # "event" | "production"
 ResumeSource = str  # "unified" | "app_max" | "legacy" | "default"
-
-
-def _resolve_plants_csv_path() -> Path:
-    env = os.environ.get("LPG_PLANTS_CREDENTIALS_PATH", "").strip()
-    if env:
-        return Path(env).expanduser().resolve()
-    file_path = os.path.join(
-        os.path.dirname(credential_loader.__file__),
-        "..",
-        "sync_services",
-        "lpg",
-        "LPG_PLANTS_CREDENTIALS.csv",
-    ).strip()
-    return Path(file_path).expanduser().resolve()
 
 
 def _app_db_connect():
@@ -1169,20 +1158,35 @@ def main() -> None:
     run_wall0 = time.perf_counter()
     started_at = dt.datetime.now(dt.timezone.utc).isoformat()
 
-    csv_path = _resolve_plants_csv_path()
-    if not csv_path.is_file():
-        raise FileNotFoundError(
-            f"Plants credentials CSV not found: {csv_path}. "
-            "Set LPG_PLANTS_CREDENTIALS_PATH or place LPG_PLANTS_CREDENTIALS.csv next to this package."
-        )
+    query = """
+        SELECT id, sap_id, plant_name, ip_address, port_no, username, password,
+               db_name, db_type, zone, region
+        FROM lpg_plants_master
+        ORDER BY id ASC
+    """
+    result = asyncio.run(hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0))
+    rows = result.get("data", []) if result else []
+    if not rows:
+        raise RuntimeError("No rows found in lpg_plants_master")
+    for row in rows:
+        if str(row["password"]).startswith("enc#_"):
+            row["password"] = urdhva_base.types.Secret(row["password"]).get_secret()
 
-    plants = pl.read_csv(csv_path)
+        row["erp_id"] = row.get("sap_id")
+        row["PlantName"] = row.get("plant_name")
+        row["host_ip"] = row.get("ip_address")
+        row["port"] = row.get("port_no")
+        row["db_user"] = row.get("username")
+        row["db_password"] = row.get("password")
+        row["db_database"] = row.get("db_name")
+        row["SiteRegion"] = row.get("region")
+    plants = pl.from_dicts(rows)
     max_workers = max(1, min(int(os.environ.get("LPG_MAX_WORKERS", "10")), len(plants)))
     n_plants = len(plants)
 
     _sync_print(
         f"RUN START | UTC {started_at} | plants={n_plants} | workers={max_workers} | "
-        f"csv={csv_path}"
+        "source=lpg_plants_master"
     )
 
     _sync_print("Step 1/3: Ensuring unified cursor table on APP_DB…")
@@ -1204,8 +1208,7 @@ def main() -> None:
     _sync_print("Step 2/3: Done.")
 
     logger.info(
-        "LPG unified sync: csv=%s workers=%s chunk=%s",
-        csv_path,
+        "LPG unified sync: source=lpg_plants_master workers=%s chunk=%s",
         max_workers,
         os.environ.get("LPG_UNIFIED_CHUNK_SIZE", "25000"),
     )
@@ -1239,11 +1242,11 @@ def main() -> None:
             "started_at_utc": started_at,
             "finished_at_utc": finished_at,
             "total_wall_seconds": total_run_s,
-            "plants_in_csv": n_plants,
+            "plants_in_db": n_plants,
             "plants_succeeded": ok_n,
             "plants_failed": fail_n,
             "max_workers": max_workers,
-            "csv_path": str(csv_path),
+            "plants_source": "lpg_plants_master",
             "totals": {
                 "event_log_rows_inserted_app_db": ev_rows,
                 "production_log_rows_inserted_app_db": pr_rows,

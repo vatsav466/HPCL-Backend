@@ -919,7 +919,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                             GROUP BY "transaction_date"
                             ORDER BY "transaction_date";
                         """
-    nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' """
+    nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' 
+                                    and zone is not null"""
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -941,7 +942,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     print("nozzel_previous_day ---->\n", nozzel_previous_day)
 
     nozzle_sales_percentage = round(
-        (nozzel_previous_day[0]['count'] / 24699) * 100,
+        (nozzel_previous_day[0]['count'] / 25131) * 100,
         1
     )
     print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)

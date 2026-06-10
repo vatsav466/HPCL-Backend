@@ -31,24 +31,32 @@ class GenerateLPGSummary():
             for carousal, phases in productivity.items():
                 row = {"carousal": int(carousal)}
                 for phase, metrics in phases.items():
-                    for key, value in metrics.items():
-                        row[f"{phase}_{key}"] = value
+                    if isinstance(metrics, dict):
+                        for key, value in metrics.items():
+                            row[f"{phase}_{key}"] = value
+                    else:
+                        row[phase] = metrics
+
                 rows.append(row)
             df = pd.DataFrame(rows)
+            print(df.columns.tolist())
 
             net_hours_column = ["normal_net_hours", "break_net_hours", "overtime_net_hours"]
             production_columns = ["normal_total_production", "break_total_production", "overtime_total_production"]
+            gap_columns = ["normal_gaps", "break_gaps", "overtime_gaps"]
+            meta_columns = ["bottling_hours", "stoppage_hours", "net_bottling_hours"]
             
-            for col in net_hours_column + production_columns:
+            for col in net_hours_column + production_columns + gap_columns + meta_columns:
                 if col in df.columns:
                     df[col] = df[col].fillna(0).astype(np.float64).abs()
 
             df["total_net_hours"] = df["normal_net_hours"] + df["break_net_hours"] + df["overtime_net_hours"]
             df["total_production"] = df["normal_total_production"] + df["break_total_production"] + df["overtime_total_production"]
+            df["total_gaps"] = df["normal_gaps"] + df["break_gaps"] + df["overtime_gaps"]
             df["total_productivity"] = df["total_production"] / df["total_net_hours"]
             print("*"*20)
             print("--- productivity ---")
-            print(df[["carousal", "total_production", "total_net_hours", "total_productivity"]])
+            print(df[["carousal", "total_production", "total_net_hours", "total_productivity", "total_gaps"]])
             print("*"*20)
             return df
         except Exception as e:
@@ -67,9 +75,10 @@ class GenerateLPGSummary():
             cs_rejection = pd.DataFrame.from_dict(cs_rejection, orient="index").reset_index()
             cs_rejection.rename(columns={"index": "carousal"}, inplace=True)
             cs_rejection.rename(columns={"handled": "cs_handled", "sortout": "cs_sortout", 
-                                         "rejection_rate": "cs_rejection"}, inplace=True)
+                                         "rejection_rate": "cs_rejection", "underfilled": "cs_underfilled", 
+                                         "overfilled": "cs_overfilled","other_errors": "cs_other_errors",}, inplace=True)
             if not cs_rejection.empty:
-                cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
+                cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection", "cs_underfilled", "cs_overfilled", "cs_other_errors"]]
 
             #### GD REJECTION ####
             gd_rejection = pd.DataFrame.from_dict(gd_rejection, orient="index").reset_index()
@@ -132,7 +141,18 @@ class GenerateLPGSummary():
                 logger.info(f"--- No Data Found for {self.params['sap_id']} ---")
                 return
             summary = summary.fillna(0)
-            summary = summary.groupby("carousal").sum().reset_index()
+            # summary = summary.groupby("carousal").sum().reset_index()
+            datetime_cols = ["first_cylinder", "last_cylinder"]
+            numeric_df = summary.drop(columns=datetime_cols,errors="ignore")
+            numeric_df = numeric_df.groupby( "carousal").sum().reset_index()
+            datetime_df = (summary[["carousal"] + datetime_cols].drop_duplicates(subset=["carousal"]))
+            summary = numeric_df.merge(
+                datetime_df,
+                on="carousal",
+                how="left"
+            )
+            print("After GroupBy:")
+            print(summary)
 
             status, location_data = await helpers.get_location_details("LPG", self.params["sap_id"], from_db = True)
             print("status---location_data---->", status, location_data)
@@ -154,7 +174,13 @@ class GenerateLPGSummary():
             summary["carousal"] = summary["carousal"].astype(int).astype(str)
             summary.rename(columns={"carousal": "carousel", 
                                     "production_19": "production_19kg", 
-                                    "production_14_2": "production_14_2kg"}, inplace=True)
+                                    "production_14_2": "production_14_2kg", 
+                                    "first_cylinder": "fst_cyl_production", 
+                                    "last_cylinder": "lst_cyl_production",
+                                    "normal_gaps": "normal_gap_hrs", 
+                                    "break_gaps": "break_gap_hrs", 
+                                    "overtime_gaps": "overtime_gap_hrs", 
+                                    "bottling_hours": "total_bottling_hours"}, inplace=True)
             summary["process_date"] = datetime.strptime(self.params["process_date"], "%Y-%m-%d")
             summary["sap_id"] = self.params["sap_id"]
 
@@ -246,10 +272,20 @@ async def main_concurrent():
                         pg_get_serial_sequence('lpg_plant_operations', 'id'),
                         (SELECT MAX(id) FROM lpg_plant_operations) + 1); """
     await urdhva_base.BasePostgresModel.execute_query(reset_id_query)
-
-    plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-    print(f"Processing {len(plants)} plants concurrently...")
-    
+    # plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    # print(f"Processing {len(plants)} plants concurrently...")
+    query = """
+        SELECT sap_id AS erp_id, plant_name AS PlantName, plant_name,
+               ip_address AS host_ip, port_no AS port,
+               username AS db_user, password AS db_password,
+               db_name AS db_database, db_type, zone
+        FROM lpg_plants_master ORDER BY id ASC
+    """
+    result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+    plants = pd.DataFrame(result.get("data", []) if result else [])
+    # filter only one plant for testing
+    # plants = plants[plants["plant_name"] == "LONI LPG PLANT"]          
+    print(f"Processing {len(plants)} plants concurrently...", plants["plant_name"].tolist())
     # Create semaphore to limit concurrent operations (adjust based on your system capacity)
     # Start with 10-15 concurrent operations, adjust based on database/API limits
     semaphore = asyncio.Semaphore(7)
@@ -260,6 +296,7 @@ async def main_concurrent():
     # Run all tasks concurrently
     await asyncio.gather(*tasks, return_exceptions=True)
     print("All plants processed!")
+
 
 if __name__ == "__main__":
     start_time = time.time()
