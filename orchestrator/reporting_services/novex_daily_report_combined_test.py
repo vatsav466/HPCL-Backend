@@ -608,6 +608,13 @@ async def _load_merge_data(
             "Data: nozzle sales trend",
             nozzle_sales_trend.fetch_data(),
         )
+    if _data_needed(segments, "nozzle"):
+        await _merge_awaitable_dict(
+            failures,
+            status_data,
+            "Data: nozzle sales top performance",
+            nozzle_sales_trend.nozzles_sales_top_performance(),
+        )
     if _data_needed(segments, "daily", "retail", "combined"):
         await _merge_awaitable_dict(
             failures, status_data, "Data: nozzle sales", retail_data.nozzle_sales(segregation="zone")
