@@ -895,7 +895,7 @@ class SendNotification:
 
                     tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
+                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusiontech.com"]:
                             if email not in tas_cc:
                                 tas_cc.append(email)
 
@@ -972,7 +972,7 @@ class SendNotification:
                     self.mail_recipients = tas_recipients
                     tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
+                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
                             if email not in tas_cc:
                                 tas_cc.append(email)
                     
@@ -1178,6 +1178,9 @@ class SendNotification:
             alert_data["assigned_user_roles"] = list(set(updated_roles))
         else:
             alert_data["assigned_user_roles"] = self.update_alert["assigned_user_roles"]
+        
+        if self.alert_data.get("bu") == "TAS" and not (self.alert_data.get("interlock_name") or "").strip().endswith("Maintenance"):
+            alert_data["assigned_user_roles"] = alert_data.get("assigned_user_roles", [])
 
         # Update alert_data with required fields
         alert_data.update({

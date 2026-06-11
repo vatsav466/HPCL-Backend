@@ -32,7 +32,6 @@ EMAIL_RECIPIENTS = {
                     "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com",
                     "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
                     "vamsi.c@algofusiontech.com"],
-    "cc_receipts": [],
     "bcc_receipts": [],
 }
 

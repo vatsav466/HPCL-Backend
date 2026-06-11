@@ -50,6 +50,10 @@
         .openAlert th{
             width: 300px;
         }
+        .alerts {
+            background-color: rgb(255, 255, 0);
+            color: black;
+        }
     </style>
 </head>
 
@@ -64,26 +68,34 @@
             <table>
                 <tbody>
                 <tr>
-                    <th>SBU</th>
-                    <th>Alert Category</th>
-                    <th>OPEN ALERTS: Critical</th>
-                    <th>OPEN ALERTS: High</th>
-                </tr>
+                    <th class="alerts" >SBU</th>
+                    <th class="alerts">Alert Category</th>
+                    <th class="alerts">OPEN ALERTS: Critical</th>
+                    <th class="alerts">OPEN ALERTS: High</th>
+                    <th class="alerts">TOTAL OPEN ALERTS</th>
+                    <th class="alerts">OVERALL OPEN ALERTS(Since Go live)</th>
+		        </tr>
                 <tr>
                     <td rowspan="3">SOD</td>
                     <td>Video Analytics</td>
                     <td>{{va_critical_tas}}</td>
                     <td>{{va_high_tas}}</td>
+                    <td>{{va_total_tas}}</td>
+                    <td>{{va_total_fy_tas}}</td>
                 </tr>
                 <tr>
                     <td>EMLock</td>
                     <td>{{emlock_critical_tas}}</td>
                     <td>{{emlock_high_tas}}</td>
+                    <td>{{emlock_total_tas}}</td>
+                    <td>{{emlock_total_fy_tas}}</td>
                 </tr>
                 <tr>
                     <td>TAS</td>
                     <td>{{tas_critical_tas}}</td>
                     <td>{{tas_high_tas}}</td>
+                    <td>{{tas_total_tas}}</td>
+                    <td>{{tas_total_fy_tas}}</td>
                 </tr>
                 </tbody>
             </table>
