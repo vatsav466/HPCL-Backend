@@ -33,6 +33,7 @@ async def lpgcarousals_create_carousal(data: Lpgcarousals_Create_CarousalParams)
                     "email": rpt.get("email", ""),
                     "bu": "LPG",
                     "action": "CREATE",
+                    "section": "LPG Action",
                     "action_model": "LpgCarousals",
                     "remarks": (
                         f"Carousel {data.carousal_id} created for "
@@ -112,6 +113,7 @@ async def lpgcarousals_update_carousal(data: Lpgcarousals_Update_CarousalParams)
                     "email": rpt.get("email", ""),
                     "bu": "LPG",
                     "action": "UPDATE",
+                    "section": "LPG Action",
                     "action_model": "LpgCarousals",
                     "remarks": (
                         f"Carousel {data.carousal_id} for "
@@ -164,6 +166,7 @@ async def lpgcarousals_delete_carousal(data: Lpgcarousals_Delete_CarousalParams)
                 "email": rpt.get("email", ""),
                 "bu": "LPG",
                 "action": "DELETE",
+                "section": "LPG Action",
                 "action_model": "LpgCarousals",
                 "remarks": (
                     f"Carousel {data.carousal_id} deleted from "

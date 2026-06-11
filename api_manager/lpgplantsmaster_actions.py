@@ -68,6 +68,7 @@ async def lpgplantsmaster_create_location(data: Lpgplantsmaster_Create_LocationP
                     "email": rpt.get("email", ""),
                     "bu": "LPG",
                     "action": "CREATE",
+                    "section": "LPG Action",
                     "action_model": "LpgPlantsMaster",
                     "remarks": f"LPG Plant '{data_dict.get('plant_name')}' with SAP ID {data.sap_id} created successfully",                    "raw_data": {
                         "new_data": data_dict
@@ -140,6 +141,7 @@ async def lpgplantsmaster_update_location(data: Lpgplantsmaster_Update_LocationP
                     "email": rpt.get("email", ""),
                     "bu": "LPG",
                     "action": "UPDATE",
+                    "section": "LPG Action",
                     "action_model": "LpgPlantsMaster",
                     "remarks": (
                         f"Plant {plant_name} "
@@ -185,6 +187,7 @@ async def lpgplantsmaster_delete_location(data: Lpgplantsmaster_Delete_LocationP
                 "email": rpt.get("email", ""),
                 "bu": "LPG",
                 "action": "DELETE",
+                "section": "LPG Action",
                 "action_model": "LpgPlantsMaster",
                 "remarks": f"Location {data.sap_id} deleted successfully",
                 "raw_data": {
