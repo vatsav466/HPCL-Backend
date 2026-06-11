@@ -1260,7 +1260,7 @@ async def lpg_production_report():
         pl.col("rated_productivity").alias("Comparision Normal Productivity")
     ])
     print("df select ---->\n", df)
-    
+    df = df.fill_null(0)
     # Sort data
     df = df.sort(["Plant Name", "SAP Code", "Zone", "Carousel"])
 
