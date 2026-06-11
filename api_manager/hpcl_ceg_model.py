@@ -11013,8 +11013,12 @@ class SystemAuditLogSchema(UrdhvaPostgresBase):
     employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     role: Mapped[typing.Optional[typing.List[str]]] = mapped_column("role", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     email: Mapped[typing.Optional[str]] = mapped_column("email", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action: Mapped[typing.Optional[str]] = mapped_column("action", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_model: Mapped[typing.Optional[str]] = mapped_column("action_model", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     section: Mapped[typing.Optional[str]] = mapped_column("section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    raw_data: Mapped[typing.Optional[dict]] = mapped_column("raw_data", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
 
 
 class SystemAuditLogCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -11023,8 +11027,12 @@ class SystemAuditLogCreate(urdhva_base.postgresmodel.BasePostgresModel):
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     email: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[str] = pydantic.Field("", **{})
+    action_model: typing.Optional[str] = pydantic.Field("", **{})
     section: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         collection_name = 'data_flow'
@@ -11040,8 +11048,12 @@ class SystemAuditLog(urdhva_base.postgresmodel.PostgresModel):
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     email: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[str] = pydantic.Field("", **{})
+    action_model: typing.Optional[str] = pydantic.Field("", **{})
     section: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         collection_name = 'data_flow'
