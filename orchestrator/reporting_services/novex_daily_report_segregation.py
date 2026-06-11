@@ -84,6 +84,7 @@ async def publish_daily_novex_status_email():
     status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
     status_data.update(await retail_data.sales_tmt_excel())
     status_data.update(await nozzle_sales_trend.fetch_data())
+    status_data.update(await nozzle_sales_trend.nozzles_sales_top_performance())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -93,10 +94,15 @@ async def publish_daily_novex_status_email():
     # print("-------->status_data",status_data)
     await send_notification(
         template_name="seg1.html",
-        to_recipients=["gkpatel@hpcl.in","sanjayk@hpcl.in","georget@hpcl.in"],
+        to_recipients=["gkpatel@hpcl.in","georget@hpcl.in"],
         subject="Novex Daily Report",
-        cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in","arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in"],
+        cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in",
+                        "anujjain@hpcl.in","Mayank.Mittal@hpcl.in","sumanraj@hpcl.in","anuragn@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in",
+                        "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
+                        "sreedhar.maddipati@algofusiontech.com", "moufikali@algofusiontech.com","venu@algofusiontech.com", "aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "vamsi.c@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com", "mohith.p@algofusiontech.com","mrudula.m@algofusiontech.com", "pawann.k@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -110,7 +116,10 @@ async def publish_daily_novex_status_email():
         to_recipients=["abalaji@hpcl.in"],
         subject="Novex Daily Report: Retail",
         cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in","harishrk@hpcl.in","sandesh.mane@hpcl.in","georget@hpcl.in", "raksha.patidar@hpcl.in", "gkpatel@hpcl.in", "magarwal@hpcl.in","rohitverma@hpcl.in"],
-        bcc_recipients=["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in"],
+        bcc_recipients=["shubhra.Narayan@hpcl.in","arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in" ,"avinashgaurav@hpcl.in",
+                        "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com","mrudula.m@algofusiontech.com","mohith.p@algofusiontech.com","pawann.k@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -123,9 +132,16 @@ async def publish_daily_novex_status_email():
         template_name="seg3.html",
         to_recipients=["adsul@hpcl.in","gbala@hpcl.in"],
         subject="Novex Daily Report: LPG",
-        cc_recipients=["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in","pranawsinha@hpcl.in","rajkumar@hpcl.in", "sarangi@hpcl.in", "mvrmurthy@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in",
-                        "gkpatel@hpcl.in","adityapandey@hpcl.in","arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in"],
+        cc_recipients=["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in","pranawsinha@hpcl.in","rajkumar@hpcl.in","sarangi@hpcl.in","mvrmurthy@hpcl.in",
+                       "NZ.LPG.HEAD@hpcl.in","EZ.LPG.HEAD@hpcl.in","SZ.LPG.HEAD@hpcl.in","NWZ.LPG.HEAD@hpcl.in","SCZ.LPG.HEAD@hpcl.in","NCZ.LPG.HEAD@hpcl.in",
+                       "WZ.LPG.HEAD@hpcl.in","Randhir.Kumar2@hpcl.in","Rishikesh.patil@hpcl.in","aijaj@hpcl.in","amargupta@hpcl.in","bkumar@hpcl.in",
+                       "krishnumbhavsar@hpcl.in","cmurli@hpcl.in","richaschouksey@hpcl.in","udayk@hpcl.in","Abhay.Kumar@hpcl.in","Vikram.Kumar@hpcl.in",
+                       "mkchauhan@hpcl.in","nsuresh@hpcl.in","ppawar@hpcl.in","satyabratakakoti@hpcl.in","kjeevan@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","gkpatel@hpcl.in",
+                        "arpitaKanak.Bara@hpcl.in","shrikantsaini@hpcl.in","vgupta@hpcl.in","avinashgaurav@hpcl.in",
+                        "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com","mrudula.m@algofusiontech.com","mohith.p@algofusiontech.com","pawann.k@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
@@ -140,9 +156,12 @@ async def publish_daily_novex_status_email():
                        "SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","rameshyadav.p@hpcl.in","crvkumar@hpcl.in",
-                       "Tarunghisulal.chauhan@hpcl.in", "akashdtewari@hpcl.in","bhsgk@hpcl.in", "msbhorkade@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in",
-                        "gkpatel@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
+                       "Tarunghisulal.chauhan@hpcl.in", "akashdtewari@hpcl.in","bhsgk@hpcl.in", "msbhorkade@hpcl.in","dabhane@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in",
+                        "gkpatel@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in","avinashgaurav@hpcl.in",
+                        "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com","mrudula.m@algofusiontech.com","mohith.p@algofusiontech.com","pawann.k@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
@@ -156,7 +175,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
         subject="Novex Daily Report",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -176,8 +195,10 @@ async def publish_daily_novex_status_email():
         template_name="ro_va_cleanliness.html",
         to_recipients=["cvmallinath@hpcl.in","ritwik.rath@hpcl.in","is.head@hpcl.in","MdTausif.Anwar@hpcl.in","vimalkumar@hpcl.in"],
         subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
-        cc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in"],
-        bcc_recipients=["venu@algofusiontech.com","yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in"],
+        bcc_recipients=["sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","aditya@algofusiontech.com","yesu.p@algofusiontech.com",
+                        "vamsi.c@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","poojitha.gumma@algofusiontech.com","mrudula.m@algofusiontech.com",
+                        "mohith.p@algofusiontech.com","pawann.k@algofusiontech.com"],
         notification_data=status_data
     )
 
@@ -185,10 +206,11 @@ async def publish_daily_novex_status_email():
         template_name="nozzle_sales_trend.html",
         to_recipients=["sandesh.mane@hpcl.in"],
         subject="Nozzle sales of MS Sales and Power daily sales Trend monitoring",
-        cc_recipients=["sanjayk@hpcl.in", "gkpatel@hpcl.in"],
-        bcc_recipients=["adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in", "venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com",
-                        "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", 
-                        "poojitha.gumma@algofusiontech.com"],
+        cc_recipients=["gkpatel@hpcl.in"],
+        bcc_recipients=["adityapandey@hpcl.in", "arpitaKanak.Bara@hpcl.in" , "shrikantsaini@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in", "sreedhar.maddipati@algofusiontech.com",
+                        "venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com",
+                        "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
+                        "poojitha.gumma@algofusiontech.com","mrudula.m@algofusiontech.com", "mohith.p@algofusiontech.com","pawann.k@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "nozzle_trend_chart": f"{status_data.get('nozzle_trend_chart')}"

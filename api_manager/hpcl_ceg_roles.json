@@ -8816,6 +8816,186 @@
                     "name": "add_recipients"
                 }
             ]
+        },
+        {
+            "name": "lpgcarousals",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCarousals",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcarousals/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_carousal"
+                },
+                {
+                    "name": "update_carousal"
+                },
+                {
+                    "name": "delete_carousal"
+                }
+            ]
+        },
+        {
+            "name": "lpgcarousals_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCarousals_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcarousals/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgcarousals_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCarousals_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcarousals/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_carousal"
+                },
+                {
+                    "name": "update_carousal"
+                },
+                {
+                    "name": "delete_carousal"
+                }
+            ]
+        },
+        {
+            "name": "lpgplantsmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantsMaster",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantsmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_location"
+                },
+                {
+                    "name": "update_location"
+                },
+                {
+                    "name": "delete_location"
+                },
+                {
+                    "name": "plant_details"
+                },
+                {
+                    "name": "test_connection"
+                },
+                {
+                    "name": "download_plant_and_carousal_details"
+                }
+            ]
+        },
+        {
+            "name": "lpgplantsmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantsMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantsmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgplantsmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantsMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantsmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_location"
+                },
+                {
+                    "name": "update_location"
+                },
+                {
+                    "name": "delete_location"
+                },
+                {
+                    "name": "plant_details"
+                },
+                {
+                    "name": "test_connection"
+                },
+                {
+                    "name": "download_plant_and_carousal_details"
+                }
+            ]
         }
     ],
     "policies": [
@@ -9725,6 +9905,42 @@
         {
             "name": "add_recipients",
             "displayName": "add_recipients"
+        },
+        {
+            "name": "create_carousal",
+            "displayName": "create_carousal"
+        },
+        {
+            "name": "update_carousal",
+            "displayName": "update_carousal"
+        },
+        {
+            "name": "delete_carousal",
+            "displayName": "delete_carousal"
+        },
+        {
+            "name": "create_location",
+            "displayName": "create_location"
+        },
+        {
+            "name": "update_location",
+            "displayName": "update_location"
+        },
+        {
+            "name": "delete_location",
+            "displayName": "delete_location"
+        },
+        {
+            "name": "plant_details",
+            "displayName": "plant_details"
+        },
+        {
+            "name": "test_connection",
+            "displayName": "test_connection"
+        },
+        {
+            "name": "download_plant_and_carousal_details",
+            "displayName": "download_plant_and_carousal_details"
         }
     ]
 }

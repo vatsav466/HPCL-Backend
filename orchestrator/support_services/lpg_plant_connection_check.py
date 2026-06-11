@@ -10,25 +10,45 @@ import mysql.connector
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import orchestrator.notification_manager.notification_factory
+import sys
+sys.path.append("/opt/ceg/algo")
+import hpcl_ceg_model
 
-PLANT_DATA_FILE = "/data/LPG_PLANTS_CREDENTIALS.csv"
 CONNECTION_TIMEOUT = 10  # seconds
 
 not_connected_plants = []
 
 
-def load_plant_data():
-    """Load plant data from CSV file"""
+async def load_plant_data():
+    """Load plant data from lpg_plants_master table in DB"""
     try:
-        if os.path.exists(PLANT_DATA_FILE):
-            df = pd.read_csv(PLANT_DATA_FILE)
-            print(f"Loaded {len(df)} plants from {PLANT_DATA_FILE}")
-            return df
-        else:
-            print(f"Plant data file not found: {PLANT_DATA_FILE}")
+        query = """
+            SELECT sap_id, plant_name, zone, ip_address, port_no, username, password, db_name, db_type
+            FROM lpg_plants_master
+            ORDER BY id ASC
+        """
+        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+        rows = result.get("data", []) if result else []
+        if not rows:
+            print("No rows found in lpg_plants_master")
             return None
+        # Decrypt password if encrypted
+        for row in rows:
+            if str(row["password"]).startswith("enc#_"):
+                row["password"] = urdhva_base.types.Secret(row["password"]).get_secret()
+                
+        df = pd.DataFrame(rows)
+        df["erp_id"] = df["sap_id"]
+        df["short_name"] = df["plant_name"]
+        df["host_ip"] = df["ip_address"]
+        df["port"] = df["port_no"]
+        df["db_user"] = df["username"]
+        df["db_password"] = df["password"]
+        df["db_database"] = df["db_name"]
+        print(f"Loaded {len(df)} plants from lpg_plants_master")
+        return df
     except Exception as e:
-        print(f"Error loading plant data: {e}")
+        print(f"Error loading plant data from DB: {e}")
         return None
 
 
@@ -311,8 +331,8 @@ async def main():
         global not_connected_plants
         not_connected_plants = []
 
-        # Load plant data
-        plant_df = load_plant_data()
+        # Load plant data from DB
+        plant_df = await load_plant_data()
         if plant_df is None:
             print("Cannot proceed without plant data")
             return
