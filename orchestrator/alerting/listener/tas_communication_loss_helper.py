@@ -46,7 +46,7 @@ async def run_communication_loss_cron() -> dict:
         return {"status": "success", "processed": 0, "alerts_created": 0}
 
     now_utc = datetime.datetime.now(datetime.timezone.utc)
-    one_hour_ago = now_utc - datetime.timedelta(hours=1)
+    five_minutes_ago = now_utc - datetime.timedelta(minutes=5)
     
     alerts_created = 0
     
@@ -95,7 +95,7 @@ async def run_communication_loss_cron() -> dict:
                     else:
                         redis_dt = redis_dt.astimezone(datetime.timezone.utc)
                     
-                    if redis_dt > one_hour_ago:
+                    if redis_dt > five_minutes_ago:
                         redis_active = True
             except Exception as e:
                 logger.error(f"Error checking Redis for sap_id {sap_id}: {e}")
@@ -134,7 +134,7 @@ async def run_communication_loss_cron() -> dict:
                     else:
                         db_dt = db_dt.astimezone(datetime.timezone.utc)
                     
-                    if db_dt > one_hour_ago:
+                    if db_dt > five_minutes_ago:
                         db_silent = False
         except Exception as e:
             logger.error(f"Error checking DB for sap_id {sap_id}: {e}")

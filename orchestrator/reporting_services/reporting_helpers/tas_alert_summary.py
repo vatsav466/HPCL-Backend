@@ -124,8 +124,15 @@ async def fetch_telemetry(session, jwt, device_id, key, start_ms, end_ms):
     unique.sort(key=lambda x: x["ts"], reverse=True)
     return unique
 
-def find_gaps(records: list[dict], gap_threshold_min: int) -> list[dict]:
+def find_gaps(records, gap_threshold_min, start_ms):
     gaps, threshold_ms = [], gap_threshold_min * 60 * 1000
+
+    # Leading gap: window start → first (oldest) record
+    if start_ms is not None and records:
+        leading_gap_ms = records[-1]["ts"] - start_ms
+        if leading_gap_ms > threshold_ms:
+            gaps.append({"duration_min": round(leading_gap_ms / 60000, 1)})
+
     for i in range(len(records) - 1):
         diff_ms = records[i]["ts"] - records[i + 1]["ts"]
         if diff_ms > threshold_ms:
@@ -165,7 +172,7 @@ async def publish_integrated_daily_report(email_type, audience):
         location_map = group_tk_devices_by_location(devices)
         for loc_name, dev in sorted(location_map.items()):
             records = await fetch_telemetry(session, jwt, dev["id"]["id"], TELEMETRY_KEY, start_ms, end_ms)
-            gaps = find_gaps(records, GAP_THRESHOLD_MIN)
+            gaps = find_gaps(records, GAP_THRESHOLD_MIN, start_ms=start_ms)
             total_min = sum(g["duration_min"] for g in gaps)
             
             # Even if no records were found at all today, that's a total outage
