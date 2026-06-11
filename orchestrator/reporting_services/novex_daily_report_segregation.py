@@ -126,7 +126,7 @@ async def publish_daily_novex_status_email():
             "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
             "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
-        attachments = [status_data.get('zone_wise_pdf_path') ,status_data.get('retail_sales_report')]
+        attachments = [status_data.get('zone_wise_pdf_path')]
     )
     await send_notification(
         template_name="seg3.html",
@@ -188,8 +188,8 @@ async def publish_daily_novex_status_email():
         },
         attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('lpg_day_wise_trend_exl_path'), 
                        status_data.get('lpg_va_path'),status_data.get('lpg_pq_path'),status_data.get('tas_day_wise_trend_exl_path'),
-                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path'),
-                       status_data.get('retail_sales_report')]
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')
+                    ]
     )
     await send_notification(
         template_name="ro_va_cleanliness.html",

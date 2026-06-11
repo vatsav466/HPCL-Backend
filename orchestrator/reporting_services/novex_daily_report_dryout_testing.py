@@ -124,7 +124,7 @@ async def publish_daily_novex_status_email():
             "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
             "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
-        attachments = [status_data.get('zone_wise_pdf_path'), status_data.get('retail_sales_report')]
+        attachments = [status_data.get('zone_wise_pdf_path')]
     )
     await send_notification(
         template_name="seg3.html",
