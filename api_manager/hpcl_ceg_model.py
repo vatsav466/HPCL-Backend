@@ -11835,6 +11835,16 @@ class Lpgoperationsinsights_Lpg_Plants_InsightsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Lpgoperationsinsights_Lpg_Car_DownloadParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class NaturalGasGVConnectionsSchema(UrdhvaPostgresBase):
     __tablename__ = 'natural_gas_gv_connections'
     
