@@ -53,7 +53,7 @@ class GenerateLPGSummary():
             df["total_net_hours"] = df["normal_net_hours"] + df["break_net_hours"] + df["overtime_net_hours"]
             df["total_production"] = df["normal_total_production"] + df["break_total_production"] + df["overtime_total_production"]
             df["total_gaps"] = df["normal_gaps"] + df["break_gaps"] + df["overtime_gaps"]
-            df["total_productivity"] = df["total_production"] / df["total_net_hours"]
+            df["total_productivity"] = df["total_production"] / df["net_bottling_hours"]
             print("*"*20)
             print("--- productivity ---")
             print(df[["carousal", "total_production", "total_net_hours", "total_productivity", "total_gaps"]])

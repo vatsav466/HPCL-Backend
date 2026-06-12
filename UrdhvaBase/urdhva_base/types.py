@@ -59,5 +59,7 @@ class Secret(str):
 
     def get_secret(self, domain=None) -> str:
         # print(self.encode())
+        if not self.startswith('enc#_'):
+            return str(self)
         return cryptography.fernet.Fernet(self.get_key(urdhva_base.settings.password_salt)).decrypt(
             self[5:].encode()).decode()
