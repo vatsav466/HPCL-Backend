@@ -30,7 +30,6 @@ def excel_safe(value):
 async def lpgplantsmaster_create_location(data: Lpgplantsmaster_Create_LocationParams):
     try:
         print("Data received:", data.__dict__)
-
         missing = [k for k, v in {"sap_id": data.sap_id, "ip_address": data.ip_address, "port_no": data.port_no, "username": data.username, "password": data.password, "db_name": data.db_name, "db_type": data.db_type}.items() if v in [None, ""]]
         if missing:
             return {"status": False, "message": f"Fields are missing: {', '.join(missing)}", "data": None}
@@ -57,8 +56,25 @@ async def lpgplantsmaster_create_location(data: Lpgplantsmaster_Create_LocationP
             data_dict["plant_name"] = data.name.strip()
             data_dict["region"] = None
             data_dict["zone"] = None
-
         resp = await hpcl_ceg_model.LpgPlantsMasterCreate(**data_dict).create()
+        rpt = urdhva_base.context.context.get("rpt", {})
+        print("resp->", resp)
+        if resp:
+            print("Creating audit log for plant creation")
+            await SystemAuditLogCreate(
+                **{
+                    "employee_id": rpt.get("username"),
+                    "role": rpt.get("novex_role", []),
+                    "email": rpt.get("email", ""),
+                    "bu": "LPG",
+                    "action": "CREATE",
+                    "section": "LPG Action",
+                    "action_model": "LpgPlantsMaster",
+                    "remarks": f"LPG Plant '{data_dict.get('plant_name')}' with SAP ID {data.sap_id} created successfully",                    "raw_data": {
+                        "new_data": data_dict
+                    }
+                }
+            ).create()
 
         return {"status": True, "message": "Location created successfully", "data": resp}
 
@@ -66,12 +82,14 @@ async def lpgplantsmaster_create_location(data: Lpgplantsmaster_Create_LocationP
         print(traceback.format_exc())
         return {"status": False, "message": str(e), "data": None}
 
+
 # Action update_location
 @router.post('/update_location', tags=['LpgPlantsMaster'])
 async def lpgplantsmaster_update_location(data: Lpgplantsmaster_Update_LocationParams):
     try:
-        query = f"sap_id = {data.sap_id}"
-        existing = await hpcl_ceg_model.LpgPlantsMaster.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+        rpt = urdhva_base.context.context.get("rpt", {})
+        existing = await hpcl_ceg_model.LpgPlantsMaster.get_all(urdhva_base.QueryParams(q=f"sap_id = {data.sap_id}"), resp_type="plain")
+
         if not existing.get("data"):
             return {
                 "status": False,
@@ -80,11 +98,63 @@ async def lpgplantsmaster_update_location(data: Lpgplantsmaster_Update_LocationP
             }
 
         record = existing["data"][0]
+        old_data = record.copy()
+        plant_name = record.get("plant_name") or record.get("name") or "Unknown"
+        changes = []
         for key, value in data.__dict__.items():
-            if value is not None:
+            if value is None:
+                continue
+            old_value = record.get(key)
+            # Password comparison
+            if key == "password":
+                old_pwd = (urdhva_base.types.Secret(str(old_value)).get_secret() if old_value and str(old_value).startswith("enc#_") else old_value)
+                new_pwd = (
+                    value.get_secret()
+                    if hasattr(value, "get_secret")
+                    else (urdhva_base.types.Secret(str(value)).get_secret() if value and str(value).startswith("enc#_") else value))
+
+                if old_pwd != new_pwd:
+                    changes.append("Password changed")
+                    record[key] = value
+                continue
+
+            # Normal field comparison
+            if old_value != value:
+                changes.append(f"{key.replace('_', ' ').title()} changed from '{old_value}' to '{value}'")
                 record[key] = value
 
+        if not changes:
+            return {
+                "status": True,
+                "message": "No changes detected",
+                "data": existing["data"][0]
+            }
+
         resp = await hpcl_ceg_model.LpgPlantsMaster(**record).modify()
+        audit_old_data = {k: v for k, v in old_data.items() if k != "password"}
+        audit_new_data = {k: v for k, v in record.items() if k != "password"}
+        if resp:
+            await hpcl_ceg_model.SystemAuditLogCreate(
+                **{
+                    "employee_id": rpt.get("username"),
+                    "role": rpt.get("novex_role", []),
+                    "email": rpt.get("email", ""),
+                    "bu": "LPG",
+                    "action": "UPDATE",
+                    "section": "LPG Action",
+                    "action_model": "LpgPlantsMaster",
+                    "remarks": (
+                        f"Plant {plant_name} "
+                        f"[SAP ID: {data.sap_id}] updated. "
+                        f"Changes: {'; '.join(changes)}"
+                    ),
+                    "raw_data": {
+                        "old_data": audit_old_data,
+                        "new_data": audit_new_data
+                    }
+                }
+            ).create()
+
         return {
             "status": True,
             "message": "Location updated successfully",
@@ -102,11 +172,29 @@ async def lpgplantsmaster_update_location(data: Lpgplantsmaster_Update_LocationP
 @router.post('/delete_location', tags=['LpgPlantsMaster'])
 async def lpgplantsmaster_delete_location(data: Lpgplantsmaster_Delete_LocationParams):
     try:
+        rpt = urdhva_base.context.context.get("rpt", {})
         resp = await hpcl_ceg_model.LpgPlantsMaster.get_all(urdhva_base.QueryParams(q=f"sap_id={data.sap_id}"), resp_type="plain")
         if not resp["data"]:
             return {"status": False, "message": "Location not found", "data": None}
 
-        await hpcl_ceg_model.LpgPlantsMaster.delete(resp["data"][0]["id"])
+        # Store record before delete
+        old_data = resp["data"][0].copy()
+        await hpcl_ceg_model.LpgPlantsMaster.delete(old_data["id"])
+        await hpcl_ceg_model.SystemAuditLogCreate(
+            **{
+                "employee_id": rpt.get("username"),
+                "role": rpt.get("novex_role", []),
+                "email": rpt.get("email", ""),
+                "bu": "LPG",
+                "action": "DELETE",
+                "section": "LPG Action",
+                "action_model": "LpgPlantsMaster",
+                "remarks": f"Location {data.sap_id} deleted successfully",
+                "raw_data": {
+                    "old_data": old_data
+                }
+            }
+        ).create()
 
         return {"status": True, "message": "Location deleted successfully", "data": None}
 
