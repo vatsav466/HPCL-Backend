@@ -11,7 +11,7 @@ import orchestrator.notification_manager.notification_factory as notification_fa
 from orchestrator.reporting_services.reporting_helpers import lpg_data
 
 
-async def publish_daily_novex_status_email():
+async def fetch_data():
     date = urdhva_base.utilities.get_present_time()
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                        date_time_format=None)
@@ -48,8 +48,11 @@ async def publish_daily_novex_status_email():
                    'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
 
     status_data.update(await lpg_data.lpg_production_report())
+    return status_data
 
 
+async def publish_daily_novex_status_email():
+    status_data = await fetch_data()
     await send_notification(
         template_name="lpg_production.html",
         to_recipients=["rishikeshdevidas.patil@hpcl.in"],
