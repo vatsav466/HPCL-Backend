@@ -1218,6 +1218,27 @@ async def lpg_production_report():
         return cleaned
 
     clean_resp = clean_decimals(resp)
+    if not clean_resp:
+        workbook = xlsxwriter.Workbook("/tmp/lpg_production_report.xlsx")
+        worksheet = workbook.add_worksheet("Report")
+        worksheet.write("A1", "No Data Available")
+        workbook.close()
+
+        return {
+            "data": [],
+            "lpg_production_report": "/tmp/lpg_production_report.xlsx"
+        }
+    
+    drop_cols = [
+        "created_at",
+        "updated_at",
+        "lst_cyl_production",
+        "fst_cyl_production"
+    ]
+
+    for row in clean_resp:
+        for col in drop_cols:
+            row.pop(col, None)
 
     df = pl.DataFrame(clean_resp)
     df = df.with_columns([
@@ -1245,8 +1266,9 @@ async def lpg_production_report():
         ]).alias("Total Cylinders"),
         pl.col("normal_total_production").alias("Normal Total Production"),
         pl.col("normal_net_hours").alias("Normal Net Hours"),
-        pl.col("total_hours").alias("Total Stoppage Hours"),
-        (pl.col("total_hours").fill_null(0) - pl.col("normal_net_hours").fill_null(0)).round(2).alias("Stoppage Hours"),
+        # pl.col("total_hours").alias("Total Stoppage Hours"),
+        # (pl.col("total_hours").fill_null(0) - pl.col("normal_net_hours").fill_null(0)).round(2).alias("Stoppage Hours"),
+        pl.col("normal_gap_hrs").alias("Stoppage Hours"),
         pl.col("normal_productivity").alias("Normal Productivity"),
         pl.col("break_total_production").alias("Break Total Production"),
         pl.col("break_net_hours").alias("Break Net Hours"),
