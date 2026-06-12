@@ -27,7 +27,7 @@ def dict_to_object(d):
     return d
     
 
-async def publish_daily_novex_status_email():
+async def fetch_data():
     global WRITE_TO_DB
     date = urdhva_base.utilities.get_present_time()
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
@@ -96,6 +96,11 @@ async def publish_daily_novex_status_email():
     # print("status_data :", json.dumps(status_data))
     # print("-" * 50)
     # print("-------->status_data",status_data)
+    return status_data
+
+
+async def publish_daily_novex_status_email():
+    status_data = await fetch_data()
     await send_notification(
         template_name="seg1.html",
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
