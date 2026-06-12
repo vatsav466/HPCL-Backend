@@ -630,8 +630,6 @@ async def lpg_car_download(data):
         final_where_clause = " AND " + " AND ".join(all_conditions)
         final_where_clause_car = " WHERE " + " AND ".join(all_conditions)
 
-    print("final_where_clause---->\n", final_where_clause)
-    print("final_where_clause_car---->\n", final_where_clause_car)
 
     if start_date == end_date:
         query = f"""
@@ -646,10 +644,8 @@ async def lpg_car_download(data):
             and process_date < '{end_date}' 
             {final_where_clause}
         """ 
-    print("query ----->\n", query)
 
-    car_query = f"""SELECT * FROM carousals_bkp {final_where_clause_car}"""
-    print("query ----->\n", car_query)
+    car_query = f"""SELECT * FROM lpg_carousals {final_where_clause_car}"""
                
     charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     charts_actions.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -676,13 +672,10 @@ async def lpg_car_download(data):
         return cleaned
 
     clean_resp = clean_data(resp)
-    # print("clean+resp ---->\n", clean_resp)
     data = pl.DataFrame(clean_resp)
-    # print("the lpg plant operations data ---->\n", data.to_dicts())
 
     car_data = await function(query= car_query)
     car_df = pl.DataFrame(car_data)
-    # print("car df----<", car_df.to_dicts())
     def calculate_hours(time_range_str):
         import json
         time_ranges = json.loads(time_range_str)
@@ -713,17 +706,13 @@ async def lpg_car_download(data):
         .alias("normal_available_hrs")
     ])
 
-    # print("df ---->\n", car_df.to_dicts())
-
     df = car_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
     data = data.with_columns([
         pl.col("sap_id").cast(pl.Utf8),
         pl.col("carousel").cast(pl.Int64)  
     ])
     df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
-
-    # print("final data ----->\n", df.to_dicts())
-
+    
     df = df.select([
         pl.col("sap_id").alias("sap_id"),
         pl.col("location_name").alias("location_name"),
