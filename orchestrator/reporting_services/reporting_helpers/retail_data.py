@@ -976,6 +976,28 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         ascending=[True, False]
     )
     supply_terminal_query_ro_count_df["Sl No"] = range(1, len(supply_terminal_query_ro_count_df) + 1)
+
+    total_dryout_ros = supply_terminal_query_ro_count_df["Count of Dryout ROs"].sum()
+    total_valid_indent = supply_terminal_query_ro_count_df["Count of DryOut Outlets with Valid indent"].sum()
+    avg_pending_indents = supply_terminal_query_ro_count_df["Avg. Pending Indents for last 3 days"].sum()
+
+    # Create total row
+    total_row = {
+        "Sl No": "",
+        "Zone": "",
+        "Supply Location (Terminal)": "",
+        "Region": "TOTAL",
+        "Count of Dryout ROs": total_dryout_ros,
+        "Count of DryOut Outlets with Valid indent": total_valid_indent,
+        "Avg. Pending Indents for last 3 days": avg_pending_indents
+    }
+
+    # Append to dataframe
+    supply_terminal_query_ro_count_df = pd.concat(
+        [supply_terminal_query_ro_count_df, pd.DataFrame([total_row])],
+        ignore_index=True
+    )
+
     html_table = supply_terminal_query_ro_count_df.to_html(
         index=False,
         classes="styled-table",
@@ -1019,6 +1041,11 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                 }}
                                 table.styled-table tr:nth-child(even) {{
                                     background-color: #f2f2f2;
+                                }}
+                                table.styled-table tr:last-child {{
+                                    font-weight: bold;
+                                    background-color: #FFF2CC;  
+                                    color: #000;
                                 }}
                                 </style>
                                 </head>

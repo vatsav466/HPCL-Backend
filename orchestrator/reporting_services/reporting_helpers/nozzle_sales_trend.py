@@ -252,6 +252,7 @@ async def fetch_data():
                 GROUP BY transaction_date
 
             """
+    nozzle_sync_time_query = """ SELECT MAX(created_at::timestamp) as sync_time FROM nozzle_sales """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -270,7 +271,21 @@ async def fetch_data():
 
     nozzle_trend_chart = await plot_ms_sales_trend(nozzle_trend_df)
     print("nozzle trend chart --->\n", nozzle_trend_chart)
-    return {"nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0], "nozzle_trend_chart": nozzle_trend_chart}
+
+    nozzle_sync_time = await function(query= nozzle_sync_time_query)
+    nozzle_sync_time = pl.DataFrame(nozzle_sync_time)
+    nozzle_sync_time = nozzle_sync_time.with_columns(
+        pl.col("sync_time")
+        .dt.replace_time_zone("UTC")
+        .dt.convert_time_zone("Asia/Kolkata")
+        .dt.strftime("%-I:%M %p")
+        .alias("nozzle_sales_sync")
+    )
+    print("nozzle_sync_time -------------->\n", nozzle_sync_time.to_dicts())
+
+    return {"nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0], "nozzle_trend_chart": nozzle_trend_chart,
+            "nozzle_sales_sync_time": nozzle_sync_time["nozzle_sales_sync"][0]
+        }
 
 
 async def nozzles_sales_top_performance():

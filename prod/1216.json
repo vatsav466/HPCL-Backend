@@ -14287,10 +14287,10 @@
         },
         {
             "device_name": "TK-32_SWEET SKO@Bahadurgarh_M",
-            "device_id": "a6999b90-5263-11f0-97fb-991e1ee6bef3",
+            "device_id": "a6999b90-5263-11f0-97fb-991e1ee6bef3_1",
             "device_type": "Tank Maintenance",
-            "device_key": "dBefn80YKh8k9A0HDBx7",
-            "entity_id": "f9195f60-08d2-11f1-a599-bd16d92a3728",
+            "device_key": "dBefn80YKh8k9A0HDBx7_1",
+            "entity_id": "f9195f60-08d2-11f1-a599-bd16d92a3728_1",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -17810,17 +17810,10 @@
                 },
                 {
                     "sensor_name": "PLC A COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC.PLCA_COMM_OK",
+                    "sensor_tag": "PLC.SFTPLC.PLCA_COMM_FAIL",
                     "normal_value": "0",
                     "sensor_id": "SFTPLC",
                     "sensor_type": "PLC A"
-                },
-                {
-                    "sensor_name": "PLC B COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC.PLCB_COMM_OK",
-                    "normal_value": "0",
-                    "sensor_id": "SFTPLC",
-                    "sensor_type": "PLC B"
                 }
             ]
         },
@@ -17859,15 +17852,8 @@
                     "sensor_id": "SFTPLC"
                 },
                 {
-                    "sensor_name": "PLC A COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC1.PLCA_COMM_OK",
-                    "normal_value": "0",
-                    "sensor_id": "SFTPLC",
-                    "sensor_type": "PLC A"
-                },
-                {
                     "sensor_name": "PLC B COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC1.PLCB_COMM_OK",
+                    "sensor_tag": "PLC.SFTPLC1.PLCB_COMM_FAIL",
                     "normal_value": "0",
                     "sensor_id": "SFTPLC",
                     "sensor_type": "PLC B"
@@ -17909,15 +17895,8 @@
                     "sensor_id": "SFTPLC"
                 },
                 {
-                    "sensor_name": "PLC A COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC2.PLCA_COMM_OK",
-                    "normal_value": "0",
-                    "sensor_id": "SFTPLC",
-                    "sensor_type": "PLC A"
-                },
-                {
                     "sensor_name": "PLC B COOMUNCIATION",
-                    "sensor_tag": "PLC.SFTPLC2.PLCB_COMM_OK",
+                    "sensor_tag": "PLC.SFTPLC2.PLCB_COMM_FAIL",
                     "normal_value": "0",
                     "sensor_id": "SFTPLC",
                     "sensor_type": "PLC B"

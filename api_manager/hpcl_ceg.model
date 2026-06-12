@@ -4074,8 +4074,12 @@ Model SystemAuditLog {
     employee_id optional str
     role optional list str
     email optional str
+    bu optional str
+    action optional str
+    action_model optional str
     section optional str
     remarks optional str
+    raw_data optional dict
 
     Config=> {
         crud_operations='read'

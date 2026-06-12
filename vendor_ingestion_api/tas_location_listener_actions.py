@@ -111,68 +111,34 @@ async def check_and_trigger_alert(sap_id: str, status: str, message: str):
     """Independent function to check and trigger/close alerts based on 1 hour failure logic"""
     
     if status == "failed":
-        one_hour_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
-
-        latest_record_query = f"""sap_id = '{sap_id}'"""
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        alert_history = [{
+            "processed_time": processed_time.isoformat(),
+            "allocated_time": processed_time.isoformat(),
+            "action_msg": message,
+            "action_type": "InterlockCreated",
+        }]
         
-        latest_record = await TasAgentCommStatus.get_all(
-            urdhva_base.queryparams.QueryParams(
-                q=latest_record_query,
-                limit=1,
-                sort=json.dumps({"created_at": "desc"})
-            ),
-            resp_type='plain'
-        )
-
-        if latest_record.get("data"):
-            latest_data = latest_record["data"][0]
-            latest_status = latest_data.get("status")
-            latest_created_at = latest_data.get("created_at")  # could be string or datetime
-
-            if isinstance(latest_created_at, str):
-                latest_created_at = datetime.datetime.fromisoformat(latest_created_at)
-            
-            if latest_created_at.tzinfo is None:
-                latest_created_at = latest_created_at.replace(tzinfo=datetime.timezone.utc)
-
-            print(f"SAP ID: {sap_id} | Latest Status: {latest_status} | Created At: {latest_created_at}")
-
-            if latest_status == "failed" and latest_created_at <= one_hour_ago:
-                processed_time = datetime.datetime.now(datetime.timezone.utc)
-                alert_history = [{
-                    "processed_time": processed_time.isoformat(),
-                    "allocated_time": processed_time.isoformat(),
-                    "action_msg": message,
-                    "action_type": "InterlockCreated",
-                }]
-                
-                alert_data = {
-                    "bu": "TAS",
-                    "sap_id": sap_id,
-                    "sop_id": "SOP099",
-                    "interlock_name": "Loss Of Communication",
-                    "device_name": "Communication Loss",
-                    "alert_type": "TAS",
-                    "device_type": message,
-                    "severity": "critical",
-                    "alert_id": str(uuid.uuid1()),
-                    "alert_history": alert_history,
-                }
-                
-                not_duplicate = await duplicate_loss_of_comm_check(alert_data)
-                if not_duplicate:
-                    success = await create_alert(alert_data)
-                    if success:
-                        print(f"Alert created successfully for SAP ID: {sap_id}")
-                    else:
-                        print(f"Failed to create alert for SAP ID: {sap_id}")
-                else:
-                    print(f"Duplicate alert skipped for SAP ID: {sap_id}")
-            else:
-                print(f"Skipping alert: SAP ID {sap_id} | latest_status={latest_status} | created_at={latest_created_at}")
+        alert_data = {
+            "bu": "TAS",
+            "sap_id": sap_id,
+            "sop_id": "SOP099",
+            "interlock_name": "Loss Of Communication",
+            "device_name": "Communication Loss",
+            "alert_type": "TAS",
+            "device_type": message,
+            "severity": "critical",
+            "alert_id": str(uuid.uuid1()),
+            "alert_history": alert_history,
+        }
+        
+        not_duplicate = await duplicate_loss_of_comm_check(alert_data)
+        if not_duplicate:
+            success = await create_alert(alert_data)
+            print(f"{'Alert created successfully' if success else 'Failed to create alert'} for SAP ID: {sap_id}")
         else:
-            print(f"No previous record found for SAP ID: {sap_id}")
-
+            print(f"Duplicate alert skipped for SAP ID: {sap_id}")
+            
     elif status == "success":
         query = f"interlock_name = 'Loss Of Communication' and bu = 'TAS' and sap_id = '{sap_id}' and alert_section = 'TAS' and alert_status != 'Close'"
         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)

@@ -726,7 +726,7 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
                 "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
                 "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}",
             },
-            attachments=[status_data.get("zone_wise_pdf_path"), status_data.get("retail_sales_report")],
+            attachments=[status_data.get("zone_wise_pdf_path")],
         )
     if _segment_set_wants(segments, "lpg"):
         recipients = await get_email_users_by_type("lpg", "testing")
@@ -817,8 +817,7 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
             attachments=[
                 status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
                 status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
-                status_data.get('retail_sales_report')
+                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
             ],
         )
     if failures:
@@ -926,7 +925,7 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
                 "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
                 "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}",
             },
-            attachments=[status_data.get("zone_wise_pdf_path"), status_data.get("retail_sales_report")],
+            attachments=[status_data.get("zone_wise_pdf_path")],
         )
     if _segment_set_wants(segments, "lpg"):
         recipients = await get_email_users_by_type("lpg", "employee")
@@ -1017,8 +1016,7 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             attachments=[
                 status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
                 status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
-                status_data.get('retail_sales_report')
+                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
             ],
         )
     if failures:
@@ -1125,7 +1123,7 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
                 "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
                 "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}",
             },
-            attachments=[status_data.get("zone_wise_pdf_path"), status_data.get("retail_sales_report")],
+            attachments=[status_data.get("zone_wise_pdf_path")],
         )
     if _segment_set_wants(segments, "lpg"):
         recipients = await get_email_users_by_type("lpg", "chairman")
@@ -1189,8 +1187,7 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             attachments=[
                 status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
                 status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
-                status_data.get("retail_sales_report")
+                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
             ],
         )
     if _segment_set_wants(segments, "clean"):
