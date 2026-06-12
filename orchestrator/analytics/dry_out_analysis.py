@@ -996,7 +996,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                             ELSE NULL
                         END AS item_name_code,
                         SUM(avgsales_7days) AS avgsales_7days
-                    FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
+                    FROM sch_inventory_forecast_dashboard_latest
                     WHERE run_id = '{date_time}'
                     GROUP BY 
                         rosapcode,
