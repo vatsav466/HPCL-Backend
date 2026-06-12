@@ -1252,35 +1252,27 @@ async def lpg_production_report():
     ])
     
     df = df.join(comp_df, left_on=["sap_id", "carousel"], right_on=["erp_id","carousal_id"], how="left")
-    df = df.select([
-        pl.col("location_name").alias("Plant Name"),
-        pl.col("sap_id").alias("SAP Code"),
-        pl.col("zone").alias("Zone"),
-        pl.col("carousel").alias("Carousel"),
-        pl.col("filling_head").alias("Heads"),
-        pl.col("production_14_2kg").alias("14.2kg Cylinders"),
-        pl.col("production_19kg").alias("19kg Cylinders"),
-        pl.sum_horizontal([
-            pl.col("production_14_2kg").fill_null(0),
-            pl.col("production_19kg").fill_null(0)
-        ]).alias("Total Cylinders"),
-        pl.col("normal_total_production").alias("Normal Total Production"),
-        pl.col("normal_net_hours").alias("Normal Net Hours"),
-        # pl.col("total_hours").alias("Total Stoppage Hours"),
-        # (pl.col("total_hours").fill_null(0) - pl.col("normal_net_hours").fill_null(0)).round(2).alias("Stoppage Hours"),
-        pl.col("normal_gap_hrs").alias("Stoppage Hours"),
-        pl.col("normal_productivity").alias("Normal Productivity"),
-        pl.col("break_total_production").alias("Break Total Production"),
-        pl.col("break_net_hours").alias("Break Net Hours"),
-        pl.col("break_productivity").alias("Break Productivity"),
-        pl.col("overtime_total_production").alias("Overtime Total Production"),
-        pl.col("overtime_net_hours").alias("Overtime Net Hours"),
-        pl.col("overtime_productivity").alias("Overtime Productivity"),
-        pl.col("cs_rejection").alias("Check Scale Rejection"),
-        pl.col("gd_rejection").alias("ELD"),
-        pl.col("pt_rejection").alias("ORT"),
-        pl.col("rated_productivity").alias("Comparision Normal Productivity")
-    ])
+    rename_cols = {
+        "location_name": "Plant Name", "sap_id": "SAP Code", "zone": "Zone", "carousel": "Carousel",
+        "filling_head": "Heads", "production_14_2kg": "14.2kg Cylinders", "production_19kg": "19kg Cylinders",
+        "normal_total_production": "Normal Total Production", "normal_net_hours": "Normal Net Hours",
+        "normal_gap_hrs": "Stoppage Hours", "normal_productivity": "Normal Productivity",
+        "break_total_production": "Break Total Production", "break_net_hours": "Break Net Hours",
+        "break_productivity": "Break Productivity", "overtime_total_production": "Overtime Total Production",
+        "overtime_net_hours": "Overtime Net Hours", "overtime_productivity": "Overtime Productivity",
+        "cs_rejection": "Check Scale Rejection", "gd_rejection": "ELD", "pt_rejection": "ORT",
+        "rated_productivity": "Comparision Normal Productivity"
+    }
+    df = (
+        df.select(rename_cols.keys())
+        .with_columns([
+            pl.sum_horizontal([
+                pl.col("production_14_2kg").fill_null(0),
+                pl.col("production_19kg").fill_null(0)
+            ]).alias("Total Cylinders")
+        ])
+        .rename(rename_cols)
+    )
     print("df select ---->\n", df)
     df = df.fill_null(0)
     # Sort data

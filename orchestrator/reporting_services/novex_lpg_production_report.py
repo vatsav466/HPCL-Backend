@@ -52,12 +52,11 @@ async def publish_daily_novex_status_email():
 
     await send_notification(
         template_name="lpg_production.html",
-        to_recipients=["venu@algofusiontech.com"],
+        to_recipients=["rishikeshdevidas.patil@hpcl.in"],
         subject="Novex LPG Production Report",
-        cc_recipients=["moufikali@algofusiontech.com", "aditya@algofusiontech.com", 
-                      "mrudula.m@algofusiontech.com", "vamsi.c@algofusiontech.com"],
-        bcc_recipients=[ "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
-                        "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],   
+        cc_recipients=["randhir.kumar2@hpcl.in"],
+        bcc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "mrudula.m@algofusiontech.com"
+                        "yesu.p@algofusiontech.com", "vamsi.c@algofusiontech.com", "poojitha.gumma@algofusiontech.com"],   
         notification_data=status_data,
         inline_images={},
         attachments = [ status_data.get('lpg_production_report')]
