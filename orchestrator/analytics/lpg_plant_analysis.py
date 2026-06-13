@@ -657,7 +657,6 @@ async def lpg_car_download(data):
     def clean_data(data):
         cleaned = []
         for row in data:
-            # print("row ---->\n", row)
             new_row = {}
             for k, v in row.items():
                 if v is pd.NaT or str(v) == "NaT":
@@ -672,7 +671,7 @@ async def lpg_car_download(data):
         return cleaned
 
     clean_resp = clean_data(resp)
-    data = pl.DataFrame(clean_resp)
+    data = pl.DataFrame(clean_resp, infer_schema_length=10000)
 
     car_data = await function(query= car_query)
     car_df = pl.DataFrame(car_data)
@@ -712,80 +711,52 @@ async def lpg_car_download(data):
         pl.col("carousel").cast(pl.Int64)  
     ])
     df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
-    
-    df = df.select([
-        pl.col("sap_id").alias("sap_id"),
-        pl.col("location_name").alias("location_name"),
-        pl.col("carousal_id").alias("carousal"),
-        pl.col("heads").alias("heads"),
-        pl.col("production_14_2kg").alias("production_14_2kg"),
-        pl.col("production_19kg").alias("production_19kg"),
-        pl.sum_horizontal([
-            pl.col("production_14_2kg").fill_null(0),
-            pl.col("production_19kg").fill_null(0)
-        ]).alias("Total Cylinders"),
-        pl.col("normal_total_production").alias("normal_total_production"),
-        pl.col("normal_available_hrs").alias("normal_available_hrs"),
-        pl.col("normal_gap_hrs").alias("normal_gaps"),
-        pl.col("normal_net_hours").alias("normal_net_hours"),
-        pl.col("normal_productivity").alias("normal_productivity"),
-        pl.col("break_total_production").alias("break_total_production"),
-        pl.col("break_available_hours").alias("break_available_hours"),
-        pl.col("break_gap_hrs").alias("break_gaps"),
-        pl.col("break_net_hours").alias("break_net_hours"),
-        pl.col("break_productivity").alias("break_productivity"),
-        pl.col("overtime_total_production").alias("overtime_total_production"),
-        pl.col("overtime_gap_hrs").alias("overtime_gaps"),
-        pl.col("overtime_net_hours").alias("overtime_net_hours"),
-        pl.col("overtime_productivity").alias("overtime_productivity"),
-        pl.col("cs_handled").alias("cs_total_cylinders_checked"),
-        pl.col("cs_underfilled").alias("cs_underweight"),
-        pl.col("cs_overfilled").alias("cs_overweight"),
-        pl.col("cs_other_errors").alias("cs_other_errors"),
-        pl.col("cs_sortout").alias("cs_total"),
-        pl.col("cs_rejection").alias("cs_rejection"),
-        pl.col("gd_handled").alias("gd_total_cylinders_checked"),
-        pl.col("gd_sortout").alias("gd_total"),
-        pl.col("gd_rejection").alias("gd_rejection"),
-        pl.col("pt_handled").alias("pt_total_cylinders_checked"),
-        pl.col("pt_sortout").alias("pt_total"),
-        pl.col("pt_rejection").alias("pt_rejection"),
-    ])
+    rename_cols = {
+        "sap_id": "sap_id", "location_name" :"location_name", "carousal_id" :"carousal",
+        "heads" :"heads", "production_14_2kg" :"production_14_2kg", "production_19kg" :"production_19kg",
+        "normal_total_production" :"normal_total_production", "normal_available_hrs" :"normal_available_hrs",
+        "normal_gap_hrs" :"normal_gaps", "normal_net_hours" :"normal_net_hours",
+        "normal_productivity" :"normal_productivity", "break_total_production" :"break_total_production",
+        "break_available_hours" :"break_available_hours", "break_gap_hrs" :"break_gaps",
+        "break_net_hours" :"break_net_hours", "break_productivity" :"break_productivity",
+        "overtime_total_production" :"overtime_total_production", "overtime_gap_hrs" :"overtime_gaps",
+        "overtime_net_hours" :"overtime_net_hours", "overtime_productivity" :"overtime_productivity",
+        "cs_handled" :"cs_total_cylinders_checked", "cs_underfilled" :"cs_underweight",
+        "cs_overfilled" :"cs_overweight", "cs_other_errors" :"cs_other_errors",
+        "cs_sortout" :"cs_total", "cs_rejection" :"cs_rejection", "gd_handled" :"gd_total_cylinders_checked",
+        "gd_sortout" :"gd_total", "gd_rejection" :"gd_rejection", "pt_handled": "pt_total_cylinders_checked",
+        "pt_sortout": "pt_total", "pt_rejection": "pt_rejection"
+       }
+    df = (
+        df.select(rename_cols.keys())
+        .with_columns([
+            pl.sum_horizontal([
+                pl.col("production_14_2kg").fill_null(0),
+                pl.col("production_19kg").fill_null(0)
+            ]).alias("Total Cylinders")
+        ])
+        .rename(rename_cols)
+    )
 
+    group_cols = ["sap_id", "location_name", "carousal", "heads"]
 
-    # print("df ---- selecting ---->\n", df.to_dicts())
+    sum_cols = [
+        "production_14_2kg", "production_19kg", "Total Cylinders", "normal_total_production", 
+        "normal_available_hrs", "normal_gaps", "break_total_production", "break_available_hours", 
+        "break_gaps", "overtime_total_production", "overtime_gaps"
+        ]
 
-    df_grouped = df.group_by(["sap_id", "location_name", "carousal", "heads"]).agg([
-        pl.col("production_14_2kg").sum().alias("production_14_2kg"),
-        pl.col("production_19kg").sum().alias("production_19kg"),
-        pl.col("Total Cylinders").sum().alias("Total Cylinders"),
+    round_sum_cols = [
+        "normal_net_hours", "break_net_hours", "overtime_net_hours", "cs_total_cylinders_checked",
+        "cs_underweight", "cs_overweight", "cs_other_errors", "cs_total",
+        "gd_total_cylinders_checked", "gd_total", "pt_total_cylinders_checked", "pt_total",
+    ]
 
-        pl.col("normal_total_production").sum().alias("normal_total_production"),
-        pl.col("normal_available_hrs").sum().alias("normal_available_hrs"),
-        pl.col("normal_gaps").sum().alias("normal_gaps"),
-        pl.col("normal_net_hours").sum().round(2).alias("normal_net_hours"),
+    df_grouped = df.group_by(group_cols).agg(
+        [pl.col(c).sum() for c in sum_cols] +
+        [pl.col(c).sum().round(2) for c in round_sum_cols]
+    )
 
-        pl.col("break_total_production").sum().alias("break_total_production"),
-        pl.col("break_available_hours").sum().alias("break_available_hours"),
-        pl.col("break_gaps").sum().alias("break_gaps"),
-        pl.col("break_net_hours").sum().round(2).alias("break_net_hours"),
-
-        pl.col("overtime_total_production").sum().alias("overtime_total_production"),
-        pl.col("overtime_gaps").sum().alias("overtime_gaps"),
-        pl.col("overtime_net_hours").sum().round(2).alias("overtime_net_hours"),
-
-        pl.col("cs_total_cylinders_checked").sum().round(2).alias("cs_total_cylinders_checked"),
-        pl.col("cs_underweight").sum().round(2).alias("cs_underweight"),
-        pl.col("cs_overweight").sum().round(2).alias("cs_overweight"),
-        pl.col("cs_other_errors").sum().round(2).alias("cs_other_errors"),
-        pl.col("cs_total").sum().round(2).alias("cs_total"),
-
-        pl.col("gd_total_cylinders_checked").sum().round(2).alias("gd_total_cylinders_checked"),
-        pl.col("gd_total").sum().round(2).alias("gd_total"),
-
-        pl.col("pt_total_cylinders_checked").sum().round(2).alias("pt_total_cylinders_checked"),
-        pl.col("pt_total").sum().round(2).alias("pt_total"),
-    ])
 
     df_grouped = df_grouped.with_columns([
         # Productivity calculation
@@ -821,23 +792,24 @@ async def lpg_car_download(data):
             .alias("pt_rejection"),
 
     ])
-
-    print("Grouped DF ---->\n", df_grouped.to_dicts())
+    
+    df_grouped = df_grouped.sort(["location_name", "carousal"])
 
     plants_output = []
 
-    # group by plant
-    for plant_name, plant_df in df_grouped.group_by("location_name"):
+    # sorted plant names
+    plant_names = df_grouped["location_name"].drop_nulls().unique().sort().to_list()
+
+    for plant_name in plant_names:
+
+        plant_df = df_grouped.filter(pl.col("location_name") == plant_name)
 
         cars_list = []
 
-        # group by car inside plant
-        for car_name, car_df in plant_df.group_by("carousal"):
+        for row in plant_df.to_dicts():
 
-            row = car_df.to_dicts()[0]
-
-            car_data = {
-                "carName": car_name,
+            cars_list.append({
+                "carName": row["carousal"],
 
                 "bottlingSummary": {
                     "14_2kgCylinders": row.get("production_14_2kg", 0),
@@ -848,7 +820,7 @@ async def lpg_car_download(data):
                 "normalHours": {
                     "production": row.get("normal_total_production", 0),
                     "availableHours": row.get("normal_available_hrs", 0),
-                    "stoppagesHours": row.get("normal_gaps", 0), 
+                    "stoppagesHours": row.get("normal_gaps", 0),
                     "netBottlingHours": row.get("normal_net_hours", 0),
                     "productivity": row.get("normal_productivity", 0)
                 },
@@ -856,38 +828,39 @@ async def lpg_car_download(data):
                 "breakHours": {
                     "production": row.get("break_total_production", 0),
                     "availableHours": row.get("break_available_hours", 0),
-                    "stoppagesHours": row.get("break_gaps", 0), 
+                    "stoppagesHours": row.get("break_gaps", 0),
                     "netBottlingHours": row.get("break_net_hours", 0),
                     "productivity": row.get("break_productivity", 0)
                 },
 
                 "overtimeHours": {
                     "production": row.get("overtime_total_production", 0),
-                    "stoppagesHours": row.get("overtime_gaps", 0), 
+                    "stoppagesHours": row.get("overtime_gaps", 0),
                     "netBottlingHours": row.get("overtime_net_hours", 0),
                     "productivity": row.get("overtime_productivity", 0)
                 },
+
                 "checkScaleSummary": {
-                    "TotalCylindersChecked": row.get("cs_total_cylinders_checked"),
-                    "RejectionUnderweight": row.get("cs_underweight"),
-                    "RejectionOverweight": row.get("cs_overweight"),
-                    "RejectionOtherErrors": row.get("cs_other_errors"),
-                    "RejectionTotal": row.get("cs_total"),
+                    "TotalCylindersChecked": row.get("cs_total_cylinders_checked", 0),
+                    "RejectionUnderweight": row.get("cs_underweight", 0),
+                    "RejectionOverweight": row.get("cs_overweight", 0),
+                    "RejectionOtherErrors": row.get("cs_other_errors", 0),
+                    "RejectionTotal": row.get("cs_total", 0),
                     "RejectionPercentage": row.get("cs_rejection", 0)
-                }, 
+                },
+
                 "electronicLeakDetectorSummary": {
-                    "TotalCylindersChecked": row.get("gd_total_cylinders_checked"),
-                    "RejectionTotal": row.get("gd_total"),
+                    "TotalCylindersChecked": row.get("gd_total_cylinders_checked", 0),
+                    "RejectionTotal": row.get("gd_total", 0),
                     "RejectionPercentage": row.get("gd_rejection", 0)
                 },
+                
                 "O-RingTesterSummary": {
-                    "TotalCylindersChecked": row.get("pt_total_cylinders_checked"),
-                    "RejectionTotal": row.get("pt_total"),
+                    "TotalCylindersChecked": row.get("pt_total_cylinders_checked", 0),
+                    "RejectionTotal": row.get("pt_total", 0),
                     "RejectionPercentage": row.get("pt_rejection", 0)
                 }
-            }
-
-            cars_list.append(car_data)
+            })
 
         plants_output.append({
             "plantName": plant_name,
@@ -899,5 +872,4 @@ async def lpg_car_download(data):
         "plants": plants_output
     }
 
-    print(final_response)
     return final_response
