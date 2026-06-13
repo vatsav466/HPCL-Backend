@@ -712,20 +712,11 @@ async def lpg_car_download(data):
     ])
     df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
     rename_cols = {
-        "sap_id": "sap_id", "location_name" :"location_name", "carousal_id" :"carousal",
-        "heads" :"heads", "production_14_2kg" :"production_14_2kg", "production_19kg" :"production_19kg",
-        "normal_total_production" :"normal_total_production", "normal_available_hrs" :"normal_available_hrs",
-        "normal_gap_hrs" :"normal_gaps", "normal_net_hours" :"normal_net_hours",
-        "normal_productivity" :"normal_productivity", "break_total_production" :"break_total_production",
-        "break_available_hours" :"break_available_hours", "break_gap_hrs" :"break_gaps",
-        "break_net_hours" :"break_net_hours", "break_productivity" :"break_productivity",
-        "overtime_total_production" :"overtime_total_production", "overtime_gap_hrs" :"overtime_gaps",
-        "overtime_net_hours" :"overtime_net_hours", "overtime_productivity" :"overtime_productivity",
-        "cs_handled" :"cs_total_cylinders_checked", "cs_underfilled" :"cs_underweight",
-        "cs_overfilled" :"cs_overweight", "cs_other_errors" :"cs_other_errors",
-        "cs_sortout" :"cs_total", "cs_rejection" :"cs_rejection", "gd_handled" :"gd_total_cylinders_checked",
-        "gd_sortout" :"gd_total", "gd_rejection" :"gd_rejection", "pt_handled": "pt_total_cylinders_checked",
-        "pt_sortout": "pt_total", "pt_rejection": "pt_rejection"
+        "carousal_id" :"carousal", "normal_gap_hrs" :"normal_gaps","break_gap_hrs" :"break_gaps",
+        "overtime_gap_hrs" :"overtime_gaps", "cs_handled" :"cs_total_cylinders_checked", 
+        "cs_underfilled" :"cs_underweight", "cs_overfilled" :"cs_overweight","cs_sortout" :"cs_total", 
+        "gd_handled" :"gd_total_cylinders_checked", "gd_sortout" :"gd_total", 
+        "pt_handled": "pt_total_cylinders_checked", "pt_sortout": "pt_total", 
        }
     df = (
         df.select(rename_cols.keys())
