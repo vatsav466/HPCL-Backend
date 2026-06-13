@@ -783,7 +783,6 @@ async def lpg_car_download(data):
             .alias("pt_rejection"),
 
     ])
-    
     df_grouped = df_grouped.sort(["location_name", "carousal"])
 
     plants_output = []
@@ -792,22 +791,16 @@ async def lpg_car_download(data):
     plant_names = df_grouped["location_name"].drop_nulls().unique().sort().to_list()
 
     for plant_name in plant_names:
-
         plant_df = df_grouped.filter(pl.col("location_name") == plant_name)
-
         cars_list = []
-
         for row in plant_df.to_dicts():
-
             cars_list.append({
                 "carName": row["carousal"],
-
                 "bottlingSummary": {
                     "14_2kgCylinders": row.get("production_14_2kg", 0),
                     "19kgCylinders": row.get("production_19kg", 0),
                     "total": row.get("Total Cylinders", 0)
                 },
-
                 "normalHours": {
                     "production": row.get("normal_total_production", 0),
                     "availableHours": row.get("normal_available_hrs", 0),
@@ -815,7 +808,6 @@ async def lpg_car_download(data):
                     "netBottlingHours": row.get("normal_net_hours", 0),
                     "productivity": row.get("normal_productivity", 0)
                 },
-
                 "breakHours": {
                     "production": row.get("break_total_production", 0),
                     "availableHours": row.get("break_available_hours", 0),
@@ -823,14 +815,12 @@ async def lpg_car_download(data):
                     "netBottlingHours": row.get("break_net_hours", 0),
                     "productivity": row.get("break_productivity", 0)
                 },
-
                 "overtimeHours": {
                     "production": row.get("overtime_total_production", 0),
                     "stoppagesHours": row.get("overtime_gaps", 0),
                     "netBottlingHours": row.get("overtime_net_hours", 0),
                     "productivity": row.get("overtime_productivity", 0)
                 },
-
                 "checkScaleSummary": {
                     "TotalCylindersChecked": row.get("cs_total_cylinders_checked", 0),
                     "RejectionUnderweight": row.get("cs_underweight", 0),
@@ -839,28 +829,19 @@ async def lpg_car_download(data):
                     "RejectionTotal": row.get("cs_total", 0),
                     "RejectionPercentage": row.get("cs_rejection", 0)
                 },
-
                 "electronicLeakDetectorSummary": {
                     "TotalCylindersChecked": row.get("gd_total_cylinders_checked", 0),
                     "RejectionTotal": row.get("gd_total", 0),
                     "RejectionPercentage": row.get("gd_rejection", 0)
                 },
-                
                 "O-RingTesterSummary": {
                     "TotalCylindersChecked": row.get("pt_total_cylinders_checked", 0),
                     "RejectionTotal": row.get("pt_total", 0),
                     "RejectionPercentage": row.get("pt_rejection", 0)
                 }
             })
+        plants_output.append({"plantName": plant_name, "cars": cars_list})
 
-        plants_output.append({
-            "plantName": plant_name,
-            "cars": cars_list
-        })
-
-
-    final_response = {
-        "plants": plants_output
-    }
+    final_response = {"plants": plants_output}
 
     return final_response
