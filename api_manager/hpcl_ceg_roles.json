@@ -8418,6 +8418,9 @@
                 },
                 {
                     "name": "lpg_plants_insights"
+                },
+                {
+                    "name": "lpg_car_download"
                 }
             ]
         },
@@ -8460,6 +8463,9 @@
                 },
                 {
                     "name": "lpg_plants_insights"
+                },
+                {
+                    "name": "lpg_car_download"
                 }
             ]
         },
@@ -9875,6 +9881,10 @@
         {
             "name": "lpg_plants_insights",
             "displayName": "lpg_plants_insights"
+        },
+        {
+            "name": "lpg_car_download",
+            "displayName": "lpg_car_download"
         },
         {
             "name": "upload_connection_data",
