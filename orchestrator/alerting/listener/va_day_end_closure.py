@@ -105,7 +105,7 @@ async def send_closure_notification(html_table, attachment_file, total_alerts, s
         subject=f"VA Day End Alert Closure Summary - {sap_id} - {location_name}",
         recipients=["sreedhar.maddipati@algofusiontech.com "],
         cc_recipients=["venu@algofusiontech.com","moufikali@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusontech.com","poojitha.gumma@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","poojitha.gumma@algofusiontech.com"],
         html_content=True,
         body=body,
         force_send=True,
