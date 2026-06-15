@@ -1614,6 +1614,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     load_type: Mapped[typing.Optional[str]] = mapped_column("load_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auto_close: Mapped[typing.Optional[bool]] = mapped_column("auto_close", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1716,6 +1717,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
     load_type: typing.Optional[str] = pydantic.Field("", **{})
+    auto_close: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -1827,6 +1829,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
     load_type: typing.Optional[str] = pydantic.Field("", **{})
+    auto_close: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
