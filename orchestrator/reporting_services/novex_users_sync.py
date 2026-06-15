@@ -269,28 +269,46 @@ async def insert_users(data: list) -> Tuple[int, int]:
     if not data:
         print("No users to upsert")
         return 0, 0
-    for item in data:
-        for key in ["bu", "sap_id", "region", "state", "zone", "sales_area", "system_role", "novex_role"]:
-            if item.get(key) is None or item[key] == "":
-                item[key] = []
-            if isinstance(item[key], str):
-                item[key] = ast.literal_eval(item[key])
-        if not item.get("escalation_level"):
-            item["escalation_level"] = None
-        if item.get("password") in (None, ""):
-            item["password"] = None
-    data, dedupe_dropped = _dedupe_user_records_for_bulk(data)
-    if not data:
-        print("No users to upsert after deduplication")
-        return 0, dedupe_dropped
-    total_record = len(data)
-    print(f"Bulk upsert {total_record} user(s)")
-    await hpcl_ceg_model.Users.bulk_update(
-        data,
-        upsert=True,
-        upsert_skip_keys=["password"],
-    )
-    return total_record, dedupe_dropped
+
+    BATCH_SIZE = 800
+    total_upserted = 0
+    total_dedupe = 0
+    for i in range(0, len(data), BATCH_SIZE):
+        batch = data[i:i + BATCH_SIZE]
+
+        for item in batch:
+            for key in ["bu", "sap_id", "region", "state", "zone", "sales_area", "system_role", "novex_role"]:
+                if item.get(key) is None or item[key] == "":
+                    item[key] = []
+                if isinstance(item[key], str):
+                    item[key] = ast.literal_eval(item[key])
+            if not item.get("escalation_level"):
+                item["escalation_level"] = None
+            if item.get("password") in (None, ""):
+                item["password"] = None
+
+        batch, dedupe_dropped = _dedupe_user_records_for_bulk(batch)
+        total_dedupe += dedupe_dropped
+
+        if not batch:
+            print("Batch empty after dedupe, skipping")
+            continue
+
+        try:
+            print(f"Upserting batch size: {len(batch)}")
+            await hpcl_ceg_model.Users.bulk_update(
+                batch,
+                upsert=True,
+                upsert_skip_keys=["password"],
+            )
+            total_upserted += len(batch)
+
+        except Exception as e:
+            print(f"Batch failed at index {i}: {e}")
+            traceback.print_exc()
+            raise
+
+    return total_upserted, total_dedupe
 
 
 async def combine_roles(data, _id, role_name):
