@@ -2950,6 +2950,12 @@ async def sync_user_roles():
                         "title": "Pro Dash"
                     },
                     {
+                        "title": "LPG Settings"
+                    },
+                    {
+                        "title": "Consolidated Report"
+                    },
+                    {
                         "title": "Supply Chain",
                         "allowed_sub_menus": [
                             {
