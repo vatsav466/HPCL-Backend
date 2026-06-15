@@ -2,6 +2,11 @@ import hpcl_ceg_model
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import urdhva_base
+import traceback
+import json
+file_path = f"{os.path.dirname(hpcl_ceg_model.__file__)}/../orchestrator/masterdata/menu_submenu_master.json"
+
 
 router = fastapi.APIRouter(prefix='/roles')
 
@@ -46,3 +51,68 @@ async def roles_get_all_pages(data: Roles_Get_All_PagesParams):
          "allowed_sub_menus": ["Analytical-Studio", "Notification", "Alerts", "DNC Settings", "Users", "Roles",
                                "Jobs", "Configurations", "User", "Changelog", "Documentation"]}]
     return role_mapping
+
+
+# Action create_role_ui
+@router.post('/create_role_ui', tags=['Roles'])
+async def roles_create_role_ui(request: fastapi.Request, data: Roles_Create_Role_UiParams):
+    try:
+        response = await request.json()
+        role_name = response.get("role_name")
+        allowed_pages = response.get("allowed_pages")
+
+        query = f"name = '{role_name}'"
+        role_data = await Roles.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+        
+        if role_data["data"]:
+            await hpcl_ceg_model.Roles.bulk_update(
+                [{"name": role_name, "status": True, "allowed_pages": allowed_pages}],
+                upsert=True,
+                upsert_skip_keys=['name']
+            )
+            return True, f"Role {role_name} updated successfully"
+
+        else:
+            await hpcl_ceg_model.Roles.bulk_update(
+                [{"name": role_name, "status": True, "allowed_pages": allowed_pages}],
+                upsert=True,
+                upsert_skip_keys=['name']
+            )
+
+            return True, f"Role {role_name} created successfully"
+
+    except Exception as e:
+        print("traceback :", traceback.format_exc())
+        return False, f"Failed to create role: {str(e)}"
+
+
+# Action delete_role_ui
+@router.post('/delete_role_ui', tags=['Roles'])
+async def roles_delete_role_ui(data: Roles_Delete_Role_UiParams):
+    try:
+        if not isinstance(data,dict):
+            data = data.__dict__
+
+        role_name = data.get("role_name")
+        query = f"name = '{role_name}'"
+       
+        role_data = await Roles.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+        if role_data["data"]:
+            role_id = role_data["data"][0]["id"]
+            await Roles.delete(role_id)
+            return True, f"Role {role_name} deleted successfully"
+
+        return False, f"Role {role_name} not found"
+        
+    except Exception as e:
+        print("traceback :", traceback.format_exc())
+        return False, f"Failed to delete role: {str(e)}"
+
+
+# Action get_menu_submenu_details
+@router.post('/get_menu_submenu_details', tags=['Roles'])
+async def roles_get_menu_submenu_details():
+    with open(file_path) as json_file:
+        menu_submenu_details = json.load(json_file)
+    return {'status':True, 'message':'Success', 'data':menu_submenu_details}
+    
