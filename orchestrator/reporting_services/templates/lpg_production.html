@@ -127,24 +127,24 @@
             <td>{{ row["Carousel"] }}</td>
             <td>{{ row["Heads"] }}</td>
 
-            <td>{{ row["14.2kg Cylinders"] }}</td>
-            <td>{{ row["19kg Cylinders"] }}</td>
-            <td>{{ row["Total Cylinders"] }}</td>
+            <td>{{ "%.0f"| format (row["14.2kg Cylinders"]) }}</td>
+            <td>{{ "%.0f"| format (row["19kg Cylinders"]) }}</td>
+            <td>{{ "%.0f"| format (row["Total Cylinders"]) }}</td>
 
-            <td>{{ row["Normal Total Production"] }}</td>
+            <td>{{ "%.0f"| format (row["Normal Total Production"]) }}</td>
             <td class="red-cell">{{ row["Stoppage Hours"] }}</td>
 
             <td class="{% if row['Comparision Normal Productivity'] > row['Normal Productivity'] %}red-cell{% endif %}">
-                {{ row["Normal Productivity"] }}
+                {{ "%.0f"| format (row["Normal Productivity"]) }}
             </td>
 
-            <td>{{ row["Break Total Production"] }}</td>
+            <td>{{ "%.0f"| format ( row["Break Total Production"]) }}</td>
             <td>{{ row["Break Net Hours"] }}</td>
-            <td>{{ row["Break Productivity"] }}</td>
+            <td>{{ "%.0f"| format ( row["Break Productivity"]) }}</td>
 
-            <td>{{ row["Overtime Total Production"] }}</td>
+            <td>{{ "%.0f"| format (row["Overtime Total Production"]) }}</td>
             <td>{{ row["Overtime Net Hours"] }}</td>
-            <td>{{ row["Overtime Productivity"] }}</td>
+            <td>{{ "%.0f"| format (row["Overtime Productivity"]) }}</td>
 	    <td class="{% if row['Check Scale Rejection'] > 8 %}red-cell{% endif %}">
                 {{ row["Check Scale Rejection"] }}
             </td>

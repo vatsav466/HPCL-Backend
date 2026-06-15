@@ -85,6 +85,30 @@ class Roles_Update_Role_StatusParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Roles_Create_Role_UiParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Roles_Delete_Role_UiParams(pydantic.BaseModel):
+    role_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Roles_Get_Menu_Submenu_DetailsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Roles_Get_All_PagesParams(pydantic.BaseModel):
     pass
 
