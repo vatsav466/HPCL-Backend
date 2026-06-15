@@ -718,16 +718,14 @@ async def lpg_car_download(data):
         "gd_handled" :"gd_total_cylinders_checked", "gd_sortout" :"gd_total", 
         "pt_handled": "pt_total_cylinders_checked", "pt_sortout": "pt_total", 
        }
-    df = (
-        df.select(rename_cols.keys())
-        .with_columns([
-            pl.sum_horizontal([
-                pl.col("production_14_2kg").fill_null(0),
-                pl.col("production_19kg").fill_null(0)
-            ]).alias("Total Cylinders")
-        ])
-        .rename(rename_cols)
-    )
+    df = df.with_columns([
+        pl.sum_horizontal([
+            pl.col("production_14_2kg").fill_null(0),
+            pl.col("production_19kg").fill_null(0)
+        ]).alias("Total Cylinders")
+    ])
+
+    df = df.rename(rename_cols)
 
     group_cols = ["sap_id", "location_name", "carousal", "heads"]
 
