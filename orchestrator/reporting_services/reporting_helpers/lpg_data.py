@@ -1275,9 +1275,27 @@ async def lpg_production_report():
     )
     print("df select ---->\n", df)
     df = df.fill_null(0)
+    df = df.with_columns([
+        pl.col("Normal Productivity").round(0),
+        pl.col("Break Productivity").round(0),
+        pl.col("Overtime Productivity").round(0),
+        pl.col("Normal Total Production").round(0),
+        pl.col("Break Total Production").round(0),
+        pl.col("Overtime Total Production").round(0),
+    ])
     # Sort data
     df = df.sort(["Plant Name", "SAP Code", "Zone", "Carousel"])
+    final_order = [
+        "Plant Name", "SAP Code", "Zone", "Carousel", "Heads",
+        "14.2kg Cylinders", "19kg Cylinders", "Total Cylinders",
+        "Normal Total Production", "Normal Net Hours", "Stoppage Hours", "Normal Productivity",
+        "Break Total Production", "Break Net Hours", "Break Productivity",
+        "Overtime Total Production", "Overtime Net Hours", "Overtime Productivity",
+        "Check Scale Rejection", "ELD", "ORT", "Comparision Normal Productivity"
+    ]
 
+    df = df.select(final_order)
+    print("df ------>\n", df.to_dicts())
     data = df.to_dicts()
     headers = df.columns
     exclude_cols = {
