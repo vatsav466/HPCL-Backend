@@ -551,11 +551,11 @@ async def nozzle_sales(
         nozzle_sales_query = f"""
             SELECT
                 ns.transaction_date::DATE AS transaction_date,
-                COUNT(DISTINCT ns.site_id) AS connected_sites,
+                COUNT(DISTINCT ns.site_id) AS connected_sites, ns.product_grp,
                 {sales_volume}
             {from_join}
             WHERE {where_clause}
-            GROUP BY ns.transaction_date::DATE
+            GROUP BY ns.transaction_date::DATE, ns.product_grp
             ORDER BY ns.transaction_date::DATE
         """
         group_cols = []
@@ -572,12 +572,12 @@ async def nozzle_sales(
 
         select_columns = [
                 "DATE_TRUNC('month', ns.transaction_date)::DATE AS month",
-                "COALESCE(ns.zone, lm.zone) AS zone"
+                "COALESCE(ns.zone, lm.zone) AS zone", "ns.product_grp"
             ]
 
         group_by_parts = [
                 "DATE_TRUNC('month', ns.transaction_date)::DATE",
-                "COALESCE(ns.zone, lm.zone)"
+                "COALESCE(ns.zone, lm.zone)", "ns.product_grp"
             ]
         #default query 
         if not has_filters and not level:
@@ -617,6 +617,9 @@ async def nozzle_sales(
             where_clause_monthly = ""
             if filter_conditions_monthly:
                 where_clause_monthly = "WHERE " + " AND ".join(filter_conditions_monthly)
+
+            if all_products:
+                where_clause_monthly = f"WHERE ns.product_grp IN ({','.join([f"'{p}'" for p in all_products])})"
 
             if level == "zone":
                 select_columns.append("ns.region AS region")
@@ -824,20 +827,20 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
         level = level_filter.get("level") if level_filter else None
 
         if not raw_filters:
-            zone = df.select(["month", "zone", "sales_volume"])
-            overall = df.group_by("month").agg([
+            zone = df.select(["month", "zone", "sales_volume", "product_grp"])
+            overall = df.group_by("month", "product_grp").agg([
                 pl.sum("sales_volume").alias("sales_volume"),
                 pl.sum("connected_sites").alias("connected_sites")
             ]).sort("month")
 
         if "zone" == level:
-            region = df.select(["month", "region", "sales_volume"])
+            region = df.select(["month", "region", "sales_volume", "product_grp"])
 
         if "region" == level:
-            sales_area = df.select(["month", "sales_area", "sales_volume"])
+            sales_area = df.select(["month", "sales_area", "sales_volume", "product_grp"])
 
         if "sales_area" == level:
-            location = df.select(["month", "location_name", "sales_volume"])
+            location = df.select(["month", "location_name", "sales_volume", "product_grp"])
 
         return {
             "overall": overall.to_dicts() if overall is not None else [],

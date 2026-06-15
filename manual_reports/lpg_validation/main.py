@@ -3,6 +3,9 @@ import psycopg2
 import pandas as pd
 import polars as pl
 import asyncio
+import sys
+sys.path.append("/opt/ceg/algo")
+import hpcl_ceg_model
 from checking_ import process_plant_concurrent
 
 
@@ -11,12 +14,18 @@ async def connect_to_plant_db(plant_ip='10.2.36.41',plant_port=5432,plant_db_nam
     return conn
 
 async def run_on_plant_db(details):
-    csv_path = '/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv'
-    df = pd.read_csv(csv_path)
-    df = df[df['erp_id'] == details['sap_id']]
-    data = df.to_dict(orient='records')
-    data = data[0]
-    plant_conn = await connect_to_plant_db(data['host_ip'],data['port'],data['db_database'],data['db_user'],data['db_password'])
+    query = f"""
+        SELECT sap_id, plant_name, ip_address, port_no, username, password, db_name, db_type
+        FROM lpg_plants_master
+        WHERE sap_id = '{details["sap_id"]}'
+    """
+    result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=1)
+    data = result.get("data", [])[0] if result and result.get("data") else {}
+    password = data.get("password", "")
+    if password and str(password).startswith("enc#_"):
+        password = urdhva_base.types.Secret(password).get_secret()
+    plant_conn = await connect_to_plant_db(
+        data["ip_address"], data["port_no"], data["db_name"], data["username"], password)
     data = await process_plant_concurrent(data,details,plant_conn,True)
     return data
 

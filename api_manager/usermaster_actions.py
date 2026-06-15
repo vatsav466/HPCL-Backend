@@ -37,6 +37,9 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             # Creator SOD was only for TAS
             if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
                 is_allowed = False
+            
+            if rpt.get("username","").lower() in ["dnc_admin"]:
+                is_allowed = False
 
         if not is_allowed:
             return {
@@ -141,6 +144,9 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         if is_allowed:
             # Creator SOD was only for TAS
             if 'creatorsod' in user_roles and data.data.bu != ['TAS']:
+                is_allowed = False
+            
+            if rpt.get("username","").lower() in ["dnc_admin"]:
                 is_allowed = False
 
         if not isinstance(data.data, dict):
@@ -262,6 +268,10 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
 
         # Check
         is_allowed = False if not user_roles else any(role in allowed for role in user_roles)
+
+        if is_allowed:
+            if rpt.get("username","").lower() in ["dnc_admin"]:
+                is_allowed = False
 
         if not is_allowed:
             return {
