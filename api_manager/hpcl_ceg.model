@@ -892,6 +892,9 @@ Model Alerts {
     ticket_id optional str
     load_type optional str
 
+    // VA
+    auto_close optional default=false bool
+
     Action=> alert_action {
         bu optional str
         alert_section optional str

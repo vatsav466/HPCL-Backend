@@ -211,6 +211,7 @@ async def day_end_closure():
             alert['alert_status'] = 'Close'
             alert['alert_state'] = 'Resolved'
             alert['closed_at'] = datetime.datetime.utcnow()
+            alert['auto_close'] = True
             alert['alert_history'] = (alert.get('alert_history') or []) + [{
                 'action_type': 'Resolved',
                 'action_msg': 'Auto closed at the end of the day',
