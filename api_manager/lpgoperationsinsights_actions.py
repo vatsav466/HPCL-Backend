@@ -15,3 +15,9 @@ async def lpgoperationsinsights_lpg_plants_insights(data: Lpgoperationsinsights_
         drill_state=data.drill_state or "",
         metric_type=data.metric_type
     )
+
+
+# Action lpg_car_download
+@router.post('/lpg_car_download', tags=['LpgOperationsInsights'])
+async def lpgoperationsinsights_lpg_car_download(data: Lpgoperationsinsights_Lpg_Car_DownloadParams):
+    return await lpg_plant_analysis.lpg_car_download(data)

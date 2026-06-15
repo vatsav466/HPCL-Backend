@@ -8,8 +8,14 @@ import mysql.connector
 import urdhva_base.utilities
 import utilities.helpers as helpers
 from datetime import datetime,timedelta, timezone
+from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import widget_actions
+import utilities.connection_mapping as connection_mapping
+import charts_actions
+import dashboard_studio_model
+# from charts_actions import charts_connection_vault_routing
+# from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Material Codes for Domestic and Non-Domestic Sales
@@ -515,3 +521,325 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
 
     except Exception as e:
         return {"status": False, "message": str(e)}
+    
+
+async def lpg_car_download(data):
+    """ downloading the lpg plant Carousel"""
+    
+    start_date = None
+    end_date = None
+    all_conditions = []
+    where_clause = []
+    final_where_clause = ""
+
+    if data.cross_filters:
+        for filter in data.cross_filters:
+
+            # -------- DATE FILTER --------
+            if "DATE" in filter.key:
+
+                filter_values = filter.value if filter.value else filter.val
+                if not filter_values:
+                    continue
+
+                if isinstance(filter_values, str):
+                    dates = [d.strip() for d in filter_values.split(",") if d.strip()]
+                elif isinstance(filter_values, list):
+                    dates = filter_values
+                else:
+                    continue
+
+                start_date = dates[0]
+                end_date = dates[-1]
+
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+
+
+                print("start_date----->\n", start_date)
+                print("end_date---->\n", end_date)
+                continue
+
+            # -------- NON-DATE FILTER --------
+            vals = []
+
+            if filter.val:
+                if isinstance(filter.val, list):
+                    vals = filter.val
+                elif isinstance(filter.val, str):
+                    vals = [v.strip() for v in filter.val.split(",") if v.strip()]
+
+            elif filter.value:
+                if isinstance(filter.value, list):
+                    vals = filter.value
+                elif isinstance(filter.value, str):
+                    vals = [v.strip() for v in filter.value.split(",") if v.strip()]
+
+            if not vals:
+                continue
+
+            if len(vals) == 1:
+                condition = f"{filter.key} = '{vals[0]}'"
+            else:
+                vals_str = ",".join([f"'{v}'" for v in vals])
+                condition = f"{filter.key} IN ({vals_str})"
+
+            all_conditions.append(condition)
+
+    # ---------------- NORMAL FILTERS ----------------
+    if data.filters:
+        conditions = []
+
+        for rec in data.filters:
+
+            vals = []
+
+            if rec.val:
+                if isinstance(rec.val, list):
+                    vals = rec.val
+                elif isinstance(rec.val, str):
+                    vals = [v.strip() for v in rec.val.split(",") if v.strip()]
+
+            elif rec.value:
+                if isinstance(rec.value, list):
+                    vals = rec.value
+                elif isinstance(rec.value, str):
+                    vals = [v.strip() for v in rec.value.split(",") if v.strip()]
+
+            if not vals:
+                continue
+
+            if len(vals) == 1:
+                condition = f"{rec.key} = '{vals[0]}'"
+            else:
+                vals_str = ",".join([f"'{v}'" for v in vals])
+                condition = f"{rec.key} IN ({vals_str})"
+
+            conditions.append(condition)
+
+        if conditions:
+            all_conditions.extend(conditions)
+
+    # ---------------- FINAL WHERE ----------------
+    final_where_clause_car = ""
+
+    if where_clause:
+        all_conditions.extend(where_clause)
+
+    if all_conditions:
+        final_where_clause = " AND " + " AND ".join(all_conditions)
+        final_where_clause_car = " WHERE " + " AND ".join(all_conditions)
+
+
+    if start_date == end_date:
+        query = f"""
+            SELECT * FROM public.lpg_plant_operations 
+            WHERE process_date::date = '{start_date}'
+            {final_where_clause}
+            """
+    else:
+        query = f"""
+            SELECT * FROM public.lpg_plant_operations 
+            where process_date >= '{start_date}' 
+            and process_date < '{end_date}' 
+            {final_where_clause}
+        """ 
+
+    car_query = f"""SELECT * FROM lpg_carousals {final_where_clause_car}"""
+               
+    charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    charts_actions.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(charts_actions.Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    
+    from decimal import Decimal
+
+    def clean_data(data):
+        cleaned = []
+        for row in data:
+            new_row = {}
+            for k, v in row.items():
+                if v is pd.NaT or str(v) == "NaT":
+                    new_row[k] = None
+                elif v == "NULL":
+                    new_row[k] = None
+                elif isinstance(v, Decimal):
+                    new_row[k] = round(float(v), 2)
+                else:
+                    new_row[k] = v
+            cleaned.append(new_row)
+        return cleaned
+
+    clean_resp = clean_data(resp)
+    data = pl.DataFrame(clean_resp, infer_schema_length=10000)
+
+    car_data = await function(query= car_query)
+    car_df = pl.DataFrame(car_data)
+    def calculate_hours(time_range_str):
+        import json
+        time_ranges = json.loads(time_range_str)
+        total_seconds = 0
+
+        for t in time_ranges:
+            start = datetime.strptime(t["start_time"], "%H:%M:%S")
+            stop = datetime.strptime(t["stop_time"], "%H:%M:%S")
+            diff = (stop - start).total_seconds()
+            total_seconds += diff
+        # convert seconds → hours
+        return round(total_seconds / 3600, 2)
+    
+    car_df = car_df.with_columns([
+        pl.col("production_hrs")
+        .map_elements(calculate_hours)
+        .alias("production_hours"),
+
+        pl.col("breaks")
+        .map_elements(calculate_hours)
+        .alias("break_available_hours")
+    ])
+
+    # Derived column
+    car_df = car_df.with_columns([
+        (pl.col("production_hours") - pl.col("break_available_hours"))
+        .round(2)
+        .alias("normal_available_hrs")
+    ])
+
+    df = car_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
+    data = data.with_columns([
+        pl.col("sap_id").cast(pl.Utf8),
+        pl.col("carousel").cast(pl.Int64)  
+    ])
+    df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
+    rename_cols = {
+        "carousal_id" :"carousal", "normal_gap_hrs" :"normal_gaps","break_gap_hrs" :"break_gaps",
+        "overtime_gap_hrs" :"overtime_gaps", "cs_handled" :"cs_total_cylinders_checked", 
+        "cs_underfilled" :"cs_underweight", "cs_overfilled" :"cs_overweight","cs_sortout" :"cs_total", 
+        "gd_handled" :"gd_total_cylinders_checked", "gd_sortout" :"gd_total", 
+        "pt_handled": "pt_total_cylinders_checked", "pt_sortout": "pt_total", 
+       }
+    df = df.with_columns([
+        pl.sum_horizontal([
+            pl.col("production_14_2kg").fill_null(0),
+            pl.col("production_19kg").fill_null(0)
+        ]).alias("Total Cylinders")
+    ])
+
+    df = df.rename(rename_cols)
+
+    group_cols = ["sap_id", "location_name", "carousal", "heads"]
+
+    sum_cols = [
+        "production_14_2kg", "production_19kg", "Total Cylinders", "normal_total_production", 
+        "normal_available_hrs", "normal_gaps", "break_total_production", "break_available_hours", 
+        "break_gaps", "overtime_total_production", "overtime_gaps"
+        ]
+
+    round_sum_cols = [
+        "normal_net_hours", "break_net_hours", "overtime_net_hours", "cs_total_cylinders_checked",
+        "cs_underweight", "cs_overweight", "cs_other_errors", "cs_total",
+        "gd_total_cylinders_checked", "gd_total", "pt_total_cylinders_checked", "pt_total",
+    ]
+
+    df_grouped = df.group_by(group_cols).agg(
+        [pl.col(c).sum() for c in sum_cols] +
+        [pl.col(c).sum().round(2) for c in round_sum_cols]
+    )
+
+
+    df_grouped = df_grouped.with_columns([
+        # Productivity calculation
+        pl.when(pl.col("normal_net_hours") > 0)
+            .then((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
+            .otherwise(0)
+            .alias("normal_productivity"),
+
+        pl.when(pl.col("break_net_hours") > 0)
+            .then((pl.col("break_total_production") / pl.col("break_net_hours")).round(2))
+            .otherwise(0)
+            .alias("break_productivity"),
+
+        pl.when(pl.col("overtime_net_hours") > 0)
+            .then((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
+            .otherwise(0)
+            .alias("overtime_productivity"),
+        
+        # Rejection calculation
+        pl.when(pl.col("cs_total_cylinders_checked") > 0)
+            .then((pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("cs_rejection"),
+
+        pl.when(pl.col("gd_total_cylinders_checked") > 0)
+            .then((pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("gd_rejection"),
+
+        pl.when(pl.col("pt_total_cylinders_checked") > 0)
+            .then((pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(2))
+            .otherwise(0)
+            .alias("pt_rejection"),
+
+    ])
+    df_grouped = df_grouped.sort(["location_name", "carousal"])
+
+    plants_output = []
+
+    # sorted plant names
+    plant_names = df_grouped["location_name"].drop_nulls().unique().sort().to_list()
+
+    for plant_name in plant_names:
+        plant_df = df_grouped.filter(pl.col("location_name") == plant_name)
+        cars_list = []
+        for row in plant_df.to_dicts():
+            cars_list.append({
+                "carName": row["carousal"],
+                "bottlingSummary": {
+                    "14_2kgCylinders": row.get("production_14_2kg", 0),
+                    "19kgCylinders": row.get("production_19kg", 0),
+                    "total": row.get("Total Cylinders", 0)
+                },
+                "normalHours": {
+                    "production": row.get("normal_total_production", 0),
+                    "availableHours": row.get("normal_available_hrs", 0),
+                    "stoppagesHours": row.get("normal_gaps", 0),
+                    "netBottlingHours": row.get("normal_net_hours", 0),
+                    "productivity": row.get("normal_productivity", 0)
+                },
+                "breakHours": {
+                    "production": row.get("break_total_production", 0),
+                    "availableHours": row.get("break_available_hours", 0),
+                    "stoppagesHours": row.get("break_gaps", 0),
+                    "netBottlingHours": row.get("break_net_hours", 0),
+                    "productivity": row.get("break_productivity", 0)
+                },
+                "overtimeHours": {
+                    "production": row.get("overtime_total_production", 0),
+                    "stoppagesHours": row.get("overtime_gaps", 0),
+                    "netBottlingHours": row.get("overtime_net_hours", 0),
+                    "productivity": row.get("overtime_productivity", 0)
+                },
+                "checkScaleSummary": {
+                    "TotalCylindersChecked": row.get("cs_total_cylinders_checked", 0),
+                    "RejectionUnderweight": row.get("cs_underweight", 0),
+                    "RejectionOverweight": row.get("cs_overweight", 0),
+                    "RejectionOtherErrors": row.get("cs_other_errors", 0),
+                    "RejectionTotal": row.get("cs_total", 0),
+                    "RejectionPercentage": row.get("cs_rejection", 0)
+                },
+                "electronicLeakDetectorSummary": {
+                    "TotalCylindersChecked": row.get("gd_total_cylinders_checked", 0),
+                    "RejectionTotal": row.get("gd_total", 0),
+                    "RejectionPercentage": row.get("gd_rejection", 0)
+                },
+                "O-RingTesterSummary": {
+                    "TotalCylindersChecked": row.get("pt_total_cylinders_checked", 0),
+                    "RejectionTotal": row.get("pt_total", 0),
+                    "RejectionPercentage": row.get("pt_rejection", 0)
+                }
+            })
+        plants_output.append({"plantName": plant_name, "cars": cars_list})
+
+    final_response = {"plants": plants_output}
+
+    return final_response
