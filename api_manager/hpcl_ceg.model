@@ -204,6 +204,16 @@ Model Roles {
         role_name str
     }
 
+    Action=> create_role_ui {
+    }
+
+    Action=> delete_role_ui {
+        role_name str
+    }
+
+    Action=> get_menu_submenu_details {       
+    }
+
     // API to fetch list of pages available for configuring role
     Action=> get_all_pages {
 
