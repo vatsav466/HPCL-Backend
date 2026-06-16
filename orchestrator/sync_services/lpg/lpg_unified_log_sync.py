@@ -104,6 +104,7 @@ import urdhva_base
 sys.path.append("/opt/ceg/algo")
 import hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.support_services.lpg_plant_connection_check as lpg_plant_connection_check
 
 logger = urdhva_base.logger.Logger.getInstance("lpg_unified_log_sync")
 
@@ -436,9 +437,16 @@ def ensure_cursor_table() -> None:
                 log_kind VARCHAR(32) NOT NULL,
                 last_process_date TIMESTAMP NULL,
                 last_source_id BIGINT NOT NULL DEFAULT 0,
+                last_synced_at TIMESTAMP NULL,
                 updated_at TIMESTAMP DEFAULT NOW(),
                 PRIMARY KEY (plant_name, log_kind)
             );
+            """
+        )
+        cur.execute(
+            f"""
+            ALTER TABLE {CURSOR_TABLE}
+            ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMP NULL
             """
         )
         conn.commit()
@@ -627,6 +635,35 @@ def _set_cursor_conn(
         cur.close()
 
 
+def _touch_last_synced_at_conn(
+    conn,
+    plant_name: str,
+    kind: LogKind,
+) -> None:
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            f"""
+            INSERT INTO {CURSOR_TABLE}
+                (plant_name, log_kind, last_process_date, last_source_id, last_synced_at, updated_at)
+            VALUES (
+                %s,
+                %s,
+                NULL,
+                0,
+                timezone('Asia/Kolkata', now()),
+                NOW()
+            )
+            ON CONFLICT (plant_name, log_kind) DO UPDATE SET
+                last_synced_at = timezone('Asia/Kolkata', now())
+            """,
+            (plant_name, kind),
+        )
+        conn.commit()
+    finally:
+        cur.close()
+        
+
 def _default_start_ts() -> dt.datetime:
     raw = os.environ.get("LPG_UNIFIED_START_TS", "").strip()
     if raw:
@@ -799,6 +836,127 @@ def _tail_cursor(data: pl.DataFrame, id_col: str) -> Tuple[Optional[dt.datetime]
 
 def _kind_label(kind: LogKind) -> str:
     return "event_log" if kind == "event" else "production_log"
+
+
+def _last_synced_at_raw(ts: Optional[Any]) -> str:
+    """Return cursor timestamp as stored in DB (no format conversion)."""
+    if ts is None:
+        return ""
+    return str(ts)
+
+
+def _load_last_synced_at_map(
+    plant_names: List[str],
+) -> Dict[str, Dict[str, Optional[dt.datetime]]]:
+    """Read last_synced_at from cursor; match plant names loosely (ILIKE), like plant_details API."""
+    names = list({str(n).strip() for n in plant_names if n})
+    if not names:
+        return {}
+    conn = _app_db_connect()
+    cur = conn.cursor()
+    out: Dict[str, Dict[str, Optional[dt.datetime]]] = {
+        n: {"event": None, "production": None, "latest": None} for n in names
+    }
+    try:
+        for master_name in names:
+            cur.execute(
+                f"""
+                SELECT plant_name, log_kind, last_synced_at
+                FROM {CURSOR_TABLE}
+                WHERE plant_name = %s
+                   OR %s ILIKE '%%' || plant_name || '%%'
+                   OR plant_name ILIKE '%%' || %s || '%%'
+                """,
+                (master_name, master_name, master_name),
+            )
+            bucket = out[master_name]
+            for _cursor_plant, log_kind, last_synced_at in cur.fetchall():
+                if last_synced_at is None:
+                    continue
+                py_ts = pd.Timestamp(last_synced_at).to_pydatetime()
+                kind = str(log_kind).strip().lower()
+                if kind == "event":
+                    if bucket["event"] is None or py_ts > bucket["event"]:
+                        bucket["event"] = py_ts
+                elif kind == "production":
+                    if bucket["production"] is None or py_ts > bucket["production"]:
+                        bucket["production"] = py_ts
+        for key, kinds in out.items():
+            candidates = [t for t in (kinds["event"], kinds["production"]) if t is not None]
+            kinds["latest"] = max(candidates) if candidates else None
+        return out
+    finally:
+        cur.close()
+        conn.close()
+
+
+def _not_connected_from_sync_results(
+    results: List[Dict[str, Any]],
+    last_synced_map: Optional[Dict[str, Dict[str, Optional[dt.datetime]]]] = None,
+) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    synced = last_synced_map or {}
+    for r in results:
+        if r.get("connected", True):
+            continue
+        plant_name = str(r.get("plant_name", ""))
+        latest_ts = synced.get(plant_name, {}).get("latest")
+        out.append(
+            {
+                "s_no": len(out) + 1,
+                "erp_id": str(r.get("sap_id", "")),
+                "plant_name": plant_name,
+                "short_name": plant_name,
+                "zone": str(r.get("zone", "")),
+                "host_ip": str(r.get("host_ip", "")),
+                "port": str(r.get("port", "")),
+                "status": "NOT CONNECTED",
+                "last_synced_at": _last_synced_at_raw(latest_ts),
+                "error_message": str(
+                    r.get("connectivity_error")
+                    or (r.get("failure") or {}).get("error_message")
+                    or "Connection failed during sync"
+                ),
+            }
+        )
+    return out
+
+
+def _check_plant_connectivity(params: Dict[str, Any]) -> Tuple[bool, str]:
+    """Port + DB check using helpers from lpg_plant_connection_check."""
+    is_connected, status_message = lpg_plant_connection_check.test_telnet_connection(
+        params["host"], params["port"]
+    )
+    if not is_connected:
+        return False, status_message
+    db_ok, db_msg = lpg_plant_connection_check.test_db_connection(
+        params["host"],
+        params["port"],
+        params["database"],
+        params["user"],
+        params["password"],
+        params["db_type"],
+    )
+    if db_ok:
+        return True, "Connected"
+    return False, db_msg
+
+
+async def _send_not_connected_plants_mail(
+    not_connected: List[Dict[str, Any]],
+) -> None:
+    if not not_connected:
+        _sync_print("Connectivity mail: all plants connected — no email sent.")
+        return
+    lpg_plant_connection_check.not_connected_plants = not_connected
+    csv_path = lpg_plant_connection_check.create_not_connected_plants_csv()
+    if not csv_path:
+        _sync_print("Connectivity mail: failed to create CSV — email not sent.")
+        return
+    await lpg_plant_connection_check.send_connectivity_mail(csv_path)
+    _sync_print(
+        f"Connectivity mail sent for {len(not_connected)} not-connected plant(s)."
+    )
 
 
 def sync_one_kind(
@@ -995,9 +1153,6 @@ def sync_one_kind(
                 "(dedupe); cursor still advanced"
             )
 
-        # cur_ts, cur_id = tail_ts, tail_id
-        # _set_cursor_conn(app_conn, plant_name, kind, cur_ts, cur_id)
-        
         # update cursor ONLY after successful insert
         if not to_insert.is_empty():
             cur_ts, cur_id = _tail_cursor(to_insert, id_col,)
@@ -1033,7 +1188,7 @@ def sync_one_kind(
         "resume_source": resume_src,
         "dedupe_each_chunk": dedupe_chunks,
     }
-
+   
 
 def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
     wall0 = time.perf_counter()
@@ -1055,8 +1210,12 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
         "csv_plant_id": plant_row.get("id"),
         "sap_id": str(params["sap_id"]),
         "host_ip": params["host"],
+        "port": str(params["port"]),
+        "zone": str(plant_row.get("zone", "")),
         "db_database": params["database"],
         "db_type": params["db_type"],
+        "connected": True,
+        "connectivity_error": None,
         "success": False,
         "total_wall_seconds": 0.0,
         "event_log": {},
@@ -1071,9 +1230,26 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
         f"host={params['host']} | chunk_size={chunk_size} max_chunks/kind={max_chunks} ==="
     )
 
+    is_connected, conn_msg = _check_plant_connectivity(params)
+    if not is_connected:
+        out["connected"] = False
+        out["connectivity_error"] = conn_msg
+        out["failure"] = {
+            "where": "connectivity",
+            "error_message": conn_msg,
+        }
+        out["total_wall_seconds"] = round(time.perf_counter() - wall0, 3)
+        _sync_print(
+            f"=== Plant END (NOT CONNECTED): {params['PlantName']} — {conn_msg} ==="
+        )
+        return out
+
     app_conn = None
     try:
         app_conn = _app_db_connect()
+        print(f"Updating last_synced_at for {params['PlantName']}")
+        _touch_last_synced_at_conn(app_conn, params["PlantName"], "event")
+        _touch_last_synced_at_conn(app_conn, params["PlantName"], "production")
         ev = sync_one_kind(
             params,
             plant_row=plant_row,
@@ -1155,6 +1331,14 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def main() -> None:
+    """
+    Run unified LPG log sync for all plants, then email not-connected plants.
+    After sync, not-connected plants are written to ``/data/not_connected_plants.csv``
+    and ``send_connectivity_mail()`` is called from ``lpg_plant_connection_check``.
+    To skip the connectivity email (sync only), export before running::
+        export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1
+    If unset, mail runs whenever this job runs and at least one plant failed the port/DB check.
+    """
     run_wall0 = time.perf_counter()
     started_at = dt.datetime.now(dt.timezone.utc).isoformat()
 
@@ -1224,6 +1408,14 @@ def main() -> None:
         ]
         for fut in concurrent.futures.as_completed(futs):
             results.append(fut.result())
+    
+    last_synced_map = _load_last_synced_at_map([r.get("plant_name") for r in results])
+    for r in results:
+        plant_name = r.get("plant_name", "")
+        latest_ts = last_synced_map.get(plant_name, {}).get("latest")
+        r["status"] = ("CONNECTED" if r.get("connected", False)  else "NOT CONNECTED")
+        r["last_synced_at"] = _last_synced_at_raw(latest_ts)
+        
 
     finished_at = dt.datetime.now(dt.timezone.utc).isoformat()
     total_run_s = round(time.perf_counter() - run_wall0, 3)
@@ -1266,6 +1458,18 @@ def main() -> None:
     _sync_print(f"Full JSON report written to: {summary_path}")
     logger.info("Wrote summary: %s", summary_path)
     print(json.dumps(report, default=str, indent=2), flush=True)
+
+    # Skip with: export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1  (or true/yes)
+    if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "").lower() not in ("1", "true", "yes",):
+        not_connected = _not_connected_from_sync_results(results, _load_last_synced_at_map([r.get("plant_name") for r in results if not r.get("connected", True)]),)
+        _sync_print(f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…")
+        try:
+            asyncio.run(_send_not_connected_plants_mail(not_connected))
+        except Exception as exc:
+            logger.exception("Connectivity mail failed: %s", exc)
+            _sync_print(f"Connectivity mail FAILED: {exc}")
+    else:
+        _sync_print("Connectivity mail: skipped (LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL)")
 
 
 if __name__ == "__main__":
