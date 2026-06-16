@@ -1470,6 +1470,8 @@ async def calculate_productivity(productivity):
         for carousal, phases in productivity.items():
             row = {"carousal": int(carousal)}
             for phase, metrics in phases.items():
+                if not isinstance(metrics, dict):
+                    continue
                 for key, value in metrics.items():
                     row[f"{phase}_{key}"] = value
             rows.append(row)
