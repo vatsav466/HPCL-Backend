@@ -719,7 +719,7 @@ async def sync_user_roles():
                                 "title": "Lubes Insights"
                             },
                             {
-                                "title": "Lubes Baazar"
+                                "title": "Lubes Bazaar"
                             }
                         ]
                     }
