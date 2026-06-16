@@ -717,6 +717,9 @@ async def sync_user_roles():
                         "allowed_sub_menus": [
                             {
                                 "title": "Lubes Insights"
+                            },
+                            {
+                                "title": "Lubes Baazar"
                             }
                         ]
                     }
