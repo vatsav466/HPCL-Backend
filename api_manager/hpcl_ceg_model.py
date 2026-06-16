@@ -27,6 +27,7 @@ class RolesSchema(UrdhvaPostgresBase):
     name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     allowed_pages: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("allowed_pages", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[typing.List[str]]] = mapped_column("bu", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(name, name="roles_name"),)
 
@@ -37,6 +38,7 @@ class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     name: str
     status: bool
     allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -52,6 +54,7 @@ class Roles(urdhva_base.postgresmodel.PostgresModel):
     name: typing.Optional[str] | None = None
     status: typing.Optional[bool] | None = None
     allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
