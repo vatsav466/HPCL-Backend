@@ -526,6 +526,15 @@ class Postgresql(BaseAction):
                                 if cond in ['=', 'equals'] and value is not None and value.lower() in ['*', '_empty', 'all', '']:
                                     continue
                                 
+                                # Like condition
+                                elif cond in ['LIKE', 'like']:
+                                    where_query += f'''"{key}" LIKE '%{value}%' AND '''
+                                    continue
+                                # IN condition explicitly sent from UI
+                                elif cond in ['IN', 'in']:
+                                    values = "', '".join([v.strip() for v in value.split(',')])
+                                    where_query += f'''"{key}" IN ('{values}') AND '''
+                                    continue                                  
                                 if key is not None and value is not None:  # Ensure required fields are present
                                     if cond in [' ', 'one-off', 'in']:
                                         value = "', '".join(map(str, value))

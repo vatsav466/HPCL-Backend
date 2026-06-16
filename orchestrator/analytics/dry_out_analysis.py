@@ -14,6 +14,7 @@ import charts_actions
 import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
+from fastapi.responses import StreamingResponse
 import utilities.helpers as helpers
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.interlock_mapping as interlock_mapping
@@ -940,41 +941,49 @@ async def get_custom_timestamp():
 async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     dry_out_in_days = "', '".join(x for x in dry_out_in_days)
     date_time = await get_custom_timestamp()
-    query = f"""WITH CombinedData AS (
+    query = f"""WITH FilteredAlerts AS (
+                    SELECT sap_id, indent_no, product_code, zone, region, sales_area, location_name, terminal_plant_id, indent_status, dry_out_in_days
+                    FROM alerts_ro1
+                    WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                    AND indent_status NOT IN ('Cancelled', 'Completed')
+                    AND mark_as_false = true
+                    AND dry_out_in_days IN ('{dry_out_in_days}')
+                ),
+                FilteredIndentRequest AS (
                     SELECT 
-                        ir."LOCN_CODE",
-                        ir."INDENT_NO",
-                        ir."INDENT_DATE",
-                        ir."PROD_REQD_DT",
-                        ir."DEALER_CODE",
-                        ir."BATCH_FLAG",
-                        ir."TRUCK_REGNO",
-                        ir."VALID_INDENT",
-                        ir."SEND_TO_JDE_TIME",
-                        ir."DELIVERY_DATE",
-                        ir."INDENT_HOLD_RELEASE_TIME",
+                        ir."LOCN_CODE", ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT",
+                        ir."DEALER_CODE", ir."BATCH_FLAG", ir."TRUCK_REGNO", ir."VALID_INDENT",
+                        ir."SEND_TO_JDE_TIME", ir."DELIVERY_DATE", ir."INDENT_HOLD_RELEASE_TIME",
+                        ir."INDENT_EXECUTABLE_TIME"
+                    FROM "IMS_SAP"."INDENT_REQUEST" ir
+                    WHERE EXISTS (
+                        SELECT 1 FROM FilteredAlerts a
+                        WHERE COALESCE(substr(ir."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+                        AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+                    )
+                ),
+                CombinedData AS (
+                    SELECT 
+                        ir."LOCN_CODE", ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT",
+                        ir."DEALER_CODE", ir."BATCH_FLAG", ir."TRUCK_REGNO", ir."VALID_INDENT",
+                        ir."SEND_TO_JDE_TIME", ir."DELIVERY_DATE", ir."INDENT_HOLD_RELEASE_TIME",
                         ir."INDENT_EXECUTABLE_TIME",
-                        ip."PROD" AS "PRODUCT_CODE",
-                        ip."QTY",
-                        ip."PROD_ALLOT_TIME",
-                        ip."SALES_ORDERNO",
-                        ip."INVOICE_NO",
-                        ip."JDE_TRUCK_NO",
+                        ip."PROD" AS "PRODUCT_CODE", ip."QTY", ip."PROD_ALLOT_TIME",
+                        ip."SALES_ORDERNO", ip."INVOICE_NO", ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
                         ROW_NUMBER() OVER (
                             PARTITION BY ir."LOCN_CODE", ir."INDENT_NO", ir."DEALER_CODE", ip."PROD"
                             ORDER BY tse."LOADED_ON" ASC NULLS LAST
                         ) AS rn
-                    FROM 
-                        "IMS_SAP"."INDENT_REQUEST" ir
+                    FROM FilteredIndentRequest ir
                     LEFT JOIN 
-                        (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '{date_time[:6]}') as ip
+                        (SELECT * FROM "IMS_SAP"."INDENT_PRODUCTS" WHERE substr(run_id, 1, 6) = '{date_time[:6]}') AS ip
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
-                        (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '{date_time[:6]}') as tse 
+                        (SELECT * FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" WHERE substr(run_id, 1, 6) = '{date_time[:6]}') AS tse 
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
@@ -997,7 +1006,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         END AS item_name_code,
                         SUM(avgsales_7days) AS avgsales_7days
                     FROM sch_inventory_forecast_dashboard_latest
-                    WHERE run_id = '{date_time}'
+                    WHERE substr(run_id, 1, 6) = '{date_time[:6]}'
                     GROUP BY 
                         rosapcode,
                         CASE
@@ -1037,12 +1046,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd."LOADED_ON",
                     sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
-                    (SELECT sap_id, indent_no, product_code, zone, region, sales_area, location_name, terminal_plant_id, indent_status, dry_out_in_days
-                     FROM alerts 
-                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                     AND indent_status NOT IN ('Cancelled', 'Completed')
-                     AND mark_as_false = true
-                     AND dry_out_in_days IN ('{dry_out_in_days}')) a
+                    FilteredAlerts a
                 LEFT JOIN 
                     CombinedData cd
                 ON 
@@ -1058,38 +1062,63 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
                     a.indent_no desc;"""
-    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-    #     "hpcl_ceg", "1")
-    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_actions.charts_connection_vault_routing(
-    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    # stats_resp = await function(
-    #     query=query
-    # )
+    
+    print('**'*100)
+    print(query)
+    print('**'*100)
+
     stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     stats_resp = stats_resp.get("data", [])
     stats_resp = pd.DataFrame(stats_resp)
+
+    if stats_resp.empty:
+        return []
+
     stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
+
     for column in ["SEND_TO_JDE_TIME", "DELIVERY_DATE", "INDENT_HOLD_RELEASE_TIME",
                    "INDENT_EXECUTABLE_TIME", "PROD_ALLOT_TIME", "LOADED_ON"]:
         if pd.api.types.is_datetime64_any_dtype(stats_resp[column]):
             stats_resp[column] = stats_resp[column].dt.strftime("%Y-%m-%d %H:%M:%S")
+
     if pd.api.types.is_datetime64_any_dtype(stats_resp['PROD_REQD_DT']):
         stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d")
-    # stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['SEND_TO_JDE_TIME'] = stats_resp['SEND_TO_JDE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['DELIVERY_DATE'] = stats_resp['DELIVERY_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['INDENT_HOLD_RELEASE_TIME'] = stats_resp['INDENT_HOLD_RELEASE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    # stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
     stats_resp['AVGSALES_7DAYS'] = stats_resp['AVGSALES_7DAYS'].fillna(0.00)
     stats_resp["QTY"] = stats_resp["QTY"].fillna(0.00)
     stats_resp = stats_resp.fillna("")
     stats_resp = stats_resp.rename(columns={"SEND_TO_JDE_TIME": "SENT_TO_SAP_TIME", "QTY": "QTY (KL)", "DRY_OUT_IN_DAYS": "DRY_OUT_TYPES"})
-    return stats_resp.to_dict(orient='records')
+    print("Total height:", len(stats_resp))
+
+    # return stats_resp.to_dict(orient='records')
+    return await streaming_data(stats_resp)
+
+
+async def streaming_data(df: pd.DataFrame, batch_size: int = 10000):
+    total = len(df)
+    async def json_generator():
+        yield "["
+        first_chunk = True
+        for i in range(0, total, batch_size):
+            chunk = df.iloc[i:i + batch_size]
+            json_chunk = chunk.to_json(orient="records", date_format="iso")
+
+            if not first_chunk:
+                yield ","
+            else:
+                first_chunk = False
+
+            yield json_chunk[1:-1] 
+            await asyncio.sleep(0)
+
+        yield "]"
+
+    return StreamingResponse(
+        json_generator(),
+        media_type="application/json"
+    )
 
 async def _get_on_hold_data(dry_out_in_days='1'):
     where_clause = {
