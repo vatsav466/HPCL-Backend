@@ -191,6 +191,7 @@ Model Roles {
     name index_field unique_field str
     status bool
     allowed_pages optional list RoleMapper
+    bu optional list str
 
     // API to create system role
     Action=> create_role {
@@ -202,6 +203,16 @@ Model Roles {
     Action=> update_role_status {
         enable bool
         role_name str
+    }
+
+    Action=> create_role_ui {
+    }
+
+    Action=> delete_role_ui {
+        role_name str
+    }
+
+    Action=> get_menu_submenu_details {       
     }
 
     // API to fetch list of pages available for configuring role
@@ -891,6 +902,9 @@ Model Alerts {
     tt_type optional str
     ticket_id optional str
     load_type optional str
+
+    // VA
+    auto_close optional default=false bool
 
     Action=> alert_action {
         bu optional str

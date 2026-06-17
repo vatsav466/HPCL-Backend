@@ -27,6 +27,7 @@ class RolesSchema(UrdhvaPostgresBase):
     name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     allowed_pages: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("allowed_pages", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[typing.List[str]]] = mapped_column("bu", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(name, name="roles_name"),)
 
@@ -37,6 +38,7 @@ class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     name: str
     status: bool
     allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -52,6 +54,7 @@ class Roles(urdhva_base.postgresmodel.PostgresModel):
     name: typing.Optional[str] | None = None
     status: typing.Optional[bool] | None = None
     allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -79,6 +82,30 @@ class Roles_Create_RoleParams(pydantic.BaseModel):
 class Roles_Update_Role_StatusParams(pydantic.BaseModel):
     enable: bool
     role_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Roles_Create_Role_UiParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Roles_Delete_Role_UiParams(pydantic.BaseModel):
+    role_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Roles_Get_Menu_Submenu_DetailsParams(pydantic.BaseModel):
+    pass
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1614,6 +1641,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     load_type: Mapped[typing.Optional[str]] = mapped_column("load_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auto_close: Mapped[typing.Optional[bool]] = mapped_column("auto_close", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1716,6 +1744,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
     load_type: typing.Optional[str] = pydantic.Field("", **{})
+    auto_close: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -1827,6 +1856,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
     load_type: typing.Optional[str] = pydantic.Field("", **{})
+    auto_close: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'

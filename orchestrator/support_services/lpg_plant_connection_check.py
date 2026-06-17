@@ -194,14 +194,16 @@ def create_not_connected_plants_csv():
 
     try:
         with open(csv_path, "w", newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['s_no', 'erp_id', 'plant_name', 'short_name', 'zone', 'host_ip', 'port', 'status']
+            fieldnames = ['s_no', 'erp_id', 'plant_name', 'short_name', 'zone', 'host_ip', 'port', 'last_synced_at', 'status',]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
             # Write rows without error_message for CSV
             for plant in not_connected_plants:
                 csv_row = {k: v for k, v in plant.items() if k != 'error_message'}
-                writer.writerow(csv_row)
+                if 'last_synced_at' not in csv_row:
+                    csv_row['last_synced_at'] = plant.get('last_synced_at', '')
+                writer.writerow({k: csv_row.get(k, '') for k in fieldnames})
 
         print(f"Created not connected plants CSV with {len(not_connected_plants)} entries: {csv_path}")
         return csv_path
@@ -237,6 +239,7 @@ async def send_connectivity_mail(csv_path):
     # Create HTML table for not connected plants
     table_rows = ""
     for plant in not_connected_plants:
+        last_synced = plant.get('last_synced_at', '')
         table_rows += f"""
         <tr>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{plant['s_no']}</td>
@@ -246,6 +249,7 @@ async def send_connectivity_mail(csv_path):
             <td style="padding: 8px; border: 1px solid #ddd;">{plant['zone']}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">{plant['host_ip']}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">{plant['port']}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{last_synced}</td>
             <td style="padding: 8px; border: 1px solid #ddd; color: red; font-weight: bold;">{plant['status']}</td>
         </tr>
         """
@@ -269,6 +273,7 @@ async def send_connectivity_mail(csv_path):
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Zone</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Host IP</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Port</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Last Synced At</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Status</th>
                 </tr>
             </thead>

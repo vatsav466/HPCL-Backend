@@ -71,7 +71,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "last_name": data.get('last_name'),
             "password": data.get('password',''),
             "employee_id": data.get('username',''),
-            "bu": data.get('bu',[]),
+            "bu": data.get('bu',["TAS"]),
             "sap_id": data.get('sap_id',[]),
             "system_role": data.get('system_role',[]),
             "novex_role": data.get('novex_role',[]),
@@ -86,7 +86,16 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "login_user_id": login_user_id,       
             "file_path": data.get('file_path','')         
         }).create()
+
         if user_response:
+            if not data.get("bu"):
+                query = f"""
+                            UPDATE users
+                            SET bu = ARRAY[]::varchar[]
+                            WHERE username = '{data.get("username")}'
+                            """
+                await Users.update_by_query(query)
+
             if rpt:
                 await SystemAuditLogCreate(
                     **{

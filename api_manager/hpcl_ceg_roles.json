@@ -32,6 +32,15 @@
                     "name": "update_role_status"
                 },
                 {
+                    "name": "create_role_ui"
+                },
+                {
+                    "name": "delete_role_ui"
+                },
+                {
+                    "name": "get_menu_submenu_details"
+                },
+                {
                     "name": "get_all_pages"
                 }
             ]
@@ -48,6 +57,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_menu_submenu_details"
                 },
                 {
                     "name": "get_all_pages"
@@ -81,6 +93,15 @@
                 },
                 {
                     "name": "update_role_status"
+                },
+                {
+                    "name": "create_role_ui"
+                },
+                {
+                    "name": "delete_role_ui"
+                },
+                {
+                    "name": "get_menu_submenu_details"
                 },
                 {
                     "name": "get_all_pages"
@@ -9081,6 +9102,18 @@
         {
             "name": "update_role_status",
             "displayName": "update_role_status"
+        },
+        {
+            "name": "create_role_ui",
+            "displayName": "create_role_ui"
+        },
+        {
+            "name": "delete_role_ui",
+            "displayName": "delete_role_ui"
+        },
+        {
+            "name": "get_menu_submenu_details",
+            "displayName": "get_menu_submenu_details"
         },
         {
             "name": "get_all_pages",
