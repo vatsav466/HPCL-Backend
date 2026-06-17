@@ -1431,6 +1431,9 @@ Model IndentDryOut {
 
     Action=> get_dryout_report {
         dry_out_in_days list str
+        action optional str
+        page optional int
+        page_size optional int
     }
 
     Action=> generate_dryout_group_data {

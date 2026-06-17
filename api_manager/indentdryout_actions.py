@@ -970,7 +970,11 @@ async def indentdryout_get_carry_fwd_indents(data: Indentdryout_Get_Carry_Fwd_In
 @router.post('/get_dryout_report', tags=['IndentDryOut'])
 async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportParams):
     dry_out_data = await dry_out_analysis._get_dry_out_ims_report(
-        dry_out_in_days=data.dry_out_in_days
+        dry_out_in_days=data.dry_out_in_days,
+        page=data.page,
+        page_size=data.page_size,
+        action=data.action
+
     )
     return {"status": True, "message": "Success", "data": dry_out_data}
 
