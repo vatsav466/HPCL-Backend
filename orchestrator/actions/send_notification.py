@@ -272,10 +272,15 @@ class SendNotification:
               
     async def get_subject_for_tas(self):
         if self.params.get('messagetype','') in ['active'] and self.alert_data.get('interlock_name') in ['Loss Of Communication']:
-            subject_template = f"OPC DA connection failed - Communication Loss"
+            device_type_map = {
+                "OPC DA connection failed": "OPC DA",
+                "Data receiving connection failed": "Connection Failed",
+            }
+            device_type = device_type_map.get(self.alert_data.get('device_type', ''), "Unknown")
+            subject_template = f"Communication Loss between Location TAS & NOVEX due to {device_type} @ {self.alert_data.get('location_name', '')}"
             return subject_template
         if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Loss Of Communication']:
-            subject_template = f"OPC DA connection success- Communication Established"
+            subject_template = f"Communication has been established between NOVEX and TAS"
             return subject_template  
         
     async def _prepare_message_content(self, bu: str, message_type: str):
@@ -364,6 +369,12 @@ class SendNotification:
             Dict[str, str]: A dictionary containing the template and body content.
         """
         message_type = self.params.get("messagetype", "").upper()
+        if self.alert_data.get("interlock_name") == "Loss Of Communication" and message_type == "ACTIVE":
+            body = await self.read_template(InterlockTemplateMapping.LOSS_OF_COMMUNICATION_ALERT.value)
+            return {"template": "LOSS_OF_COMMUNICATION_ALERT", "body": body}
+        if self.alert_data.get("interlock_name") == "Loss Of Communication" and message_type == "RESOLVED":
+            body = await self.read_template(InterlockTemplateMapping.LOSS_OF_COMMUNICATION_RESOLVED.value)
+            return {"template": "LOSS_OF_COMMUNICATION_RESOLVED", "body": body}
         if self.alert_data.get("alert_section") in ["VTS"] and self.params.get('messagetype','') in ['active','resolved']:
             message_type = await self.get_vts_messagetype()
         if self.alert_data.get("interlock_name") in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
@@ -972,7 +983,7 @@ class SendNotification:
                     self.mail_recipients = tas_recipients
                     tas_cc = ["ArpitaKanak.Bara@hpcl.in"]
                     if self.alert_data['interlock_name'] in ['Loss Of Communication']:
-                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusontech.com"]:
+                        for email in ["vgupta@hpcl.in","TarunGhisulal.Chauhan@hpcl.in","avinashgaurav@hpcl.in","dineshkumar.chudasama@advancedsystek.com","mohith.p@algofusiontech.com","moufikali@algofusiontech.com"]:
                             if email not in tas_cc:
                                 tas_cc.append(email)
                     
