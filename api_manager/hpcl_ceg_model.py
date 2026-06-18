@@ -2971,6 +2971,9 @@ class Indentdryout_Get_Carry_Fwd_IndentsParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Dryout_ReportParams(pydantic.BaseModel):
     dry_out_in_days: typing.List[str]
+    action: typing.Optional[str] = pydantic.Field("", **{})
+    page: typing.Optional[int] = pydantic.Field(0, **{})
+    page_size: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
