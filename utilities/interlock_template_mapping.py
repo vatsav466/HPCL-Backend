@@ -17,6 +17,8 @@ class InterlockTemplateMapping(str, Enum):
     BLOCK_OUTLET = "block_outlet.html"
     UNBLOCK_OUTLET = "unblock_outlet.html"
     VTS_DEVICE_EXPIRY = "vts_device_expiry.html"
+    LOSS_OF_COMMUNICATION_ALERT = "loss_of_communication_alert.html"
+    LOSS_OF_COMMUNICATION_RESOLVED = "loss_of_communication_resolved.html"
 
 
 class TemplateMapping(str, Enum):
