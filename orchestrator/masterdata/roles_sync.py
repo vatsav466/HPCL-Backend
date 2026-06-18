@@ -724,6 +724,14 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "RO",
@@ -739,6 +747,14 @@ async def sync_user_roles():
                     }
                 ]
             },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
+            }
         ],
         "status": True
     },
@@ -878,6 +894,14 @@ async def sync_user_roles():
                             "title": "Risk Score"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -2094,6 +2118,14 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -2199,6 +2231,14 @@ async def sync_user_roles():
                         "title": "CEMS Dashboard"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -2263,6 +2303,14 @@ async def sync_user_roles():
                             "title": "Risk Score"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -2330,6 +2378,14 @@ async def sync_user_roles():
                             "title": "Risk Score"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -2415,6 +2471,14 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -2460,6 +2524,14 @@ async def sync_user_roles():
                             "title": "Risk Score"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -2509,6 +2581,14 @@ async def sync_user_roles():
                         ]
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -2554,6 +2634,14 @@ async def sync_user_roles():
                             "title": "Risk Score"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -2784,6 +2872,14 @@ async def sync_user_roles():
                     },
                     {
                         "title": "I&C Campaign"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -3020,6 +3116,14 @@ async def sync_user_roles():
                         "title": "Alert Manager"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "LPG",
@@ -3055,6 +3159,14 @@ async def sync_user_roles():
                             "title": "Sales"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -3119,6 +3231,14 @@ async def sync_user_roles():
                         "title": "LPG Analytics"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "LPG",
@@ -3154,6 +3274,14 @@ async def sync_user_roles():
                             "title": "Sales"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -3221,6 +3349,14 @@ async def sync_user_roles():
                         "title": "Video Analytics"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "LPG",
@@ -3256,6 +3392,14 @@ async def sync_user_roles():
                             "title": "Sales"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -3460,6 +3604,14 @@ async def sync_user_roles():
                         "title": "Sales Performance"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "RO",
@@ -3486,6 +3638,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "Sales Performance"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }
@@ -3723,6 +3883,14 @@ async def sync_user_roles():
                         "title": "PM Orders"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -3783,6 +3951,14 @@ async def sync_user_roles():
             {
                 "menu_name": "Pipeline",
                 "allowed_sub_menus": []
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ],
         "name": "Pipeline",
@@ -3867,6 +4043,14 @@ async def sync_user_roles():
                         "title": "Supply Chain"
                     }
                 ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    }
+                ]
             }
         ]
     },
@@ -3947,6 +4131,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
                     }
                 ]
             }

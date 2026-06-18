@@ -24,7 +24,7 @@ async def generate_dryout_report():
     data_1 = await sync_ro_ims_report._get_dry_out_ims_report("2")
     df_1 = pd.DataFrame(data_1)
     df_1.to_excel(f"/tmp/intra_day_dry_out_report_{report_time}.xlsx", index=False)
-    to_email = ['gauravyadav1@hpcl.in', 'rameshyadav.p@hpcl.in', 'venu@algofusiontech.com', 'pampanaboyina.rekha@hpcl.in']
+    to_email = ['gauravyadav1@hpcl.in', 'rameshyadav.p@hpcl.in', 'venu@algofusiontech.com', 'pampanaboyina.rekha@hpcl.in', 'yesu.p@algofusiontech.com']
     attachments = [f"/tmp/dry_out_report_{report_time}.xlsx", f"/tmp/intra_day_dry_out_report_{report_time}.xlsx"]
     notify_email = NotifyEMail()
     data = {"report_time": report_time, "portal_link": "https://novex.hpcl.co.in"}
