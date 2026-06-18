@@ -937,6 +937,18 @@ async def _get_dry_out_ims_report(
 
     dry_out_in_days_str = "', '".join(x for x in dry_out_in_days)
 
+    column_mapping = {
+        'zone': 'ZONE', 'region': 'REGION', 'sales_area': 'SALES_AREA', 'sap_id': 'SAP_ID', 'location_name': 'LOCATION_NAME',
+        'terminal_plant_id': 'TERMINAL_PLANT_ID', 'indent_no': 'INDENT_NO', 'product_code': 'PRODUCT_CODE',
+        'indent_status': 'INDENT_STATUS', 'dry_out_types': 'DRY_OUT_TYPES', 'assigned_to_locn': 'ASSIGNED_TO_LOCN',
+        'prod_reqd_dt': 'PROD_REQD_DT', 'truck_regno': 'TRUCK_REGNO', 'valid_indent': 'VALID_INDENT', 'sent_to_sap_time': 'SENT_TO_SAP_TIME', 
+        'delivery_date': 'DELIVERY_DATE', 'indent_hold_release_time': 'INDENT_HOLD_RELEASE_TIME',
+        'indent_executable_time': 'INDENT_EXECUTABLE_TIME', 'qty_kl': 'QTY (KL)', 'prod_allot_time': 'PROD_ALLOT_TIME',
+        'sales_orderno': 'SALES_ORDERNO', 'invoice_no': 'INVOICE_NO', 'loaded_on': 'LOADED_ON', 'avgsales_7days': 'AVGSALES_7DAYS'
+    }
+
+    remove_cols = {'run_id', 'alert_id'}
+
     if action == "download":
         query = f"""
             SELECT * FROM public.dry_out_indent_report
@@ -951,7 +963,9 @@ async def _get_dry_out_ims_report(
             return {"status": False, "message": "No data found"}
 
         df = pd.DataFrame(data)
-        del data  # free memory immediately
+        df.rename(columns=column_mapping, inplace=True)
+        df = df.drop(columns=remove_cols, errors='ignore')
+        del data  
 
         # ---- Write Excel in a thread so event loop doesn't block ----
         def build_excel(dataframe: pd.DataFrame) -> io.BytesIO:
@@ -1026,7 +1040,15 @@ async def _get_dry_out_ims_report(
     data = resp.get("data", [])
     total_count = count_resp.get("data", [{}])[0].get("total_count", 0)
 
-    return {"data": data, "total_count": total_count}
+    final_data = [
+        {
+            column_mapping.get(k, k): v
+            for k, v in row.items()
+            if k not in remove_cols
+        }
+        for row in data
+    ]
+    return {"data": final_data, "total_count": total_count}
 
 
 async def _get_on_hold_data(dry_out_in_days='1'):
