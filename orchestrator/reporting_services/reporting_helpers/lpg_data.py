@@ -1376,7 +1376,7 @@ async def lpg_production_report():
     })
 
     red_format = workbook.add_format({
-        "bg_color": "#FFC7CE",
+        "bg_color": "#FFC7CE", 
         "font_color": "#9C0006",
         "align": "center",
         "valign": "vcenter",
@@ -1426,7 +1426,7 @@ async def lpg_production_report():
     worksheet.write("S2", "ELD", header_format)
     worksheet.write("T2", "ORT", header_format)
 
-    # ---------------- Write data ----------------
+    # ---------------- Write normal data first ----------------
     row_num = 2
 
     for row in data:
