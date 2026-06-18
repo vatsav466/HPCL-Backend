@@ -4,7 +4,8 @@ import datetime
 import pandas as pd
 from jinja2 import Template
 from orchestrator.notification_manager.notify_email import *
-import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+import orchestrator.alerting.listener.sync_ro_ims_report as sync_ro_ims_report
+
 
 def read_template(filename, data):
     with open(filename, 'r') as f:
@@ -13,13 +14,14 @@ def read_template(filename, data):
     body=j2_template.render(data)
     return body
 
+
 async def generate_dryout_report():
     report_time = urdhva_base.utilities.get_present_time()
     report_time = report_time.strftime("%Y-%B-%d_%H_%M_%S")
-    data = await dry_out_analysis._get_dry_out_ims_report("1")
+    data = await sync_ro_ims_report._get_dry_out_ims_report("1")
     df = pd.DataFrame(data)
     df.to_excel(f"/tmp/dry_out_report_{report_time}.xlsx", index=False)
-    data_1 = await dry_out_analysis._get_dry_out_ims_report("2")
+    data_1 = await sync_ro_ims_report._get_dry_out_ims_report("2")
     df_1 = pd.DataFrame(data_1)
     df_1.to_excel(f"/tmp/intra_day_dry_out_report_{report_time}.xlsx", index=False)
     to_email = ['gauravyadav1@hpcl.in', 'rameshyadav.p@hpcl.in', 'venu@algofusiontech.com', 'pampanaboyina.rekha@hpcl.in']
