@@ -1163,8 +1163,10 @@ async def log_count_excel():
 async def lpg_production_report():
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
     yesterday_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    query = f"""SELECT * FROM public.lpg_plant_operations where process_date >= '{yesterday_date}' and process_date < '{current_date}' """ 
-    
+    query = f"""SELECT * FROM public.lpg_plant_operations where process_date >= '{yesterday_date}' and process_date < '{current_date}' """
+
+    plant_details_query = """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
+
     stoppages_query = """SELECT
                             a.erp_id,
                             c.plant_id,
@@ -1200,7 +1202,10 @@ async def lpg_production_report():
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
 
-    stoppages = await function(query= stoppages_query)
+    plant_details = await function(query=plant_details_query)
+    plant_details_df = pl.DataFrame(plant_details)
+
+    stoppages = await function(query=stoppages_query)
     stoppages_df = pl.DataFrame(stoppages)
 
     from decimal import Decimal
@@ -1218,40 +1223,69 @@ async def lpg_production_report():
         return cleaned
 
     clean_resp = clean_decimals(resp)
-    if not clean_resp:
-        workbook = xlsxwriter.Workbook("/tmp/lpg_production_report.xlsx")
-        worksheet = workbook.add_worksheet("Report")
-        worksheet.write("A1", "No Data Available")
-        workbook.close()
 
-        return {
-            "data": [],
-            "lpg_production_report": "/tmp/lpg_production_report.xlsx"
-        }
-    
     drop_cols = [
         "created_at",
         "updated_at",
         "lst_cyl_production",
         "fst_cyl_production"
     ]
-
     for row in clean_resp:
         for col in drop_cols:
             row.pop(col, None)
 
-    df = pl.DataFrame(clean_resp)
-    df = df.with_columns([
-        pl.col("sap_id").cast(pl.Utf8),
-        pl.col("carousel").cast(pl.Int64)  
-    ])
-
-    comp_df = stoppages_df.with_columns([
-        pl.col("erp_id").cast(pl.Utf8),
-        pl.col("carousal_id").cast(pl.Int64)  
-    ])
     
-    df = df.join(comp_df, left_on=["sap_id", "carousel"], right_on=["erp_id","carousal_id"], how="left")
+    plant_details_df = plant_details_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
+
+    carousal_master_df = (
+        stoppages_df
+        .select(["erp_id", "carousal_id", "heads", "rated_productivity"])
+        .with_columns([
+            pl.col("erp_id").cast(pl.Utf8),
+            pl.col("carousal_id").cast(pl.Int64),
+        ])
+    )
+
+    base_df = (
+        carousal_master_df
+        .join(plant_details_df, left_on="erp_id", right_on="sap_id", how="left")
+        .rename({
+            "erp_id": "sap_id",
+            "carousal_id": "carousel",
+            "heads": "filling_head",
+            "plant_name": "location_name",
+        })
+    )
+
+    production_cols = [
+        "sap_id", "carousel",
+        "production_14_2kg", "production_19kg",
+        "normal_total_production", "normal_net_hours", "normal_gap_hrs", "normal_productivity",
+        "break_total_production", "break_net_hours", "break_productivity",
+        "overtime_total_production", "overtime_net_hours", "overtime_productivity",
+        "cs_rejection", "gd_rejection", "pt_rejection",
+    ]
+
+    if not clean_resp:
+        ops_df = pl.DataFrame(
+            {c: [] for c in production_cols},
+            schema={c: (pl.Utf8 if c == "sap_id" else pl.Int64 if c == "carousel" else pl.Float64)
+                    for c in production_cols},
+        )
+    else:
+        ops_df = pl.DataFrame(clean_resp).with_columns([
+            pl.col("sap_id").cast(pl.Utf8),
+            pl.col("carousel").cast(pl.Int64),
+        ]).select(production_cols)
+
+    df = base_df.join(ops_df, on=["sap_id", "carousel"], how="left")
+
+    # Flag rows with no operations record at all for this date, so we render
+    # "NA" later instead of a misleading 0.
+    df = df.with_columns(
+        pl.col("normal_total_production").is_null().alias("no_ops_data")
+    )
+
     rename_cols = {
         "location_name": "Plant Name", "sap_id": "SAP Code", "zone": "Zone", "carousel": "Carousel",
         "filling_head": "Heads", "production_14_2kg": "14.2kg Cylinders", "production_19kg": "19kg Cylinders",
@@ -1263,8 +1297,9 @@ async def lpg_production_report():
         "cs_rejection": "Check Scale Rejection", "gd_rejection": "ELD", "pt_rejection": "ORT",
         "rated_productivity": "Comparision Normal Productivity"
     }
+
     df = (
-        df.select(rename_cols.keys())
+        df.select(list(rename_cols.keys()) + ["no_ops_data"])
         .with_columns([
             pl.sum_horizontal([
                 pl.col("production_14_2kg").fill_null(0),
@@ -1273,8 +1308,18 @@ async def lpg_production_report():
         ])
         .rename(rename_cols)
     )
-    print("df select ---->\n", df)
-    df = df.fill_null(0)
+
+    fill_cols = [
+        "Normal Productivity", "Break Productivity", "Overtime Productivity",
+        "Normal Total Production", "Break Total Production", "Overtime Total Production",
+    ]
+    df = df.with_columns([
+        pl.when(pl.col("no_ops_data"))
+          .then(None)
+          .otherwise(pl.col(c).fill_null(0))
+          .alias(c)
+        for c in fill_cols
+    ])
     df = df.with_columns([
         pl.col("Normal Productivity").round(0),
         pl.col("Break Productivity").round(0),
@@ -1283,7 +1328,11 @@ async def lpg_production_report():
         pl.col("Break Total Production").round(0),
         pl.col("Overtime Total Production").round(0),
     ])
-    # Sort data
+    # Total Cylinders should also read NA, not 0, when there's no ops record at all
+    df = df.with_columns(
+        pl.when(pl.col("no_ops_data")).then(None).otherwise(pl.col("Total Cylinders")).alias("Total Cylinders")
+    )
+
     df = df.sort(["Plant Name", "SAP Code", "Zone", "Carousel"])
     final_order = [
         "Plant Name", "SAP Code", "Zone", "Carousel", "Heads",
@@ -1293,15 +1342,15 @@ async def lpg_production_report():
         "Overtime Total Production", "Overtime Net Hours", "Overtime Productivity",
         "Check Scale Rejection", "ELD", "ORT", "Comparision Normal Productivity"
     ]
+    df = df.select(final_order + ["no_ops_data"])
 
-    df = df.select(final_order)
     print("df ------>\n", df.to_dicts())
     data = df.to_dicts()
-    headers = df.columns
     exclude_cols = {
         "Comparision Normal Productivity",
         "Normal Net Hours",
-        "Total Stoppage Hours"
+        "Total Stoppage Hours",
+        "no_ops_data",
     }
     headers = [col for col in df.columns if col not in exclude_cols]
 
@@ -1325,14 +1374,24 @@ async def lpg_production_report():
         "border": 1,
         "text_wrap": True
     })
-    
+
     red_format = workbook.add_format({
-        "bg_color": "#FFC7CE",   
+        "bg_color": "#FFC7CE",  
         "font_color": "#9C0006",
         "align": "center",
         "valign": "vcenter",
         "border": 1
     })
+
+    na_format = workbook.add_format({
+        "bold": True,
+        "align": "center",
+        "valign": "vcenter",
+        "border": 1,
+        "italic": True,
+        "font_color":  "#000000",
+    })
+
 
     # ---------------- Headers ----------------
     worksheet.merge_range("A1:A2", "Plant Name", header_format)
@@ -1362,7 +1421,6 @@ async def lpg_production_report():
     worksheet.write("P2", "Net Hours", header_format)
     worksheet.write("Q2", "Productivity (cyls/hr)", header_format)
 
-
     worksheet.merge_range("R1:T1", "QC Rejections (%)", header_format)
     worksheet.write("R2", "Check Scale", header_format)
     worksheet.write("S2", "ELD", header_format)
@@ -1372,13 +1430,17 @@ async def lpg_production_report():
     row_num = 2
 
     for row in data:
-
         for col_idx, col_name in enumerate(headers[3:], start=3):
             value = row[col_name]
+
+            # Missing operations record for this plant/carousel on this date -> NA
+            if value is None:
+                worksheet.write(row_num, col_idx, "N/A", na_format)
+                continue
+
             if col_name == "Normal Productivity":
                 normal = row["Normal Productivity"]
                 comp = row["Comparision Normal Productivity"]
-
                 if comp is not None and normal is not None and comp > normal:
                     worksheet.write(row_num, col_idx, value, red_format)
                 else:
@@ -1395,7 +1457,6 @@ async def lpg_production_report():
                     worksheet.write(row_num, col_idx, value, red_format)
                 else:
                     worksheet.write(row_num, col_idx, value, cell_format)
-
             elif col_name == "ORT":
                 if value < 6 or value < 1:
                     worksheet.write(row_num, col_idx, value, red_format)
@@ -1407,11 +1468,9 @@ async def lpg_production_report():
         row_num += 1
 
     # ---------------- Merge repeated values ----------------
-    
     start_row = 2
 
     for i in range(len(data)):
-
         is_last = i == len(data) - 1
 
         current = (
@@ -1421,7 +1480,6 @@ async def lpg_production_report():
         )
 
         next_value = None
-
         if not is_last:
             next_value = (
                 data[i + 1]["Plant Name"],
@@ -1430,7 +1488,6 @@ async def lpg_production_report():
             )
 
         if is_last or current != next_value:
-
             end_row = i + 2
 
             plant_name = data[i]["Plant Name"]
@@ -1438,37 +1495,14 @@ async def lpg_production_report():
             zone = data[i]["Zone"]
 
             if start_row < end_row:
-                # Merge Plant Name
-                worksheet.merge_range(
-                    start_row, 0,
-                    end_row, 0,
-                    plant_name,
-                    cell_format
-                )
-
-                # Merge SAP Code
-                worksheet.merge_range(
-                    start_row, 1,
-                    end_row, 1,
-                    sap_code,
-                    cell_format
-                )
-
-                # Merge Zone
-                worksheet.merge_range(
-                    start_row, 2,
-                    end_row, 2,
-                    zone,
-                    cell_format
-                )
-
+                worksheet.merge_range(start_row, 0, end_row, 0, plant_name, cell_format)
+                worksheet.merge_range(start_row, 1, end_row, 1, sap_code, cell_format)
+                worksheet.merge_range(start_row, 2, end_row, 2, zone, cell_format)
             else:
-                # Single row -> write normally
                 worksheet.write(start_row, 0, plant_name, cell_format)
                 worksheet.write(start_row, 1, sap_code, cell_format)
                 worksheet.write(start_row, 2, zone, cell_format)
 
-            # Move to next group
             start_row = end_row + 1
 
     # ---------------- Column Widths ----------------
@@ -1481,13 +1515,11 @@ async def lpg_production_report():
     workbook.close()
 
     print(f"Excel saved at: {output_path}")
-    
+
     # html rowspan for merging cells with same Plant Name, SAP Code, Zone
     final_data = []
-
     i = 0
     while i < len(data):
-
         current = (
             data[i]["Plant Name"],
             data[i]["SAP Code"],
@@ -1496,7 +1528,6 @@ async def lpg_production_report():
 
         group = [data[i]]
         j = i + 1
-
         while j < len(data):
             nxt = (
                 data[j]["Plant Name"],
@@ -1510,16 +1541,13 @@ async def lpg_production_report():
                 break
 
         rowspan = len(group)
-
         for idx, row in enumerate(group):
             new_row = row.copy()
-
             if idx == 0:
                 new_row["rowspan"] = rowspan
                 new_row["show_merge"] = True
             else:
                 new_row["show_merge"] = False
-
             final_data.append(new_row)
 
         i = j
@@ -1528,4 +1556,4 @@ async def lpg_production_report():
     return {
         "data": data,
         "lpg_production_report": output_path
-    } 
+    }
