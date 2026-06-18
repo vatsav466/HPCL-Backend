@@ -1376,7 +1376,7 @@ async def lpg_production_report():
     })
 
     red_format = workbook.add_format({
-        "bg_color": "#FFC7CE", 
+        "bg_color": "#FFC7CE",  
         "font_color": "#9C0006",
         "align": "center",
         "valign": "vcenter",
@@ -1508,7 +1508,7 @@ async def lpg_production_report():
     # ---------------- Column Widths ----------------
     worksheet.set_column(0, 0, 30)
     worksheet.set_column(1, 2, 15)
-    worksheet.set_column(3, len(headers) - 1, 15)
+    worksheet.set_column(3, len(headers)-1, 15)
 
     worksheet.set_row(0, 30)
     worksheet.set_row(1, 30)
