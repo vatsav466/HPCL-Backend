@@ -976,7 +976,7 @@ async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportPar
         action=data.action
 
     )
-    return {"status": True, "message": "Success", "data": dry_out_data}
+    return dry_out_data
 
 
 # Action generate_dryout_group_data
