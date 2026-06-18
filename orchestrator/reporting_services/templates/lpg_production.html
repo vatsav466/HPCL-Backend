@@ -38,10 +38,26 @@
         color: #9C0006;
         font-weight: bold;
     }
+
+    .na-cell {
+        color:  #000;
+        font-weight: bold;
+        font-style: italic;
+    }
 </style>
 </head>
 
 <body>
+<!-- macro is helper function -->
+{% macro fmt(value, spec=none) -%}
+{%- if value is none -%}
+<span class="na-cell">N/A</span>
+{%- elif spec -%}
+{{ spec|format(value) }}
+{%- else -%}
+{{ value }}
+{%- endif -%}
+{%- endmacro %}
 	<p>LPG Production Report</p>
     <p><strong>Report Generated Date:</strong> {{today}} | <strong>Day:</strong> {{today_week}}</p>
 	<p><strong>Report Date:</strong> {{yesterday}} | <strong>Day:</strong> {{yesterday_week}}</p>
@@ -120,41 +136,41 @@
         {% for row in data %}
         <tr>
 	    {% if row.show_merge %}
-        	<td rowspan="{{ row.rowspan }}">{{ row["Plant Name"] }}</td>
-        	<td rowspan="{{ row.rowspan }}">{{ row["SAP Code"] }}</td>
-        	<td rowspan="{{ row.rowspan }}">{{ row["Zone"] }}</td>
+        	<td rowspan="{{ row.rowspan }}">{{ fmt(row["Plant Name"]) }}</td>
+        	<td rowspan="{{ row.rowspan }}">{{ fmt(row["SAP Code"]) }}</td>
+        	<td rowspan="{{ row.rowspan }}">{{ fmt(row["Zone"]) }}</td>
     	    {% endif %}
-            <td>{{ row["Carousel"] }}</td>
-            <td>{{ row["Heads"] }}</td>
+            <td>{{ fmt(row["Carousel"]) }}</td>
+            <td>{{ fmt(row["Heads"]) }}</td>
 
-            <td>{{ "%.0f"| format (row["14.2kg Cylinders"]) }}</td>
-            <td>{{ "%.0f"| format (row["19kg Cylinders"]) }}</td>
-            <td>{{ "%.0f"| format (row["Total Cylinders"]) }}</td>
+            <td>{{ fmt(row["14.2kg Cylinders"], "%.0f") }}</td>
+            <td>{{ fmt(row["19kg Cylinders"], "%.0f") }}</td>
+            <td>{{ fmt(row["Total Cylinders"], "%.0f") }}</td>
 
-            <td>{{ "%.0f"| format (row["Normal Total Production"]) }}</td>
-            <td class="red-cell">{{ row["Stoppage Hours"] }}</td>
+            <td>{{ fmt(row["Normal Total Production"], "%.0f") }}</td>
+            <td class="red-cell">{{ fmt(row["Stoppage Hours"]) }}</td>
 
-            <td class="{% if row['Comparision Normal Productivity'] > row['Normal Productivity'] %}red-cell{% endif %}">
-                {{ "%.0f"| format (row["Normal Productivity"]) }}
+            <td class="{% if row['Comparision Normal Productivity'] is not none and row['Normal Productivity'] is not none and row['Comparision Normal Productivity'] > row['Normal Productivity'] %}red-cell{% endif %}">
+                {{ fmt(row["Normal Productivity"], "%.0f") }}
             </td>
 
-            <td>{{ "%.0f"| format ( row["Break Total Production"]) }}</td>
-            <td>{{ row["Break Net Hours"] }}</td>
-            <td>{{ "%.0f"| format ( row["Break Productivity"]) }}</td>
+            <td>{{ fmt(row["Break Total Production"], "%.0f") }}</td>
+            <td>{{ fmt(row["Break Net Hours"]) }}</td>
+            <td>{{ fmt(row["Break Productivity"], "%.0f") }}</td>
 
-            <td>{{ "%.0f"| format (row["Overtime Total Production"]) }}</td>
-            <td>{{ row["Overtime Net Hours"] }}</td>
-            <td>{{ "%.0f"| format (row["Overtime Productivity"]) }}</td>
-	    <td class="{% if row['Check Scale Rejection'] > 8 %}red-cell{% endif %}">
-                {{ row["Check Scale Rejection"] }}
+            <td>{{ fmt(row["Overtime Total Production"], "%.0f") }}</td>
+            <td>{{ fmt(row["Overtime Net Hours"]) }}</td>
+            <td>{{ fmt(row["Overtime Productivity"], "%.0f") }}</td>
+	    <td class="{% if row['Check Scale Rejection'] is not none and row['Check Scale Rejection'] > 8 %}red-cell{% endif %}">
+                {{ fmt(row["Check Scale Rejection"]) }}
             </td>
 
-            <td class="{% if row['ELD'] > 6 or row['ELD'] < 1 %}red-cell{% endif %}">
-                {{ row["ELD"] }}
+            <td class="{% if row['ELD'] is not none and (row['ELD'] > 6 or row['ELD'] < 1) %}red-cell{% endif %}">
+                {{ fmt(row["ELD"]) }}
             </td>
 
-            <td class="{% if row['ORT'] < 6 or row['ORT'] < 1 %}red-cell{% endif %}">
-                {{ row["ORT"] }}
+            <td class="{% if row['ORT'] is not none and (row['ORT'] < 6 or row['ORT'] < 1) %}red-cell{% endif %}">
+                {{ fmt(row["ORT"]) }}
             </td>
         </tr>
         {% endfor %}
