@@ -12184,6 +12184,9 @@ class LpgCarousalsSchema(UrdhvaPostgresBase):
     rated_productivity: Mapped[int] = mapped_column("rated_productivity", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     production_hrs: Mapped[typing.List[typing.Any]] = mapped_column("production_hrs", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
     breaks: Mapped[typing.List[typing.Any]] = mapped_column("breaks", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    min_productivity: Mapped[typing.Optional[int]] = mapped_column("min_productivity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    max_productivity: Mapped[typing.Optional[int]] = mapped_column("max_productivity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    skip_zero_performance_score: Mapped[typing.Optional[bool]] = mapped_column("skip_zero_performance_score", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class LpgCarousalsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -12195,6 +12198,9 @@ class LpgCarousalsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     rated_productivity: int
     production_hrs: typing.List[ShiftHrsCreate]
     breaks: typing.List[BreakHrsCreate]
+    min_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    max_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    skip_zero_performance_score: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -12213,6 +12219,9 @@ class LpgCarousals(urdhva_base.postgresmodel.PostgresModel):
     rated_productivity: typing.Optional[int] | None = None
     production_hrs: typing.Optional[typing.List[ShiftHrsCreate]] | None = None
     breaks: typing.Optional[typing.List[BreakHrsCreate]] | None = None
+    min_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    max_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    skip_zero_performance_score: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -12235,6 +12244,9 @@ class Lpgcarousals_Create_CarousalParams(pydantic.BaseModel):
     rated_productivity: int
     production_hrs: typing.List[ShiftHrsCreate]
     breaks: typing.List[BreakHrsCreate]
+    min_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    max_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    skip_zero_performance_score: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -12248,6 +12260,9 @@ class Lpgcarousals_Update_CarousalParams(pydantic.BaseModel):
     rated_productivity: typing.Optional[int] = pydantic.Field(0, **{})
     production_hrs: typing.Optional[typing.List[ShiftHrsCreate]] | None = None
     breaks: typing.Optional[typing.List[BreakHrsCreate]] | None = None
+    min_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    max_productivity: typing.Optional[int] = pydantic.Field(0, **{})
+    skip_zero_performance_score: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

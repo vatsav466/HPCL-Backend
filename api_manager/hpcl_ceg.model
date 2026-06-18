@@ -4529,6 +4529,9 @@ Model LpgCarousals {
     rated_productivity int
     production_hrs list ShiftHrs
     breaks list BreakHrs
+    min_productivity optional int
+    max_productivity optional int
+    skip_zero_performance_score optional bool
 
     Action=> create_carousal {
         sap_id int
@@ -4537,6 +4540,9 @@ Model LpgCarousals {
         rated_productivity int
         production_hrs list ShiftHrs
         breaks list BreakHrs
+        min_productivity optional int
+        max_productivity optional int
+        skip_zero_performance_score optional bool
     }
 
     Action=> update_carousal {
@@ -4546,6 +4552,9 @@ Model LpgCarousals {
         rated_productivity optional int
         production_hrs optional list ShiftHrs
         breaks optional list BreakHrs
+        min_productivity optional int
+        max_productivity optional int
+        skip_zero_performance_score optional bool
     }
 
     Action=> delete_carousal {
