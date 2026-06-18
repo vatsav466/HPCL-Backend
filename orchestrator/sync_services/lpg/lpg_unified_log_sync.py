@@ -94,6 +94,7 @@ import traceback
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from zoneinfo import ZoneInfo
 
 import mysql.connector
 import pandas as pd
@@ -839,29 +840,61 @@ def _kind_label(kind: LogKind) -> str:
 
 
 def _last_synced_at_raw(ts: Optional[Any]) -> str:
-    """Return cursor timestamp as stored in DB (no format conversion)."""
+    """Return cursor timestamp formatted without microseconds."""
     if ts is None:
         return ""
-    return str(ts)
+    return pd.Timestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _format_elapsed(delta: dt.timedelta) -> str:
+    """Human-readable duration (e.g. ``2h 15m``, ``3d 4h``)."""
+    secs = max(0, int(delta.total_seconds()))
+    if secs < 60:
+        return f"{secs}s"
+    mins, rem_secs = divmod(secs, 60)
+    if mins < 60:
+        return f"{mins}m {rem_secs}s" if rem_secs else f"{mins}m"
+    hours, rem_mins = divmod(mins, 60)
+    if hours < 24:
+        return f"{hours}h {rem_mins}m" if rem_mins else f"{hours}h"
+    days, rem_hours = divmod(hours, 24)
+    return f"{days}d {rem_hours}h" if rem_hours else f"{days}d"
+
+
+def _time_elapsed_since(ts: Optional[Any]) -> str:
+    """Elapsed time since ``last_synced_at`` (IST), empty when unknown."""
+    if ts is None:
+        return ""
+    now_ist = dt.datetime.now(ZoneInfo("Asia/Kolkata"))
+    py_ts = pd.Timestamp(ts).to_pydatetime()
+    if py_ts.tzinfo is None:
+        py_ts = py_ts.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+    else:
+        py_ts = py_ts.astimezone(ZoneInfo("Asia/Kolkata"))
+    return _format_elapsed(now_ist - py_ts)
 
 
 def _load_last_synced_at_map(
     plant_names: List[str],
-) -> Dict[str, Dict[str, Optional[dt.datetime]]]:
-    """Read last_synced_at from cursor; match plant names loosely (ILIKE), like plant_details API."""
+) -> Dict[str, Dict[str, Any]]:
+    """Read ``last_synced_at`` and ``last_process_date`` from cursor (ILIKE plant match)."""
     names = list({str(n).strip() for n in plant_names if n})
     if not names:
         return {}
     conn = _app_db_connect()
     cur = conn.cursor()
-    out: Dict[str, Dict[str, Optional[dt.datetime]]] = {
-        n: {"event": None, "production": None, "latest": None} for n in names
+    out: Dict[str, Dict[str, Any]] = {
+        n: {
+            "event": {"synced": None, "process": None},
+            "production": {"synced": None, "process": None},
+        }
+        for n in names
     }
     try:
         for master_name in names:
             cur.execute(
                 f"""
-                SELECT plant_name, log_kind, last_synced_at
+                SELECT plant_name, log_kind, last_synced_at, last_process_date
                 FROM {CURSOR_TABLE}
                 WHERE plant_name = %s
                    OR %s ILIKE '%%' || plant_name || '%%'
@@ -870,37 +903,54 @@ def _load_last_synced_at_map(
                 (master_name, master_name, master_name),
             )
             bucket = out[master_name]
-            for _cursor_plant, log_kind, last_synced_at in cur.fetchall():
-                if last_synced_at is None:
-                    continue
-                py_ts = pd.Timestamp(last_synced_at).to_pydatetime()
+            for _cursor_plant, log_kind, last_synced_at, last_process_date in cur.fetchall():
                 kind = str(log_kind).strip().lower()
-                if kind == "event":
-                    if bucket["event"] is None or py_ts > bucket["event"]:
-                        bucket["event"] = py_ts
-                elif kind == "production":
-                    if bucket["production"] is None or py_ts > bucket["production"]:
-                        bucket["production"] = py_ts
-        for key, kinds in out.items():
-            candidates = [t for t in (kinds["event"], kinds["production"]) if t is not None]
-            kinds["latest"] = max(candidates) if candidates else None
+                if kind not in ("event", "production"):
+                    continue
+                slot = bucket[kind]
+                if last_synced_at is not None:
+                    py_synced = pd.Timestamp(last_synced_at).to_pydatetime()
+                    if slot["synced"] is None or py_synced > slot["synced"]:
+                        slot["synced"] = py_synced
+                if last_process_date is not None:
+                    py_process = pd.Timestamp(last_process_date).to_pydatetime()
+                    if slot["process"] is None or py_process > slot["process"]:
+                        slot["process"] = py_process
         return out
     finally:
         cur.close()
         conn.close()
 
 
+def _resolve_display_sync_ts(
+    bucket: Dict[str, Any],
+    *,
+    connected: bool,
+) -> Optional[dt.datetime]:
+    """
+    Prefer ``last_synced_at``. For not-connected plants only, fall back to
+    ``last_process_date`` when ``last_synced_at`` is null (e.g. first run skip).
+    """
+    picks: List[dt.datetime] = []
+    for kind in ("event", "production"):
+        slot = bucket.get(kind, {})
+        synced = slot.get("synced")
+        process = slot.get("process")
+        if synced is not None:
+            picks.append(synced)
+        elif not connected and process is not None:
+            picks.append(process)
+    return max(picks) if picks else None
+
+
 def _not_connected_from_sync_results(
     results: List[Dict[str, Any]],
-    last_synced_map: Optional[Dict[str, Dict[str, Optional[dt.datetime]]]] = None,
 ) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
-    synced = last_synced_map or {}
     for r in results:
         if r.get("connected", True):
             continue
         plant_name = str(r.get("plant_name", ""))
-        latest_ts = synced.get(plant_name, {}).get("latest")
         out.append(
             {
                 "s_no": len(out) + 1,
@@ -911,7 +961,8 @@ def _not_connected_from_sync_results(
                 "host_ip": str(r.get("host_ip", "")),
                 "port": str(r.get("port", "")),
                 "status": "NOT CONNECTED",
-                "last_synced_at": _last_synced_at_raw(latest_ts),
+                "last_synced_at": r.get("last_synced_at", ""),
+                "time_elapsed": r.get("time_elapsed", ""),
                 "error_message": str(
                     r.get("connectivity_error")
                     or (r.get("failure") or {}).get("error_message")
@@ -1412,9 +1463,12 @@ def main() -> None:
     last_synced_map = _load_last_synced_at_map([r.get("plant_name") for r in results])
     for r in results:
         plant_name = r.get("plant_name", "")
-        latest_ts = last_synced_map.get(plant_name, {}).get("latest")
-        r["status"] = ("CONNECTED" if r.get("connected", False)  else "NOT CONNECTED")
+        connected = bool(r.get("connected", False))
+        bucket = last_synced_map.get(plant_name, {})
+        latest_ts = _resolve_display_sync_ts(bucket, connected=connected)
+        r["status"] = ("CONNECTED" if connected else "NOT CONNECTED")
         r["last_synced_at"] = _last_synced_at_raw(latest_ts)
+        r["time_elapsed"] = _time_elapsed_since(latest_ts)
         
 
     finished_at = dt.datetime.now(dt.timezone.utc).isoformat()
@@ -1461,7 +1515,7 @@ def main() -> None:
 
     # Skip with: export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1  (or true/yes)
     if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "").lower() not in ("1", "true", "yes",):
-        not_connected = _not_connected_from_sync_results(results, _load_last_synced_at_map([r.get("plant_name") for r in results if not r.get("connected", True)]),)
+        not_connected = _not_connected_from_sync_results(results)
         _sync_print(f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…")
         try:
             asyncio.run(_send_not_connected_plants_mail(not_connected))
