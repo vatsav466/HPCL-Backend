@@ -34,7 +34,9 @@
                     <tr>
                         <td style="font-size:16px; line-height:24px; color:#222222; padding:0 34px 28px 34px; text-align:left;">
                             <strong>Location:</strong> {{ location_name or plant_location }}<br>
+                            <strong>Communication Lost At:</strong> {{ created_at_IST }}<br>
                             <strong>Communication Restored At:</strong> {{ date_time }}<br>
+                            <strong>Communication Lost Duration:</strong> {{ lost_duration }}<br>
                             <strong>Reason:</strong>
                             {% if asset_name in ["OPC DA connection failed", "Data receiving connection failed"] %}
                                 {{ asset_name }}

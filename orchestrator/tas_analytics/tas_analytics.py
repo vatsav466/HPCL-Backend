@@ -7519,6 +7519,245 @@ async def verification_meters(data):
             "status": False,
             "quarter_wise_bcu_analysis": []
         }
+    
+async def loss_of_communication(data):
+    try:
+
+        IST               = timezone(timedelta(hours=5, minutes=30))
+        THINGSBOARD_URL   = tb_utils.THINGSBOARD_URL.rstrip("/")
+        TELEMETRY_KEY     = "Primary Gauge HIGH"
+        GAP_THRESHOLD_MIN = 35
+        PAGE_SIZE         = 1000
+
+        EXCLUDED_LOCATIONS     = {"mathura"}
+        TANK_DEVICE_EXCEPTIONS = {"secunderabad": "51-TT-"}
+        TB_LOCATION_OVERRIDES  = {"kozikode": "kozhikode"}
+        STRIP_WORDS            = {"hpcl", "terminal", "plant", "depot", "location", "ltd", "limited", "ird", "stp", "1044", "oil", "white"}
+
+        # ── Date range ────────────────────────────────────────────────────────
+        if not data.start_date or not data.end_date:
+            return {"status": False, "message": "start_date and end_date are required", "data": {}}
+
+        start_ms = int(datetime.strptime(str(data.start_date), "%Y-%m-%d")
+                       .replace(tzinfo=timezone.utc).timestamp() * 1000)
+        end_ms   = int(datetime.strptime(str(data.end_date), "%Y-%m-%d")
+                       .replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+                       .timestamp() * 1000)
+        num_days = max((end_ms - start_ms) / (1000 * 60 * 60 * 24), 1) 
+
+        # ── UI filters ────────────────────────────────────────────────────────
+        filter_location   = (getattr(data, "location_name", None) or "").strip()
+        filter_zone       = (getattr(data, "zone", None) or "").strip().lower()
+        normalized_filter = re.sub(r'[^a-z0-9\s]', '', filter_location.strip().lower()).split()
+        normalized_filter = " ".join(w for w in normalized_filter if w not in STRIP_WORDS) if filter_location else ""
+
+        # ── Helpers ───────────────────────────────────────────────────────────
+        def normalize_for_compare(text):
+            text  = re.sub(r'[^a-z0-9\s]', '', text.strip().lower())
+            words = [w for w in text.split() if w not in STRIP_WORDS]
+            return " ".join(words).strip()
+
+        def normalize_location(location):
+            return re.sub(r'_[A-Za-z0-9]+$', '', location.strip())
+
+        def find_gaps(records):
+            gaps          = []
+            threshold_ms  = GAP_THRESHOLD_MIN * 60 * 1000
+            total_diff_ms = 0
+            for i in range(len(records) - 1):
+                newer_ts = records[i]["ts"]
+                older_ts = records[i + 1]["ts"]
+                diff_ms  = newer_ts - older_ts
+                if diff_ms > threshold_ms:
+                    total_diff_ms += diff_ms
+                    gaps.append({
+                        "gap_start":    datetime.fromtimestamp(older_ts / 1000, tz=IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                        "gap_end":      datetime.fromtimestamp(newer_ts / 1000, tz=IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                        "duration_min": round(diff_ms / 60000, 1),
+                    })
+            return gaps, round(total_diff_ms / 60000, 1)
+
+        # ── Zone map from onboarded locations ─────────────────────────────────
+        all_locations = await get_all_onboarded_locations()
+        name_to_zone  = {
+            normalize_for_compare(loc["name"]): (loc.get("zone") or "").strip()
+            for loc in all_locations
+            if loc.get("name")
+        }
+
+        def get_zone(tb_location):
+            return name_to_zone.get(normalize_for_compare(tb_location), "")
+
+        # ── Auth ──────────────────────────────────────────────────────────────
+        jwt     = await tb_utils.get_thingsboard_jwt()
+        headers = {"X-Authorization": f"Bearer {jwt}"}
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+
+            # ── Fetch all devices ─────────────────────────────────────────────
+            devices, page = [], 0
+            while True:
+                resp = await client.get(
+                    f"{THINGSBOARD_URL}/api/tenant/devices",
+                    headers=headers,
+                    params={"pageSize": PAGE_SIZE, "page": page},
+                )
+                resp.raise_for_status()
+                body = resp.json()
+                devices.extend(body.get("data", []))
+                if not body.get("hasNext"):
+                    break
+                page += 1
+
+            # ── Group TK devices by location ──────────────────────────────────
+            location_map: dict = {}
+            for dev in devices:
+                name = dev.get("name", "")
+                if "@" not in name:
+                    continue
+
+                local_name, raw_location = name.split("@", 1)
+                local_name   = local_name.strip()
+                location     = normalize_location(raw_location)
+                location_key = location.strip().lower()
+                location     = TB_LOCATION_OVERRIDES.get(location_key, location)
+
+                if location_key in EXCLUDED_LOCATIONS:
+                    continue
+                if normalized_filter and normalize_for_compare(location) != normalized_filter:
+                    continue
+                if filter_zone and get_zone(location).lower() != filter_zone:
+                    continue
+
+                is_tk        = local_name.upper().startswith("TK")
+                exc_prefix   = TANK_DEVICE_EXCEPTIONS.get(location_key)
+                is_exception = bool(exc_prefix and local_name.upper().startswith(exc_prefix.upper()))
+
+                if (is_tk or is_exception) and location not in location_map:
+                    location_map[location] = dev
+
+            if not location_map:
+                return {
+                    "status":  True,
+                    "message": (
+                        f"No TK-prefixed devices found"
+                        f"{' for location: ' + filter_location if filter_location else ''}"
+                        f"{' in zone: ' + filter_zone if filter_zone else ''}"
+                    ),
+                    "data": {}
+                }
+
+            # ── Fetch telemetry (paginated) ───────────────────────────────────
+            async def fetch_telemetry(device_id):
+                records, window_end = [], end_ms
+                while window_end > start_ms:
+                    try:
+                        resp = await client.get(
+                            f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
+                            headers=headers,
+                            params={
+                                "keys":    TELEMETRY_KEY,
+                                "startTs": start_ms,
+                                "endTs":   window_end,
+                                "limit":   PAGE_SIZE,
+                                "orderBy": "DESC",
+                            },
+                        )
+                        if resp.status_code != 200:
+                            break
+                        points = resp.json().get(TELEMETRY_KEY, [])
+                    except Exception:
+                        break
+
+                    if not points:
+                        break
+
+                    records.extend(points)
+                    oldest_ts = points[-1]["ts"]
+                    if oldest_ts <= start_ms or len(points) < PAGE_SIZE:
+                        break
+                    window_end = oldest_ts - 1
+
+                # Deduplicate in one pass
+                seen = {}
+                for p in records:
+                    seen.setdefault(p["ts"], p)
+                return sorted(seen.values(), key=lambda x: x["ts"], reverse=True)
+
+            # ── Fetch all locations concurrently ──────────────────────────────
+            sorted_locations = sorted(location_map.items())
+            all_records = await asyncio.gather(
+                *[fetch_telemetry(dev["id"]["id"]) for _, dev in sorted_locations]
+            )
+
+            # ── Build report ──────────────────────────────────────────────────
+            report = []
+            for (location, device), records in zip(sorted_locations, all_records):
+                zone = get_zone(location)
+
+                if not records:
+                    duration = round((end_ms - start_ms) / 60000, 1)
+                    report.append({
+                        "location":          location,
+                        "zone":              zone,
+                        "device_name":       device["name"],
+                        "gaps": [{
+                            "gap_start":    datetime.fromtimestamp(start_ms / 1000, tz=IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                            "gap_end":      datetime.fromtimestamp(end_ms   / 1000, tz=IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                            "duration_min": duration,
+                        }],
+                        "gap_count":         1,
+                        "has_gap":           True,
+                        "total_downtime_min": duration,
+                        "avg_daily_downtime_min": round(duration / num_days, 2),
+                        
+                    })
+                    continue
+
+                gaps, total_downtime_min = find_gaps(records)
+                report.append({
+                    "location":          location,
+                    "zone":              zone,
+                    "gaps":              gaps,
+                    "gap_count":         len(gaps),
+                    "has_gap":           bool(gaps),
+                    "total_downtime_min": total_downtime_min,
+                    "avg_daily_downtime_min":    round(total_downtime_min / num_days, 2),
+                })
+
+        locations_with_gaps    = [r for r in report if r["has_gap"]]
+        locations_without_gaps = [
+            {"location": r["location"], "zone": r["zone"]}
+            for r in report if not r["has_gap"]
+        ]
+
+        all_downtimes                  = [r["total_downtime_min"] for r in report]
+        overall_total_downtime_min     = round(sum(all_downtimes), 2)
+        overall_avg_daily_downtime_min = round(overall_total_downtime_min / num_days, 2)
+
+
+        return {
+            "status":  True,
+            "message": "Telemetry gap report generated successfully",
+            "data": {
+                "gap_threshold_min":        GAP_THRESHOLD_MIN,
+                "start_date":               str(data.start_date),
+                "end_date":                 str(data.end_date),
+                "location_filter":          filter_location,
+                "zone_filter":              filter_zone,
+                "locations_with_gaps":      locations_with_gaps,
+                "locations_without_gaps":   locations_without_gaps,
+                "total_locations_checked":  len(report),
+                "locations_with_gap_count": len(locations_with_gaps),
+                "overall_total_downtime_min":      overall_total_downtime_min,
+                "overall_avg_daily_downtime_min":  overall_avg_daily_downtime_min,
+            }
+        }
+
+    except Exception as e:
+        return {"status": False, "message": str(e), "data": {}}
+    
+
 
 async def get_recurrent_delay(data):
     try:
@@ -8117,7 +8356,8 @@ AnalyticsModelMapping = {
     "Verification_of_meters":verification_meters,
     "Recurrent_Delay":get_recurrent_delay,
     "Tank_Mode_status":get_tank_mode_analysis,
-    "Safety Exposure Index":calculate_safety_exposure_index_overview
+    "Safety Exposure Index":calculate_safety_exposure_index_overview,
+    "Telemetry Loss of Communication": loss_of_communication
 
 }
 
