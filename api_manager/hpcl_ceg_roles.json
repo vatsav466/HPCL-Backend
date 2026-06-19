@@ -8793,6 +8793,9 @@
                 },
                 {
                     "name": "add_recipients"
+                },
+                {
+                    "name": "get_email_audience"
                 }
             ]
         },
@@ -8808,6 +8811,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_email_audience"
                 }
             ]
         },
@@ -8835,6 +8841,9 @@
                 },
                 {
                     "name": "add_recipients"
+                },
+                {
+                    "name": "get_email_audience"
                 }
             ]
         },
@@ -9938,6 +9947,10 @@
         {
             "name": "add_recipients",
             "displayName": "add_recipients"
+        },
+        {
+            "name": "get_email_audience",
+            "displayName": "get_email_audience"
         },
         {
             "name": "create_carousal",
