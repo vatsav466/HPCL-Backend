@@ -50,6 +50,10 @@ def resolve_gateway_date_bound(
     s = str(value).strip()
     if not s:
         return None
+    # Support YYYYMMDD format
+    if len(s) == 8 and s.isdigit():
+        return s
+    
     if len(s) >= 10 and s[4] == "-" and s[7] == "-":
         try:
             return datetime.date.fromisoformat(s[:10])
