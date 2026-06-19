@@ -12161,6 +12161,14 @@ class Dailyemailnotificationusers_Add_RecipientsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Dailyemailnotificationusers_Get_Email_AudienceParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class ShiftHrsCreate(pydantic.BaseModel):
     shift_name: str
     start_time: str
