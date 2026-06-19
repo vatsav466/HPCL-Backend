@@ -437,6 +437,25 @@ class SendNotification:
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
                   self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+        
+        lost_duration = ""
+        if self.alert_data.get("interlock_name") == "Loss Of Communication":
+            try:
+                fmt = '%d-%m-%Y %H:%M:%S'
+                created_at_IST_str = self.alert_data['created_at'].replace(tzinfo=pytz.utc).astimezone(self.IST).strftime(fmt)
+                date_time_str = datetime.datetime.now(self.IST).strftime(fmt)
+
+                created_dt = datetime.datetime.strptime(created_at_IST_str, fmt)
+                restored_dt = datetime.datetime.strptime(date_time_str, fmt)
+
+                delta = restored_dt - created_dt
+                total_seconds = int(delta.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                lost_duration = f"{hours}h {minutes}m {seconds}s"
+            except Exception as e:
+                logger.error(f"Failed to compute lost_duration: {e}")
+                lost_duration = "N/A"
 
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
@@ -448,6 +467,8 @@ class SendNotification:
             "asset_name": self.alert_data["device_type"],
             "date_time": datetime.datetime.now(self.IST).strftime('%d-%m-%Y %H:%M:%S'),
             "opened_time": self.alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S'),
+            "created_at_IST": self.alert_data['created_at'].replace(tzinfo=pytz.utc).astimezone(self.IST).strftime('%d-%m-%Y %H:%M:%S'),
+            "lost_duration": lost_duration, 
             "days": self.days if self.days else 0,
             "transporter_name": self.alert_data['transporter_name'] if self.alert_data['transporter_name'] else "",
             "block_start_date": self.alert_data['vehicle_blocked_start_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_start_date'] else None,
