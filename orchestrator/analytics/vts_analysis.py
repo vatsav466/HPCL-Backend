@@ -805,9 +805,9 @@ async def get_delivered_location_packed(invoice_number,supply_location,vehicle_n
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             # Fetching customer from TIBCO DB
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            #function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
             query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE LOAD_NO1 = '{invoice_number}' 
                         AND SUPPLY_LOC = '{supply_location}' AND VEHICLE_ID = '{vehicle_number}'"""
 
@@ -815,7 +815,7 @@ async def get_delivered_location_packed(invoice_number,supply_location,vehicle_n
             print('query',query)
             print('*'*100)
 
-            delivery_location_resp = await function(query=query) 
+            # delivery_location_resp = await function(query=query) 
 
             if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
                 break
@@ -863,22 +863,22 @@ async def get_delivered_location(invoice_number,supply_location,vehicle_number):
             if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
                 break
             
-            invoice_no = invoice_number.split("-")[0]
-            # Fetching voilations from VTS DB
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
-                        AND SUPPLY_LOC = '{supply_location}'"""
+            # invoice_no = invoice_number.split("-")[0]
+            # # Fetching voilations from VTS DB
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            # query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+            #             AND SUPPLY_LOC = '{supply_location}'"""
 
-            print('*'*100)
-            print('query',query)
-            print('*'*100)
+            # print('*'*100)
+            # print('query',query)
+            # print('*'*100)
 
-            delivery_location_resp = await function(query=query) 
+            # delivery_location_resp = await function(query=query) 
 
-            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
-                break
+            # if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+            #     break
 
         except Exception as e:
             print(traceback.format_exc())
