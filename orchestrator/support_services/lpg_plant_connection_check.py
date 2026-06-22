@@ -16,14 +16,40 @@ import hpcl_ceg_model
 
 CONNECTION_TIMEOUT = 10  # seconds
 
+PLANT_CONNECTIVITY_CC_RECIPIENTS = [
+    "Rishikesh.patil@hpcl.in",
+    "Randhir.Kumar2@hpcl.in",
+    "avinashgaurav@hpcl.in",
+    "sachinkwarghane@hpcl.in",
+    "ArpitaKanak.Bara@hpcl.in",
+]
+
+PLANT_CONNECTIVITY_BCC_RECIPIENTS = [
+    "yesu.p@algofusiontech.com",
+    "mrudula.m@algofusiontech.com",
+    "venu@algofusiontech.com",
+]
+
 not_connected_plants = []
+
+
+def _normalize_mail_recipients(recipients):
+    """Return a clean list of email addresses from mail_recipients field."""
+    if not recipients:
+        return []
+    if isinstance(recipients, str):
+        recipients = [recipients]
+    return list(dict.fromkeys(
+        str(r).strip() for r in recipients if r and str(r).strip()
+    ))
 
 
 async def load_plant_data():
     """Load plant data from lpg_plants_master table in DB"""
     try:
         query = """
-            SELECT sap_id, plant_name, zone, ip_address, port_no, username, password, db_name, db_type
+            SELECT sap_id, plant_name, zone, ip_address, port_no, username, password,
+                   db_name, db_type, mail_recipients
             FROM lpg_plants_master
             ORDER BY id ASC
         """
@@ -168,7 +194,8 @@ def check_plant_connectivity(plant_df):
                 'host_ip': host_ip,
                 'port': port,
                 'status': 'NOT CONNECTED',
-                'error_message': status_message
+                'error_message': status_message,
+                'mail_recipients': _normalize_mail_recipients(plant.get('mail_recipients')),
             })
             print(f"{short_name}: {status_message}")
         else:
@@ -194,7 +221,10 @@ def create_not_connected_plants_csv():
 
     try:
         with open(csv_path, "w", newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['s_no', 'erp_id', 'plant_name', 'short_name', 'zone', 'host_ip', 'port', 'last_synced_at', 'status',]
+            fieldnames = [
+                's_no', 'erp_id', 'plant_name', 'short_name', 'zone', 'host_ip', 'port',
+                'last_synced_at', 'time_elapsed', 'status',
+            ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
@@ -203,6 +233,8 @@ def create_not_connected_plants_csv():
                 csv_row = {k: v for k, v in plant.items() if k != 'error_message'}
                 if 'last_synced_at' not in csv_row:
                     csv_row['last_synced_at'] = plant.get('last_synced_at', '')
+                if 'time_elapsed' not in csv_row:
+                    csv_row['time_elapsed'] = plant.get('time_elapsed', '')
                 writer.writerow({k: csv_row.get(k, '') for k in fieldnames})
 
         print(f"Created not connected plants CSV with {len(not_connected_plants)} entries: {csv_path}")
@@ -240,6 +272,7 @@ async def send_connectivity_mail(csv_path):
     table_rows = ""
     for plant in not_connected_plants:
         last_synced = plant.get('last_synced_at', '')
+        time_elapsed = plant.get('time_elapsed', '')
         table_rows += f"""
         <tr>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{plant['s_no']}</td>
@@ -250,6 +283,7 @@ async def send_connectivity_mail(csv_path):
             <td style="padding: 8px; border: 1px solid #ddd;">{plant['host_ip']}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">{plant['port']}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">{last_synced}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{time_elapsed}</td>
             <td style="padding: 8px; border: 1px solid #ddd; color: red; font-weight: bold;">{plant['status']}</td>
         </tr>
         """
@@ -274,6 +308,7 @@ async def send_connectivity_mail(csv_path):
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Host IP</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Port</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Last Synced At</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Time Elapsed</th>
                     <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Status</th>
                 </tr>
             </thead>
@@ -326,6 +361,98 @@ async def send_connectivity_mail(csv_path):
             print(f"Attempt {attempt} - Failed to send email: {e}")
             if attempt == 3:
                 print("All email attempts failed.")
+
+    await send_plant_recipient_connectivity_mails()
+
+
+def _resolve_plant_connectivity_error(plant):
+    """Pick the best available connectivity error/reason for a plant."""
+    return (
+        plant.get('error_message')
+        or plant.get('connectivity_error')
+        or (plant.get('failure') or {}).get('error_message')
+        or 'Connection failed during sync'
+    )
+
+
+def _build_plant_recipient_email_html(plant, formatted_time):
+    """Build simple HTML body for a single plant connectivity alert."""
+    plant_name = plant.get('plant_name') or plant.get('short_name', 'Unknown Plant')
+    error_message = _resolve_plant_connectivity_error(plant)
+    last_synced_at = plant.get('last_synced_at') or 'Not available'
+    time_elapsed = plant.get('time_elapsed') or 'Not available'
+    return f"""
+    <html>
+        <body style="font-family: Arial, sans-serif;">
+        <p>Hi Team,</p>
+        <p>
+            <strong>{plant_name}</strong> is not connected.
+        </p>
+        <p><strong>Last Synced At:</strong> {last_synced_at}</p>
+        <p><strong>Time Elapsed:</strong> {time_elapsed}</p>
+        <p><strong>Reason / Error:</strong> {error_message}</p>
+        <p><strong>Report Time:</strong> {formatted_time}</p>
+        <br>
+        <p>Regards,<br>
+        LPG Plants Monitoring System</p>
+        </body>
+    </html>
+    """
+
+
+async def send_plant_recipient_connectivity_mails():
+    """Send plant-wise connectivity alerts to mail_recipients from lpg_plants_master."""
+    if not not_connected_plants:
+        print("No disconnected plants for plant-recipient emails")
+        return
+
+    now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+    sent_count = 0
+    skipped_count = 0
+
+    for plant in not_connected_plants:
+        to_recipients = _normalize_mail_recipients(plant.get('mail_recipients'))
+        if not to_recipients:
+            print(
+                f"Skipping plant-recipient email for {plant.get('short_name', plant.get('plant_name'))}: "
+                "no mail_recipients configured"
+            )
+            skipped_count += 1
+            continue
+
+        html_body = _build_plant_recipient_email_html(plant, formatted_time)
+        plant_label = plant.get('short_name') or plant.get('plant_name', 'Unknown Plant')
+
+        for attempt in range(1, 4):
+            try:
+                print(
+                    f"Attempt {attempt} to send plant-recipient email for {plant_label} "
+                    f"to {to_recipients}..."
+                )
+                await ins.publish_message(
+                    subject=f"LPG Plant Connectivity Alert - {plant_label} - {formatted_time}",
+                    recipients=to_recipients,
+                    # cc_recipients=PLANT_CONNECTIVITY_CC_RECIPIENTS,
+                    # bcc_recipients=PLANT_CONNECTIVITY_BCC_RECIPIENTS,
+                    html_content=True,
+                    body=html_body,
+                    force_send=True,
+                )
+                print(f"Plant-recipient email sent for {plant_label}.")
+                sent_count += 1
+                break
+            except Exception as e:
+                print(f"Attempt {attempt} - Failed plant-recipient email for {plant_label}: {e}")
+                if attempt == 3:
+                    print(f"All plant-recipient email attempts failed for {plant_label}.")
+
+    print(
+        f"Plant-recipient emails completed: sent={sent_count}, "
+        f"skipped(no recipients)={skipped_count}"
+    )
 
 
 async def main():

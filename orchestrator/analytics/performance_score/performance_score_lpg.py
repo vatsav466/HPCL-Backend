@@ -474,23 +474,45 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_productivity_pi_score(self, name, rules, location_id):
         query = f"""
-            SELECT filling_head AS filling_heads,carousel ,
-                COALESCE(ROUND(SUM(total_production) / NULLIF(SUM(total_net_hours), 0), 2), 0) AS productivity_yesterday
-            FROM lpg_plant_operations
+            SELECT
+                o.filling_head AS filling_heads,
+                o.carousel,
+                COALESCE(
+                    ROUND(
+                        SUM(o.total_production) /
+                        NULLIF(SUM(o.net_bottling_hours), 0),
+                        2
+                    ),
+                    0
+                ) AS productivity_yesterday,
+                c.min_productivity,
+                c.max_productivity
+            FROM lpg_plant_operations o
+            LEFT JOIN lpg_carousals c
+                ON o.sap_id::int = c.sap_id
+                AND o.carousel::int = c.carousal_id
             WHERE
-                process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-                AND sap_id = '{location_id}'
-            GROUP BY filling_head , carousel 
+                o.process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
+                AND o.sap_id = '{location_id}'
+            GROUP BY
+                o.filling_head,
+                o.carousel,
+                c.min_productivity,
+                c.max_productivity
         """
-
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        print("resp-->", resp)
         # productivity = {rec['filling_heads']: float(rec['productivity_yesterday']) for rec in resp['data']}
         productivity = {}
         for rec in resp['data']:
             head = rec['filling_heads']
             car = rec['carousel']
             val = float(rec['productivity_yesterday'])
-            productivity.setdefault(head, {})[car] = val
+            productivity.setdefault(head, {})[car] = {
+                "value": val,
+                "min": float(rec.get("min_productivity") or 0),
+                "max": float(rec.get("max_productivity") or 0)
+            }
         pi_score = []
         msg = ""
         for rule in rules['rules']:
@@ -498,63 +520,67 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             if head not in productivity:
                 continue
 
-            weightage = float(rule['weightage'])
-            subrules = rule['rules']
+            # weightage = float(rule['weightage'])
+            weightage = float(rule.get('weightage', 100))
+            # subrules = rule['rules']
             num_carousels = len(productivity[head])
             per_carousel_weightage = float(rule['weightage']) / num_carousels
 
-            for carousel, val in productivity[head].items():
+            # for carousel, val in productivity[head].items():
+            for carousel, data in productivity[head].items():
+                val = data["value"]
+                min_val = data["min"]
+                max_val = data["max"]
                 score = 0.0
                 msg = ""
+                if min_val == 0 or max_val == 0:
+                    print(f"Skipping carousel {carousel} because min/max not configured")
+                    continue
 
-                for r in subrules:
-                    min_val = float(r['min'])
-                    max_val = float(r['max'])
-
-                    if val < min_val:
-                        score = 0
-                        msg = f"Productivity of {head} Carousel {carousel} is {val} which is less than {min_val}"
-                        break
-
-                    elif val > max_val:
-                        score = 100
-                        msg = f"Productivity of {head} Carousel {carousel} is {val} which is more than {max_val}"
-                        continue
-
-                    else:
-                        score = 100 - ((max_val - val) / (max_val - min_val) * 100)
-                        msg = (
+                if val < min_val:
+                    score = 0
+                    msg = f"Productivity of {head} Carousel {carousel} is {val} which is less than {min_val}"
+                elif val > max_val:
+                    score = 100
+                    msg = f"Productivity of {head} Carousel {carousel} is {val} which is more than {max_val}"
+                else:
+                    score = 100 - (((max_val - val) / (max_val - min_val)) * 100)
+                    msg = (
                             f"Productivity of {head} Carousel {carousel} is {val}. "
                             f"Calculation : 100 - ((max_value: {max_val} - productivity: {val}) / "
                             f"(max_value: {max_val} - min_value: {min_val}) * 100)"
                         )
-                        break
 
                 score = max(0, min(100, score))
+                print("score-->", score)
+                pi_score.append(
+                    {
+                        "name": f"{rule['name']} - Carousel {carousel}",
+                        "score": round(score, 2),
+                        "weightage": per_carousel_weightage,
+                        "module": rules.get(
+                            "name",
+                            "Productivity"
+                        ),
+                        "msg": msg,
+                    })
 
-                pi_score.append({
-                    "name": f"{rule['name']} - Carousel {carousel}",
-                    "score": round(score, 2),
-                    # "weightage": weightage,
-                    "weightage": per_carousel_weightage,
-                    "module": rules.get('name', 'Productivity'),
-                    "msg": msg
-                })
-            
         if pi_score:
-            total_weight = sum(s['weightage'] for s in pi_score)
-            weighted_sum = sum(s['score'] * s['weightage'] for s in pi_score)
+            total_weight = sum(s["weightage"] for s in pi_score)
+            weighted_sum = sum(s["score"] * s["weightage"] for s in pi_score)
             avg_score = weighted_sum / total_weight
-            final_score = round(avg_score * (rules['weightage'] / 100), 2)
+            final_score = round(avg_score * (rules["weightage"] / 100),2)
         else:
             final_score = 0
-
+        
+        print("pi_score->", pi_score)
         return {
-            "name": rules.get('name', 'Productivity'),
+            "name": rules.get("name", "Productivity"),
             "score": final_score,
-            "weightage": rules['weightage'],
-            "results": pi_score
+            "weightage": rules["weightage"],
+            "results": pi_score,
         }
+
 
     async def _compute_break_down_pi_score(self, name, rules, location_id):
         file_path = f"{os.path.dirname(performance_score_factory.__file__)}/pi_masters/lpg_working_hours.xlsx"
