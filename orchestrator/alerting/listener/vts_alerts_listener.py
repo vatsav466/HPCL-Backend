@@ -63,7 +63,7 @@ class VTSAlertsListener:
     async def send_no_data_mail(self,tt_type):
         ins = await notification_factory.get_notification_module("email")
         if tt_type == "bulk":
-            recipients = ["mberde@aryaomnitalk.com"]
+            recipients = ["mberde@aryaomnitalk.com","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com"]
             body=f"""
             <p>Hi Sir,</p>
 
@@ -95,8 +95,7 @@ class VTSAlertsListener:
         await ins.publish_message(
             subject=f"VTS Issue: No Data Received - {tt_type.upper()}",
             recipients= recipients,
-            cc_recipients= ["adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
-                             "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
+            cc_recipients= ["arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
                             "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
             bcc_recipients= [],
             html_content=True,
