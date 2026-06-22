@@ -64,21 +64,11 @@ class VTSAlertsListener:
         ins = await notification_factory.get_notification_module("email")
         if tt_type == "bulk":
             recipients = ["mberde@aryaomnitalk.com"]
-        elif tt_type == "packed":
-            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in"]
-        await ins.publish_message(
-            subject=f"VTS Issue: No {tt_type.upper()} Data Received",
-            recipients= recipients,
-            cc_recipients= ["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
-                             "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
-                            "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
-            bcc_recipients= [],
-            html_content=True,
             body=f"""
             <p>Hi Sir,</p>
 
             <p>
-            No <b>{tt_type.upper()}</b> VTS data has been received for the last one hour
+            No VTS data has been received for the last one hour - <b>{tt_type.upper()} VTS</b>
             on server <b>{urdhva_base.settings.server_ip}</b>.
 
             Kindly check and resolve the issue.
@@ -86,7 +76,31 @@ class VTSAlertsListener:
 
             <p>Thanks & Regards,<br>
             Novex System</p>
-            """,
+            """
+        elif tt_type == "packed":
+            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in"]
+            body=f"""
+            <p>Hi Sir,</p>
+
+            <p>
+            No VTS data has been received for the last one hour - <b>{tt_type.upper()} VTS</b>
+            on server <b>novex.hpcl.co.in</b>.
+
+            Kindly check and resolve the issue.
+            </p>
+
+            <p>Thanks & Regards,<br>
+            Novex System</p>
+            """
+        await ins.publish_message(
+            subject=f"VTS Issue: No Data Received - {tt_type.upper()}",
+            recipients= recipients,
+            cc_recipients= ["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
+                             "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
+                            "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
+            bcc_recipients= [],
+            html_content=True,
+            body=body,
             force_send=True,
             inline_images= {},
             attachments= []
