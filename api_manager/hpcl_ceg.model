@@ -4500,6 +4500,9 @@ Model DailyEmailNotificationUsers {
         bcc_recipients optional list str
         action str
     }
+
+    Action=> get_email_audience {
+    }
     
     Config=> {
         crud_operations='read'

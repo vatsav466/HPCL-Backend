@@ -25,7 +25,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
 
     email_type = data.email_type
     bu = data.bu
-    name = data.name
+    subject = data.subject
     audience = data.audience
     action = (data.action or "").lower()
 
@@ -50,7 +50,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             if (
                 user["email_type"] == email_type
                 and user["bu"] == bu
-                and user.get("name") == name
+                # and user.get("subject") == subject
                 and user.get("audience") == audience
             )
         ),
@@ -63,6 +63,14 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
         bcc_set = set(normalize(matched_user.get("bcc_recipients")))
 
         messages = []
+        changes_made = False
+
+        if action == "add" and data.subject is not None:
+            existing_subject = matched_user.get("subject")
+            if existing_subject != data.subject:
+                changes_made = True
+                messages.append(f"Subject updated from '{existing_subject}' to '{data.subject}'")
+
 
         # ------------------------
         # DELETE LOGIC
@@ -70,12 +78,15 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
         if action == "delete":
             def remove_emails(target_set, remove_list, label):
                 removed = []
+                nonlocal changes_made
                 for email in remove_list:
                     if email in target_set:
                         target_set.remove(email)
                         removed.append(email)
+                        changes_made = True  
                     else:
-                        messages.append(f"{email} not found in {label}")
+                        # messages.append(f"{email} not found in {label}")
+                        messages.append(f"The email address '{email}' was not found in the {label} Recipients list.")
                 return removed
 
             removed_to = remove_emails(to_set, to_list, "TO")
@@ -84,45 +95,14 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
 
             msg_parts = []
             if removed_to:
-                msg_parts.append(f"Removed from TO: {', '.join(removed_to)}")
+                msg_parts.append(f"The following email(s) have been successfully removed from the TO Recipients: {', '.join(removed_to)}")
             if removed_cc:
-                msg_parts.append(f"Removed from CC: {', '.join(removed_cc)}")
+                msg_parts.append(f"The following email(s) have been successfully removed from the CC Recipients: {', '.join(removed_cc)}")
             if removed_bcc:
-                msg_parts.append(f"Removed from BCC: {', '.join(removed_bcc)}")
+                msg_parts.append(f"The following email(s) have been successfully removed from the BCC Recipients: {', '.join(removed_bcc)}")
 
             final_message = "; ".join(msg_parts + messages)
 
-        if action == "delete":
-            def remove_from_all(email):
-                removed_from = []
-                if email in to_set:
-                    to_set.remove(email)
-                    removed_from.append("TO")
-
-                if email in cc_set:
-                    cc_set.remove(email)
-                    removed_from.append("CC")
-
-                if email in bcc_set:
-                    bcc_set.remove(email)
-                    removed_from.append("BCC")
-
-                if not removed_from:
-                    messages.append(f"{email} not found in any list")
-
-                return removed_from
-
-            msg_parts = []
-
-            for email in set(to_list + cc_list + bcc_list): 
-                removed_from = remove_from_all(email)
-
-                if removed_from:
-                    msg_parts.append(
-                        f"{email} removed from {', '.join(removed_from)}"
-                    )
-
-            final_message = "; ".join(msg_parts + messages)
 
         # ------------------------
         # ADD LOGIC
@@ -140,13 +120,17 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             added_map = {"TO": [], "CC": [], "BCC": []}
 
             def add_emails(new_list, target_set, target_type):
+                nonlocal changes_made
                 for email in new_list:
                     if email in email_map:
-                        messages.append(f"{email} already exists in {email_map[email]}")
+                        # messages.append(f"{email} already exists in {email_map[email]}")
+                        messages.append(f"The email address '{email}' already exists in the {email_map[email]} Recipients list.")
+
                     else:
                         target_set.add(email)
                         added_map[target_type].append(email)
                         email_map[email] = target_type
+                        changes_made = True 
 
             add_emails(to_list, to_set, "TO")
             add_emails(cc_list, cc_set, "CC")
@@ -154,17 +138,23 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
 
             msg_parts = []
             if added_map["TO"]:
-                msg_parts.append(f"Added to TO: {', '.join(added_map['TO'])}")
+                msg_parts.append(f"The following email(s) have been successfully added to the TO Recipients: {', '.join(added_map['TO'])}")
             if added_map["CC"]:
-                msg_parts.append(f"Added to CC: {', '.join(added_map['CC'])}")
+                msg_parts.append(f"The following email(s) have been successfully added to the CC Recipients: {', '.join(added_map['CC'])}")
             if added_map["BCC"]:
-                msg_parts.append(f"Added to BCC: {', '.join(added_map['BCC'])}")
+                msg_parts.append(f"The following email(s) have been successfully added to the BCC Recipients: {', '.join(added_map['BCC'])}")
 
             final_message = "; ".join(msg_parts + messages)
 
         else:
             return {"status": "error", "message": "Invalid action. Use 'add' or 'delete'"}
 
+        if not changes_made:
+            return {
+                "status": "success",
+                "message": "; ".join(messages) if messages else "No changes made"
+            }
+        
         # ------------------------
         # UPDATE DB
         # ------------------------
@@ -181,7 +171,67 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             cc_recipients=list(cc_set),
             bcc_recipients=list(bcc_set)
         ).modify()
+        rpt = urdhva_base.context.context.get("rpt", {})
+        if resp:
+            if action == 'add':
+                await SystemAuditLogCreate(
+                    **{
+                        "employee_id": rpt.get("username"),
+                        "role": rpt.get("novex_role", []),
+                        "email": rpt.get("email", ""),
+                        "bu": "",
+                        "action": "UPDATE",
+                        "section": "EMAIL",
+                        "action_model": "EMAIL_ACTION",
+                        "remarks": f"Email recipients updated for '{email_type}' (Audience: {audience}, Subject: '{matched_user.get("subject")}'). {final_message}",
+                        "raw_data": {
+                            "old_data": {
+                                "email_type": email_type,
+                                "to_recipients": list(normalize(matched_user.get("to_recipients"))),
+                                "cc_recipients": list(normalize(matched_user.get("cc_recipients"))),
+                                "bcc_recipients": list(normalize(matched_user.get("bcc_recipients"))),
+                                "subject": matched_user.get("subject"),
+                            },
+                            "new_data": {
+                                "email_type": email_type,
+                                "to_recipients": list(to_set),
+                                "cc_recipients": list(cc_set),
+                                "bcc_recipients": list(bcc_set),
+                                "subject": data.subject if getattr(data, "subject", None) is not None else matched_user.get("subject"),
+                            }
+                        }
+                    }
+                ).create()
 
+            if action == 'delete':
+                await SystemAuditLogCreate(
+                    **{
+                        "employee_id": rpt.get("username"),
+                        "role": rpt.get("novex_role", []),
+                        "email": rpt.get("email", ""),
+                        "bu": "",
+                        "action": "UPDATE",
+                        "section": "EMAIL",
+                        "action_model": "EMAIL_ACTION",
+                        "remarks": f"Email recipients removed from '{email_type}' (Audience: {audience}, Subject: '{subject}'). {final_message}",
+                        "raw_data": {
+                            "old_data": {
+                                "email_type": email_type,
+                                "to_recipients": list(normalize(matched_user.get("to_recipients"))),
+                                "cc_recipients": list(normalize(matched_user.get("cc_recipients"))),
+                                "bcc_recipients": list(normalize(matched_user.get("bcc_recipients"))),
+                                "subject": matched_user.get("subject"),
+                            },
+                            "new_data": {
+                                "email_type": email_type,
+                                "to_recipients": list(to_set),
+                                "cc_recipients": list(cc_set),
+                                "bcc_recipients": list(bcc_set),
+                                "subject": matched_user.get("subject"), 
+                            }
+                        }
+                    }
+                ).create()
         return {
             "status": "success",
             "message": final_message if final_message else "No changes made"
@@ -190,15 +240,44 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
     # ------------------------
     # CREATE ONLY FOR ADD
     # ------------------------
-    if action == "add":
-        resp = await DailyEmailNotificationUsersCreate(**dict(data)).create()
-        return {
-            "status": "success",
-            "message": "New record created",
-            "data": resp
-        }
+    # if action == "add":
+    #     resp = await DailyEmailNotificationUsersCreate(**dict(data)).create()
+    #     return {
+    #         "status": "success",
+    #         "message": "New record created",
+    #         "data": resp
+    #     }
 
     return {
         "status": "error",
         "message": "Record not found for delete operation"
     }
+
+
+
+
+# Action get_email_audience
+@router.post('/get_email_audience', tags=['DailyEmailNotificationUsers'])
+async def dailyemailnotificationusers_get_email_audience(data: Dailyemailnotificationusers_Get_Email_AudienceParams):
+    if urdhva_base.context.context.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
+
+    all_audiences = ["Scheduled Report", "Dev Testing", "Test Report"]
+    limited_audiences = ["Scheduled Report", "Test Report"]
+
+    print(rpt.get('novex_role'))
+    user_roles = rpt.get('novex_role', [])
+    admin_roles = {'Admin', 'superadmin'}
+
+    if any(role in admin_roles for role in user_roles):
+        return {
+            "status": "success",
+            "data": all_audiences
+        }
+    else:
+        return {
+            "status": "success",
+            "data": limited_audiences
+        }
