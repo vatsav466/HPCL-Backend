@@ -47,6 +47,9 @@ Environment:
 * ``LPG_UNIFIED_DEDUPE_ANY_BATCH`` — max ids per APP_DB dedupe probe (default ``12000``).
   Dedupe uses ``= ANY(ARRAY[...]::bigint[])`` plus a composite index on ``(sap_id, *_id)``
   instead of huge ``IN (...)`` lists (lower planner/CPU cost).
+* ``LPG_UNIFIED_SLOW_PLANT_THRESHOLD_S`` — wall-seconds above which a plant appears in
+  ``performance_summary.slow_plants`` in the JSON report and the stdout ranked table
+  (default ``60``). Set to ``0`` to list every plant.
 
 **Resume order** (first match wins): stored unified cursor → legacy
 ``lpg_*_extraction_log.last_extracted_date`` (cheap PK lookup) → only if still unknown,
@@ -71,9 +74,35 @@ This module is **self-contained** (no imports from ``lpg_log_daily_reconciliatio
   object summarises which stage broke.
 
 **APP_DB CPU:** dedupe uses ``ANY(ARRAY[bigint])`` (not giant ``IN`` lists), a composite
-index on ``(sap_id, event_log_id)`` / ``(sap_id, production_log_id)``, and the plant’s
+index on ``(sap_id, event_log_id)`` / ``(sap_id, production_log_id)``, and the plant's
 open APP connection. Plant SQL echo is off by default; per-chunk ``COPY`` skips extra
 logger lines. Set ``LPG_UNIFIED_VERBOSE_PLANT_SQL=1`` only when debugging.
+
+**Bug fixes applied (v3)**:
+
+* **Fix 1 — Cursor always persisted to DB after every chunk**, regardless of whether
+  rows were inserted or fully deduped. Previously the cursor was only saved when
+  ``to_insert`` was non-empty. When all rows in a chunk were deduped, the cursor was
+  never written to the DB, so the next run re-read the same stale watermark, applied
+  the rollback again, fetched the same rows again — indefinitely until ``max_chunks``
+  was hit. This was the direct cause of 3+ hour runtimes.
+
+* **Fix 2 — 1-hour rollback is a fetch-window concept only; it is never saved back.**
+  ``get_resume_cursor_conn`` returns the TRUE saved watermark (no rollback baked in).
+  ``sync_one_kind`` derives ``fetch_from_ts = cur_ts - 1h`` used only for the first
+  chunk query. All subsequent chunk queries and the cursor save use the true tail of
+  fetched data. Because the saved value is always the true tail and never a rolled-back
+  value, the watermark advances each run instead of oscillating in the same window.
+
+* **Fix 3 — ``copy_dataframe_to_app_table`` accepts an optional ``conn`` parameter** so
+  the caller can pass the already-open ``app_conn`` and avoid opening a new TCP
+  connection per COPY chunk. With 10 workers × many plants × 2 log kinds × N chunks,
+  the connection overhead was significant.
+
+* **Fix 4 — PostgreSQL advisory lock in ``main()``** prevents two scheduler instances
+  from running concurrently. Without this, an overlapping run fetches from the same
+  cursor before either has committed, both pass the dedupe check, and both insert the
+  same rows. The lock is released automatically when the lock connection is closed.
 
 Run::
 
@@ -143,6 +172,17 @@ TABLE_EXTRACTION_PRODUCTION = "lpg_plant_extraction_log"
 LogKind = str  # "event" | "production"
 ResumeSource = str  # "unified" | "app_max" | "legacy" | "default"
 
+# Advisory lock key: deterministic hash of this module's name so it does not
+# collide with any other pg_advisory_lock in the same database.
+_ADVISORY_LOCK_KEY = 0x4C50475F554C5300  # "LPG_ULS\x00" as uint64, masked to int64
+_ADVISORY_LOCK_KEY = _ADVISORY_LOCK_KEY & 0x7FFFFFFFFFFFFFFF  # ensure positive int64
+
+# Sentinel returned by fetch_data when the plant query is cancelled by the DB
+# server due to statement_timeout / max_execution_time.  Distinct from an empty
+# DataFrame (which means the plant has no more rows) so sync_one_kind can fail
+# the plant explicitly instead of silently treating a timeout as end-of-data.
+_FETCH_TIMEOUT = object()
+
 
 def _app_db_connect():
     creds = credential_loader.get_credentials("APP_DB")
@@ -152,7 +192,7 @@ def _app_db_connect():
         user=creds["user"],
         password=creds["password"],
         port=int(creds["port"]),
-        connect_timeout=20,
+        connect_timeout=45,
     )
 
 
@@ -196,11 +236,17 @@ def ensure_lpg_app_log_indexes(conn, table_name: str) -> None:
         cur.close()
 
 
+# ---------------------------------------------------------------------------
+# FIX 3: copy_dataframe_to_app_table now accepts an optional `conn` parameter.
+# When the caller passes its already-open app_conn we reuse it instead of
+# opening (and closing) a new TCP connection per COPY chunk.
+# ---------------------------------------------------------------------------
 def copy_dataframe_to_app_table(
     data: pl.DataFrame,
     table_name: str,
     batch_size: int = 50_000,
     *,
+    conn=None,
     ensure_indexes: bool = True,
     log_rowcount: bool = True,
 ) -> None:
@@ -210,15 +256,19 @@ def copy_dataframe_to_app_table(
         return
 
     data = _strip_utf8_nulls(data)
-    creds = credential_loader.get_credentials("APP_DB")
-    conn = psycopg2.connect(
-        host=creds["host"],
-        database=creds["database"],
-        user=creds["user"],
-        password=creds["password"],
-        port=int(creds["port"]),
-        connect_timeout=30,
-    )
+
+    own_conn = conn is None
+    if conn is None:
+        creds = credential_loader.get_credentials("APP_DB")
+        conn = psycopg2.connect(
+            host=creds["host"],
+            database=creds["database"],
+            user=creds["user"],
+            password=creds["password"],
+            port=int(creds["port"]),
+            connect_timeout=30,
+        )
+
     cur = conn.cursor()
     try:
         parts: List[str] = []
@@ -268,7 +318,8 @@ def copy_dataframe_to_app_table(
             logger.info('COPY completed for "%s" (%s rows)', table_name, n)
     finally:
         cur.close()
-        conn.close()
+        if own_conn:
+            conn.close()
 
 
 def fetch_data(
@@ -276,12 +327,18 @@ def fetch_data(
     *,
     getData: bool = False,
     params: Optional[Dict[str, Any]] = None,
-    timeout: int = 10,
-    query_timeout: int = 30,
+    timeout: int = 45,
+    query_timeout: int = 120,
     chunk_size: int = 50000,
     verbose: bool = False,
 ):
-    """Fetch from plant MySQL or PostgreSQL (socket check, timeouts, optional LIMIT/OFFSET chunks)."""
+    """Fetch from plant MySQL or PostgreSQL.
+
+    Socket probe and DB connect are bounded by ``timeout`` (default 45s).
+    Query execution is bounded by ``query_timeout`` (default 120s).
+    On a query timeout returns ``_FETCH_TIMEOUT`` sentinel instead of an empty
+    DataFrame so callers can distinguish timeout from genuinely no rows.
+    """
     if params is None:
         return pl.DataFrame() if getData else None
     query = query.replace(";", "")
@@ -413,13 +470,38 @@ def fetch_data(
 
     except psycopg2.errors.QueryCanceled:
         logger.error(
-            "Query timed out after %s seconds - skipping this plant", query_timeout
+            "Plant query timed out after %s seconds for %s",
+            query_timeout,
+            params.get("PlantName", "unknown"),
         )
-        print(f"Query timed out after {query_timeout} seconds - skipping this plant")
+        print(
+            f"Plant query timed out after {query_timeout}s for "
+            f"{params.get('PlantName', 'unknown')} — failing this plant"
+        )
         cursor.close()
         pg_conn.close()
-        return pl.DataFrame() if getData else None
+        # Return sentinel so caller can distinguish timeout from no-more-rows.
+        # MySQL raises a generic Exception (not QueryCanceled) for max_execution_time;
+        # that is caught below and also returns the sentinel.
+        return _FETCH_TIMEOUT if getData else None
     except Exception as e:
+        # MySQL raises DatabaseError errno 3024 when max_execution_time is hit.
+        is_mysql_timeout = (
+            hasattr(e, "errno") and getattr(e, "errno", None) == 3024
+        )
+        if is_mysql_timeout:
+            logger.error(
+                "Plant query timed out after %ss (MySQL) for %s",
+                query_timeout,
+                params.get("PlantName", "unknown"),
+            )
+            print(
+                f"Plant query timed out after {query_timeout}s (MySQL) for "
+                f"{params.get('PlantName', 'unknown')} — failing this plant"
+            )
+            cursor.close()
+            pg_conn.close()
+            return _FETCH_TIMEOUT if getData else None
         logger.error("Query execution error: %s", e)
         print(f"Query execution error: {str(e)}")
         cursor.close()
@@ -556,6 +638,11 @@ def get_resume_cursor_conn(
     Resume point for plant-server keyset fetch. Uses one transaction/connection to avoid
     extra round-trips. Legacy extraction is checked **before** the heavy APP_DB max row
     query so routine runs avoid sorting large ``event_log`` / ``production_log`` tables.
+
+    Returns the true saved watermark (not a rolled-back value). The 1-hour safety
+    rollback is applied by the caller (sync_one_kind) **only for the fetch query**,
+    and is never saved back to the cursor table. This ensures the watermark always
+    advances and never gets permanently stuck in a re-fetch loop.
     """
     cur = conn.cursor()
     try:
@@ -569,7 +656,11 @@ def get_resume_cursor_conn(
         )
         row = cur.fetchone()
         if row and row[0] is not None:
-            return pd.Timestamp(row[0]).to_pydatetime(), int(row[1] or 0), "unified"
+            ts = pd.Timestamp(row[0]).to_pydatetime()
+            # Return the TRUE watermark. Caller applies the 1-hour rollback only
+            # when building the fetch query, and saves the true tail back — so the
+            # cursor always advances and never loops over the same window every run.
+            return ts, int(row[1] or 0), "unified"
 
         leg_table = _legacy_extraction_table(kind)
         try:
@@ -663,7 +754,7 @@ def _touch_last_synced_at_conn(
         conn.commit()
     finally:
         cur.close()
-        
+
 
 def _default_start_ts() -> dt.datetime:
     raw = os.environ.get("LPG_UNIFIED_START_TS", "").strip()
@@ -968,6 +1059,9 @@ def _not_connected_from_sync_results(
                     or (r.get("failure") or {}).get("error_message")
                     or "Connection failed during sync"
                 ),
+                "mail_recipients": lpg_plant_connection_check._normalize_mail_recipients(
+                    r.get("mail_recipients")
+                ),
             }
         )
     return out
@@ -1006,8 +1100,33 @@ async def _send_not_connected_plants_mail(
         return
     await lpg_plant_connection_check.send_connectivity_mail(csv_path)
     _sync_print(
-        f"Connectivity mail sent for {len(not_connected)} not-connected plant(s)."
+        f"Connectivity mail sent for {len(not_connected)} not-connected plant(s) "
+        "(summary + plant-recipient alerts)."
     )
+
+
+# ---------------------------------------------------------------------------
+# FIX 4: Advisory lock helpers — prevent two scheduler instances from running
+# concurrently and inserting the same rows before either commits.
+# pg_try_advisory_lock is non-blocking: returns True if the lock was acquired,
+# False if another session already holds it.  The lock is released automatically
+# when lock_conn is closed (end of main()).
+# ---------------------------------------------------------------------------
+def _acquire_run_lock(conn) -> bool:
+    """
+    Try to acquire a session-level advisory lock unique to this sync module.
+    Returns True if the lock was acquired (safe to proceed), False if another
+    instance already holds it (caller should exit immediately).
+    """
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT pg_try_advisory_lock(%s)",
+            (_ADVISORY_LOCK_KEY,),
+        )
+        return bool(cur.fetchone()[0])
+    finally:
+        cur.close()
 
 
 def sync_one_kind(
@@ -1031,6 +1150,12 @@ def sync_one_kind(
         "yes",
     )
 
+    # Timeout constants used for both the fetch_data call and error reporting.
+    # Defined here so _fail() and the sentinel check can reference them by name
+    # instead of repeating magic literals.
+    connect_timeout_s: int = 45
+    query_timeout_s: int = 120
+
     t_kind_start = time.perf_counter()
     sec_fetch = 0.0
     sec_copy = 0.0
@@ -1038,12 +1163,17 @@ def sync_one_kind(
     rows_fetched = 0
     rows_inserted = 0
 
+    # get_resume_cursor_conn returns the TRUE saved watermark (no rollback baked in).
+    # Apply the 1-hour safety rollback here, only to derive fetch_from_ts — the start
+    # of the first query window. cur_ts remains the true watermark and is what gets
+    # saved back after each chunk, so the cursor always advances and never re-fetches
+    # the same rollback window on every run.
     cur_ts, cur_id, resume_src = get_resume_cursor_conn(
         app_conn, plant_name, kind, sap_s, app_table, id_col
     )
-
-    #fetching before 1 hr of last extracted date
-    cur_ts = (cur_ts - dt.timedelta(hours=1)).replace(minute=0,second=0,microsecond=0,)
+    fetch_from_ts = (cur_ts - dt.timedelta(hours=1)).replace(
+        minute=0, second=0, microsecond=0
+    )
 
     always_dedupe = os.environ.get("LPG_UNIFIED_ALWAYS_DEDUPE", "").lower() in (
         "1",
@@ -1090,6 +1220,8 @@ def sync_one_kind(
             "chunks_processed": chunks_done,
             "resume_source": resume_src,
             "dedupe_each_chunk": dedupe_chunks,
+            "connect_timeout_s": connect_timeout_s,
+            "query_timeout_s": query_timeout_s,
         }
         if exc is not None:
             out["exception_type"] = type(exc).__name__
@@ -1100,12 +1232,18 @@ def sync_one_kind(
         return out
 
     chunks = 0
+    first_chunk = True
 
     while chunks < max_chunks:
+        # First chunk uses fetch_from_ts (cur_ts rolled back 1 hour) to catch any
+        # out-of-order rows near the boundary. Subsequent chunks use cur_ts directly
+        # (already advanced to the tail of the previous chunk), so we don't keep
+        # re-fetching the same rollback window on every iteration.
+        query_ts = fetch_from_ts if first_chunk else cur_ts
         query = _build_keyset_query(
             source_table=source_table,
             id_col=id_col,
-            cursor_ts=cur_ts,
+            cursor_ts=query_ts,
             cursor_id=cur_id,
             limit=chunk_size,
             db_type=params["db_type"],
@@ -1119,18 +1257,32 @@ def sync_one_kind(
             query,
             getData=True,
             params=params,
-            timeout=15,
-            query_timeout=240,
+            timeout=connect_timeout_s,
+            query_timeout=query_timeout_s,
             chunk_size=chunk_size,
             verbose=sql_verbose,
         )
         dt_fetch = time.perf_counter() - t_fetch
         sec_fetch += dt_fetch
+        chunks += 1
+        first_chunk = False
+
+        # Sentinel means the plant DB cancelled the query (statement_timeout /
+        # max_execution_time).  Fail this plant explicitly — do not treat it as
+        # end-of-data and silently mark success.
+        if chunk is _FETCH_TIMEOUT:
+            return _fail(
+                message=(
+                    f"Plant query timed out after {query_timeout_s}s on chunk {chunks} "
+                    f"(>{query_timeout_s}s limit). Plant is too slow or overloaded."
+                ),
+                stage="plant_fetch_timeout",
+                chunks_done=chunks,
+            )
         if chunk is None:
             chunk = pl.DataFrame()
         n = len(chunk)
         rows_fetched += n
-        chunks += 1
         _sync_print(
             f"{plant_name} | {label}: chunk {chunks} — received {n} rows from plant "
             f"(this fetch: {dt_fetch:.2f}s)"
@@ -1152,7 +1304,15 @@ def sync_one_kind(
                 chunks_done=chunks,
             )
 
+        # Capture the tail cursor from the *fetched* chunk before any filtering.
+        # FIX 1: We must advance cur_ts/cur_id from the raw fetched chunk, not from
+        # to_insert.  When all rows are deduped, to_insert is empty so the old code
+        # left the cursor unchanged — the next run fetched the same rows again, and
+        # with dedupe_chunks=False (the default on unified resume) it inserted them
+        # again, creating duplicates.  By advancing from the fetched chunk we always
+        # move past processed data regardless of how many rows survived deduplication.
         tail_ts, tail_id = _tail_cursor(chunk, id_col)
+
         enriched = _enrich_frame(
             chunk,
             plant_name=plant_name,
@@ -1180,9 +1340,12 @@ def sync_one_kind(
             )
             try:
                 t0 = time.perf_counter()
+                # FIX 3: pass the already-open app_conn so we do not open a new TCP
+                # connection per COPY chunk (was: a fresh connect/close every call).
                 copy_dataframe_to_app_table(
                     to_insert,
                     app_table,
+                    conn=app_conn,
                     ensure_indexes=False,
                     log_rowcount=False,
                 )
@@ -1201,12 +1364,31 @@ def sync_one_kind(
         else:
             _sync_print(
                 f"{plant_name} | {label}: chunk {chunks} — all rows already in APP_DB "
-                "(dedupe); cursor still advanced"
+                "(dedupe); advancing cursor without insert"
             )
 
-        # update cursor ONLY after successful insert
-        if not to_insert.is_empty():
-            cur_ts, cur_id = _tail_cursor(to_insert, id_col,)
+        # Always advance and persist the cursor from the tail of the RAW fetched chunk,
+        # regardless of whether any rows were inserted or fully deduped.
+        #
+        # This is the core fix for long runtimes:
+        #   - cursor stores the TRUE high-water mark (not a rolled-back value)
+        #   - next run reads that mark, applies 1-hour rollback only for fetch_from_ts
+        #   - the watermark always moves forward, so the job never re-fetches the same
+        #     already-synced window on every run
+        #
+        # Previously, when to_insert was empty (all deduped), the cursor was not saved,
+        # so the next run re-read the same stale cursor, applied rollback again, fetched
+        # the same rows, deduped them all again — indefinitely until max_chunks was hit.
+
+
+        # if not to_insert.is_empty():
+        #     cur_ts, cur_id = _tail_cursor(to_insert, id_col,)
+        # print("cur_ts->", cur_ts)
+        # print("cur_id--->", cur_id)
+        if tail_ts and tail_id:
+            print("tail_ts-->", tail_ts)
+            print("tail_id-->", tail_id)
+            cur_ts, cur_id = tail_ts, tail_id
             _set_cursor_conn(app_conn, plant_name, kind, cur_ts, cur_id)
 
         if len(chunk) < chunk_size:
@@ -1239,7 +1421,7 @@ def sync_one_kind(
         "resume_source": resume_src,
         "dedupe_each_chunk": dedupe_chunks,
     }
-   
+    
 
 def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
     wall0 = time.perf_counter()
@@ -1265,6 +1447,7 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
         "zone": str(plant_row.get("zone", "")),
         "db_database": params["database"],
         "db_type": params["db_type"],
+        "mail_recipients": plant_row.get("mail_recipients"),
         "connected": True,
         "connectivity_error": None,
         "success": False,
@@ -1381,6 +1564,148 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Slow-plant performance summary
+# ---------------------------------------------------------------------------
+_SLOW_PLANT_THRESHOLD_S: float = float(
+    os.environ.get("LPG_UNIFIED_SLOW_PLANT_THRESHOLD_S", "60")
+)
+"""
+Plants whose ``total_wall_seconds`` exceeds this value are included in the
+``performance_summary.slow_plants`` section of the final JSON report and
+printed as a ranked table to stdout.  Default 60s.  Override via env var
+``LPG_UNIFIED_SLOW_PLANT_THRESHOLD_S``.
+"""
+
+
+def _build_performance_summary(
+    results: List[Dict[str, Any]],
+    threshold_s: float = _SLOW_PLANT_THRESHOLD_S,
+) -> Dict[str, Any]:
+    """
+    Build a ``performance_summary`` block for the final JSON report.
+
+    Fields per slow plant:
+      plant_name, sap_id, zone, total_wall_seconds, connected, success,
+      event_log_fetch_s, event_log_copy_s, event_log_dedupe_s,
+      event_log_rows_fetched, event_log_rows_inserted,
+      production_log_fetch_s, production_log_copy_s, production_log_dedupe_s,
+      production_log_rows_fetched, production_log_rows_inserted,
+      failure_stage  (populated only when success=False)
+    """
+    slow: List[Dict[str, Any]] = []
+    for r in results:
+        wall = float(r.get("total_wall_seconds") or 0)
+        if wall < threshold_s:
+            continue
+        ev = r.get("event_log") or {}
+        pr = r.get("production_log") or {}
+        failure = r.get("failure") or {}
+        slow.append(
+            {
+                "plant_name": r.get("plant_name", ""),
+                "sap_id": r.get("sap_id", ""),
+                "zone": r.get("zone", ""),
+                "host_ip": r.get("host_ip", ""),
+                "connected": r.get("connected", False),
+                "success": r.get("success", False),
+                "total_wall_seconds": round(wall, 2),
+                "event_log": {
+                    "fetch_seconds": round(float(ev.get("plant_fetch_seconds") or 0), 2),
+                    "copy_seconds": round(float(ev.get("app_db_copy_seconds") or 0), 2),
+                    "dedupe_seconds": round(float(ev.get("app_db_dedupe_seconds") or 0), 2),
+                    "chunks_processed": ev.get("chunks_processed", 0),
+                    "rows_fetched": ev.get("rows_fetched_from_plant_db", 0),
+                    "rows_inserted": ev.get("rows_inserted_into_app_db", 0),
+                    "success": ev.get("success", False),
+                    "error_stage": ev.get("error_stage"),
+                },
+                "production_log": {
+                    "fetch_seconds": round(float(pr.get("plant_fetch_seconds") or 0), 2),
+                    "copy_seconds": round(float(pr.get("app_db_copy_seconds") or 0), 2),
+                    "dedupe_seconds": round(float(pr.get("app_db_dedupe_seconds") or 0), 2),
+                    "chunks_processed": pr.get("chunks_processed", 0),
+                    "rows_fetched": pr.get("rows_fetched_from_plant_db", 0),
+                    "rows_inserted": pr.get("rows_inserted_into_app_db", 0),
+                    "success": pr.get("success", False),
+                    "error_stage": pr.get("error_stage"),
+                },
+                "failure_stage": failure.get("where") or failure.get("error_stage"),
+                "failure_message": failure.get("error_message"),
+            }
+        )
+
+    slow.sort(key=lambda x: x["total_wall_seconds"], reverse=True)
+
+    all_walls = [float(r.get("total_wall_seconds") or 0) for r in results]
+    avg_wall = round(sum(all_walls) / len(all_walls), 2) if all_walls else 0.0
+    max_wall = round(max(all_walls), 2) if all_walls else 0.0
+    timeout_plants = [
+        r.get("plant_name", "")
+        for r in results
+        if (r.get("event_log") or {}).get("error_stage") == "plant_fetch_timeout"
+        or (r.get("production_log") or {}).get("error_stage") == "plant_fetch_timeout"
+    ]
+
+    return {
+        "threshold_seconds": threshold_s,
+        "slow_plant_count": len(slow),
+        "avg_plant_wall_seconds": avg_wall,
+        "max_plant_wall_seconds": max_wall,
+        "timeout_plant_count": len(timeout_plants),
+        "timeout_plants": timeout_plants,
+        "slow_plants": slow,
+    }
+
+
+def _print_slow_plant_table(perf: Dict[str, Any]) -> None:
+    """Print a human-readable ranked table of slow plants to stdout."""
+    slow = perf.get("slow_plants", [])
+    threshold = perf.get("threshold_seconds", 60)
+    timeout_plants = set(perf.get("timeout_plants", []))
+
+    _sync_print(
+        f"\nPERFORMANCE SUMMARY — plants taking >{threshold}s "
+        f"({perf['slow_plant_count']} of {perf.get('slow_plant_count', 0) } flagged | "
+        f"avg={perf['avg_plant_wall_seconds']}s max={perf['max_plant_wall_seconds']}s | "
+        f"query-timeouts={perf['timeout_plant_count']})"
+    )
+    if not slow:
+        _sync_print("  All plants completed within the threshold.")
+        return
+
+    header = (
+        f"  {'#':>3}  {'Plant':<35} {'Zone':<10} {'Wall(s)':>8} "
+        f"{'EV fetch':>9} {'EV ins':>8} {'PR fetch':>9} {'PR ins':>8}  Status"
+    )
+    _sync_print(header)
+    _sync_print("  " + "-" * (len(header) - 2))
+    for i, p in enumerate(slow, 1):
+        ev = p["event_log"]
+        pr = p["production_log"]
+        status_parts = []
+        if not p["connected"]:
+            status_parts.append("NOT-CONNECTED")
+        elif not p["success"]:
+            stage = p.get("failure_stage") or "FAILED"
+            if p["plant_name"] in timeout_plants:
+                status_parts.append(f"TIMEOUT({stage})")
+            else:
+                status_parts.append(f"FAILED({stage})")
+        else:
+            status_parts.append("OK")
+        if p["plant_name"] in timeout_plants:
+            status_parts.append("⚠ QUERY-TIMEOUT")
+        status = " ".join(status_parts)
+        _sync_print(
+            f"  {i:>3}  {p['plant_name']:<35} {p['zone']:<10} "
+            f"{p['total_wall_seconds']:>8.1f} "
+            f"{ev['fetch_seconds']:>9.1f} {ev['rows_inserted']:>8} "
+            f"{pr['fetch_seconds']:>9.1f} {pr['rows_inserted']:>8}  {status}"
+        )
+    _sync_print("")
+
+
 def main() -> None:
     """
     Run unified LPG log sync for all plants, then email not-connected plants.
@@ -1395,7 +1720,7 @@ def main() -> None:
 
     query = """
         SELECT id, sap_id, plant_name, ip_address, port_no, username, password,
-               db_name, db_type, zone, region
+               db_name, db_type, zone, region, mail_recipients
         FROM lpg_plants_master
         ORDER BY id ASC
     """
@@ -1424,106 +1749,140 @@ def main() -> None:
         "source=lpg_plants_master"
     )
 
-    _sync_print("Step 1/3: Ensuring unified cursor table on APP_DB…")
+    _sync_print("Step 1/4: Ensuring unified cursor table on APP_DB…")
     ensure_cursor_table()
-    _sync_print("Step 1/3: Done (lpg_unified_sync_cursor).")
+    _sync_print("Step 1/4: Done (lpg_unified_sync_cursor).")
 
-    _sync_print(
-        "Step 2/3: Ensuring extra columns + standard indexes on APP_DB "
-        f'("{EVENT_PG_TABLE}", "{PROD_PG_TABLE}")…'
-    )
-    setup = _app_db_connect()
+    # FIX 4: Acquire a session-level advisory lock before any plant work so that if
+    # the scheduler fires a second instance while we are still running (which was
+    # causing duplicate inserts), the second instance exits immediately instead of
+    # fetching from the same cursors and inserting the same rows concurrently.
+    _sync_print("Step 2/4: Acquiring run advisory lock on APP_DB…")
+    lock_conn = _app_db_connect()
+    if not _acquire_run_lock(lock_conn):
+        _sync_print(
+            "Another lpg_unified_log_sync instance is already running — "
+            "exiting to prevent concurrent inserts and duplicates."
+        )
+        lock_conn.close()
+        return
+    _sync_print("Step 2/4: Advisory lock acquired — this is the only running instance.")
+
     try:
-        ensure_log_extra_columns_conn(setup, EVENT_PG_TABLE)
-        ensure_log_extra_columns_conn(setup, PROD_PG_TABLE)
-        ensure_lpg_app_log_indexes(setup, EVENT_PG_TABLE)
-        ensure_lpg_app_log_indexes(setup, PROD_PG_TABLE)
-    finally:
-        setup.close()
-    _sync_print("Step 2/3: Done.")
-
-    logger.info(
-        "LPG unified sync: source=lpg_plants_master workers=%s chunk=%s",
-        max_workers,
-        os.environ.get("LPG_UNIFIED_CHUNK_SIZE", "25000"),
-    )
-
-    _sync_print(
-        f"Step 3/3: Syncing all plants (parallel pool size={max_workers}) — "
-        "watch per-plant lines below…"
-    )
-    results: List[Dict[str, Any]] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = [
-            ex.submit(process_plant, dict(row)) for row in plants.iter_rows(named=True)
-        ]
-        for fut in concurrent.futures.as_completed(futs):
-            results.append(fut.result())
-    
-    last_synced_map = _load_last_synced_at_map([r.get("plant_name") for r in results])
-    for r in results:
-        plant_name = r.get("plant_name", "")
-        connected = bool(r.get("connected", False))
-        bucket = last_synced_map.get(plant_name, {})
-        latest_ts = _resolve_display_sync_ts(bucket, connected=connected)
-        r["status"] = ("CONNECTED" if connected else "NOT CONNECTED")
-        r["last_synced_at"] = _last_synced_at_raw(latest_ts)
-        r["time_elapsed"] = _time_elapsed_since(latest_ts)
-        
-
-    finished_at = dt.datetime.now(dt.timezone.utc).isoformat()
-    total_run_s = round(time.perf_counter() - run_wall0, 3)
-    ok_n = sum(1 for r in results if r.get("success"))
-    fail_n = n_plants - ok_n
-    ev_rows = sum(
-        int(r.get("event_log", {}).get("rows_inserted_into_app_db") or 0) for r in results
-    )
-    pr_rows = sum(
-        int(r.get("production_log", {}).get("rows_inserted_into_app_db") or 0)
-        for r in results
-    )
-
-    report: Dict[str, Any] = {
-        "run": {
-            "started_at_utc": started_at,
-            "finished_at_utc": finished_at,
-            "total_wall_seconds": total_run_s,
-            "plants_in_db": n_plants,
-            "plants_succeeded": ok_n,
-            "plants_failed": fail_n,
-            "max_workers": max_workers,
-            "plants_source": "lpg_plants_master",
-            "totals": {
-                "event_log_rows_inserted_app_db": ev_rows,
-                "production_log_rows_inserted_app_db": pr_rows,
-            },
-        },
-        "plants": results,
-    }
-
-    summary_path = Path(tempfile.gettempdir()) / f"lpg_unified_sync_{uuid.uuid4().hex[:10]}.json"
-    summary_path.write_text(json.dumps(report, default=str, indent=2), encoding="utf-8")
-
-    _sync_print(
-        f"RUN END | UTC {finished_at} | total {total_run_s}s | "
-        f"ok={ok_n} failed={fail_n} | "
-        f"rows inserted — event_log={ev_rows}, production_log={pr_rows}"
-    )
-    _sync_print(f"Full JSON report written to: {summary_path}")
-    logger.info("Wrote summary: %s", summary_path)
-    print(json.dumps(report, default=str, indent=2), flush=True)
-
-    # Skip with: export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1  (or true/yes)
-    if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "").lower() not in ("1", "true", "yes",):
-        not_connected = _not_connected_from_sync_results(results)
-        _sync_print(f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…")
+        _sync_print(
+            "Step 3/4: Ensuring extra columns + standard indexes on APP_DB "
+            f'("{EVENT_PG_TABLE}", "{PROD_PG_TABLE}")…'
+        )
+        setup = _app_db_connect()
         try:
-            asyncio.run(_send_not_connected_plants_mail(not_connected))
-        except Exception as exc:
-            logger.exception("Connectivity mail failed: %s", exc)
-            _sync_print(f"Connectivity mail FAILED: {exc}")
-    else:
-        _sync_print("Connectivity mail: skipped (LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL)")
+            ensure_log_extra_columns_conn(setup, EVENT_PG_TABLE)
+            ensure_log_extra_columns_conn(setup, PROD_PG_TABLE)
+            ensure_lpg_app_log_indexes(setup, EVENT_PG_TABLE)
+            ensure_lpg_app_log_indexes(setup, PROD_PG_TABLE)
+        finally:
+            setup.close()
+        _sync_print("Step 3/4: Done.")
+
+        logger.info(
+            "LPG unified sync: source=lpg_plants_master workers=%s chunk=%s",
+            max_workers,
+            os.environ.get("LPG_UNIFIED_CHUNK_SIZE", "25000"),
+        )
+
+        _sync_print(
+            f"Step 4/4: Syncing all plants (parallel pool size={max_workers}) — "
+            "watch per-plant lines below…"
+        )
+        results: List[Dict[str, Any]] = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+            futs = [
+                ex.submit(process_plant, dict(row)) for row in plants.iter_rows(named=True)
+            ]
+            for fut in concurrent.futures.as_completed(futs):
+                results.append(fut.result())
+
+        last_synced_map = _load_last_synced_at_map([r.get("plant_name") for r in results])
+        for r in results:
+            plant_name = r.get("plant_name", "")
+            connected = bool(r.get("connected", False))
+            bucket = last_synced_map.get(plant_name, {})
+            latest_ts = _resolve_display_sync_ts(bucket, connected=connected)
+            r["status"] = ("CONNECTED" if connected else "NOT CONNECTED")
+            r["last_synced_at"] = _last_synced_at_raw(latest_ts)
+            r["time_elapsed"] = _time_elapsed_since(latest_ts)
+
+        finished_at = dt.datetime.now(dt.timezone.utc).isoformat()
+        total_run_s = round(time.perf_counter() - run_wall0, 3)
+        ok_n = sum(1 for r in results if r.get("success"))
+        fail_n = n_plants - ok_n
+        ev_rows = sum(
+            int(r.get("event_log", {}).get("rows_inserted_into_app_db") or 0) for r in results
+        )
+        pr_rows = sum(
+            int(r.get("production_log", {}).get("rows_inserted_into_app_db") or 0)
+            for r in results
+        )
+
+        perf_summary = _build_performance_summary(results)
+        report: Dict[str, Any] = {
+            "run": {
+                "started_at_utc": started_at,
+                "finished_at_utc": finished_at,
+                "total_wall_seconds": total_run_s,
+                "plants_in_db": n_plants,
+                "plants_succeeded": ok_n,
+                "plants_failed": fail_n,
+                "max_workers": max_workers,
+                "plants_source": "lpg_plants_master",
+                "connect_timeout_s": 45,
+                "query_timeout_s": 120,
+                "totals": {
+                    "event_log_rows_inserted_app_db": ev_rows,
+                    "production_log_rows_inserted_app_db": pr_rows,
+                },
+            },
+            "performance_summary": perf_summary,
+            "plants": results,
+        }
+
+        summary_path = Path(tempfile.gettempdir()) / f"lpg_unified_sync_{uuid.uuid4().hex[:10]}.json"
+        summary_path.write_text(json.dumps(report, default=str, indent=2), encoding="utf-8")
+
+        _print_slow_plant_table(perf_summary)
+        _sync_print(
+            f"RUN END | UTC {finished_at} | total {total_run_s}s | "
+            f"ok={ok_n} failed={fail_n} | "
+            f"rows inserted — event_log={ev_rows}, production_log={pr_rows}"
+        )
+        _sync_print(f"Full JSON report written to: {summary_path}")
+        logger.info("Wrote summary: %s", summary_path)
+        print(json.dumps(report, default=str, indent=2), flush=True)
+
+        # Skip with: export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1  (or true/yes)
+        if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "").lower() not in (
+            "1",
+            "true",
+            "yes",
+        ):
+            not_connected = _not_connected_from_sync_results(results)
+            _sync_print(f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…")
+            try:
+                asyncio.run(_send_not_connected_plants_mail(not_connected))
+            except Exception as exc:
+                logger.exception("Connectivity mail failed: %s", exc)
+                _sync_print(f"Connectivity mail FAILED: {exc}")
+        else:
+            _sync_print("Connectivity mail: skipped (LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL)")
+
+    finally:
+        # FIX 4: Releasing lock_conn releases the advisory lock automatically.
+        # This runs even if the sync raises an unhandled exception, ensuring no
+        # stale lock blocks the next scheduled run.
+        try:
+            lock_conn.close()
+        except Exception:
+            pass
+        _sync_print("Advisory lock released.")
 
 
 if __name__ == "__main__":
