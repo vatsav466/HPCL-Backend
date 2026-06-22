@@ -4582,6 +4582,7 @@ Model LpgPlantsMaster{
     plant_name optional str
     region optional str
     zone optional str
+    mail_recipients optional list str
 
     Action=> create_location {
         sap_id int
@@ -4592,6 +4593,7 @@ Model LpgPlantsMaster{
         db_name str
         db_type str
         name optional str
+        mail_recipients optional list str
     }
     
     Action=> update_location {
@@ -4603,6 +4605,7 @@ Model LpgPlantsMaster{
         db_name optional str
         db_type optional str
         name optional str
+        mail_recipients optional list str
     }
     
     Action=> delete_location {

@@ -12300,6 +12300,7 @@ class LpgPlantsMasterSchema(UrdhvaPostgresBase):
     plant_name: Mapped[typing.Optional[str]] = mapped_column("plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mail_recipients: Mapped[typing.Optional[typing.List[str]]] = mapped_column("mail_recipients", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LpgPlantsMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -12316,6 +12317,7 @@ class LpgPlantsMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     plant_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    mail_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -12339,6 +12341,7 @@ class LpgPlantsMaster(urdhva_base.postgresmodel.PostgresModel):
     plant_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    mail_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -12363,6 +12366,7 @@ class Lpgplantsmaster_Create_LocationParams(pydantic.BaseModel):
     db_name: str
     db_type: str
     name: typing.Optional[str] = pydantic.Field("", **{})
+    mail_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -12378,6 +12382,7 @@ class Lpgplantsmaster_Update_LocationParams(pydantic.BaseModel):
     db_name: typing.Optional[str] = pydantic.Field("", **{})
     db_type: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
+    mail_recipients: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

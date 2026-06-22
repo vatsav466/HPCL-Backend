@@ -207,7 +207,7 @@ async def lpgplantsmaster_delete_location(data: Lpgplantsmaster_Delete_LocationP
 async def lpgplantsmaster_plant_details(data: Lpgplantsmaster_Plant_DetailsParams):
     try:
         query = """
-            SELECT p.sap_id, p.plant_name, p.ip_address, p.port_no AS port, p.username,
+            SELECT p.sap_id, p.plant_name, p.ip_address, p.port_no AS port, p.username, p.mail_recipients
                 p.db_type, p.db_name,
                 COUNT(c.id) AS carousals,
                 MAX(CASE WHEN usc.log_kind='event' THEN usc.last_process_date END) AS last_event_sync,
@@ -215,7 +215,7 @@ async def lpgplantsmaster_plant_details(data: Lpgplantsmaster_Plant_DetailsParam
             FROM lpg_plants_master p
             LEFT JOIN lpg_carousals c ON p.sap_id = c.sap_id
             LEFT JOIN lpg_unified_sync_cursor usc ON p.plant_name ILIKE '%' || usc.plant_name || '%'
-            GROUP BY p.sap_id, p.plant_name, p.ip_address, p.port_no, p.username, p.db_type, p.db_name
+            GROUP BY p.sap_id, p.plant_name, p.ip_address, p.port_no, p.username, p.mail_recipients, p.db_type, p.db_name
             ORDER BY p.plant_name
         """
 

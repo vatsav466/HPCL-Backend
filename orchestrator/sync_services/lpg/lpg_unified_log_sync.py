@@ -1059,6 +1059,9 @@ def _not_connected_from_sync_results(
                     or (r.get("failure") or {}).get("error_message")
                     or "Connection failed during sync"
                 ),
+                "mail_recipients": lpg_plant_connection_check._normalize_mail_recipients(
+                    r.get("mail_recipients")
+                ),
             }
         )
     return out
@@ -1097,7 +1100,8 @@ async def _send_not_connected_plants_mail(
         return
     await lpg_plant_connection_check.send_connectivity_mail(csv_path)
     _sync_print(
-        f"Connectivity mail sent for {len(not_connected)} not-connected plant(s)."
+        f"Connectivity mail sent for {len(not_connected)} not-connected plant(s) "
+        "(summary + plant-recipient alerts)."
     )
 
 
@@ -1443,6 +1447,7 @@ def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
         "zone": str(plant_row.get("zone", "")),
         "db_database": params["database"],
         "db_type": params["db_type"],
+        "mail_recipients": plant_row.get("mail_recipients"),
         "connected": True,
         "connectivity_error": None,
         "success": False,
@@ -1715,7 +1720,7 @@ def main() -> None:
 
     query = """
         SELECT id, sap_id, plant_name, ip_address, port_no, username, password,
-               db_name, db_type, zone, region
+               db_name, db_type, zone, region, mail_recipients
         FROM lpg_plants_master
         ORDER BY id ASC
     """
