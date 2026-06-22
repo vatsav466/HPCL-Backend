@@ -95,7 +95,7 @@ class VTSAlertsListener:
         await ins.publish_message(
             subject=f"VTS Issue: No Data Received - {tt_type.upper()}",
             recipients= recipients,
-            cc_recipients= ["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
+            cc_recipients= ["adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
                              "arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
                             "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
             bcc_recipients= [],
