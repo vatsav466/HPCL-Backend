@@ -269,7 +269,7 @@ async def dailyemailnotificationusers_get_email_audience(data: Dailyemailnotific
 
     print(rpt.get('novex_role'))
     user_roles = rpt.get('novex_role', [])
-    admin_roles = {'Admin', 'superadmin'}
+    admin_roles = {'Admin', 'Super Admin'}
 
     if any(role in admin_roles for role in user_roles):
         return {
