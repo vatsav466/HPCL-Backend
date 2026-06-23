@@ -646,12 +646,17 @@ async def lpg_car_download(data):
         """ 
 
     car_query = f"""SELECT * FROM lpg_carousals {final_where_clause_car}"""
-               
+    
+    plant_details_query = """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
+
     charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     charts_actions.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(charts_actions.Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
     
+    plant_details = await function(query=plant_details_query)
+    plant_details_df = pl.DataFrame(plant_details)
+
     from decimal import Decimal
 
     def clean_data(data):
@@ -681,8 +686,19 @@ async def lpg_car_download(data):
         total_seconds = 0
 
         for t in time_ranges:
-            start = datetime.strptime(t["start_time"], "%H:%M:%S")
-            stop = datetime.strptime(t["stop_time"], "%H:%M:%S")
+            start_str = t["start_time"]
+            stop_str = t["stop_time"]
+            # Handle both HH:MM and HH:MM:SS formats
+            try:
+                start = datetime.strptime(start_str, "%H:%M:%S")
+            except ValueError:
+                start = datetime.strptime(start_str, "%H:%M")
+
+            try:
+                stop = datetime.strptime(stop_str, "%H:%M:%S")
+            except ValueError:
+                stop = datetime.strptime(stop_str, "%H:%M")
+
             diff = (stop - start).total_seconds()
             total_seconds += diff
         # convert seconds → hours
@@ -741,48 +757,77 @@ async def lpg_car_download(data):
         "gd_total_cylinders_checked", "gd_total", "pt_total_cylinders_checked", "pt_total",
     ]
 
+    car_sap_carousal = car_df.select(["sap_id", "carousal_id", "heads"]).unique()
+    car_sap_carousal = car_sap_carousal.with_columns(pl.col("sap_id").cast(pl.Utf8))
+
+    all_plant_carousals = car_sap_carousal.join(
+        plant_details_df.with_columns(pl.col("sap_id").cast(pl.Utf8)),
+        on="sap_id",
+        how="left"
+    ).rename({"carousal_id": "carousal", "plant_name": "location_name"})
+
     df_grouped = df.group_by(group_cols).agg(
         [pl.col(c).sum() for c in sum_cols] +
         [pl.col(c).sum().round(2) for c in round_sum_cols]
     )
 
+    df_grouped = all_plant_carousals.join(
+        df_grouped,
+        on=["sap_id", "location_name", "carousal", "heads"],
+        how="left"
+    ).sort(["location_name", "carousal"])
 
     df_grouped = df_grouped.with_columns([
         # Productivity calculation
-        pl.when(pl.col("normal_net_hours") > 0)
-            .then((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
-            .otherwise(0)
-            .alias("normal_productivity"),
+        pl.when(pl.col("normal_total_production").is_null() | pl.col("normal_net_hours").is_null())
+        .then(None)
+        .when(pl.col("normal_net_hours") == 0)
+        .then(0)
+        .otherwise((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
+        .alias("normal_productivity"),
 
-        pl.when(pl.col("break_net_hours") > 0)
-            .then((pl.col("break_total_production") / pl.col("break_net_hours")).round(2))
-            .otherwise(0)
-            .alias("break_productivity"),
+        pl.when(pl.col("break_total_production").is_null() | pl.col("break_net_hours").is_null())
+        .then(None)
+        .when(pl.col("break_net_hours") == 0)
+        .then(0)
+        .otherwise((pl.col("break_total_production") / pl.col("break_net_hours")).round(2))
+        .alias("break_productivity"),
 
-        pl.when(pl.col("overtime_net_hours") > 0)
-            .then((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
-            .otherwise(0)
-            .alias("overtime_productivity"),
-        
+        pl.when(pl.col("overtime_total_production").is_null() | pl.col("overtime_net_hours").is_null())
+        .then(None)
+        .when(pl.col("overtime_net_hours") == 0)
+        .then(0)
+        .otherwise((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
+        .alias("overtime_productivity"),
+
         # Rejection calculation
-        pl.when(pl.col("cs_total_cylinders_checked") > 0)
-            .then((pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(2))
-            .otherwise(0)
-            .alias("cs_rejection"),
+        pl.when(pl.col("cs_total").is_null() | pl.col("cs_total_cylinders_checked").is_null())
+        .then(None)
+        .when(pl.col("cs_total_cylinders_checked") == 0)
+        .then(0)
+        .otherwise((pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(2))
+        .alias("cs_rejection"),
 
-        pl.when(pl.col("gd_total_cylinders_checked") > 0)
-            .then((pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(2))
-            .otherwise(0)
-            .alias("gd_rejection"),
+        pl.when(pl.col("gd_total").is_null() | pl.col("gd_total_cylinders_checked").is_null())
+        .then(None)
+        .when(pl.col("gd_total_cylinders_checked") == 0)
+        .then(0)
+        .otherwise((pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(2))
+        .alias("gd_rejection"),
 
-        pl.when(pl.col("pt_total_cylinders_checked") > 0)
-            .then((pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(2))
-            .otherwise(0)
-            .alias("pt_rejection"),
-
+        pl.when(pl.col("pt_total").is_null() | pl.col("pt_total_cylinders_checked").is_null())
+        .then(None)
+        .when(pl.col("pt_total_cylinders_checked") == 0)
+        .then(0)
+        .otherwise((pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(2))
+        .alias("pt_rejection"),
     ])
-    df_grouped = df_grouped.sort(["location_name", "carousal"])
 
+    df_grouped = df_grouped.sort(["location_name", "carousal"])
+    
+    def val(x):
+        return "N/A" if x is None else x
+    
     plants_output = []
 
     # sorted plant names
@@ -795,47 +840,47 @@ async def lpg_car_download(data):
             cars_list.append({
                 "carName": row["carousal"],
                 "bottlingSummary": {
-                    "14_2kgCylinders": row.get("production_14_2kg", 0),
-                    "19kgCylinders": row.get("production_19kg", 0),
-                    "total": row.get("Total Cylinders", 0)
+                    "14_2kgCylinders": val(row.get("production_14_2kg")),
+                    "19kgCylinders": val(row.get("production_19kg")),
+                    "total": val(row.get("Total Cylinders"))
                 },
                 "normalHours": {
-                    "production": row.get("normal_total_production", 0),
-                    "availableHours": row.get("normal_available_hrs", 0),
-                    "stoppagesHours": row.get("normal_gaps", 0),
-                    "netBottlingHours": row.get("normal_net_hours", 0),
-                    "productivity": row.get("normal_productivity", 0)
+                    "production": val(row.get("normal_total_production")),
+                    "availableHours": val(row.get("normal_available_hrs")),
+                    "stoppagesHours": val(row.get("normal_gaps")),
+                    "netBottlingHours": val(row.get("normal_net_hours")),
+                    "productivity": val(row.get("normal_productivity"))
                 },
                 "breakHours": {
-                    "production": row.get("break_total_production", 0),
-                    "availableHours": row.get("break_available_hours", 0),
-                    "stoppagesHours": row.get("break_gaps", 0),
-                    "netBottlingHours": row.get("break_net_hours", 0),
-                    "productivity": row.get("break_productivity", 0)
+                    "production": val(row.get("break_total_production")),
+                    "availableHours": val(row.get("break_available_hours")),
+                    "stoppagesHours": val(row.get("break_gaps")),
+                    "netBottlingHours": val(row.get("break_net_hours")),
+                    "productivity": val(row.get("break_productivity"))
                 },
                 "overtimeHours": {
-                    "production": row.get("overtime_total_production", 0),
-                    "stoppagesHours": row.get("overtime_gaps", 0),
-                    "netBottlingHours": row.get("overtime_net_hours", 0),
-                    "productivity": row.get("overtime_productivity", 0)
+                    "production": val(row.get("overtime_total_production")),
+                    "stoppagesHours": val(row.get("overtime_gaps")),
+                    "netBottlingHours": val(row.get("overtime_net_hours")),
+                    "productivity": val(row.get("overtime_productivity"))
                 },
                 "checkScaleSummary": {
-                    "TotalCylindersChecked": row.get("cs_total_cylinders_checked", 0),
-                    "RejectionUnderweight": row.get("cs_underweight", 0),
-                    "RejectionOverweight": row.get("cs_overweight", 0),
-                    "RejectionOtherErrors": row.get("cs_other_errors", 0),
-                    "RejectionTotal": row.get("cs_total", 0),
-                    "RejectionPercentage": row.get("cs_rejection", 0)
+                    "TotalCylindersChecked": val(row.get("cs_total_cylinders_checked")),
+                    "RejectionUnderweight": val(row.get("cs_underweight")),
+                    "RejectionOverweight": val(row.get("cs_overweight")),
+                    "RejectionOtherErrors": val(row.get("cs_other_errors")),
+                    "RejectionTotal": val(row.get("cs_total")),
+                    "RejectionPercentage": val(row.get("cs_rejection"))
                 },
                 "electronicLeakDetectorSummary": {
-                    "TotalCylindersChecked": row.get("gd_total_cylinders_checked", 0),
-                    "RejectionTotal": row.get("gd_total", 0),
-                    "RejectionPercentage": row.get("gd_rejection", 0)
+                    "TotalCylindersChecked": val(row.get("gd_total_cylinders_checked")),
+                    "RejectionTotal": val(row.get("gd_total")),
+                    "RejectionPercentage": val(row.get("gd_rejection"))
                 },
                 "O-RingTesterSummary": {
-                    "TotalCylindersChecked": row.get("pt_total_cylinders_checked", 0),
-                    "RejectionTotal": row.get("pt_total", 0),
-                    "RejectionPercentage": row.get("pt_rejection", 0)
+                    "TotalCylindersChecked": val(row.get("pt_total_cylinders_checked")),
+                    "RejectionTotal": val(row.get("pt_total")),
+                    "RejectionPercentage": val(row.get("pt_rejection"))
                 }
             })
         plants_output.append({"plantName": plant_name, "cars": cars_list})
