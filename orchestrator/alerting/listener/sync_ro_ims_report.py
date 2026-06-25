@@ -32,7 +32,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1', '2']):
                     indent_status, dry_out_in_days, id as alert_id
                     FROM alerts
                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                    AND indent_status NOT IN ('Cancelled', 'Completed')
+                    AND indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
                     AND mark_as_false = true
                     AND dry_out_in_days IN ('{dry_out_in_days}')
                 ),
