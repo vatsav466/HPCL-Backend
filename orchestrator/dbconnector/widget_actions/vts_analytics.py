@@ -4595,18 +4595,12 @@ class VTSAnalyticsActions:
                 }
                 
             # Execute Tibco query
-            conn = await VTSAnalyticsActions.tibco_connection()
-            if not conn:
-                return {"status": False, "message": "Database connection failed", "data": {}}
-            
-            
+                              
             shortage_tibco_query = f"""select ENGINE_NO, CHASSIS_NO, vehicle_no
-            from CONN_ENT.ZSDCV_VEH_BLKLIS_STG 
+            from veh_blklis_stg
             where vehicle_no = '{safe_val}'  """
             print('shortage_tibco_query------->',shortage_tibco_query)
-            shortage_resp = await VTSAnalyticsActions.execute_tibco_query(conn, shortage_tibco_query)
-            shortage_data = pd.DataFrame(shortage_resp.get("data", []))
-            
+            shortage_data = await VTSAnalyticsActions.execute_query(shortage_tibco_query)            
             print('shortage_data',shortage_data)
             
             # Merge shortage_data with final_df on TRUCK_REGNNO (final_df) = vehicle_no (shortage_data)
