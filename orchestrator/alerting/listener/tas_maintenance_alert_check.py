@@ -27,7 +27,7 @@ async def maintenance_alert_check(alert_data):
         original_device_name = alert_data.get('device_name', '')
 
         # Extract tas_device_name
-        if re.match(r'^[A-Z]+[- ]\d+_', original_device_name) and not original_device_name.startswith('TK-') :
+        if re.match(r'^[A-Z]+[- ][A-Z0-9]+_', original_device_name) and not original_device_name.startswith('TK-') :
             tas_device_name = original_device_name.split('_', 1)[1]
         else:
             tas_device_name = original_device_name
