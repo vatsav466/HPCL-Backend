@@ -8134,6 +8134,124 @@ async def get_tank_mode_analysis(data):
             "tank_mode_not_changed": []
         }
 
+async def tas_faulty_resolution_avg_time(data):
+    try:
+        where_conditions = [
+            "status = 'Resolved'",
+            "updated_at < NOW() - INTERVAL '48 hours'"
+        ]
+
+        zone          = None
+        location_name = None
+        vendor_name   = None
+
+        if getattr(data, "filters", None):
+            for f in data.filters:
+                if not f.value:
+                    continue
+                if f.key == "zone":
+                    zone = f.value
+                elif f.key == "location_name":
+                    location_name = f.value
+                elif f.key == "vendor_name":
+                    vendor_name = f.value
+
+        if not zone and getattr(data, "zone", None):
+            zone = data.zone
+
+        if not location_name and getattr(data, "location_name", None):
+            location_name = data.location_name
+
+        if not vendor_name and getattr(data, "vendor_name", None):
+            vendor_name = data.vendor_name
+
+        if zone and zone.strip():
+            where_conditions.append(f"zone = '{zone.strip()}'")
+
+        if location_name and location_name.strip():
+            where_conditions.append(f"location_name = '{location_name.strip()}'")
+
+        if vendor_name and vendor_name.strip():
+            where_conditions.append(f"vendor_name = '{vendor_name.strip()}'")
+
+        where_clause = " AND ".join(where_conditions)
+
+        # ── Zone-level summary ────────────────────────────────────────────────
+        zone_query = f"""
+            SELECT
+                zone,
+                COUNT(*)                                                                        AS total_resolved,
+                ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600.0)::numeric, 2) AS avg_resolution_hours
+            FROM tas_faulty
+            WHERE {where_clause}
+            GROUP BY zone
+            ORDER BY avg_resolution_hours DESC;
+        """
+
+        # ── Location-level summary ────────────────────────────────────────────
+        location_query = f"""
+            SELECT
+                zone,
+                location_name,
+                COUNT(*)                                                                        AS total_resolved,
+                ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600.0)::numeric, 2) AS avg_resolution_hours
+            FROM tas_faulty
+            WHERE {where_clause}
+            GROUP BY zone, location_name
+            ORDER BY zone, avg_resolution_hours DESC;
+        """
+
+        # ── Vendor-level summary ──────────────────────────────────────────────
+        vendor_overall_query = f"""
+        SELECT
+            vendor_name,
+            COUNT(*)                                                                        AS total_resolved,
+            ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600.0)::numeric, 2) AS avg_resolution_hours
+        FROM tas_faulty
+        WHERE {where_clause}
+        GROUP BY vendor_name
+        ORDER BY avg_resolution_hours DESC;
+    """
+
+        zone_res, location_res, vendor_overall_res = await asyncio.gather(
+            hpcl_ceg_model.Alerts.get_aggr_data(zone_query,     limit=0),
+            hpcl_ceg_model.Alerts.get_aggr_data(location_query, limit=0),
+            hpcl_ceg_model.Alerts.get_aggr_data(vendor_overall_query,   limit=0),
+        )
+
+        zone_data     = zone_res.get("data",     [])
+        location_data = location_res.get("data", [])
+        vendor_overall_data  = vendor_overall_res.get("data",  [])
+
+        overall_avg_hours = None
+        total_resolved    = 0
+
+        if zone_data:
+            total_resolved = sum(r["total_resolved"] for r in zone_data)
+            valid_avgs     = [r["avg_resolution_hours"] for r in zone_data if r.get("avg_resolution_hours") is not None]
+            if valid_avgs:
+                overall_avg_hours = round(sum(valid_avgs) / len(valid_avgs), 2)
+
+        return {
+            "status":  True,
+            "message": "TAS Faulty resolution average time calculated successfully",
+            "data": {
+                "overall_avg_resolution_hours": overall_avg_hours,
+                "total_resolved_count":         total_resolved,
+                "zone_summary":                 zone_data,
+                "location_summary":             location_data,
+                "vendor_overall_summary":       vendor_overall_data,
+            }
+        }
+
+    except Exception as e:
+        print(f"Error in tas_faulty_resolution_avg_time: {e}")
+        return {
+            "status":  False,
+            "message": f"Error calculating resolution average time: {e}",
+            "data":    {}
+        }
+
 async def calculate_safety_exposure_index_overview(data):
     try:        
         where_conditions = ["alert_section = 'TAS'"]
@@ -8357,7 +8475,8 @@ AnalyticsModelMapping = {
     "Recurrent_Delay":get_recurrent_delay,
     "Tank_Mode_status":get_tank_mode_analysis,
     "Safety Exposure Index":calculate_safety_exposure_index_overview,
-    "Telemetry Loss of Communication": loss_of_communication
+    "Telemetry Loss of Communication": loss_of_communication,
+    "Tas Faulty Resolution Average Time": tas_faulty_resolution_avg_time,
 
 }
 
