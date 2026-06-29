@@ -272,6 +272,7 @@ Model Users {
     status bool
     manual_user bool
     contact_number optional str
+    mfa optional bool
 
 
     login_user_id str                                 // account created by               

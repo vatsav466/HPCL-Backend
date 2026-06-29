@@ -24,6 +24,10 @@ zone_map = {
     "ECZ": "ECZ",
     "SWZ": "SWZ",
     "CEN": "CEN",
+    "GZR": "GZ",
+    "PZR": "PZ",
+    "NUZ": "NUZ",
+    "CZR": "CZ",
     "NORTH CENTRAL RETAIL": "NCZ",
     "SOUTH CENTRAL RETAIL": "SCZ",
     "WEST ZONE": "WZ",
@@ -78,8 +82,8 @@ tas_query = """ SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME a
                     ZE.EMP_BU_CODE, ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC, ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as zone,
                     ZE.EMP_CONTACT_NUMBER AS contact_number
                 FROM ZGRCCV_ROLE_STG ZR LEFT JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
-                    LEFT JOIN EDW_DC_PLANT EPL on ZE.PLANT_CODE = EPL.PLANT
-                WHERE (ZE.PLANT_CODE like '1%') """
+                    LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
+                WHERE (ZE.PLANT_CODE like '1%') AND EPL.ZZONE NOT IN ('COR','MHQ') """
 
 # Add required roles in novex_role_master.csv
 ro_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 
