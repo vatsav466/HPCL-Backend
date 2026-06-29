@@ -335,7 +335,7 @@ async def combine_roles(data, _id, role_name):
 async def process_data(data, bu):
     novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
                        "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
-                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user", "contact_number"]
+                       "state", "zone", "sales_area", "is_ad_user", "status", "manual_user", "contact_number", "mfa"]
     data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
                                 "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
@@ -350,7 +350,7 @@ async def process_data(data, bu):
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
     print("After dropping empty username :", len(data))
-    for col in ["status", "is_ad_user"]:
+    for col in ["status", "is_ad_user", "mfa"]:
         data[col] = True
     data["employee_id"] = data["username"]
     data["manual_user"] = False
@@ -501,7 +501,7 @@ async def insert_ro_dealer(cursor) -> int:
                 if col in data.columns:
                     data[col] = data[col].fillna("").astype(str)
                     data[col] = '["' + data[col] + '"]'            
-            for col in ["status", "is_ad_user"]:
+            for col in ["status", "is_ad_user", "mfa"]:
                 data[col] = True
             for col in data.columns:
                 data[col] = data[col].fillna("")
