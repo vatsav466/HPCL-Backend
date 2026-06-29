@@ -221,6 +221,7 @@ class UsersSchema(UrdhvaPostgresBase):
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     manual_user: Mapped[bool] = mapped_column("manual_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     contact_number: Mapped[typing.Optional[str]] = mapped_column("contact_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mfa: Mapped[typing.Optional[bool]] = mapped_column("mfa", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     login_user_id: Mapped[str] = mapped_column("login_user_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     file_path: Mapped[typing.Optional[str]] = mapped_column("file_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
@@ -250,6 +251,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     status: bool
     manual_user: bool
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfa: typing.Optional[bool] = pydantic.Field(False, )
     login_user_id: str
     file_path: typing.Optional[str] = pydantic.Field("", **{})
 
@@ -285,6 +287,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     status: typing.Optional[bool] | None = None
     manual_user: typing.Optional[bool] | None = None
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    mfa: typing.Optional[bool] = pydantic.Field(False, )
     login_user_id: typing.Optional[str] | None = None
     file_path: typing.Optional[str] = pydantic.Field("", **{})
 
