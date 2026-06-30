@@ -58,6 +58,17 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
     )
         # if user["email_type"] == email_type and bu == user["bu"]:
     if matched_user:
+
+        existing_subject = matched_user.get("subject")
+
+        response_data = {
+            "subject": {},
+            "Already_exists_emails": [],
+            "Updated_to_recipients": [],
+            "Updated_cc_recipients": [],
+            "Updated_bcc_recipients": []
+        }
+
         to_set = set(normalize(matched_user.get("to_recipients")))
         cc_set = set(normalize(matched_user.get("cc_recipients")))
         bcc_set = set(normalize(matched_user.get("bcc_recipients")))
@@ -66,9 +77,12 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
         changes_made = False
 
         if action == "add" and data.subject is not None:
-            existing_subject = matched_user.get("subject")
             if existing_subject != data.subject:
                 changes_made = True
+                response_data["subject"] = {
+                    "old": existing_subject,
+                    "new": data.subject
+                }
                 messages.append(f"Subject updated from '{existing_subject}' to '{data.subject}'")
 
 
@@ -95,11 +109,11 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
 
             msg_parts = []
             if removed_to:
-                msg_parts.append(f"The following email(s) have been successfully removed from the TO Recipients: {', '.join(removed_to)}")
+                msg_parts.append(f"Removed from TO: {', '.join(removed_to)}")
             if removed_cc:
-                msg_parts.append(f"The following email(s) have been successfully removed from the CC Recipients: {', '.join(removed_cc)}")
+                msg_parts.append(f"Removed from CC: {', '.join(removed_cc)}")
             if removed_bcc:
-                msg_parts.append(f"The following email(s) have been successfully removed from the BCC Recipients: {', '.join(removed_bcc)}")
+                msg_parts.append(f"Removed from BCC: {', '.join(removed_bcc)}")
 
             final_message = "; ".join(msg_parts + messages)
 
@@ -118,6 +132,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 email_map[e] = "BCC"
 
             added_map = {"TO": [], "CC": [], "BCC": []}
+            already_exists = []
 
             def add_emails(new_list, target_set, target_type):
                 nonlocal changes_made
@@ -125,7 +140,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                     if email in email_map:
                         # messages.append(f"{email} already exists in {email_map[email]}")
                         messages.append(f"The email address '{email}' already exists in the {email_map[email]} Recipients list.")
-
+                        already_exists.append(email)
                     else:
                         target_set.add(email)
                         added_map[target_type].append(email)
@@ -136,13 +151,18 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             add_emails(cc_list, cc_set, "CC")
             add_emails(bcc_list, bcc_set, "BCC")
 
+            response_data["Already_exists_emails"] = already_exists
+            response_data["Updated_to_recipients"] = added_map["TO"]
+            response_data["Updated_cc_recipients"] = added_map["CC"]
+            response_data["Updated_bcc_recipients"] = added_map["BCC"]
+
             msg_parts = []
             if added_map["TO"]:
-                msg_parts.append(f"The following email(s) have been successfully added to the TO Recipients: {', '.join(added_map['TO'])}")
+                msg_parts.append(f"Added to TO: {', '.join(added_map['TO'])}")
             if added_map["CC"]:
-                msg_parts.append(f"The following email(s) have been successfully added to the CC Recipients: {', '.join(added_map['CC'])}")
+                msg_parts.append(f"Added to CC: {', '.join(added_map['CC'])}")
             if added_map["BCC"]:
-                msg_parts.append(f"The following email(s) have been successfully added to the BCC Recipients: {', '.join(added_map['BCC'])}")
+                msg_parts.append(f"Added to BCC: {', '.join(added_map['BCC'])}")
 
             final_message = "; ".join(msg_parts + messages)
 
@@ -152,21 +172,20 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
         if not changes_made:
             return {
                 "status": "success",
-                "message": "; ".join(messages) if messages else "No changes made"
+                "message": "; ".join(messages) if messages else "No changes made",
+                "data": response_data
             }
-        
-        # ------------------------
-        # UPDATE DB
-        # ------------------------
+
+        # ---------------- DB UPDATE ----------------
         resp = await DailyEmailNotificationUsers(
             id=matched_user["id"],
             email_type=email_type,
             bu=matched_user["bu"],
             name=data.name if data.name is not None else matched_user.get("name"),
-            subject=data.subject if getattr(data, "subject", None) is not None else matched_user.get("subject"),
-            description=data.description if getattr(data, "description", None) is not None else matched_user.get("description"),
-            enabled=data.enabled if getattr(data, "enabled", None) is not None else matched_user.get("enabled", True),
-            audience=audience, 
+            subject=data.subject if data.subject is not None else matched_user.get("subject"),
+            description=data.description if data.description is not None else matched_user.get("description"),
+            enabled=data.enabled if data.enabled is not None else matched_user.get("enabled", True),
+            audience=audience,
             to_recipients=list(to_set),
             cc_recipients=list(cc_set),
             bcc_recipients=list(bcc_set)
@@ -234,7 +253,8 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 ).create()
         return {
             "status": "success",
-            "message": final_message if final_message else "No changes made"
+            "message": final_message if final_message else "No changes made",
+            "data": response_data
         }
 
     # ------------------------
