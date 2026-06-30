@@ -358,8 +358,8 @@ async def supply_terminal_wise_counts(by_ro=False):
         .agg(
             **{
                 "Count of Dryout ROs": ("sap_id", "nunique"),
-                "Count of DryOut Outlets with Valid indent": ("VALID_COUNT", "sum"),
-                "Avg. Pending Indents for last 3 days": ("INDCNT", "sum")
+                "Valid Indent Count (Supply Location+Region)": ("VALID_COUNT", "sum"),
+                "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": ("INDCNT", "sum")
             }
         )
         .reset_index()
@@ -959,7 +959,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     # Step 4: Reorder columns for readability
     bottom_3_per_zone_sorted = bottom_3_per_zone_sorted[
-        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Count of DryOut Outlets with Valid indent", "Avg. Pending Indents for last 3 days"]
+        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Valid Indent Count (Supply Location+Region)", "Average Pending Indent counts from Last 3 Days (Supply Location+Region)"]
     ]
     print(bottom_3_per_zone_sorted)
 
@@ -971,8 +971,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     supply_terminal_query_ro_count_df["Sl No"] = range(1, len(supply_terminal_query_ro_count_df) + 1)
 
     total_dryout_ros = supply_terminal_query_ro_count_df["Count of Dryout ROs"].sum()
-    total_valid_indent = supply_terminal_query_ro_count_df["Count of DryOut Outlets with Valid indent"].sum()
-    avg_pending_indents = supply_terminal_query_ro_count_df["Avg. Pending Indents for last 3 days"].sum()
+    total_valid_indent = supply_terminal_query_ro_count_df["Valid Indent Count (Supply Location+Region)"].sum()
+    avg_pending_indents = supply_terminal_query_ro_count_df["Average Pending Indent counts from Last 3 Days (Supply Location+Region)"].sum()
 
     # Create total row
     total_row = {
@@ -981,8 +981,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         "Supply Location (Terminal)": "",
         "Region": "TOTAL",
         "Count of Dryout ROs": total_dryout_ros,
-        "Count of DryOut Outlets with Valid indent": total_valid_indent,
-        "Avg. Pending Indents for last 3 days": avg_pending_indents
+        "Valid Indent Count (Supply Location+Region)": total_valid_indent,
+        "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": avg_pending_indents
     }
 
     # Append to dataframe
@@ -990,6 +990,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         [supply_terminal_query_ro_count_df, pd.DataFrame([total_row])],
         ignore_index=True
     )
+    today = datetime.datetime.now() 
+    current_date = today.strftime("%d %B %Y")
 
     html_table = supply_terminal_query_ro_count_df.to_html(
         index=False,
@@ -1009,16 +1011,37 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                     margin: 5px;  /* Reduce white space around content */
                                     padding: 0;
                                 }}
+                                .header {{
+                                    position: relative;
+                                    text-align: center;
+                                    margin-bottom: 15px;
+                                }}
+
+                                .title {{
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    color: #003366;
+                                }}
+
+                                .date {{
+                                    position: absolute;
+                                    right: 0;
+                                    top: 0;
+                                    font-size: 14px;
+                                    color: #333;
+                                }}
                                 h2 {{
                                     text-align: center;
                                     color: #003366;
-                                    margin-bottom: 10px;
+                                    margin-bottom: 20px;
                                     margin-top: 5px;
+                                    font-size: 18px;
                                 }}
                                 table.styled-table {{
                                     border-collapse: collapse;
                                     width: 100%;
                                     margin: 5px auto;  /* Small margin around table */
+                                    table-layout: fixed; 
                                 }}
                                 table.styled-table th {{
                                     background-color: #003366;
@@ -1026,6 +1049,11 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                     text-align: center;
                                     padding: 8px;
                                     border: 1px solid #ddd;
+
+                                    white-space: normal;     
+                                    word-wrap: break-word;
+                                    word-break: break-word;
+                                    font-size: 12px;  
                                 }}
                                 table.styled-table td {{
                                     text-align: center;
@@ -1043,7 +1071,10 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                 </style>
                                 </head>
                                 <body>
-                                <h2>Location Wise RO Dryout Count</h2>
+                                <div class="header">
+                                    <div class="title">Location Wise RO Dryout Count</div>
+                                    <div class="date">{current_date}</div>
+                                </div>
                                 {html_table}
                                 </body>
                                 </html>
