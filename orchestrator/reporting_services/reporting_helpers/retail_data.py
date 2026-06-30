@@ -737,17 +737,10 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         elif stat['section'] == 'Indent Raised':
             indent_raised = stat['value']
 
-   # query = f"""
-   #      SELECT dry_out_date, dry_out_zone, dry_out_count
-   #      FROM dry_out_daily_report
-   #      WHERE dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
-   #      AND dry_out_date::DATE < (date_trunc('month', CURRENT_DATE) + interval '1 month')
-   #  """
     query = f""" 
         SELECT dry_out_date, dry_out_zone, dry_out_count
         FROM dry_out_daily_report
-        WHERE dry_out_date::DATE >= '2026-06-09'
-        -- dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
+        WHERE dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
         AND dry_out_date::DATE < (date_trunc('month', CURRENT_DATE) + interval '1 month')
     """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
