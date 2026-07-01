@@ -640,6 +640,8 @@ async def _load_merge_data(
 async def publish_daily_novex_status_email_testing(segments: frozenset[str] | None = None):
     global WRITE_TO_DB
     date = urdhva_base.utilities.get_present_time()
+    print("="*100)
+    print("Execution date ---->", date)
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                        date_time_format=None)
     report_generated_time = date.strftime('%I:%M %p')
@@ -839,6 +841,8 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
 async def publish_daily_novex_status_email_employee(segments: frozenset[str] | None = None):
     global WRITE_TO_DB
     date = urdhva_base.utilities.get_present_time()
+    print("="*100)
+    print("Execution date ---->", date)
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                        date_time_format=None)
     report_generated_time = date.strftime('%I:%M %p')
@@ -1037,6 +1041,8 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
 # ---------------------------------------------------------------------------
 async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | None = None):
     date = urdhva_base.utilities.get_present_time()
+    print("="*100)
+    print("Execution date ---->", date)
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                        date_time_format=None)
     report_generated_time = date.strftime('%I:%M %p')
