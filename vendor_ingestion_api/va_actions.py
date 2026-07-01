@@ -140,6 +140,7 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
         alert_data = alert_data.get("data", [])[0]
         alert_data['alert_status'] = 'Close'
         alert_data['alert_state'] = 'Resolved'
+        alert_data['closed_at'] = datetime.datetime.now()
         alert_data['alert_history'].append({
             "action_type": "Resolved", "alert_status": "Close", "action_msg": data.action_code or data.status,
             "remarks": data.action_description, "action_by": data.acknowledged_by,
