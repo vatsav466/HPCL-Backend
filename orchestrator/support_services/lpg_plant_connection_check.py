@@ -52,7 +52,16 @@ def _format_sync_elapsed(ts):
     else:
         synced = synced.astimezone(ZoneInfo("Asia/Kolkata"))
     secs = max(0, int((now - synced).total_seconds()))
-    elapsed = f"{secs // 3600}h {(secs % 3600) // 60}m" if secs >= 3600 else f"{secs // 60}m"
+    if secs >= 3600:
+        hours = secs // 3600
+        rem_mins = (secs % 3600) // 60
+        if hours >= 24:
+            days, rem_hours = divmod(hours, 24)
+            elapsed = f"{days}d {rem_hours}h {rem_mins}m"
+        else:
+            elapsed = f"{hours}h {rem_mins}m"
+    else:
+        elapsed = f"{secs // 60}m"
     return synced.strftime("%Y-%m-%d %H:%M:%S"), elapsed
 
 
