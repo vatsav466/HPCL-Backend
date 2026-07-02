@@ -44,6 +44,50 @@ def _normalize_mail_recipients(recipients):
     ))
 
 
+def _format_sync_elapsed(ts):
+    synced = pd.Timestamp(ts).to_pydatetime()
+    now = datetime.now(ZoneInfo("Asia/Kolkata"))
+    if synced.tzinfo is None:
+        synced = synced.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+    else:
+        synced = synced.astimezone(ZoneInfo("Asia/Kolkata"))
+    secs = max(0, int((now - synced).total_seconds()))
+    elapsed = f"{secs // 3600}h {(secs % 3600) // 60}m" if secs >= 3600 else f"{secs // 60}m"
+    return synced.strftime("%Y-%m-%d %H:%M:%S"), elapsed
+
+
+async def fill_not_connected_sync_info(plants):
+    """Fill last_synced_at and time_elapsed from lpg_unified_sync_cursor."""
+    if not plants:
+        return
+    try:
+        query = """
+            SELECT p.plant_name,
+                   MAX(COALESCE(usc.last_synced_at, usc.last_process_date)) AS last_synced
+            FROM lpg_plants_master p
+            LEFT JOIN lpg_unified_sync_cursor usc
+              ON p.plant_name ILIKE '%' || usc.plant_name || '%'
+            GROUP BY p.plant_name
+        """
+        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+        print("last_synced query resp:", result, flush=True)
+        sync_map = {
+            str(r["plant_name"]).strip().upper(): r.get("last_synced")
+            for r in (result.get("data") or [])
+            if r.get("last_synced")
+        }
+        for plant in plants:
+            key = (plant.get("plant_name") or plant.get("short_name", "")).strip().upper()
+            ts = sync_map.get(key)
+            if ts:
+                plant["last_synced_at"], plant["time_elapsed"] = _format_sync_elapsed(ts)
+            else:
+                plant["last_synced_at"] = ""
+                plant["time_elapsed"] = ""
+    except Exception as e:
+        print(f"last_synced lookup failed: {e}", flush=True)
+
+
 async def load_plant_data():
     """Load plant data from lpg_plants_master table in DB"""
     try:
@@ -196,6 +240,8 @@ def check_plant_connectivity(plant_df):
                 'status': 'NOT CONNECTED',
                 'error_message': status_message,
                 'mail_recipients': _normalize_mail_recipients(plant.get('mail_recipients')),
+                'last_synced_at': '',
+                'time_elapsed': '',
             })
             print(f"{short_name}: {status_message}")
         else:
@@ -338,18 +384,21 @@ async def send_connectivity_mail(csv_path):
     </html>
     """
 
+    to_recipients = []
+    for plant in not_connected_plants:
+        to_recipients.extend(_normalize_mail_recipients(plant.get("mail_recipients")))
+    to_recipients = list(dict.fromkeys(to_recipients))
+    print(f"email to (plant mail_recipients): {to_recipients}", flush=True)
+
     for attempt in range(1, 4):
         try:
             print(f"Attempt {attempt} to send email with not connected plants...")
             ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
             await ins.publish_message(
                 subject=f"LPG - Not Connected Plants Report - {formatted_time}",
-                recipients=[
-                    "avinashgaurav@hpcl.in",
-                    "rishikeshdevidas.patil@hpcl.in",   
-                    "randhir.kumar2@hpcl.in"
-                ],
-                cc_recipients=["yesu.p@algofusiontech.com", "mrudula.m@algofusiontech.com", "venu@algofusiontech.com", "sachinkwarghane@hpcl.in", "arpitakanak.bara@hpcl.in"],
+                recipients=to_recipients,
+                cc_recipients=PLANT_CONNECTIVITY_CC_RECIPIENTS,
+                bcc_recipients=PLANT_CONNECTIVITY_BCC_RECIPIENTS,
                 html_content=True,
                 body=html_body,
                 attachments=[csv_path],
@@ -361,8 +410,6 @@ async def send_connectivity_mail(csv_path):
             print(f"Attempt {attempt} - Failed to send email: {e}")
             if attempt == 3:
                 print("All email attempts failed.")
-
-    await send_plant_recipient_connectivity_mails()
 
 
 def _resolve_plant_connectivity_error(plant):
@@ -471,6 +518,8 @@ async def main():
 
         # Check connectivity for all plants
         not_connected_list = check_plant_connectivity(plant_df)
+
+        await fill_not_connected_sync_info(not_connected_plants)
 
         # Create CSV with not connected plants details
         csv_path = create_not_connected_plants_csv()
