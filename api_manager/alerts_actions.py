@@ -446,7 +446,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         if truck_no and not VEHICLE_REGEX.match(truck_no):
                 return {
                     "status": "error",
-                    "message": "Add a valid truck number"
+                    "message": "Please enter a valid truck number"
                 }
 
         location_name = data.location_name
