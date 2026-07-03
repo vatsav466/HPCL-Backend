@@ -78,7 +78,7 @@ class VTSAlertsListener:
             Novex System</p>
             """
         elif tt_type == "packed":
-            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in"]
+            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in", "renumeena@hpcl.in"]
             body=f"""
             <p>Hi Sir,</p>
 
