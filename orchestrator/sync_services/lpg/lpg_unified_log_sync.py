@@ -50,6 +50,8 @@ Environment:
 * ``LPG_UNIFIED_SLOW_PLANT_THRESHOLD_S`` — wall-seconds above which a plant appears in
   ``performance_summary.slow_plants`` in the JSON report and the stdout ranked table
   (default ``60``). Set to ``0`` to list every plant.
+* ``LPG_UNIFIED_QUERY_TIMEOUT_S`` — max seconds per plant DB chunk fetch (default ``600``,
+  10 minutes). Exceeding this with 0 rows fails the plant instead of marking OK.
 
 **Resume order** (first match wins): stored unified cursor → legacy
 ``lpg_*_extraction_log.last_extracted_date`` (cheap PK lookup) → only if still unknown,
@@ -328,19 +330,25 @@ def fetch_data(
     getData: bool = False,
     params: Optional[Dict[str, Any]] = None,
     timeout: int = 45,
-    query_timeout: int = 120,
+    query_timeout: int = int(os.environ.get("LPG_UNIFIED_QUERY_TIMEOUT_S", "600")),
     chunk_size: int = 50000,
     verbose: bool = False,
 ):
     """Fetch from plant MySQL or PostgreSQL.
 
     Socket probe and DB connect are bounded by ``timeout`` (default 45s).
-    Query execution is bounded by ``query_timeout`` (default 120s).
+    Query execution is bounded by ``query_timeout`` (default 600s).
     On a query timeout returns ``_FETCH_TIMEOUT`` sentinel instead of an empty
     DataFrame so callers can distinguish timeout from genuinely no rows.
     """
     if params is None:
+        print("fetch_data: params is None", flush=True)
         return pl.DataFrame() if getData else None
+    print(
+        f"fetch_data START: {params.get('PlantName')} host={params.get('host')}:"
+        f"{params.get('port')} db_type={params.get('db_type')}",
+        flush=True,
+    )
     query = query.replace(";", "")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
@@ -354,18 +362,22 @@ def fetch_data(
                 timeout,
             )
             print(
-                f"Connection timed out to {params['host']}:{params['port']} after {timeout} seconds"
+                f"fetch_data SOCKET FAIL: {params.get('PlantName')} "
+                f"{params['host']}:{params['port']} error={result}",
+                flush=True,
             )
             return pl.DataFrame() if getData else None
+        print(f"fetch_data SOCKET OK: {params.get('PlantName')}", flush=True)
     except Exception as e:
         logger.error("Socket connection error: %s", e)
-        print(f"Socket connection error: {str(e)}")
+        print(f"fetch_data SOCKET ERROR: {params.get('PlantName')} {e}", flush=True)
         return pl.DataFrame() if getData else None
     finally:
         sock.close()
 
     try:
         if str(params.get("db_type", "")).lower() == "mysql":
+            print(f"fetch_data DB CONNECT MySQL: {params.get('PlantName')}", flush=True)
             pg_conn = mysql.connector.connect(
                 host=params["host"],
                 database=params["database"],
@@ -373,12 +385,16 @@ def fetch_data(
                 password=params["password"],
                 port=int(params["port"]),
                 connection_timeout=timeout,
+                read_timeout=query_timeout,
+                write_timeout=query_timeout,
             )
             cursor = pg_conn.cursor()
             cursor.execute(
                 f"SET SESSION max_execution_time = {query_timeout * 1000};"
             )
+            print(f"fetch_data DB CONNECTED MySQL: {params.get('PlantName')}", flush=True)
         else:
+            print(f"fetch_data DB CONNECT PostgreSQL: {params.get('PlantName')}", flush=True)
             pg_conn = psycopg2.connect(
                 host=params["host"],
                 database=params["database"],
@@ -386,10 +402,16 @@ def fetch_data(
                 password=params["password"],
                 port=params["port"],
                 connect_timeout=timeout,
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=6,
+                options=f"-c statement_timeout={query_timeout * 1000}",
             )
             pg_conn.set_session(autocommit=True)
             cursor = pg_conn.cursor()
             cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
+            print(f"fetch_data DB CONNECTED PostgreSQL: {params.get('PlantName')}", flush=True)
 
     except Exception as e:
         logger.error(
@@ -398,7 +420,8 @@ def fetch_data(
             e,
         )
         print(
-            f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}"
+            f"fetch_data DB CONNECT FAIL: {params.get('PlantName', 'unknown')} {e}",
+            flush=True,
         )
         return pl.DataFrame() if getData else None
 
@@ -408,13 +431,17 @@ def fetch_data(
             print(f"Running Query with {query_timeout}s timeout...", flush=True)
             print(query, flush=True)
 
+        print(f"fetch_data QUERY EXECUTE: {params.get('PlantName')}", flush=True)
+
         if not getData:
             cursor.execute(query)
             resp = cursor.fetchone()
             cursor.close()
             pg_conn.close()
+            print(f"fetch_data DONE scalar: {params.get('PlantName')}", flush=True)
             return resp[0] if resp else None
         if "LIMIT" not in query.upper():
+            print(f"fetch_data QUERY mode=OFFSET: {params.get('PlantName')}", flush=True)
             base_query = query.rstrip(";")
             base_query += f" LIMIT {chunk_size} OFFSET "
         else:
@@ -425,6 +452,10 @@ def fetch_data(
             data = pl.from_pandas(data)
             cursor.close()
             pg_conn.close()
+            print(
+                f"fetch_data DONE LIMIT rows={len(data)}: {params.get('PlantName')}",
+                flush=True,
+            )
             return data
 
         all_data = []
@@ -432,10 +463,18 @@ def fetch_data(
         columns = []
         while True:
             chunk_query = f"{base_query} {offset};"
+            print(
+                f"fetch_data QUERY OFFSET offset={offset}: {params.get('PlantName')}",
+                flush=True,
+            )
             cursor.execute(chunk_query)
             chunk_data = cursor.fetchall()
 
             if not chunk_data:
+                print(
+                    f"fetch_data OFFSET empty offset={offset}: {params.get('PlantName')}",
+                    flush=True,
+                )
                 break
 
             if verbose:
@@ -452,6 +491,7 @@ def fetch_data(
             if offset > 2000000:
                 if verbose:
                     print("Reached maximum record limit (1M)", flush=True)
+                print(f"fetch_data OFFSET cap reached: {params.get('PlantName')}", flush=True)
                 break
 
         if verbose:
@@ -463,9 +503,14 @@ def fetch_data(
             data = pl.from_pandas(data)
             cursor.close()
             pg_conn.close()
+            print(
+                f"fetch_data DONE OFFSET rows={len(data)}: {params.get('PlantName')}",
+                flush=True,
+            )
             return data
         cursor.close()
         pg_conn.close()
+        print(f"fetch_data DONE empty: {params.get('PlantName')}", flush=True)
         return pl.DataFrame()
 
     except psycopg2.errors.QueryCanceled:
@@ -499,6 +544,11 @@ def fetch_data(
                 f"Plant query timed out after {query_timeout}s (MySQL) for "
                 f"{params.get('PlantName', 'unknown')} — failing this plant"
             )
+            cursor.close()
+            pg_conn.close()
+            return _FETCH_TIMEOUT if getData else None
+        err = str(e).lower()
+        if "connection timed out" in err or "could not receive data" in err:
             cursor.close()
             pg_conn.close()
             return _FETCH_TIMEOUT if getData else None
@@ -1154,7 +1204,7 @@ def sync_one_kind(
     # Defined here so _fail() and the sentinel check can reference them by name
     # instead of repeating magic literals.
     connect_timeout_s: int = 45
-    query_timeout_s: int = 120
+    query_timeout_s: int = int(os.environ.get("LPG_UNIFIED_QUERY_TIMEOUT_S", "600"))
 
     t_kind_start = time.perf_counter()
     sec_fetch = 0.0
@@ -1171,9 +1221,11 @@ def sync_one_kind(
     cur_ts, cur_id, resume_src = get_resume_cursor_conn(
         app_conn, plant_name, kind, sap_s, app_table, id_col
     )
+    print("before cur_ts--->", cur_ts)
     fetch_from_ts = (cur_ts - dt.timedelta(hours=1)).replace(
         minute=0, second=0, microsecond=0
     )
+    print("before cur_ts--->", fetch_from_ts)
 
     always_dedupe = os.environ.get("LPG_UNIFIED_ALWAYS_DEDUPE", "").lower() in (
         "1",
@@ -1240,6 +1292,7 @@ def sync_one_kind(
         # (already advanced to the tail of the previous chunk), so we don't keep
         # re-fetching the same rollback window on every iteration.
         query_ts = fetch_from_ts if first_chunk else cur_ts
+        print("query_ts")
         query = _build_keyset_query(
             source_table=source_table,
             id_col=id_col,
@@ -1250,6 +1303,7 @@ def sync_one_kind(
         )
         _sync_print(
             f"{plant_name} | {label}: chunk {chunks + 1}/{max_chunks} — "
+            f"query_ts={query_ts} | "
             f"fetching up to {chunk_size} rows from plant DB ({source_table})…"
         )
         t_fetch = time.perf_counter()
@@ -1271,6 +1325,9 @@ def sync_one_kind(
         # max_execution_time).  Fail this plant explicitly — do not treat it as
         # end-of-data and silently mark success.
         if chunk is _FETCH_TIMEOUT:
+            _sync_print(
+                f"{plant_name} | {label}: fetch took too long ({round(dt_fetch)}s), exited"
+            )
             return _fail(
                 message=(
                     f"Plant query timed out after {query_timeout_s}s on chunk {chunks} "
@@ -1289,6 +1346,15 @@ def sync_one_kind(
         )
 
         if chunk.is_empty():
+            if dt_fetch >= query_timeout_s * 0.85:
+                _sync_print(
+                    f"{plant_name} | {label}: fetch took too long ({round(dt_fetch)}s), exited"
+                )
+                return _fail(
+                    message=f"Plant query timed out after {dt_fetch:.0f}s (0 rows)",
+                    stage="plant_fetch_timeout",
+                    chunks_done=chunks,
+                )
             _sync_print(
                 f"{plant_name} | {label}: no more rows from plant (empty chunk). "
                 f"Totals: fetched={rows_fetched}, inserted={rows_inserted}, "
@@ -1711,9 +1777,8 @@ def main() -> None:
     Run unified LPG log sync for all plants, then email not-connected plants.
     After sync, not-connected plants are written to ``/data/not_connected_plants.csv``
     and ``send_connectivity_mail()`` is called from ``lpg_plant_connection_check``.
-    To skip the connectivity email (sync only), export before running::
-        export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1
-    If unset, mail runs whenever this job runs and at least one plant failed the port/DB check.
+    Connectivity email is **skipped by default**. To send mail after sync, set::
+        export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=0
     """
     run_wall0 = time.perf_counter()
     started_at = dt.datetime.now(dt.timezone.utc).isoformat()
@@ -1835,7 +1900,7 @@ def main() -> None:
                 "max_workers": max_workers,
                 "plants_source": "lpg_plants_master",
                 "connect_timeout_s": 45,
-                "query_timeout_s": 120,
+                "query_timeout_s": int(os.environ.get("LPG_UNIFIED_QUERY_TIMEOUT_S", "600")),
                 "totals": {
                     "event_log_rows_inserted_app_db": ev_rows,
                     "production_log_rows_inserted_app_db": pr_rows,
@@ -1850,6 +1915,10 @@ def main() -> None:
 
         _print_slow_plant_table(perf_summary)
         _sync_print(
+            f"Plants exited due to fetch timeout: "
+            f"{', '.join(perf_summary.get('timeout_plants') or []) or 'none'}"
+        )
+        _sync_print(
             f"RUN END | UTC {finished_at} | total {total_run_s}s | "
             f"ok={ok_n} failed={fail_n} | "
             f"rows inserted — event_log={ev_rows}, production_log={pr_rows}"
@@ -1858,8 +1927,7 @@ def main() -> None:
         logger.info("Wrote summary: %s", summary_path)
         print(json.dumps(report, default=str, indent=2), flush=True)
 
-        # Skip with: export LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL=1  (or true/yes)
-        if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "").lower() not in (
+        if os.environ.get("LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL", "1").lower() not in (
             "1",
             "true",
             "yes",
