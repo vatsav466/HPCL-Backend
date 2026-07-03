@@ -10,6 +10,7 @@ import datetime
 import requests
 import traceback
 import utilities
+import re
 import polars as pl
 from pathlib import Path
 import urdhva_base.redispool
@@ -440,6 +441,14 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         if alert_data["data"]:
             return {"status": False, "message": "Truck has already been blocked"}
         
+        VEHICLE_REGEX = re.compile(r'^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{1,4}$')
+        truck_no = data.truck_number.strip().upper() if data.truck_number else None
+        if truck_no and not VEHICLE_REGEX.match(truck_no):
+                return {
+                    "status": "error",
+                    "message": "Please enter a valid truck number"
+                }
+
         location_name = data.location_name
         zone = data.zone
         region = data.region
