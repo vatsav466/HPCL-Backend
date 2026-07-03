@@ -168,10 +168,13 @@ class GlobalAnalytics:
             for filter_ in filters:
                 if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
+                    if filter_.key == "created_at":
+                        filter_.key = "(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')"
                     filter_.key = f"{filter_.key}"
                 
             # After modifying the filters, send the updated filters to apply_filter_drilldown
             analytics_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(analytics_query, filters, drill_state)
+            print('analytics_query_',analytics_query_)
         try:
             # Execute the query
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(analytics_query_)
@@ -257,6 +260,9 @@ class GlobalAnalytics:
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
+            for filter_ in filters:
+                if filter_.key == "created_at":
+                    filter_.key = "(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')"
             alert_ageing_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_ageing_query, filters, drill_state)
             print(alert_ageing_query_)
         try:

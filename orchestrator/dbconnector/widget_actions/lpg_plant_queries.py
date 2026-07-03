@@ -609,31 +609,31 @@ LIMIT 10000;''',
 
     "alert_ageing": '''SELECT DISTINCT bu, alert_section,
                         CASE 
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN '1 Day'
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) <= 1 THEN '1 Day'
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 7 AND 10 THEN '7 to 10 Days'
                             ELSE 'Older than 10 Days'
                         END AS alert_ageing,
                         COUNT(*) OVER (
                             PARTITION BY 
                             bu, alert_section,
                             CASE 
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN '1 Day'
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) <= 1 THEN '1 Day'
+                                WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 7 AND 10 THEN '7 to 10 Days'
                                 ELSE 'Older than 10 Days'
                             END
                         ) AS alert_count,
                         CASE 
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 1
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN 2
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN 3
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN 4
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN 5
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) <= 1 THEN 1
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 1 AND 2 THEN 2
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 2 AND 5 THEN 3
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 5 AND 7 THEN 4
+                            WHEN DATE_PART('day', CURRENT_DATE - (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')) BETWEEN 7 AND 10 THEN 5
                             ELSE 6
                         END AS alert_ageing_order
                     FROM 
@@ -669,12 +669,12 @@ LIMIT 10000;''',
     "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master''',
 
     "day_wise_alerts": '''SELECT 
-                            DATE(created_at) AS alert_date,
+                             DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS alert_date,
                             interlock_name,
                             severity,
                             COUNT(*) AS total_alerts
                         FROM alerts
-                        GROUP BY DATE(created_at), interlock_name, severity
+                        GROUP BY DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') , interlock_name, severity
                         ORDER BY alert_date, severity;
                         ''',
     
