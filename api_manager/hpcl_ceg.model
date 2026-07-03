@@ -1075,6 +1075,7 @@ Model TasAnalytics crud_disable {
         truck_number optional str
         filters optional list WidgetFilters
         interlock_category optional str
+        selected_key optional str
     }
 
 }

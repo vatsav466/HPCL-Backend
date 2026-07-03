@@ -8445,6 +8445,149 @@ async def calculate_safety_exposure_index_overview(data):
         
     except Exception as e:
         return {"status": False, "message": str(e), "data": []}
+    
+
+async def proactive_maintenance(data):
+    """
+    Fetches maintenance alerts and summarizes equipment under maintenance by location and category.
+    Shows Process and Safety counts in a summary view.
+    Provides detailed equipment list with days under maintenance when a category(process or safety) is selected.
+    """
+    
+    maintenance_sopids = analog_mapping.Maintenance
+
+    sop_ids = tuple(items["sop_id"] for items in maintenance_sopids)
+
+    alert_query = f"bu = 'TAS' AND alert_section = 'TAS' AND sop_id IN {sop_ids}"
+
+    alert_query += (
+        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+    )
+
+    if data.alert_status:
+        alert_query += f" AND alert_status = '{data.alert_status}'"
+        
+    if data.location_name:
+        alert_query += f" AND sap_id = '{data.location_name}'"
+
+    if data.zone:
+        alert_query += f" AND zone = '{data.zone}' "
+
+    print("FINAL alert_query >>>", alert_query)
+
+    alert_params = urdhva_base.queryparams.QueryParams(
+        q=alert_query,
+        limit=0
+    )
+
+    alert_params.fields = ["zone", "location_name","sop_id", "severity", "device_type","sap_id","device_id","equipment_type",
+                           "device_name", "equipment_id","interlock_name", "alert_category", "equipment_name", "created_at"]
+
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
+    alert_data = alerts_resp.get("data", [])
+
+
+    if not alert_data:
+        return []
+    
+    df = pl.DataFrame(alert_data)
+
+    df = df.with_columns(
+        pl.when(pl.col("interlock_name").str.to_lowercase().str.ends_with("maintenance"))
+          .then(pl.lit("Maintenance"))
+        #   .otherwise(pl.lit("Fault"))
+          .alias("interlock_category")
+    )
+
+    #filtering maintenance equipment records
+    maintenance_df = df.filter(
+        pl.col("interlock_category") == "Maintenance"
+    )
+
+    # Group maintenance records by location and alert category to count equipment under maintenance per category
+    grouped = (
+        maintenance_df
+        .group_by(["zone", "location_name", "sap_id", "device_name", "equipment_name",  "equipment_type", "alert_category"])
+        .agg(pl.col("equipment_id").n_unique().alias("cnt"))
+    )
+
+    # Pivot grouped data to create location-wise summary with Process and Safety maintenance counts as columns
+    result = (
+        grouped
+        .pivot(
+            index="location_name",
+            on="alert_category",
+            values="cnt",
+            aggregate_function="sum"
+        )
+        .fill_null(0)
+    )
+    rename_map = {
+        col: col.lower()
+        for col in result.columns
+        if col != "location_name"
+    }
+
+    result = result.rename(rename_map).sort("location_name")
+
+    for col in ["process", "safety"]:
+        if col not in result.columns:
+            result = result.with_columns(pl.lit(0).alias(col))
+
+    # Reorder columns consistently
+    result = result.select(["location_name", "process", "safety"])
+
+    top5_locations = (
+        maintenance_df
+        .group_by("location_name")
+        .agg(pl.len().alias("total_equipment"))
+        .sort("total_equipment", descending=True)
+        .head(5)
+    )
+
+    category_type_details = pl.DataFrame()
+
+    category_map = {
+        "safety": "Safety",
+        "process": "Process"
+    }
+    # detailed maintenance list for selected alert category
+    if data.selected_key:
+        clicked_category = category_map.get(data.selected_key.lower())
+        if data.selected_key.lower() in category_map:
+            category_type_details = (
+                maintenance_df
+                .with_columns(
+                    (pl.lit(datetime.today()) - pl.col("created_at").dt.date())
+                    .dt.total_days()
+                    .alias("days_under_maintenance")
+                )
+                .filter((pl.col("alert_category") == clicked_category))
+                .group_by(["zone", "location_name", "sap_id", "device_name", "equipment_name", "equipment_type"])
+                .agg(pl.col("days_under_maintenance").max().alias("days_under_maintenance"))
+                .sort(["zone", "location_name", "days_under_maintenance"], descending=[False, False, True])
+            )
+    
+    else:
+        category_type_details = (
+            maintenance_df
+            .with_columns(
+                (pl.lit(datetime.today()) - pl.col("created_at").dt.date())
+                .dt.total_days()
+                .alias("days_under_maintenance")
+            )
+            .group_by(["zone", "location_name", "sap_id", "device_name", "equipment_name", "equipment_type"])
+            .agg(pl.col("days_under_maintenance").max().alias("days_under_maintenance"))
+            .sort(["zone", "location_name", "days_under_maintenance"], descending=[False, False, True])
+        )
+
+
+    return {
+        "no_of_equipment": result.to_dicts(),
+        "top5_locations": top5_locations.to_dicts(),
+        "category_type_details": category_type_details.to_dicts() if category_type_details.height else [],
+    }
+
         
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -8477,7 +8620,7 @@ AnalyticsModelMapping = {
     "Safety Exposure Index":calculate_safety_exposure_index_overview,
     "Telemetry Loss of Communication": loss_of_communication,
     "Tas Faulty Resolution Average Time": tas_faulty_resolution_avg_time,
-
+    "Proactive_maintenance": proactive_maintenance
 }
 
 
