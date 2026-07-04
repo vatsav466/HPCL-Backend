@@ -412,8 +412,8 @@ async def get_va_path():
     )
 
     date_filter = (
-        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
-        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
     query = f"""
@@ -503,7 +503,10 @@ async def get_pq_path():
                                                date_time_format=None)
     month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
                                                date_time_format="%Y-%m-%d")
-    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    date_filter = (
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
     query = f"""
         SELECT
             location_name AS "Plant Wise PQ Alerts",

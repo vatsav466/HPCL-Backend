@@ -14,7 +14,10 @@ async def get_alert_data(alert_section):
                                                date_time_format=None)
     month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
                                                date_time_format="%Y-%m-%d")
-    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+    date_filter = (
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}' "
+     ) # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     if alert_section in ["VTS"]:
@@ -36,7 +39,7 @@ async def get_alert_data(alert_section):
                     FROM alerts
                     WHERE alert_status = 'Open'
                     AND alert_section = '{alert_section}'
-                    AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+                    AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
                     GROUP BY alert_section, bu
                 """
     
@@ -46,7 +49,7 @@ async def get_alert_data(alert_section):
                     FROM alerts
                     WHERE vehicle_unblocked_date is null
                     AND alert_section = '{alert_section}'
-                    AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
+                    AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'
                     GROUP BY alert_section, bu
                 """
     fy_open_alerts = await hpcl_ceg_model.Alerts.get_aggr_data(fy_open_alerts_query)
