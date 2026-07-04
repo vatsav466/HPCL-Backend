@@ -665,8 +665,8 @@ async def get_va_path():
     )
 
     date_filter = (
-        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
-        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
     query = f"""
@@ -759,8 +759,8 @@ async def get_emlock_path():
     )
 
     date_filter = (
-        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
-        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
     query = f"""
@@ -853,8 +853,8 @@ async def get_tas_path():
     )
 
     date_filter = (
-        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
-        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+        f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
     query = f"""
