@@ -935,7 +935,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     print("nozzel_previous_day ---->\n", nozzel_previous_day)
 
     nozzle_sales_percentage = round(
-        (nozzel_previous_day[0]['count'] / 25131) * 100,
+        (nozzel_previous_day[0]['count'] / 25160) * 100,
         1
     )
     print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)
