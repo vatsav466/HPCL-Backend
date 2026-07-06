@@ -388,7 +388,7 @@ async def nozzles_sales_top_performance():
                                     AS financial_year_label
 
                                 FROM nozzle_sales
-
+                                WHERE zone is not Null
                                 GROUP BY
                                     zone,
                                     region,
@@ -412,10 +412,10 @@ async def nozzles_sales_top_performance():
     nozzle_sales_df = nozzle_sales_df.join(loc_df, on = 'sap_id', how = "left")
     print("completed the joining with lm")
 
-    nozzle_sales_top_df = nozzle_sales_df.filter(
-        (pl.col("current_ms_kl").is_not_null()) & 
-        (pl.col("current_ms_kl") != 0)
-    )
+    # nozzle_sales_top_df = nozzle_sales_df.filter(
+    #     (pl.col("current_ms_kl").is_not_null()) & 
+    #     (pl.col("current_ms_kl") != 0)
+    # )
 
     labels = nozzle_sales_df.select([
         "current_date_label",
@@ -423,7 +423,7 @@ async def nozzles_sales_top_performance():
     ]).unique().to_dicts()[0]
     print("labels ---->\n", labels)
 
-    nozzle_sales_top_df = nozzle_sales_top_df.filter(pl.col("zone").is_not_null())
+    nozzle_sales_top_df = nozzle_sales_df.filter(pl.col("zone").is_not_null())
 
     nozzle_sales_top_df = (
         nozzle_sales_top_df
