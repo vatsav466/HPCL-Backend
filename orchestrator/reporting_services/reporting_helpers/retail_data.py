@@ -804,22 +804,22 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'Bengaluru Zone': 1724,
-        'Bhopal Zone' : 1711,
-        'Bhubaneswar Zone' : 1425,
+        'Bengaluru Zone': 1725,
+        'Bhopal Zone' : 1710,
+        'Bhubaneswar Zone' : 1426,
         'Chandigarh Zone' : 1557,
-        'Cochin Zone': 880,
-        'EZ': 734,
+        'Cochin Zone': 883,
+        'EZ': 735,
         'Guwahati Zone': 481,
-        'Jaipur Zone': 1914,
-        'NCZ': 1597,
-        'Noida Zone' : 1713,
+        'Jaipur Zone': 1916,
+        'NCZ': 1599,
+        'Noida Zone' : 1718,
         'NWZ': 1400,
-        'NZ': 1196,
-        'Patna Zone': 1317,
-        'SCZ': 2857,
-        'SZ': 1939,
-        'WZ': 2686
+        'NZ': 1199,
+        'Patna Zone': 1320,
+        'SCZ': 2860,
+        'SZ': 1941,
+        'WZ': 2690
     }
 
     default_ro_values = {
