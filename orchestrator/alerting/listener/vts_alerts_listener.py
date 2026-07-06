@@ -63,7 +63,7 @@ class VTSAlertsListener:
     async def send_no_data_mail(self,tt_type):
         ins = await notification_factory.get_notification_module("email")
         if tt_type == "bulk":
-            recipients = ["mberde@aryaomnitalk.com","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com"]
+            recipients = ["mberde@aryaomnitalk.com","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com", "Randhir.Kumar2@hpcl.in", "Rishikesh.patil@hpcl.in"]
             body=f"""
             <p>Hi Sir,</p>
 
@@ -78,7 +78,7 @@ class VTSAlertsListener:
             Novex System</p>
             """
         elif tt_type == "packed":
-            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in", "renumeena@hpcl.in"]
+            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in", "renumeena@hpcl.in", "Randhir.Kumar2@hpcl.in", "Rishikesh.patil@hpcl.in"]
             body=f"""
             <p>Hi Sir,</p>
 
