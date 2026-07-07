@@ -213,51 +213,79 @@
     </div>
 
     <h4>Branded Fuel Top Performers</h4>
-    <h5>1. Top 3 Retail Outlets with highest Power Sales (Nozzle sales)</h5>
+    <h5>1. Top 3 Zones with highest Power Sales</h5>
+    <table>
+        <thead>
+            <tr>
+                <th class="th2" rowspan="2" style="border-right:2px solid white;">Zone</th>
+                <th class="th3" colspan="3" class="center">{{nozzle_present_month}}</th>
+                <th class="th3" colspan="3" class="center">Year Till Date</th>
+            </tr>
+            <tr>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white;">MS-Power (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white;">MS-Total (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
+                <th class="th2" style="white-space:nowrap;">% Conversion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in top_3_zones %}
+            <tr>
+                <td class="td2" >{{ row.zone }}</td>
+                <!-- <td class="td2 center">{{ row.current_power_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.current_power_kl_sum) }}</td>
+                <!-- <td class="td2 center">{{ row.current_ms_total_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.current_ms_total_kl_sum) }}</td>
+                <td class="td2 center">{{ row.current_conversion_pct | round(1) }}%</td>
+                <!-- <td class="td2 center">{{ row.ytd_power_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_power_kl_sum) }}</td>
+                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_ms_total_kl_sum) }}</td>
+                <td class="td2 center">{{ row.ytd_conversion_pct | round(1) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>2. Top 3 Regions with highest Power Sales</h5>
     <table>
         <thead>
             <tr>
                 <th class="th2" rowspan="2" style="border-right:2px solid white;">Zone</th>
                 <th class="th2" rowspan="2" style="border-right:2px solid white;">Region</th>
-                <th class="th2" rowspan="2" style="border-right:2px solid white;">Sales Area</th>
-                <th class="th2" rowspan="2" style="border-right:2px solid white;">SAP Code</th>
-                <th class="th2" rowspan="2" style="border-right:2px solid white;">Outlet Name</th>
                 <th class="th3" colspan="3" class="center">{{nozzle_present_month}}</th>
                 <th class="th3" colspan="3" class="center">Year Till Date</th>
             </tr>
             <tr>
-            	<th class="th2"style="border-right:2px solid white;">MS-Power (KL)</th>
-                <th class="th2" style="border-right:2px solid white;">MS-Total (KL)</th>
-                <th class="th2" style="border-right:2px solid white;">% Conversion</th>
-                <th class="th2" style="border-right:2px solid white;">MS-Power (KL)</th>
-                <th class="th2" style="border-right:2px solid white;">MS-Total (KL)</th>
-                <th class="th2" >% Conversion</th>
-	    </tr>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
+                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
+            </tr>
         </thead>
         <tbody>
-            {% for row in top_3_retail_outlets %}
+            {% for row in top_3_regions %}
             <tr>
                 <td class="td2" >{{ row.zone }}</td>
                 <td class="td2" >{{ row.region }}</td>
-                <td class="td2" >{{ row.sales_area }}</td>
-                <td class="td2" >{{ row.sap_id }}</td>
-                <td class="td2" >{{ row.location_name }}</td>
-                <!-- <td class="td2 center">{{ row.current_power_kl | round(1)}}</td> -->
-                <td class="td2 center">{{ "{:,.2f}".format(row.current_power_kl) }}</td>
-                <!-- <td class="td2 center">{{ row.current_ms_total_kl | round(1)}}</td> -->
-                <td class="td2 center">{{ "{:,.2f}".format(row.current_ms_total_kl) }}</td>
-                <td class="td2 center">{{ row.current_conversion_pct | round(1)}}%</td>
-                <!-- <td class="td2 center">{{ row.ytd_power_kl | round(1)}}</td> -->
-                <td class="td2 center">{{ "{:,.2f}".format(row.ytd_power_kl) }}</td>
-                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl | round(1)}}</td> -->
-                <td class="td2 center">{{ "{:,.2f}".format(row.ytd_ms_total_kl) }}</td>
-                <td class="td2 center">{{ row.ytd_conversion_pct | round(1)}}%</td>
+                <!-- <td class="td2 center">{{ row.current_power_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.current_power_kl_sum) }}</td>
+                <!-- <td class="td2 center">{{ row.current_ms_total_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.current_ms_total_kl_sum) }}</td>
+                <td class="td2 center">{{ row.current_conversion_pct | round(1) }}%</td>
+                <!-- <td class="td2 center">{{ row.ytd_power_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_power_kl_sum) }}</td>
+                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl_sum | round(0)}}</td> -->
+                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_ms_total_kl_sum) }}</td>
+                <td class="td2 center">{{ row.ytd_conversion_pct | round(1) }}%</td>
             </tr>
             {% endfor %}
         </tbody>
-
     </table>
-    <h5>2. Top 3 Sales Areas with highest Power Sales</h5>
+    <h5>3. Top 3 Sales Areas with highest Power Sales</h5>
     <table>
         <thead>
             <tr>
@@ -296,74 +324,46 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>3. Top 3 Regions with highest Power Sales</h5>
+
+    <h5>4. Top 3 Retail Outlets with highest Power Sales (Nozzle sales)</h5>
     <table>
         <thead>
             <tr>
                 <th class="th2" rowspan="2" style="border-right:2px solid white;">Zone</th>
                 <th class="th2" rowspan="2" style="border-right:2px solid white;">Region</th>
+                <th class="th2" rowspan="2" style="border-right:2px solid white;">Sales Area</th>
+                <th class="th2" rowspan="2" style="border-right:2px solid white;">SAP Code</th>
+                <th class="th2" rowspan="2" style="border-right:2px solid white;">Outlet Name</th>
                 <th class="th3" colspan="3" class="center">{{nozzle_present_month}}</th>
                 <th class="th3" colspan="3" class="center">Year Till Date</th>
             </tr>
             <tr>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
-            </tr>
+            	<th class="th2"style="border-right:2px solid white;">MS-Power (KL)</th>
+                <th class="th2" style="border-right:2px solid white;">MS-Total (KL)</th>
+                <th class="th2" style="border-right:2px solid white;">% Conversion</th>
+                <th class="th2" style="border-right:2px solid white;">MS-Power (KL)</th>
+                <th class="th2" style="border-right:2px solid white;">MS-Total (KL)</th>
+                <th class="th2" >% Conversion</th>
+	    </tr>
         </thead>
         <tbody>
-            {% for row in top_3_regions %}
+            {% for row in top_3_retail_outlets %}
             <tr>
                 <td class="td2" >{{ row.zone }}</td>
                 <td class="td2" >{{ row.region }}</td>
-                <!-- <td class="td2 center">{{ row.current_power_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.current_power_kl_sum) }}</td>
-                <!-- <td class="td2 center">{{ row.current_ms_total_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.current_ms_total_kl_sum) }}</td>
-                <td class="td2 center">{{ row.current_conversion_pct | round(1) }}%</td>
-                <!-- <td class="td2 center">{{ row.ytd_power_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_power_kl_sum) }}</td>
-                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_ms_total_kl_sum) }}</td>
-                <td class="td2 center">{{ row.ytd_conversion_pct | round(1) }}%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h5>4. Top 3 Zones with highest Power Sales</h5>
-    <table>
-        <thead>
-            <tr>
-                <th class="th2" rowspan="2" style="border-right:2px solid white;">Zone</th>
-                <th class="th3" colspan="3" class="center">{{nozzle_present_month}}</th>
-                <th class="th3" colspan="3" class="center">Year Till Date</th>
-            </tr>
-            <tr>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white;">MS-Power (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white;">MS-Total (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">% Conversion</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Power (KL)</th>
-                <th class="th2" style="white-space:nowrap; border-right:2px solid white">MS-Total (KL)</th>
-                <th class="th2" style="white-space:nowrap;">% Conversion</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in top_3_zones %}
-            <tr>
-                <td class="td2" >{{ row.zone }}</td>
-                <!-- <td class="td2 center">{{ row.current_power_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.current_power_kl_sum) }}</td>
-                <!-- <td class="td2 center">{{ row.current_ms_total_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.current_ms_total_kl_sum) }}</td>
-                <td class="td2 center">{{ row.current_conversion_pct | round(1) }}%</td>
-                <!-- <td class="td2 center">{{ row.ytd_power_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_power_kl_sum) }}</td>
-                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl_sum | round(0)}}</td> -->
-                <td class="td2 center">{{ "{:,.0f}".format(row.ytd_ms_total_kl_sum) }}</td>
-                <td class="td2 center">{{ row.ytd_conversion_pct | round(1) }}%</td>
+                <td class="td2" >{{ row.sales_area }}</td>
+                <td class="td2" >{{ row.sap_id }}</td>
+                <td class="td2" >{{ row.location_name }}</td>
+                <!-- <td class="td2 center">{{ row.current_power_kl | round(1)}}</td> -->
+                <td class="td2 center">{{ "{:,.2f}".format(row.current_power_kl) }}</td>
+                <!-- <td class="td2 center">{{ row.current_ms_total_kl | round(1)}}</td> -->
+                <td class="td2 center">{{ "{:,.2f}".format(row.current_ms_total_kl) }}</td>
+                <td class="td2 center">{{ row.current_conversion_pct | round(1)}}%</td>
+                <!-- <td class="td2 center">{{ row.ytd_power_kl | round(1)}}</td> -->
+                <td class="td2 center">{{ "{:,.2f}".format(row.ytd_power_kl) }}</td>
+                <!-- <td class="td2 center">{{ row.ytd_ms_total_kl | round(1)}}</td> -->
+                <td class="td2 center">{{ "{:,.2f}".format(row.ytd_ms_total_kl) }}</td>
+                <td class="td2 center">{{ row.ytd_conversion_pct | round(1)}}%</td>
             </tr>
             {% endfor %}
         </tbody>
