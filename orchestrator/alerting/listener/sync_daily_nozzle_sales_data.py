@@ -146,7 +146,7 @@ async def sync_old_nozzles_data():
         schema_name="public",
         table_name="nozzle_sales",
         records=final_df,
-        conflict_columns=["transaction_date", "sap_id", "product_grp", "sales_volume"]
+        conflict_columns=["transaction_date", "sap_id", "product_grp"]
     )
 
     return {
