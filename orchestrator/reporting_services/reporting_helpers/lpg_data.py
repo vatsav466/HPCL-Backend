@@ -647,6 +647,7 @@ async def get_vts_lpg_blocked_counts():
                     FROM alerts
                     WHERE alert_section='VTS'
                     AND bu='LPG'
+                    AND tt_type= 'bulk'
                     AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                     AND {date_filter}
                     GROUP BY violation_type
@@ -662,12 +663,24 @@ async def get_vts_lpg_blocked_counts():
                             WHEN 'speed_violation_count'      THEN 7
                         END;
                 """
-    
+    lpg_blocked_packed = f""" 
+                            SELECT COUNT(*) as TT_Alerts_generated_by_Novex
+                            FROM alerts
+                            WHERE alert_section='VTS'
+                            AND bu='LPG'
+                            AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
+                            AND tt_type= 'packed'
+                            AND {date_filter}
+                            """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     lpg_blocked_data_resp = await function(query=lpg_query)
     lpg_blocked_data_resp = pd.DataFrame(lpg_blocked_data_resp)
+    
+    lpg_blocked_packed_resp = await function(query=lpg_blocked_packed)
+    lpg_blocked_packed_data_resp = pd.DataFrame(lpg_blocked_packed_resp)
+    lpg_blocked_packed_data_resp = lpg_blocked_packed_data_resp.iloc[0].to_dict()
     # Extract values from the first (and only) row safely
     if not lpg_blocked_data_resp.empty:
         lpg_blocked_data = {
@@ -748,6 +761,7 @@ async def get_vts_lpg_blocked_counts():
 
     return {
         "lpg_blocked_data_resp":lpg_blocked_data, 
+        "lpg_blocked_packed_resp": lpg_blocked_packed_data_resp,
         "lpg_blocked_data_resp_violation": lpg_blocked_data_resp,
         "zone_wise_cylinder_count_df": zone_wise_cylinder_count_df,
         "lpg_monthyl_score_path" : lpg_monthyl_score_path,
