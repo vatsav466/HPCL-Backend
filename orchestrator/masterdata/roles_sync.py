@@ -4157,7 +4157,7 @@ async def sync_user_roles():
         ]
     }
 }
-    await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}
+    await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"],"bu": [value.get("name")]}
                                             for key, value in role_mapping.items()], upsert=True,
                                            upsert_skip_keys=['name'])
 
