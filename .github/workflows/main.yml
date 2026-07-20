@@ -35,47 +35,13 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          # cx_Oracle needs libaio; python-ldap needs LDAP/SASL/SSL headers
-          # (lber.h, ldap.h) to compile its C extension.
-          # libaio1 was renamed to libaio1t64 on Ubuntu 24.04 runners.
-          sudo apt-get install -y \
-            libldap2-dev \
-            libsasl2-dev \
-            libssl-dev \
-            wget unzip \
-            && (sudo apt-get install -y libaio1t64 || sudo apt-get install -y libaio1)
-
-      - name: Install Oracle Instant Client (required to build cx_Oracle)
-        run: |
-          sudo mkdir -p /opt/oracle && cd /opt/oracle
-          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
-          sudo unzip -q instantclient-basiclite-linuxx64.zip
-          sudo rm instantclient-basiclite-linuxx64.zip
-          # Get the actual extracted directory name (version may change)
-          INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1)
-          # Create symlinks for the library files inside the actual directory
-          # Remove existing files first to avoid "Not a directory" error
-          sudo rm -f "$INSTALL_DIR/libclntsh.so" "$INSTALL_DIR/libocci.so"
-          cd "$INSTALL_DIR"
-          # Create symlinks only if the source files exist
-          if ls libclntsh.so.* 1> /dev/null 2>&1; then
-            sudo ln -sf libclntsh.so.* libclntsh.so
-          fi
-          if ls libocci.so.* 1> /dev/null 2>&1; then
-            sudo ln -sf libocci.so.* libocci.so
-          fi
-          echo "LD_LIBRARY_PATH=$INSTALL_DIR:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "OCI_LIB_DIR=$INSTALL_DIR" >> $GITHUB_ENV
-          echo "OCI_INC_DIR=$INSTALL_DIR/sdk/include" >> $GITHUB_ENV
+          sudo apt-get install -y libpq5
 
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          # Pin setuptools below 82 — newer setuptools dropped pkg_resources,
-          # which breaks the legacy build of cx_Oracle 8.3.0 on Python 3.12.
-          pip install "setuptools<82"
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 mypy pytest pytest-cov httpx bandit pip-audit
+          pip install black flake8 isort mypy pytest pytest-cov httpx bandit pip-audit
 
       - name: Black (format check)
         id: black
@@ -90,10 +56,25 @@ jobs:
             --max-line-length=100 \
             --exclude=.git,__pycache__,venv,.venv
 
+      - name: isort (import sorting check)
+        id: isort
+        continue-on-error: true
+        run: isort --check-only --diff .
+
       - name: MyPy (type check)
         id: mypy
         continue-on-error: true
         run: mypy . --ignore-missing-imports
+
+      - name: Run Unit Tests with Coverage
+        id: pytest
+        continue-on-error: true
+        run: |
+          pytest -v \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --junitxml=pytest-report.xml
 
       - name: Bandit (static security scan)
         id: bandit
@@ -105,15 +86,10 @@ jobs:
         continue-on-error: true
         run: pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
 
-      - name: Run Unit Tests with Coverage
-        id: pytest
-        continue-on-error: true
+      - name: Run API Tests
         run: |
-          pytest -v \
-            --cov=. \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --junitxml=pytest-report.xml
+          python -m pip install --upgrade pip pytest httpx
+          pytest tests/api -v || true
 
       - name: Upload Reports
         if: always()
@@ -132,12 +108,14 @@ jobs:
           echo "### Lint & Unit Tests Summary" >> $GITHUB_STEP_SUMMARY
           echo "- Black: ${{ steps.black.outcome }}"     >> $GITHUB_STEP_SUMMARY
           echo "- Flake8: ${{ steps.flake8.outcome }}"    >> $GITHUB_STEP_SUMMARY
+          echo "- isort: ${{ steps.isort.outcome }}"      >> $GITHUB_STEP_SUMMARY
           echo "- MyPy: ${{ steps.mypy.outcome }}"        >> $GITHUB_STEP_SUMMARY
           echo "- Bandit: ${{ steps.bandit.outcome }}"    >> $GITHUB_STEP_SUMMARY
           echo "- Pytest: ${{ steps.pytest.outcome }}"    >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ steps.black.outcome }}"  == "failure" || \
                 "${{ steps.flake8.outcome }}" == "failure" || \
+                "${{ steps.isort.outcome }}" == "failure" || \
                 "${{ steps.mypy.outcome }}"   == "failure" || \
                 "${{ steps.bandit.outcome }}" == "failure" || \
                 "${{ steps.pytest.outcome }}" == "failure" ]]; then
@@ -216,12 +194,7 @@ jobs:
       - name: Run E2E Tests
         run: |
           python -m pip install --upgrade pip pytest httpx
-          # Replace with your actual e2e test path, e.g. pytest tests/e2e
           pytest tests/e2e -v
-
-      # Uncomment if you add visual regression testing (e.g. Percy, Playwright)
-      # - name: Run Visual Regression Tests
-      #   run: npx playwright test --project=visual
 
       - name: Dump Container Logs on Failure
         if: failure()
