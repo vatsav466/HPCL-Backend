@@ -1,277 +1,186 @@
-name: Python API CI/CD Pipeline
+name: Backend CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.12"
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
-
-permissions:
-  contents: read
-  packages: write
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-
-  # ==================================================================
-  # 1) LINT & UNIT TESTS
-  # ==================================================================
-  lint-and-test:
-    name: Lint & Unit Tests
+  # ──────────────────────────────────────────────
+  # 1. CODE QUALITY & TESTS
+  # ──────────────────────────────────────────────
+  test:
+    name: Lint, Test & Scan
     runs-on: ubuntu-latest
+
     steps:
+      # ---- Checkout Code ----
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      # ---- Setup Python ----
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
 
-      - name: Install System Dependencies
+      # ---- Cache pip Packages ----
+      - name: Cache pip Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # ---- Create Virtual Environment ----
+      - name: Create Virtual Environment
         run: |
-          sudo apt-get update
-          # python-ldap needs LDAP/SASL/SSL headers (lber.h, ldap.h) to compile
-          sudo apt-get install -y \
-            libldap2-dev \
-            libsasl2-dev \
-            libssl-dev
+          python -m venv venv
+          echo "$PWD/venv/bin" >> $GITHUB_PATH
 
-      - name: Install Python Dependencies
+      # ---- Install Dependencies ----
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 isort mypy pytest pytest-cov httpx bandit pip-audit
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black isort mypy pytest pytest-cov bandit pip-audit
 
-      - name: Black (format check)
-        id: black
-        continue-on-error: true
-        run: black --check --diff .
+      # ---- Lint ----
+      - name: Lint (flake8)
+        run: flake8 . --count --statistics --max-line-length=120
 
-      - name: Flake8 (lint)
-        id: flake8
-        continue-on-error: true
-        run: |
-          flake8 . --count --statistics \
-            --max-line-length=100 \
-            --exclude=.git,__pycache__,venv,.venv
+      # ---- Format Check ----
+      - name: Format Check (black)
+        run: black --check .
 
-      - name: isort (import sorting check)
-        id: isort
-        continue-on-error: true
-        run: isort --check-only --diff .
+      # ---- Import Sorting Check ----
+      - name: Import Sorting Check (isort)
+        run: isort --check-only .
 
-      - name: MyPy (type check)
-        id: mypy
-        continue-on-error: true
+      # ---- Type Checking ----
+      - name: Type Checking (mypy)
         run: mypy . --ignore-missing-imports
+        continue-on-error: true   # remove once codebase is fully typed
 
-      - name: Run Unit Tests with Coverage
-        id: pytest
-        continue-on-error: true
-        run: |
-          pytest -v \
-            --cov=. \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --junitxml=pytest-report.xml || true
+      # ---- Unit Tests ----
+      - name: Unit Tests (pytest)
+        run: pytest -v
 
-      - name: Bandit (static security scan)
-        id: bandit
-        continue-on-error: true
-        run: bandit -r . -x ./tests,./venv -f json -o bandit-report.json
+      # ---- Code Coverage ----
+      - name: Code Coverage
+        run: pytest --cov=. --cov-report=xml --cov-report=term
 
-      - name: pip-audit (dependency vulnerability scan)
-        id: pip_audit
-        continue-on-error: true
-        run: pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
-
-      - name: Run API Tests
-        if: always()
-        continue-on-error: true
-        run: |
-          python -m pip install --upgrade pip pytest httpx
-          if [ -d "tests/api" ]; then pytest tests/api -v || true; fi
-
-      - name: Upload Reports
-        if: always()
+      - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: lint-and-test-reports
-          path: |
-            pytest-report.xml
-            coverage.xml
-            bandit-report.json
-            pip-audit-report.json
-          if-no-files-found: ignore
+          name: coverage-report
+          path: coverage.xml
 
-      - name: Summary
-        if: always()
+      # ---- Security Scan ----
+      - name: Security Scan (bandit)
+        run: bandit -r . -x ./venv,./tests -ll
+
+      # ---- Dependency Vulnerability Scan ----
+      - name: Dependency Vulnerability Scan (pip-audit)
+        run: pip-audit -r requirements.txt
+        continue-on-error: true   # flip to false once known CVEs are cleared
+
+      # ---- API Tests ----
+      - name: API Tests (Postman/Newman)
         run: |
-          echo "### Lint & Unit Tests Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Black: ${{ steps.black.outcome }}"     >> $GITHUB_STEP_SUMMARY
-          echo "- Flake8: ${{ steps.flake8.outcome }}"    >> $GITHUB_STEP_SUMMARY
-          echo "- isort: ${{ steps.isort.outcome }}"      >> $GITHUB_STEP_SUMMARY
-          echo "- MyPy: ${{ steps.mypy.outcome }}"        >> $GITHUB_STEP_SUMMARY
-          echo "- Bandit: ${{ steps.bandit.outcome }}"    >> $GITHUB_STEP_SUMMARY
-          echo "- Pytest: ${{ steps.pytest.outcome }}"    >> $GITHUB_STEP_SUMMARY
+          if [ -f postman/collection.json ]; then
+            npm install -g newman
+            newman run postman/collection.json -e postman/environment.json --reporters cli,junit --reporter-junit-export newman-report.xml
+          else
+            echo "No Postman collection found, skipping."
+          fi
 
-  # ==================================================================
-  # 2) BUILD APP  (build the Docker image once, don't push yet)
-  # ==================================================================
-  build-app:
-    name: Build App
-    needs: lint-and-test
+  # ──────────────────────────────────────────────
+  # 2. BUILD & PUSH DOCKER IMAGE
+  # ──────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    needs: test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set Image Tag
+        id: meta
+        run: echo "tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Image (local only)
-        uses: docker/build-push-action@v5
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: false
           load: true
-          tags: local/python-api:${{ github.sha }}
+          tags: |
+            ${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Save Image as Artifact
-        run: docker save local/python-api:${{ github.sha }} -o app-image.tar
-
-      - name: Upload Image Artifact
-        uses: actions/upload-artifact@v4
+      - name: Push Docker Image
+        uses: docker/build-push-action@v6
         with:
-          name: app-image
-          path: app-image.tar
-          retention-days: 1
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
 
-  # ==================================================================
-  # 3) E2E & VISUAL REGRESSION  (run against the image built above)
-  # ==================================================================
-  e2e-and-visual-regression:
-    name: E2E & Visual Regression
-    needs: build-app
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Download Image Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-image
-
-      - name: Load Image
-        run: docker load -i app-image.tar
-
-      - name: Start App Container
-        run: |
-          docker run -d --name python-api-e2e -p 8000:8000 \
-            local/python-api:${{ github.sha }}
-
-      - name: Wait for App to be Healthy
-        continue-on-error: true
-        run: |
-          for i in {1..15}; do
-            if curl -sf http://localhost:8000/health; then
-              echo "App is up"; exit 0
-            fi
-            echo "Waiting for app... ($i)"; sleep 2
-          done
-          echo "App failed to become healthy"; docker logs python-api-e2e; exit 1 || true
-
-      - name: Run E2E Tests
-        if: always()
-        continue-on-error: true
-        run: |
-          python -m pip install --upgrade pip pytest httpx
-          if [ -d "tests/e2e" ]; then pytest tests/e2e -v || true; fi
-
-      - name: Dump Container Logs on Failure
-        if: failure()
-        run: docker logs python-api-e2e
-
-      - name: Stop Container
-        if: always()
-        run: docker rm -f python-api-e2e || true
-
-  # ==================================================================
-  # 4) BUILD & PUSH DOCKER IMAGE  (re-tag the already-tested image, push it)
-  # ==================================================================
-  build-and-push-docker-image:
-    name: Build & Push Docker Image
-    needs: e2e-and-visual-regression
-    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tag }}
-    steps:
-      - name: Download Image Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-image
-
-      - name: Load Image
-        run: docker load -i app-image.tar
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set image tag
-        id: meta
-        run: echo "tag=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-
-      - name: Tag & Push
-        run: |
-          docker tag local/python-api:${{ github.sha }} ${{ steps.meta.outputs.tag }}
-          docker tag local/python-api:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
-          docker push ${{ steps.meta.outputs.tag }}
-          docker push ${{ env.IMAGE_NAME }}:latest
-
-  # ==================================================================
-  # 5) DEPLOY  (SSH + Docker on your server, behind Nginx)
-  # ==================================================================
+  # ──────────────────────────────────────────────
+  # 3. DEPLOY VIA SSH
+  # ──────────────────────────────────────────────
   deploy:
-    name: Deploy
-    needs: build-and-push-docker-image
-    if: always()
+    name: SSH Deploy to Server
+    needs: build-and-push
     runs-on: ubuntu-latest
     environment: production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     steps:
-      - name: Deploy to Server
+      - name: SSH into Server & Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ needs.build-and-push-docker-image.outputs.image_tag }}
-
-            docker stop python-api || true
-            docker rm python-api || true
-
-            docker run -d \
-              --name python-api \
-              --restart unless-stopped \
-              -p 127.0.0.1:8000:8000 \
-              --env-file /opt/python-api/.env \
-              ${{ needs.build-and-push-docker-image.outputs.image_tag }}
-
-            sudo systemctl reload nginx
+            docker pull ${{ needs.build-and-push.outputs.image_tag }}
+            docker compose -f /opt/hpcl-backend/docker-compose.yml down
+            docker compose -f /opt/hpcl-backend/docker-compose.yml up -d
             docker image prune -f
