@@ -1,0 +1,244 @@
+name: Python API CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  PYTHON_VERSION: "3.12"
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: write   # needed to push to GHCR
+
+jobs:
+
+  # ------------------------------------------------------------------
+  # 1) LINT + FORMAT + TYPE CHECK
+  #    Every tool runs even if a previous one fails, so you see ALL
+  #    issues in a single run instead of stopping at the first error.
+  # ------------------------------------------------------------------
+  lint:
+    name: Lint / Format / Type Check
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install black flake8 mypy
+
+      - name: Black (format check)
+        id: black
+        continue-on-error: true
+        run: black --check --diff .
+
+      - name: Flake8 (lint)
+        id: flake8
+        continue-on-error: true
+        run: |
+          flake8 . --count --statistics \
+            --max-line-length=100 \
+            --exclude=.git,__pycache__,venv,.venv
+
+      - name: MyPy (type check)
+        id: mypy
+        continue-on-error: true
+        run: mypy . --ignore-missing-imports
+
+      - name: Summarize lint results
+        id: summary
+        run: |
+          echo "### Lint Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Black: ${{ steps.black.outcome }}"  >> $GITHUB_STEP_SUMMARY
+          echo "- Flake8: ${{ steps.flake8.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- MyPy: ${{ steps.mypy.outcome }}"     >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ steps.black.outcome }}" == "failure" || \
+                "${{ steps.flake8.outcome }}" == "failure" || \
+                "${{ steps.mypy.outcome }}" == "failure" ]]; then
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+            echo "One or more lint/type checks failed. See logs above."
+            exit 1
+          else
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ------------------------------------------------------------------
+  # 2) TEST + COVERAGE
+  # ------------------------------------------------------------------
+  test:
+    name: Pytest + Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov httpx
+
+      - name: Run Tests with Coverage
+        run: |
+          pytest -v \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --junitxml=pytest-report.xml
+
+      - name: Upload Test & Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            pytest-report.xml
+            coverage.xml
+
+  # ------------------------------------------------------------------
+  # 3) SECURITY SCANS (Bandit + pip-audit)
+  #    Both run regardless of each other's outcome, results uploaded
+  #    as artifacts so nothing is silently lost.
+  # ------------------------------------------------------------------
+  security:
+    name: Security & Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install bandit pip-audit
+
+      - name: Bandit (static security scan)
+        id: bandit
+        continue-on-error: true
+        run: bandit -r . -x ./tests,./venv -f json -o bandit-report.json
+
+      - name: pip-audit (dependency vulnerability scan)
+        id: pip_audit
+        continue-on-error: true
+        run: pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
+
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
+
+      - name: Fail job if scans found issues
+        run: |
+          if [[ "${{ steps.bandit.outcome }}" == "failure" ]]; then
+            echo "Bandit found issues — see security-reports artifact."
+            exit 1
+          fi
+
+  # ------------------------------------------------------------------
+  # 4) BUILD & PUSH DOCKER IMAGE TO GHCR
+  #    Only runs after lint, test, and security ALL succeed,
+  #    and only on a push to main (not PRs).
+  # ------------------------------------------------------------------
+  build-and-push:
+    name: Build & Push Docker Image
+    needs: [lint, test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ------------------------------------------------------------------
+  # 5) DEPLOY (SSH + Docker on your server, behind Nginx)
+  # ------------------------------------------------------------------
+  deploy:
+    name: Deploy via SSH
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ needs.build-and-push.outputs.image_tag }}
+
+            # Stop & remove old container if it exists
+            docker stop python-api || true
+            docker rm python-api || true
+
+            # Start new container
+            docker run -d \
+              --name python-api \
+              --restart unless-stopped \
+              -p 127.0.0.1:8000:8000 \
+              --env-file /opt/python-api/.env \
+              ${{ needs.build-and-push.outputs.image_tag }}
+
+            # Reload nginx (already configured to proxy to 127.0.0.1:8000)
+            sudo systemctl reload nginx
+
+            # Clean up old images to save disk space
+            docker image prune -f
