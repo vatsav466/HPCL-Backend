@@ -201,13 +201,13 @@ jobs:
 
             # Clone or pull latest code on server
             if [ -d "/opt/hpcl-backend" ]; then
-              cd /opt/hpcl-backend && git pull origin main
+              git -C /opt/hpcl-backend pull origin main
             else
               git clone https://github.com/vatsav466/HPCL-Backend.git /opt/hpcl-backend
             fi
 
             # Build Docker image on server
-            cd /opt/hpcl-backend && run_sudo docker build -t hpcl-backend .
+            run_sudo bash -c "cd /opt/hpcl-backend && docker build -t hpcl-backend ."
 
             # Stop and remove existing container
             run_sudo docker stop hpcl-backend || true
