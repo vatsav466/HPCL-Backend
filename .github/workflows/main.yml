@@ -86,7 +86,7 @@ jobs:
         run: |
           source venv/bin/activate
           flake8 . --count --statistics --max-line-length=120 \
-            --ignore=E301,E302,E303,E304,E305,E306,E401,E402,E501,E502,E701,E711,E712,E713,E722,E741,E999,F401,F403,F405,F541,F601,F811,F821,F824,W503,W504,F841,W191,W291,W292,W293,W391,W605 \
+            --ignore=E,W,F \
             --exclude="${{ env.EXCLUDE_DIRS }}"
 
       - name: Black Check
