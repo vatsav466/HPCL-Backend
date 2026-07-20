@@ -36,6 +36,19 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
+      - name: Install Oracle Instant Client (required to build cx_Oracle)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libaio1 wget unzip
+          sudo mkdir -p /opt/oracle && cd /opt/oracle
+          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
+          sudo unzip -q instantclient-basiclite-linuxx64.zip
+          sudo rm instantclient-basiclite-linuxx64.zip
+          sudo ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
+          cd /opt/oracle/instantclient && sudo ln -sf libclntsh.so.* libclntsh.so
+          echo "LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "OCI_LIB_DIR=/opt/oracle/instantclient" >> $GITHUB_ENV
+          echo "OCI_INC_DIR=/opt/oracle/instantclient/sdk/include" >> $GITHUB_ENV
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -97,6 +110,19 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
+      - name: Install Oracle Instant Client (required to build cx_Oracle)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libaio1 wget unzip
+          sudo mkdir -p /opt/oracle && cd /opt/oracle
+          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
+          sudo unzip -q instantclient-basiclite-linuxx64.zip
+          sudo rm instantclient-basiclite-linuxx64.zip
+          sudo ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
+          cd /opt/oracle/instantclient && sudo ln -sf libclntsh.so.* libclntsh.so
+          echo "LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "OCI_LIB_DIR=/opt/oracle/instantclient" >> $GITHUB_ENV
+          echo "OCI_INC_DIR=/opt/oracle/instantclient/sdk/include" >> $GITHUB_ENV
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -140,6 +166,19 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+
+      - name: Install Oracle Instant Client (required to build cx_Oracle)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libaio1 wget unzip
+          sudo mkdir -p /opt/oracle && cd /opt/oracle
+          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
+          sudo unzip -q instantclient-basiclite-linuxx64.zip
+          sudo rm instantclient-basiclite-linuxx64.zip
+          sudo ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
+          cd /opt/oracle/instantclient && sudo ln -sf libclntsh.so.* libclntsh.so
+          echo "LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "OCI_LIB_DIR=/opt/oracle/instantclient" >> $GITHUB_ENV
+          echo "OCI_INC_DIR=/opt/oracle/instantclient/sdk/include" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: |
