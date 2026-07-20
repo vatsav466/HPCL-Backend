@@ -48,8 +48,17 @@ jobs:
           sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
           sudo unzip -q instantclient-basiclite-linuxx64.zip
           sudo rm instantclient-basiclite-linuxx64.zip
-          sudo ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
-          cd /opt/oracle/instantclient && sudo ln -sf libclntsh.so.* libclntsh.so
+          # -n prevents ln from following an existing symlink and dropping
+          # the new one *inside* it if /opt/oracle/instantclient already exists
+          sudo ln -sfn /opt/oracle/instantclient_* /opt/oracle/instantclient
+          cd /opt/oracle/instantclient
+          # libclntsh.so.* can match several versioned files (e.g. .so.19.1
+          # and .so.10.1) — that made `ln` treat the last arg as a target
+          # directory instead of a symlink name. Pick exactly one, newest first.
+          if [ ! -e libclntsh.so ]; then
+            LATEST_LIB=$(ls -1 libclntsh.so.* | sort -V | tail -n1)
+            sudo ln -sf "$LATEST_LIB" libclntsh.so
+          fi
           echo "LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "OCI_LIB_DIR=/opt/oracle/instantclient" >> $GITHUB_ENV
           echo "OCI_INC_DIR=/opt/oracle/instantclient/sdk/include" >> $GITHUB_ENV
