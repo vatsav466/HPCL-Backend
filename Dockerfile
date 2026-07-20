@@ -24,18 +24,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Swap this whole block out if you migrate to `oracledb` (thin mode) instead —
 # then none of this Instant Client setup is needed at all.
 # NOTE: the zip extracts to a folder named instantclient_<version>, and that
-# version changes as Oracle updates the "latest" download. Rather than
-# hardcode it, we resolve it at build time and write it to /etc/environment
-# equivalents via a symlink at a fixed path so the rest of the Dockerfile
-# doesn't need to know the version.
+# version changes as Oracle updates the "latest" download. We get the actual
+# directory path and use it directly.
 RUN mkdir -p /opt/oracle && cd /opt/oracle \
     && wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip \
     && unzip -q instantclient-basiclite-linuxx64.zip \
     && rm instantclient-basiclite-linuxx64.zip \
-    && ln -s /opt/oracle/instantclient_* /opt/oracle/instantclient \
-    && cd /opt/oracle/instantclient \
-    && ln -s libclntsh.so.* libclntsh.so \
-    && ln -s libocci.so.* libocci.so
+    && INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1) \
+    && cd "$INSTALL_DIR" \
+    && rm -f libclntsh.so libocci.so \
+    && ln -sf libclntsh.so.* libclntsh.so \
+    && ln -sf libocci.so.* libocci.so || true
+# Create symlink at fixed path for environment variables
+RUN rm -f /opt/oracle/instantclient && ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH \
     OCI_LIB_DIR=/opt/oracle/instantclient \
     OCI_INC_DIR=/opt/oracle/instantclient/sdk/include
