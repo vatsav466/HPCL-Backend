@@ -33,8 +33,8 @@ RUN mkdir -p /opt/oracle && cd /opt/oracle \
     && INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1) \
     && cd "$INSTALL_DIR" \
     && rm -f libclntsh.so libocci.so \
-    && ln -sf libclntsh.so.* libclntsh.so \
-    && ln -sf libocci.so.* libocci.so || true
+    && if ls libclntsh.so.* 1> /dev/null 2>&1; then ln -sf libclntsh.so.* libclntsh.so; fi \
+    && if ls libocci.so.* 1> /dev/null 2>&1; then ln -sf libocci.so.* libocci.so; fi
 # Create symlink at fixed path for environment variables
 RUN rm -f /opt/oracle/instantclient && ln -sf /opt/oracle/instantclient_* /opt/oracle/instantclient
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH \
