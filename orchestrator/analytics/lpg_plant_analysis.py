@@ -1,34 +1,30 @@
 import urdhva_base
 import os
-import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
 import mysql.connector
 import urdhva_base.utilities
 import utilities.helpers as helpers
-from datetime import datetime,timedelta, timezone
-from collections import defaultdict
-from dateutil.relativedelta import relativedelta
-from orchestrator.dbconnector.widget_actions import widget_actions
+from datetime import datetime
 import utilities.connection_mapping as connection_mapping
 import charts_actions
-import dashboard_studio_model
+
 # from charts_actions import charts_connection_vault_routing
 # from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Material Codes for Domestic and Non-Domestic Sales
-material_code_domestic = ['0949036', '0949109']
-material_code_non_domestic = ['0948064', '0948450', '0948042', '0948149']
-material_code_bulk = ['0949000']
+material_code_domestic = ["0949036", "0949109"]
+material_code_non_domestic = ["0948064", "0948450", "0948042", "0948149"]
+material_code_bulk = ["0949000"]
 
 
 def load_lpg_tank_capacity():
     """Loading tank operating capacity and daily average sales data from master sheet provided by HPCL"""
     file_path = f"{os.path.dirname(helpers.__file__)}/../orchestrator/masterdata/lpg_tank_capacity.xlsx"
     capacity_data = pd.read_excel(file_path)
-    capacity_data['LPGPlantCode'] = capacity_data['LPGPlantCode'].astype(str)
+    capacity_data["LPGPlantCode"] = capacity_data["LPGPlantCode"].astype(str)
     # capacity_data = capacity_data[capacity_data['IsSelected'] == 'Y']
     return capacity_data
 
@@ -37,22 +33,25 @@ def load_opening_stock_from_csv(plants):
     """Loading opening stock from csv file"""
     file_path = f"{os.path.dirname(helpers.__file__)}/../orchestrator/masterdata/lpgintransit.csv"
     df = pd.read_csv(file_path)
-    df['plant'] = df['plant'].astype(str)
+    df["plant"] = df["plant"].astype(str)
     if plants:
-        df = df[df['plant'].isin([f"{plant}" for plant in plants])]
-    df = df[['valuation_type', 'QTY']]
-    dom, non_dom = df[df['valuation_type'] == 'HPC_DOM'].sum()['QTY'], df[df['valuation_type'] == 'HPC_NDM'].sum()['QTY']
+        df = df[df["plant"].isin([f"{plant}" for plant in plants])]
+    df = df[["valuation_type", "QTY"]]
+    dom, non_dom = (
+        df[df["valuation_type"] == "HPC_DOM"].sum()["QTY"],
+        df[df["valuation_type"] == "HPC_NDM"].sum()["QTY"],
+    )
     return round(float(dom)), round(float(non_dom))
 
 
 async def fetch_from_tibco(query):
     # For fetching data from Tibco, Using MYSQL interface
-    creds = credential_loader.get_credentials('TIBCO')
+    creds = credential_loader.get_credentials("TIBCO")
     connection = mysql.connector.connect(
-        host=creds['host'],
-        user=creds['user'],
-        passwd=creds['password'],
-        port=creds['port']
+        host=creds["host"],
+        user=creds["user"],
+        passwd=creds["password"],
+        port=creds["port"],
     )
     cursor = connection.cursor()
     cursor.execute(query)
@@ -65,7 +64,9 @@ async def fetch_from_tibco(query):
     return result
 
 
-async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+async def lpg_plant_analysis(
+    filters, cross_filters, drill_state="", time_grain="", resp_format=""
+):
     """
     LPG Plant level analysis
     :param filters:
@@ -75,63 +76,103 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     :param resp_format:
     :return:
     """
-    lpg_data = {"stock": 0, "current_inventory": 0,
-                "hpcl_sales": {"dom": 0, "non_dom": 0, "bulk": 0}, "omc_sales": {"dom": 0, "non_dom": 0, "bulk": 0},
-                "stock_transfers": {"dom": 0, "non_dom": 0, "bulk": 0},
-                "opening_stock": {"dom": 0, "non_dom": 0},
-                "tankage": {"total": 0, "not_in_ops": 0, "op_tankage": 0, "stock_percentage": 0},
-                "avg_sales": {"dom": 0, "non_dom": 0, "bulk": 0}, "days_cover": 0, "in_transit": 0}
+    lpg_data = {
+        "stock": 0,
+        "current_inventory": 0,
+        "hpcl_sales": {"dom": 0, "non_dom": 0, "bulk": 0},
+        "omc_sales": {"dom": 0, "non_dom": 0, "bulk": 0},
+        "stock_transfers": {"dom": 0, "non_dom": 0, "bulk": 0},
+        "opening_stock": {"dom": 0, "non_dom": 0},
+        "tankage": {
+            "total": 0,
+            "not_in_ops": 0,
+            "op_tankage": 0,
+            "stock_percentage": 0,
+        },
+        "avg_sales": {"dom": 0, "non_dom": 0, "bulk": 0},
+        "days_cover": 0,
+        "in_transit": 0,
+    }
 
-    zones = [cond['value'] if cond['value'] else cond.get('val') for cond in filters
-             if cond['key'].strip('"') == 'zone_name' and (cond['value'] or cond.get('val'))]
+    zones = [
+        cond["value"] if cond["value"] else cond.get("val")
+        for cond in filters
+        if cond["key"].strip('"') == "zone_name" and (cond["value"] or cond.get("val"))
+    ]
     # if not zones:
     #     zones = ['SCZ', 'SZ']
-    plants = [cond['value'] if cond['value'] else cond.get('val') for cond
-              in filters if cond['key'].strip('"') == 'plant_name' and (cond['value'] or cond.get('val'))]
-    filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id', 'plant_name']]
+    plants = [
+        cond["value"] if cond["value"] else cond.get("val")
+        for cond in filters
+        if cond["key"].strip('"') == "plant_name" and (cond["value"] or cond.get("val"))
+    ]
+    filters = [
+        cond
+        for cond in filters
+        if cond["key"].strip('"') not in ["zone_name", "sap_id", "plant_name"]
+    ]
     if not plants and zones:
         in_clause_raw = ", ".join(f"'{value}'" for value in zones)
         query = f"""select sap_id from location_master where bu='LPG' and zone in ({in_clause_raw})"""
         resp = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1000)
-        plants = [rec['sap_id'] for rec in resp['data']]
+        plants = [rec["sap_id"] for rec in resp["data"]]
 
     # Fetching required data from tibco
     hpcl_sales = await fetch_hpcl_sales(plants)
     omc_sales = await fetch_omc_sales(plants)
-    opening_stock_dom, opening_stock_non_dom, operating_tankage = await fetch_opening_stock(plants)
+    opening_stock_dom, opening_stock_non_dom, operating_tankage = (
+        await fetch_opening_stock(plants)
+    )
     opening_stock = opening_stock_dom + opening_stock_non_dom
     stock_transfer = await fetch_stock_transfer(plants)
     receipt_stock = await fetch_receipt_stock_transfer(plants)
 
-    lpg_data['stock'] = round(opening_stock)
-    lpg_data['receipt_stock'] = round(float(sum(list(receipt_stock.values()))))
+    lpg_data["stock"] = round(opening_stock)
+    lpg_data["receipt_stock"] = round(float(sum(list(receipt_stock.values()))))
     # Updating sales data
     for key, value in hpcl_sales.items():
-        lpg_data['avg_sales'][key] += value
+        lpg_data["avg_sales"][key] += value
     for key, value in omc_sales.items():
-        lpg_data['avg_sales'][key] += value
+        lpg_data["avg_sales"][key] += value
     for key, value in stock_transfer.items():
-        lpg_data['avg_sales'][key] += value
+        lpg_data["avg_sales"][key] += value
     dom_avg_sales, non_dom_avg_sales = await get_hpcl_average_sale(plants)
-    lpg_data['opening_stock'].update({"dom": opening_stock_dom, "non_dom": opening_stock_non_dom})
-    lpg_data['avg_sales']['dom'] = dom_avg_sales
-    lpg_data['avg_sales']['non_dom'] = non_dom_avg_sales
-    lpg_data['hpcl_sales'].update(hpcl_sales)
-    lpg_data['omc_sales'].update(omc_sales)
-    lpg_data['stock_transfers'].update(stock_transfer)
-    lpg_data['in_transit'] = round(await fetch_intransit_stock_transfer(plants))
+    lpg_data["opening_stock"].update(
+        {"dom": opening_stock_dom, "non_dom": opening_stock_non_dom}
+    )
+    lpg_data["avg_sales"]["dom"] = dom_avg_sales
+    lpg_data["avg_sales"]["non_dom"] = non_dom_avg_sales
+    lpg_data["hpcl_sales"].update(hpcl_sales)
+    lpg_data["omc_sales"].update(omc_sales)
+    lpg_data["stock_transfers"].update(stock_transfer)
+    lpg_data["in_transit"] = round(await fetch_intransit_stock_transfer(plants))
 
-    avg_sales = float(sum(list(lpg_data['avg_sales'].values())))
-    lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales))
-    lpg_data['days_cover'] = round(float(lpg_data['current_inventory']) / avg_sales) if avg_sales else 0
-    dom_days_cover = round(float((opening_stock_dom - dom_avg_sales) / dom_avg_sales)) if dom_avg_sales else 0
-    non_dom_days_cover = round(float((opening_stock_non_dom - non_dom_avg_sales) / non_dom_avg_sales)) \
-        if non_dom_avg_sales else 0
-    lpg_data['days_cover_stock'] = {"dom": dom_days_cover if dom_days_cover > 0 else 0,
-                                    "non_dom": non_dom_days_cover if non_dom_days_cover > 0 else 0}
-    lpg_data['tankage']['total'] = 0
-    lpg_data['tankage']['op_tankage'] = operating_tankage
-    lpg_data['tankage']['stock_percentage'] = (opening_stock / operating_tankage) * 100 if operating_tankage else 0
+    avg_sales = float(sum(list(lpg_data["avg_sales"].values())))
+    lpg_data["current_inventory"] = round(
+        (float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales)
+    )
+    lpg_data["days_cover"] = (
+        round(float(lpg_data["current_inventory"]) / avg_sales) if avg_sales else 0
+    )
+    dom_days_cover = (
+        round(float((opening_stock_dom - dom_avg_sales) / dom_avg_sales))
+        if dom_avg_sales
+        else 0
+    )
+    non_dom_days_cover = (
+        round(float((opening_stock_non_dom - non_dom_avg_sales) / non_dom_avg_sales))
+        if non_dom_avg_sales
+        else 0
+    )
+    lpg_data["days_cover_stock"] = {
+        "dom": dom_days_cover if dom_days_cover > 0 else 0,
+        "non_dom": non_dom_days_cover if non_dom_days_cover > 0 else 0,
+    }
+    lpg_data["tankage"]["total"] = 0
+    lpg_data["tankage"]["op_tankage"] = operating_tankage
+    lpg_data["tankage"]["stock_percentage"] = (
+        (opening_stock / operating_tankage) * 100 if operating_tankage else 0
+    )
 
     for key in lpg_data:
         if isinstance(lpg_data[key], dict):
@@ -146,7 +187,7 @@ async def fetch_hpcl_sales(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND ZM.plant in ({in_clause_raw})"
@@ -165,13 +206,17 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER
     resp = await fetch_from_tibco(query_hpcl_sales)
     df = pd.DataFrame(resp)
     if not df.empty:
-        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-            if rec['MATERIAL_NUMBER'] in material_code_domestic:
-                hpcl_sales['dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-                hpcl_sales['non_dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-                hpcl_sales['bulk'] += float(rec['Average_Sales'])
+        for rec in (
+            df.groupby("MATERIAL_NUMBER", as_index=False)
+            .sum()
+            .to_dict(orient="records")
+        ):
+            if rec["MATERIAL_NUMBER"] in material_code_domestic:
+                hpcl_sales["dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_non_domestic:
+                hpcl_sales["non_dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_bulk:
+                hpcl_sales["bulk"] += float(rec["Average_Sales"])
     return hpcl_sales
 
 
@@ -181,7 +226,7 @@ async def fetch_omc_sales(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND ZM.plant in ({in_clause_raw})"
@@ -199,13 +244,17 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER
     resp = await fetch_from_tibco(query_omc_sales)
     df = pd.DataFrame(resp)
     if not df.empty:
-        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-            if rec['MATERIAL_NUMBER'] in material_code_domestic:
-                omc_sales['dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-                omc_sales['non_dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-                omc_sales['bulk'] += float(rec['Average_Sales'])
+        for rec in (
+            df.groupby("MATERIAL_NUMBER", as_index=False)
+            .sum()
+            .to_dict(orient="records")
+        ):
+            if rec["MATERIAL_NUMBER"] in material_code_domestic:
+                omc_sales["dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_non_domestic:
+                omc_sales["non_dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_bulk:
+                omc_sales["bulk"] += float(rec["Average_Sales"])
     return omc_sales
 
 
@@ -215,7 +264,7 @@ async def fetch_stock_transfer(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND ZM.plant in ({in_clause_raw})"
@@ -231,13 +280,17 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER"""
     df = pd.DataFrame(resp)
     receipt_stock = {"dom": 0, "non_dom": 0, "bulk": 0}
     if not df.empty:
-        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-            if rec['MATERIAL_NUMBER'] in material_code_domestic:
-                receipt_stock['dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-                receipt_stock['non_dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-                receipt_stock['bulk'] += float(rec['Average_Sales'])
+        for rec in (
+            df.groupby("MATERIAL_NUMBER", as_index=False)
+            .sum()
+            .to_dict(orient="records")
+        ):
+            if rec["MATERIAL_NUMBER"] in material_code_domestic:
+                receipt_stock["dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_non_domestic:
+                receipt_stock["non_dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_bulk:
+                receipt_stock["bulk"] += float(rec["Average_Sales"])
     return receipt_stock
 
 
@@ -247,7 +300,7 @@ async def fetch_receipt_stock_transfer(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND ZM.plant in ({in_clause_raw})"
@@ -263,13 +316,17 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER"""
     df = pd.DataFrame(resp)
     receipt_stock = {"dom": 0, "non_dom": 0, "bulk": 0}
     if not df.empty:
-        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-            if rec['MATERIAL_NUMBER'] in material_code_domestic:
-                receipt_stock['dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-                receipt_stock['non_dom'] += float(rec['Average_Sales'])
-            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-                receipt_stock['bulk'] += float(rec['Average_Sales'])
+        for rec in (
+            df.groupby("MATERIAL_NUMBER", as_index=False)
+            .sum()
+            .to_dict(orient="records")
+        ):
+            if rec["MATERIAL_NUMBER"] in material_code_domestic:
+                receipt_stock["dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_non_domestic:
+                receipt_stock["non_dom"] += float(rec["Average_Sales"])
+            elif rec["MATERIAL_NUMBER"] in material_code_bulk:
+                receipt_stock["bulk"] += float(rec["Average_Sales"])
     return receipt_stock
 
 
@@ -279,12 +336,16 @@ async def fetch_intransit_stock_transfer(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND ZM.plant in ({in_clause_raw})"
-    current_date = helpers.get_time_stamp_by_delta(urdhva_base.utilities.get_present_time(), days=1,
-                                                    with_month_start_day=False, date_time_format='%Y%m%d')
+    current_date = helpers.get_time_stamp_by_delta(
+        urdhva_base.utilities.get_present_time(),
+        days=1,
+        with_month_start_day=False,
+        date_time_format="%Y%m%d",
+    )
     query = f"""SELECT ZM.plant as Locationcode, sum(quantity)/(1000 * 7) AS Average_Sales 
 from  CONN_ENT.ZMMCI_MATDOC_V1_STG ZM
 LEFT JOIN CONN_ENT.ZSDCV_CUST_SA_STG ZS ON ZM.GOODS_RECIPIENT = ZS.CUSTOMER
@@ -293,7 +354,7 @@ ZM.MATERIAL_NUMBER in ('0949000')
 AND ZM.POSTING_DATE_IN_THE_DOCUMENT={current_date} {plant_cond}
 group by  ZM.plant"""
     resp = await fetch_from_tibco(query)
-    receipt_stock = sum([float(rec['Average_Sales']) for rec in resp])
+    receipt_stock = sum([float(rec["Average_Sales"]) for rec in resp])
     return receipt_stock
 
 
@@ -303,12 +364,16 @@ async def fetch_opening_stock(plants):
     :param plants:
     :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND plant in ({in_clause_raw})"
-    current_date = helpers.get_time_stamp_by_delta(urdhva_base.utilities.get_present_time(), days=1,
-                                                   with_month_start_day=False, date_time_format='%Y%m%d')
+    current_date = helpers.get_time_stamp_by_delta(
+        urdhva_base.utilities.get_present_time(),
+        days=1,
+        with_month_start_day=False,
+        date_time_format="%Y%m%d",
+    )
     # Opening Stock
     query_open_stock = f"""select plant,valuation_type as val_type,sum(stock_quantity)/1000 QTY from 
     CONN_ENT.ZMMCI_MATDOC_V1_STG WHERE POSTING_DATE_IN_THE_DOCUMENT between '20230601' and '{current_date}' and 
@@ -318,8 +383,10 @@ async def fetch_opening_stock(plants):
 """
     tank_capacity_master_data = load_lpg_tank_capacity()
     if plants:
-        tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
-    operating_tankage = tank_capacity_master_data['OperatingTankage'].sum()
+        tank_capacity_master_data = tank_capacity_master_data[
+            tank_capacity_master_data["LPGPlantCode"].isin(plants)
+        ]
+    operating_tankage = tank_capacity_master_data["OperatingTankage"].sum()
     dom, non_dom = load_opening_stock_from_csv(plants)
     return round(float(dom)), round(float(non_dom)), round(operating_tankage)
     # resp = await fetch_from_tibco(query_open_stock)
@@ -331,11 +398,11 @@ async def fetch_opening_stock(plants):
 
 async def get_hpcl_average_sale(plants):
     """
-        For fetching average stock data for plants provided by HPCL
-        :param plants:
-        :return:
+    For fetching average stock data for plants provided by HPCL
+    :param plants:
+    :return:
     """
-    plant_cond = ''
+    plant_cond = ""
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
         plant_cond = f" AND supply_loc in ({in_clause_raw})"
@@ -350,15 +417,22 @@ group by supply_loc,material_grp
     df = pd.DataFrame(resp)
     if df.empty:
         return 0, 0
-    df['material_grp'] = df['material_grp'].astype(str)
-    df = df[['material_grp', 'QTY']]
-    dom, non_dom = df[df['material_grp'] == '002'].sum()['QTY'], df[df['material_grp'] == '003'].sum()['QTY']
+    df["material_grp"] = df["material_grp"].astype(str)
+    df = df[["material_grp", "QTY"]]
+    dom, non_dom = (
+        df[df["material_grp"] == "002"].sum()["QTY"],
+        df[df["material_grp"] == "003"].sum()["QTY"],
+    )
     return round(float(dom)), round(float(non_dom))
     tank_capacity_master_data = load_lpg_tank_capacity()
     if plants:
-        tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
-    dom, non_dom = (tank_capacity_master_data['DAILY_AVERAGE_SALES_DOM'].sum(),
-                    tank_capacity_master_data['DAILY_AVERAGE_SALES_NonDOM'].sum())
+        tank_capacity_master_data = tank_capacity_master_data[
+            tank_capacity_master_data["LPGPlantCode"].isin(plants)
+        ]
+    dom, non_dom = (
+        tank_capacity_master_data["DAILY_AVERAGE_SALES_DOM"].sum(),
+        tank_capacity_master_data["DAILY_AVERAGE_SALES_NonDOM"].sum(),
+    )
     return dom, non_dom
 
 
@@ -377,7 +451,10 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
                     end_dt = datetime.strptime(end, "%Y-%m-%d")
 
                     if (end_dt - start_dt).days < 7:
-                        return {"status": False, "message": "Minimum 7 days data required" }
+                        return {
+                            "status": False,
+                            "message": "Minimum 7 days data required",
+                        }
 
                     date_filter = f""" process_date >= '{start}' AND process_date < '{end}'::date + INTERVAL '1 day' """
                 else:
@@ -396,20 +473,20 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
                 "expr": "SUM(total_production)/NULLIF(SUM(total_net_hours),0)",
                 "col": "productivity",
                 "cond": "slope > 0 AND inc > dec",
-                "order": "DESC"
+                "order": "DESC",
             },
             "bottom_productivity": {
                 "expr": "SUM(total_production)/NULLIF(SUM(total_net_hours),0)",
                 "col": "productivity",
                 "cond": "slope < 0 AND dec > inc",
-                "order": "ASC"
+                "order": "ASC",
             },
             "rejections": {
                 "expr": "SUM(COALESCE(cs_rejection,0)+COALESCE(gd_rejection,0)+COALESCE(pt_rejection,0))",
                 "col": "rejections",
                 "cond": "slope > 0 AND inc > dec",
-                "order": "DESC"
-            }
+                "order": "DESC",
+            },
         }
 
         if metric_type not in config:
@@ -494,18 +571,20 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
                             "cs_rejection": 0,
                             "gd_rejection": 0,
                             "pt_rejection": 0,
-                            "trend_pct": r.get("trend_pct")
+                            "trend_pct": r.get("trend_pct"),
                         },
-                        "daily": []
+                        "daily": [],
                     }
 
-                plants[pid]["daily"].append({
-                    "process_date": r["process_date"],
-                    "total_rejections": r["value"],
-                    "cs_rejection": r["cs_rejection"],
-                    "gd_rejection": r["gd_rejection"],
-                    "pt_rejection": r["pt_rejection"]
-                })
+                plants[pid]["daily"].append(
+                    {
+                        "process_date": r["process_date"],
+                        "total_rejections": r["value"],
+                        "cs_rejection": r["cs_rejection"],
+                        "gd_rejection": r["gd_rejection"],
+                        "pt_rejection": r["pt_rejection"],
+                    }
+                )
 
                 plants[pid]["overall"]["total_rejections"] += r["value"]
                 plants[pid]["overall"]["cs_rejection"] += r["cs_rejection"]
@@ -521,11 +600,11 @@ async def lpg_plants_insights(filters, cross_filters, drill_state, metric_type):
 
     except Exception as e:
         return {"status": False, "message": str(e)}
-    
+
 
 async def lpg_car_download(data):
-    """ downloading the lpg plant Carousel"""
-    
+    """downloading the lpg plant Carousel"""
+
     start_date = None
     end_date = None
     all_conditions = []
@@ -552,9 +631,10 @@ async def lpg_car_download(data):
                 start_date = dates[0]
                 end_date = dates[-1]
 
-                start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").strftime(
+                    "%Y-%m-%d"
+                )
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%d")
-
 
                 print("start_date----->\n", start_date)
                 print("end_date---->\n", end_date)
@@ -630,7 +710,6 @@ async def lpg_car_download(data):
         final_where_clause = " AND " + " AND ".join(all_conditions)
         final_where_clause_car = " WHERE " + " AND ".join(all_conditions)
 
-
     if start_date == end_date:
         query = f"""
             SELECT * FROM public.lpg_plant_operations 
@@ -643,17 +722,23 @@ async def lpg_car_download(data):
             where process_date >= '{start_date}' 
             and process_date < '{end_date}' 
             {final_where_clause}
-        """ 
+        """
 
     car_query = f"""SELECT * FROM lpg_carousals {final_where_clause_car}"""
-    
-    plant_details_query = """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
 
-    charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    charts_actions.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(charts_actions.Charts_Connection_Vault_RoutingParams)
+    plant_details_query = (
+        """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
+    )
+
+    charts_actions.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    charts_actions.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_actions.charts_connection_vault_routing(
+        charts_actions.Charts_Connection_Vault_RoutingParams
+    )
     resp = await function(query=query)
-    
+
     plant_details = await function(query=plant_details_query)
     plant_details_df = pl.DataFrame(plant_details)
 
@@ -678,10 +763,12 @@ async def lpg_car_download(data):
     clean_resp = clean_data(resp)
     data = pl.DataFrame(clean_resp, infer_schema_length=10000)
 
-    car_data = await function(query= car_query)
+    car_data = await function(query=car_query)
     car_df = pl.DataFrame(car_data)
+
     def calculate_hours(time_range_str):
         import json
+
         time_ranges = json.loads(time_range_str)
         total_seconds = 0
 
@@ -703,58 +790,93 @@ async def lpg_car_download(data):
             total_seconds += diff
         # convert seconds → hours
         return round(total_seconds / 3600, 2)
-    
-    car_df = car_df.with_columns([
-        pl.col("production_hrs")
-        .map_elements(calculate_hours)
-        .alias("production_hours"),
 
-        pl.col("breaks")
-        .map_elements(calculate_hours)
-        .alias("break_available_hours")
-    ])
+    car_df = car_df.with_columns(
+        [
+            pl.col("production_hrs")
+            .map_elements(calculate_hours)
+            .alias("production_hours"),
+            pl.col("breaks")
+            .map_elements(calculate_hours)
+            .alias("break_available_hours"),
+        ]
+    )
 
     # Derived column
-    car_df = car_df.with_columns([
-        (pl.col("production_hours") - pl.col("break_available_hours"))
-        .round(2)
-        .alias("normal_available_hrs")
-    ])
+    car_df = car_df.with_columns(
+        [
+            (pl.col("production_hours") - pl.col("break_available_hours"))
+            .round(2)
+            .alias("normal_available_hrs")
+        ]
+    )
 
     df = car_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
-    data = data.with_columns([
-        pl.col("sap_id").cast(pl.Utf8),
-        pl.col("carousel").cast(pl.Int64)  
-    ])
-    df = df.join(data, left_on=["sap_id", "carousal_id"], right_on=["sap_id", "carousel"], how="left")
+    data = data.with_columns(
+        [pl.col("sap_id").cast(pl.Utf8), pl.col("carousel").cast(pl.Int64)]
+    )
+    df = df.join(
+        data,
+        left_on=["sap_id", "carousal_id"],
+        right_on=["sap_id", "carousel"],
+        how="left",
+    )
     rename_cols = {
-        "carousal_id" :"carousal", "normal_gap_hrs" :"normal_gaps","break_gap_hrs" :"break_gaps",
-        "overtime_gap_hrs" :"overtime_gaps", "cs_handled" :"cs_total_cylinders_checked", 
-        "cs_underfilled" :"cs_underweight", "cs_overfilled" :"cs_overweight","cs_sortout" :"cs_total", 
-        "gd_handled" :"gd_total_cylinders_checked", "gd_sortout" :"gd_total", 
-        "pt_handled": "pt_total_cylinders_checked", "pt_sortout": "pt_total", 
-       }
-    df = df.with_columns([
-        pl.sum_horizontal([
-            pl.col("production_14_2kg").fill_null(0),
-            pl.col("production_19kg").fill_null(0)
-        ]).alias("Total Cylinders")
-    ])
+        "carousal_id": "carousal",
+        "normal_gap_hrs": "normal_gaps",
+        "break_gap_hrs": "break_gaps",
+        "overtime_gap_hrs": "overtime_gaps",
+        "cs_handled": "cs_total_cylinders_checked",
+        "cs_underfilled": "cs_underweight",
+        "cs_overfilled": "cs_overweight",
+        "cs_sortout": "cs_total",
+        "gd_handled": "gd_total_cylinders_checked",
+        "gd_sortout": "gd_total",
+        "pt_handled": "pt_total_cylinders_checked",
+        "pt_sortout": "pt_total",
+    }
+    df = df.with_columns(
+        [
+            pl.sum_horizontal(
+                [
+                    pl.col("production_14_2kg").fill_null(0),
+                    pl.col("production_19kg").fill_null(0),
+                ]
+            ).alias("Total Cylinders")
+        ]
+    )
 
     df = df.rename(rename_cols)
 
     group_cols = ["sap_id", "location_name", "carousal", "heads"]
 
     sum_cols = [
-        "production_14_2kg", "production_19kg", "Total Cylinders", "normal_total_production", 
-        "normal_available_hrs", "normal_gaps", "break_total_production", "break_available_hours", 
-        "break_gaps", "overtime_total_production", "overtime_gaps"
-        ]
+        "production_14_2kg",
+        "production_19kg",
+        "Total Cylinders",
+        "normal_total_production",
+        "normal_available_hrs",
+        "normal_gaps",
+        "break_total_production",
+        "break_available_hours",
+        "break_gaps",
+        "overtime_total_production",
+        "overtime_gaps",
+    ]
 
     round_sum_cols = [
-        "normal_net_hours", "break_net_hours", "overtime_net_hours", "cs_total_cylinders_checked",
-        "cs_underweight", "cs_overweight", "cs_other_errors", "cs_total",
-        "gd_total_cylinders_checked", "gd_total", "pt_total_cylinders_checked", "pt_total",
+        "normal_net_hours",
+        "break_net_hours",
+        "overtime_net_hours",
+        "cs_total_cylinders_checked",
+        "cs_underweight",
+        "cs_overweight",
+        "cs_other_errors",
+        "cs_total",
+        "gd_total_cylinders_checked",
+        "gd_total",
+        "pt_total_cylinders_checked",
+        "pt_total",
     ]
 
     car_sap_carousal = car_df.select(["sap_id", "carousal_id", "heads"]).unique()
@@ -763,71 +885,106 @@ async def lpg_car_download(data):
     all_plant_carousals = car_sap_carousal.join(
         plant_details_df.with_columns(pl.col("sap_id").cast(pl.Utf8)),
         on="sap_id",
-        how="left"
+        how="left",
     ).rename({"carousal_id": "carousal", "plant_name": "location_name"})
 
     df_grouped = df.group_by(group_cols).agg(
-        [pl.col(c).sum() for c in sum_cols] +
-        [pl.col(c).sum().round(2) for c in round_sum_cols]
+        [pl.col(c).sum() for c in sum_cols]
+        + [pl.col(c).sum().round(2) for c in round_sum_cols]
     )
 
     df_grouped = all_plant_carousals.join(
-        df_grouped,
-        on=["sap_id", "location_name", "carousal", "heads"],
-        how="left"
+        df_grouped, on=["sap_id", "location_name", "carousal", "heads"], how="left"
     ).sort(["location_name", "carousal"])
 
-    df_grouped = df_grouped.with_columns([
-        # Productivity calculation
-        pl.when(pl.col("normal_total_production").is_null() | pl.col("normal_net_hours").is_null())
-        .then(None)
-        .when(pl.col("normal_net_hours") == 0)
-        .then(0)
-        .otherwise((pl.col("normal_total_production") / pl.col("normal_net_hours")).round(2))
-        .alias("normal_productivity"),
-
-        pl.when(pl.col("break_total_production").is_null() | pl.col("break_net_hours").is_null())
-        .then(None)
-        .when(pl.col("break_net_hours") == 0)
-        .then(0)
-        .otherwise((pl.col("break_total_production") / pl.col("break_net_hours")).round(2))
-        .alias("break_productivity"),
-
-        pl.when(pl.col("overtime_total_production").is_null() | pl.col("overtime_net_hours").is_null())
-        .then(None)
-        .when(pl.col("overtime_net_hours") == 0)
-        .then(0)
-        .otherwise((pl.col("overtime_total_production") / pl.col("overtime_net_hours")).round(2))
-        .alias("overtime_productivity"),
-
-        # Rejection calculation
-        pl.when(pl.col("cs_total").is_null() | pl.col("cs_total_cylinders_checked").is_null())
-        .then(None)
-        .when(pl.col("cs_total_cylinders_checked") == 0)
-        .then(0)
-        .otherwise((pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(2))
-        .alias("cs_rejection"),
-
-        pl.when(pl.col("gd_total").is_null() | pl.col("gd_total_cylinders_checked").is_null())
-        .then(None)
-        .when(pl.col("gd_total_cylinders_checked") == 0)
-        .then(0)
-        .otherwise((pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(2))
-        .alias("gd_rejection"),
-
-        pl.when(pl.col("pt_total").is_null() | pl.col("pt_total_cylinders_checked").is_null())
-        .then(None)
-        .when(pl.col("pt_total_cylinders_checked") == 0)
-        .then(0)
-        .otherwise((pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(2))
-        .alias("pt_rejection"),
-    ])
+    df_grouped = df_grouped.with_columns(
+        [
+            # Productivity calculation
+            pl.when(
+                pl.col("normal_total_production").is_null()
+                | pl.col("normal_net_hours").is_null()
+            )
+            .then(None)
+            .when(pl.col("normal_net_hours") == 0)
+            .then(0)
+            .otherwise(
+                (pl.col("normal_total_production") / pl.col("normal_net_hours")).round(
+                    2
+                )
+            )
+            .alias("normal_productivity"),
+            pl.when(
+                pl.col("break_total_production").is_null()
+                | pl.col("break_net_hours").is_null()
+            )
+            .then(None)
+            .when(pl.col("break_net_hours") == 0)
+            .then(0)
+            .otherwise(
+                (pl.col("break_total_production") / pl.col("break_net_hours")).round(2)
+            )
+            .alias("break_productivity"),
+            pl.when(
+                pl.col("overtime_total_production").is_null()
+                | pl.col("overtime_net_hours").is_null()
+            )
+            .then(None)
+            .when(pl.col("overtime_net_hours") == 0)
+            .then(0)
+            .otherwise(
+                (
+                    pl.col("overtime_total_production") / pl.col("overtime_net_hours")
+                ).round(2)
+            )
+            .alias("overtime_productivity"),
+            # Rejection calculation
+            pl.when(
+                pl.col("cs_total").is_null()
+                | pl.col("cs_total_cylinders_checked").is_null()
+            )
+            .then(None)
+            .when(pl.col("cs_total_cylinders_checked") == 0)
+            .then(0)
+            .otherwise(
+                (pl.col("cs_total") / pl.col("cs_total_cylinders_checked") * 100).round(
+                    2
+                )
+            )
+            .alias("cs_rejection"),
+            pl.when(
+                pl.col("gd_total").is_null()
+                | pl.col("gd_total_cylinders_checked").is_null()
+            )
+            .then(None)
+            .when(pl.col("gd_total_cylinders_checked") == 0)
+            .then(0)
+            .otherwise(
+                (pl.col("gd_total") / pl.col("gd_total_cylinders_checked") * 100).round(
+                    2
+                )
+            )
+            .alias("gd_rejection"),
+            pl.when(
+                pl.col("pt_total").is_null()
+                | pl.col("pt_total_cylinders_checked").is_null()
+            )
+            .then(None)
+            .when(pl.col("pt_total_cylinders_checked") == 0)
+            .then(0)
+            .otherwise(
+                (pl.col("pt_total") / pl.col("pt_total_cylinders_checked") * 100).round(
+                    2
+                )
+            )
+            .alias("pt_rejection"),
+        ]
+    )
 
     df_grouped = df_grouped.sort(["location_name", "carousal"])
-    
+
     def val(x):
         return "N/A" if x is None else x
-    
+
     plants_output = []
 
     # sorted plant names
@@ -837,52 +994,60 @@ async def lpg_car_download(data):
         plant_df = df_grouped.filter(pl.col("location_name") == plant_name)
         cars_list = []
         for row in plant_df.to_dicts():
-            cars_list.append({
-                "carName": row["carousal"],
-                "bottlingSummary": {
-                    "14_2kgCylinders": val(row.get("production_14_2kg")),
-                    "19kgCylinders": val(row.get("production_19kg")),
-                    "total": val(row.get("Total Cylinders"))
-                },
-                "normalHours": {
-                    "production": val(row.get("normal_total_production")),
-                    "availableHours": val(row.get("normal_available_hrs")),
-                    "stoppagesHours": val(row.get("normal_gaps")),
-                    "netBottlingHours": val(row.get("normal_net_hours")),
-                    "productivity": val(row.get("normal_productivity"))
-                },
-                "breakHours": {
-                    "production": val(row.get("break_total_production")),
-                    "availableHours": val(row.get("break_available_hours")),
-                    "stoppagesHours": val(row.get("break_gaps")),
-                    "netBottlingHours": val(row.get("break_net_hours")),
-                    "productivity": val(row.get("break_productivity"))
-                },
-                "overtimeHours": {
-                    "production": val(row.get("overtime_total_production")),
-                    "stoppagesHours": val(row.get("overtime_gaps")),
-                    "netBottlingHours": val(row.get("overtime_net_hours")),
-                    "productivity": val(row.get("overtime_productivity"))
-                },
-                "checkScaleSummary": {
-                    "TotalCylindersChecked": val(row.get("cs_total_cylinders_checked")),
-                    "RejectionUnderweight": val(row.get("cs_underweight")),
-                    "RejectionOverweight": val(row.get("cs_overweight")),
-                    "RejectionOtherErrors": val(row.get("cs_other_errors")),
-                    "RejectionTotal": val(row.get("cs_total")),
-                    "RejectionPercentage": val(row.get("cs_rejection"))
-                },
-                "electronicLeakDetectorSummary": {
-                    "TotalCylindersChecked": val(row.get("gd_total_cylinders_checked")),
-                    "RejectionTotal": val(row.get("gd_total")),
-                    "RejectionPercentage": val(row.get("gd_rejection"))
-                },
-                "O-RingTesterSummary": {
-                    "TotalCylindersChecked": val(row.get("pt_total_cylinders_checked")),
-                    "RejectionTotal": val(row.get("pt_total")),
-                    "RejectionPercentage": val(row.get("pt_rejection"))
+            cars_list.append(
+                {
+                    "carName": row["carousal"],
+                    "bottlingSummary": {
+                        "14_2kgCylinders": val(row.get("production_14_2kg")),
+                        "19kgCylinders": val(row.get("production_19kg")),
+                        "total": val(row.get("Total Cylinders")),
+                    },
+                    "normalHours": {
+                        "production": val(row.get("normal_total_production")),
+                        "availableHours": val(row.get("normal_available_hrs")),
+                        "stoppagesHours": val(row.get("normal_gaps")),
+                        "netBottlingHours": val(row.get("normal_net_hours")),
+                        "productivity": val(row.get("normal_productivity")),
+                    },
+                    "breakHours": {
+                        "production": val(row.get("break_total_production")),
+                        "availableHours": val(row.get("break_available_hours")),
+                        "stoppagesHours": val(row.get("break_gaps")),
+                        "netBottlingHours": val(row.get("break_net_hours")),
+                        "productivity": val(row.get("break_productivity")),
+                    },
+                    "overtimeHours": {
+                        "production": val(row.get("overtime_total_production")),
+                        "stoppagesHours": val(row.get("overtime_gaps")),
+                        "netBottlingHours": val(row.get("overtime_net_hours")),
+                        "productivity": val(row.get("overtime_productivity")),
+                    },
+                    "checkScaleSummary": {
+                        "TotalCylindersChecked": val(
+                            row.get("cs_total_cylinders_checked")
+                        ),
+                        "RejectionUnderweight": val(row.get("cs_underweight")),
+                        "RejectionOverweight": val(row.get("cs_overweight")),
+                        "RejectionOtherErrors": val(row.get("cs_other_errors")),
+                        "RejectionTotal": val(row.get("cs_total")),
+                        "RejectionPercentage": val(row.get("cs_rejection")),
+                    },
+                    "electronicLeakDetectorSummary": {
+                        "TotalCylindersChecked": val(
+                            row.get("gd_total_cylinders_checked")
+                        ),
+                        "RejectionTotal": val(row.get("gd_total")),
+                        "RejectionPercentage": val(row.get("gd_rejection")),
+                    },
+                    "O-RingTesterSummary": {
+                        "TotalCylindersChecked": val(
+                            row.get("pt_total_cylinders_checked")
+                        ),
+                        "RejectionTotal": val(row.get("pt_total")),
+                        "RejectionPercentage": val(row.get("pt_rejection")),
+                    },
                 }
-            })
+            )
         plants_output.append({"plantName": plant_name, "cars": cars_list})
 
     final_response = {"plants": plants_output}

@@ -1,7 +1,6 @@
 import datetime
 import json
 import uuid
-import logging
 import pytz
 import urdhva_base
 import urdhva_base.queryparams
@@ -16,6 +15,7 @@ import asyncio
 logger = urdhva_base.logger.Logger.getInstance("tas_communication_loss_cron")
 IST = pytz.timezone("Asia/Kolkata")
 
+
 async def run_communication_loss_cron() -> dict:
     """
     Simplified Cron logic to detect and alert on TAS Communication Loss:
@@ -29,7 +29,6 @@ async def run_communication_loss_cron() -> dict:
            -> Create the "Loss Of Communication" alert.
     """
 
-    
     # 1. Run operability index health check
     try:
         payload = hpcl_ceg_model.Tasanalytics_Tas_AnalyticsParams(
@@ -47,9 +46,9 @@ async def run_communication_loss_cron() -> dict:
 
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     five_minutes_ago = now_utc - datetime.timedelta(minutes=5)
-    
+
     alerts_created = 0
-    
+
     # Get Redis Connection
     try:
         redis_client = await urdhva_base.redispool.get_redis_connection()
@@ -61,7 +60,7 @@ async def run_communication_loss_cron() -> dict:
         device_name = dev.get("device_name", "")
         if not device_name:
             continue
-            
+
         # Resolve sap_id
         sap_id = None
         try:
@@ -77,7 +76,7 @@ async def run_communication_loss_cron() -> dict:
                 sap_id = data_list[0].get("sap_id")
         except Exception as e:
             logger.error(f"Error resolving sap_id for {device_name}: {e}")
-            
+
         if not sap_id:
             logger.warning(f"Could not resolve sap_id for device: {device_name}")
             continue
@@ -88,13 +87,17 @@ async def run_communication_loss_cron() -> dict:
             try:
                 raw_redis = await redis_client.hget("tas_agent_up_status", sap_id)
                 if raw_redis:
-                    redis_time_str = raw_redis if isinstance(raw_redis, str) else raw_redis.decode()
+                    redis_time_str = (
+                        raw_redis if isinstance(raw_redis, str) else raw_redis.decode()
+                    )
                     redis_dt = datetime.datetime.fromisoformat(redis_time_str)
                     if redis_dt.tzinfo is None:
-                        redis_dt = IST.localize(redis_dt).astimezone(datetime.timezone.utc)
+                        redis_dt = IST.localize(redis_dt).astimezone(
+                            datetime.timezone.utc
+                        )
                     else:
                         redis_dt = redis_dt.astimezone(datetime.timezone.utc)
-                    
+
                     if redis_dt > five_minutes_ago:
                         redis_active = True
             except Exception as e:
@@ -115,7 +118,7 @@ async def run_communication_loss_cron() -> dict:
                     limit=1,
                     sort=json.dumps({"created_at": "desc"}),
                 ),
-                resp_type="plain"
+                resp_type="plain",
             )
             records = db_res.get("data", [])
             if records:
@@ -123,7 +126,7 @@ async def run_communication_loss_cron() -> dict:
                 # Check status
                 if last_record.get("status") == "failed":
                     db_last_failed = True
-                
+
                 raw_created = last_record.get("created_at")
                 if raw_created:
                     db_dt = raw_created
@@ -133,7 +136,7 @@ async def run_communication_loss_cron() -> dict:
                         db_dt = db_dt.replace(tzinfo=datetime.timezone.utc)
                     else:
                         db_dt = db_dt.astimezone(datetime.timezone.utc)
-                    
+
                     if db_dt > five_minutes_ago:
                         db_silent = False
         except Exception as e:
@@ -176,12 +179,14 @@ async def run_communication_loss_cron() -> dict:
                 failure_reason = "Data not flowing — OPC connection may be up but no tag values are being received."
 
         # Create the alert payload
-        alert_history = [{
-            "processed_time": now_utc.isoformat(),
-            "allocated_time": now_utc.isoformat(),
-            "action_msg": failure_reason,
-            "action_type": "InterlockCreated",
-        }]
+        alert_history = [
+            {
+                "processed_time": now_utc.isoformat(),
+                "allocated_time": now_utc.isoformat(),
+                "action_msg": failure_reason,
+                "action_type": "InterlockCreated",
+            }
+        ]
 
         alert_data = {
             "bu": "TAS",
@@ -211,13 +216,18 @@ async def run_communication_loss_cron() -> dict:
         except Exception as e:
             logger.error(f"Exception creating alert for sap_id {sap_id}: {e}")
 
-    return {"status": "success", "processed": len(down_devices), "alerts_created": alerts_created}
+    return {
+        "status": "success",
+        "processed": len(down_devices),
+        "alerts_created": alerts_created,
+    }
 
 
 if __name__ == "__main__":
+
     async def main():
 
         result = await run_communication_loss_cron()
         print(json.dumps(result, indent=2))
-        
+
     asyncio.run(main())

@@ -19,12 +19,14 @@ ranges = [
 CREDENTIALS = []
 for base, start, end, password in ranges:
     for ip in range(start, end + 1):
-        CREDENTIALS.append({
-            "IPAddress": f"{base}.{ip}",
-            "UserName": "novex",
-            "Password": password,
-            "port": 22
-        })
+        CREDENTIALS.append(
+            {
+                "IPAddress": f"{base}.{ip}",
+                "UserName": "novex",
+                "Password": password,
+                "port": 22,
+            }
+        )
 
 
 # ======================================================
@@ -95,21 +97,27 @@ def collect_server_data(cred):
             username=cred["UserName"],
             password=cred["Password"],
             port=cred["port"],
-            timeout=8
+            timeout=8,
         )
 
         server = {
             "IPAddress": cred["IPAddress"],
             "HostName": run_cmd(ssh, "hostname"),
-            "OsName": run_cmd(ssh, "grep ^NAME= /etc/os-release | cut -d= -f2 | tr -d '\"'"),
-            "OsVersion": run_cmd(ssh, "grep ^VERSION_ID= /etc/os-release | cut -d= -f2 | tr -d '\"'"),
+            "OsName": run_cmd(
+                ssh, "grep ^NAME= /etc/os-release | cut -d= -f2 | tr -d '\"'"
+            ),
+            "OsVersion": run_cmd(
+                ssh, "grep ^VERSION_ID= /etc/os-release | cut -d= -f2 | tr -d '\"'"
+            ),
             "CPU Cores": int(run_cmd(ssh, "nproc")),
-            "Memory(GB)": int(run_cmd(ssh, "free -g | awk '/Mem:/ {print $2}'"))
+            "Memory(GB)": int(run_cmd(ssh, "free -g | awk '/Mem:/ {print $2}'")),
         }
         storage = []
 
         # Disk ↔ Partition structure
-        lsblk_cmd = "lsblk -ndo NAME,TYPE,SIZE,PKNAME | awk '$2==\"disk\" || $2==\"part\"'"
+        lsblk_cmd = (
+            'lsblk -ndo NAME,TYPE,SIZE,PKNAME | awk \'$2=="disk" || $2=="part"\''
+        )
         lsblk_raw = run_cmd(ssh, lsblk_cmd)
 
         for line in lsblk_raw.splitlines():
@@ -117,14 +125,16 @@ def collect_server_data(cred):
             path = f"/dev/{name}"
 
             if typ == "disk":
-                storage.append({
-                    "partition": path,
-                    "mount": '-',
-                    "size": size,
-                    "used": '-',
-                    "free": '-',
-                    "type": "Disk"
-                })
+                storage.append(
+                    {
+                        "partition": path,
+                        "mount": "-",
+                        "size": size,
+                        "used": "-",
+                        "free": "-",
+                        "type": "Disk",
+                    }
+                )
 
         # Partition usage
         df_cmd = "df -h --output=source,target,size,used,avail | awk '$1 ~ \"^/dev/\"'"
@@ -132,14 +142,16 @@ def collect_server_data(cred):
 
         for line in df_raw.splitlines():
             dev, mount, size, used, free = line.split()
-            storage.append({
-                "partition": dev,
-                "mount": mount,
-                "size": size,
-                "used": used,
-                "free": free,
-                "type": "Partition"
-            })
+            storage.append(
+                {
+                    "partition": dev,
+                    "mount": mount,
+                    "size": size,
+                    "used": used,
+                    "free": free,
+                    "type": "Partition",
+                }
+            )
 
         return server, storage
 

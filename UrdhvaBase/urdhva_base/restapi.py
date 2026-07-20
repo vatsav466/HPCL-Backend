@@ -6,9 +6,7 @@ import uuid
 import httpx
 import typing
 import base64
-import random
 import fastapi
-import datetime
 import traceback
 import importlib
 import contextvars
@@ -19,16 +17,14 @@ import urdhva_base.settings
 import urdhva_base.redispool
 from jose import jwt, JWTError
 import urdhva_base.elasticmodel
-from pydantic.fields import Field
 from urllib.parse import urlparse
 from slowapi.extension import Limiter
 from cryptography.fernet import Fernet
-from starlette.datastructures import URL
 import urdhva_base.ttl_cache as ttl_cache
 from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import urlencode
 from slowapi.middleware import SlowAPIMiddleware
 from mangum import Mangum
 from starlette.responses import RedirectResponse
@@ -612,7 +608,7 @@ async def authorize(request: fastapi.Request, entity_id: str):
     oauth_redirect_url = f'https://{base_url}/api/{entity_id}/login'
     if await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname):
         data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
-        url = json.loads(data)["base_url"]
+        json.loads(data)["base_url"]
         oauth_redirect_url = f'https://{request.base_url.hostname}/api/{entity_id}/login'
     redis_client = await urdhva_base.redispool.get_redis_connection()
     data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)

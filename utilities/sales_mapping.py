@@ -23,5 +23,5 @@ sales_zone_map = {
     "COR": "COR",
     "ECZ": "ECZ",
     "SWZ": "SWZ",
-    "CEN": "CEN"
+    "CEN": "CEN",
 }

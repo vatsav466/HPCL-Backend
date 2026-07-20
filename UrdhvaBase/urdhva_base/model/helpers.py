@@ -11,7 +11,7 @@ class PkgResourceLoader(jinja2.BaseLoader):
         self.lang = lang
 
     def get_source(self, environment, name):
-        path = os.path.join("templates", self.lang, f'{name}.jinja')
+        path = os.path.join("templates", self.lang, f"{name}.jinja")
         if not pkg_resources.resource_exists(__name__, path):
             raise jinja2.TemplateNotFound(path)
 
@@ -19,20 +19,35 @@ class PkgResourceLoader(jinja2.BaseLoader):
         return source.decode(), path, lambda: True
 
 
-templateEnv = jinja2.Environment(loader=PkgResourceLoader('python'))
+templateEnv = jinja2.Environment(loader=PkgResourceLoader("python"))
 
 
 class Base:
 
     def render(self):
         templateEnv.globals.update(convert_snake_case=urdhva_base.utilities.snake_case)
-        templateEnv.globals.update(generate_unique_id=urdhva_base.utilities.generate_unique_id)
-        return templateEnv.get_template(self.__class__.__name__.lower()).render(input=self)
+        templateEnv.globals.update(
+            generate_unique_id=urdhva_base.utilities.generate_unique_id
+        )
+        return templateEnv.get_template(self.__class__.__name__.lower()).render(
+            input=self
+        )
 
 
 class Model(Base):
-    def __init__(self, parent, name, is_internal, disable_crud_operations, attrs, indexes, unique, references,
-                 actions, config):
+    def __init__(
+        self,
+        parent,
+        name,
+        is_internal,
+        disable_crud_operations,
+        attrs,
+        indexes,
+        unique,
+        references,
+        actions,
+        config,
+    ):
         super().__init__()
         self.parent = parent
         self.name = name
@@ -50,13 +65,24 @@ class Model(Base):
     def resolveReferences(self):
         for ref in self.references:
             fieldName = ref.model.name.lower()
-            islist = False if ref.relation == '1-1' else True
+            islist = False if ref.relation == "1-1" else True
 
-            localModelAttr = Attr(self, f'{fieldName}_ref', None, ref.model, islist, ref.optional, None, True)
+            localModelAttr = Attr(
+                self,
+                f"{fieldName}_ref",
+                None,
+                ref.model,
+                islist,
+                ref.optional,
+                None,
+                True,
+            )
 
             # Add unique index
             if not islist:
-                self.indexes.append(Index(self, [FieldOrder(self, localModelAttr, False)]))
+                self.indexes.append(
+                    Index(self, [FieldOrder(self, localModelAttr, False)])
+                )
 
             # Create attr in local model
             self.attrs.append(localModelAttr)
@@ -67,8 +93,21 @@ class Model(Base):
 
 
 class Attr(Base):
-    def __init__(self, parent, name, simpletype, model_or_enum, list, optional, index_field, default, primary_key=False,
-                 postgres_schema=False, ref=False, unique_field=False):
+    def __init__(
+        self,
+        parent,
+        name,
+        simpletype,
+        model_or_enum,
+        list,
+        optional,
+        index_field,
+        default,
+        primary_key=False,
+        postgres_schema=False,
+        ref=False,
+        unique_field=False,
+    ):
         super().__init__()
         self.parent = parent
         self.name = urdhva_base.utilities.snake_case(name)
@@ -105,8 +144,8 @@ class IntSpec(Base):
     def __init__(self, parent, max, min, multiple):
         super().__init__()
         self.parent = parent
-        self.name = 'int'
-        self.sqlalchemy_name = 'Integer'
+        self.name = "int"
+        self.sqlalchemy_name = "Integer"
         self.max = max
         self.min = min
         self.multiple = multiple
@@ -121,7 +160,7 @@ class FloatSpec(Base):
         self.parent = parent
         self.max = max
         self.min = min
-        self.sqlalchemy_name = 'Numeric'
+        self.sqlalchemy_name = "Numeric"
 
     def has_params(self):
         return self.max or self.min
@@ -131,8 +170,8 @@ class StrSpec(Base):
     def __init__(self, parent, maxlen, minlen, regex, startswith, endswith, contains):
         super().__init__()
         self.parent = parent
-        self.name = 'str'
-        self.sqlalchemy_name = 'String'
+        self.name = "str"
+        self.sqlalchemy_name = "String"
         self.maxlen = maxlen
         self.minlen = minlen
         self.regex = regex
@@ -141,14 +180,21 @@ class StrSpec(Base):
         self.contains = contains
 
     def has_params(self):
-        return self.maxlen or self.minlen or self.regex or self.startswith or self.endswith or self.contains
+        return (
+            self.maxlen
+            or self.minlen
+            or self.regex
+            or self.startswith
+            or self.endswith
+            or self.contains
+        )
 
 
 class BoolSpec(Base):
     def __init__(self, parent, x):
         super().__init__()
-        self.name = 'bool'
-        self.sqlalchemy_name = 'Boolean'
+        self.name = "bool"
+        self.sqlalchemy_name = "Boolean"
         self.parent = parent
 
     def has_params(self):
@@ -158,8 +204,8 @@ class BoolSpec(Base):
 class DictSpec(Base):
     def __init__(self, parent, x):
         super().__init__()
-        self.name = 'dict'
-        self.sqlalchemy_name = 'JSONB'
+        self.name = "dict"
+        self.sqlalchemy_name = "JSONB"
         self.parent = parent
 
     def has_params(self):
@@ -170,7 +216,7 @@ class EmailSpec(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'String'
+        self.sqlalchemy_name = "String"
 
     def has_params(self):
         return False
@@ -180,7 +226,7 @@ class Datetime(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'DateTime(timezone=True)'
+        self.sqlalchemy_name = "DateTime(timezone=True)"
 
     def has_params(self):
         return False
@@ -190,7 +236,7 @@ class DatetimeWithoutTimeZone(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'DateTime(timezone=False)'
+        self.sqlalchemy_name = "DateTime(timezone=False)"
 
     def has_params(self):
         return False
@@ -200,7 +246,7 @@ class Date(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'DATE'
+        self.sqlalchemy_name = "DATE"
 
     def has_params(self):
         return False
@@ -210,7 +256,7 @@ class Time(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'TIME'
+        self.sqlalchemy_name = "TIME"
 
     def has_params(self):
         return False
@@ -220,7 +266,7 @@ class IpAddressv4(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'String'
+        self.sqlalchemy_name = "String"
 
     def has_params(self):
         return False
@@ -230,7 +276,7 @@ class IpAddressv6(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.sqlalchemy_name = 'String'
+        self.sqlalchemy_name = "String"
 
     def has_params(self):
         return False
@@ -240,8 +286,8 @@ class Secret(Base):
     def __init__(self, parent, x):
         super().__init__()
         self.parent = parent
-        self.name = 'secret'
-        self.sqlalchemy_name = 'String'
+        self.name = "secret"
+        self.sqlalchemy_name = "String"
 
     def has_params(self):
         return False
@@ -287,7 +333,7 @@ class Enum(Base):
         self.name = name
         self.str = str
         self.fields = fields
-        self.sqlalchemy_name = 'String'
+        self.sqlalchemy_name = "String"
 
         # Set proper values for enum to be rendered in template
         if not self.str:

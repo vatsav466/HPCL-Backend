@@ -1,14 +1,10 @@
 import urdhva_base
-import hpcl_ceg_model
 import dashboard_studio_model
 import pyodbc
-import os
 import datetime
-import calendar
 import psycopg2
 import traceback
 import polars as pl
-import pandas as pd
 import re
 import asyncio
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -19,18 +15,18 @@ class SolarService:
     @classmethod
     def get_db_connection(cls, bu: str = None, db_name: str = None):
         if bu:
-            db_name = f'{bu}_SOLAR'
+            db_name = f"{bu}_SOLAR"
         elif not db_name:
-            db_name = 'SOLAR'
+            db_name = "SOLAR"
 
         creds = credential_loader.get_credentials(db_name)
         connection = pyodbc.connect(
-            'DRIVER={ODBC Driver 18 for SQL Server};'
+            "DRIVER={ODBC Driver 18 for SQL Server};"
             f'Server={creds["host"]},{creds["port"]};'
             f'Database={creds.get("database", "ION_Data")};'
             f'UID={creds["user"]};'
             f'PWD={creds["password"]};'
-            'TrustServerCertificate=yes;MARS_Connection=yes;',
+            "TrustServerCertificate=yes;MARS_Connection=yes;",
         )
         return connection
 
@@ -43,7 +39,7 @@ class SolarService:
                 database=params["database"],
                 user=params["user"],
                 password=params["password"],
-                port=params["port"]
+                port=params["port"],
             )
             cursor = pg_conn.cursor()
 
@@ -55,8 +51,7 @@ class SolarService:
 
             if rows:
                 data_dict = {
-                    col: [row[i] for row in rows]
-                    for i, col in enumerate(columns)
+                    col: [row[i] for row in rows] for i, col in enumerate(columns)
                 }
                 df = pl.DataFrame(data_dict)
             else:
@@ -82,7 +77,7 @@ class SolarService:
 
         return (
             start_ist.strftime("%Y-%m-%d %H:%M:%S"),
-            end_ist.strftime("%Y-%m-%d %H:%M:%S")
+            end_ist.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     @classmethod
@@ -126,7 +121,7 @@ class SolarService:
     def extract_capacity(source_name):
         if not source_name:
             return None
-        match = re.search(r'(\d+)\s*kW?', source_name, re.IGNORECASE)
+        match = re.search(r"(\d+)\s*kW?", source_name, re.IGNORECASE)
         return match.group(1) if match else None
 
     @classmethod
@@ -157,7 +152,9 @@ class SolarService:
                     SELECT MAX(timestamp_ist) as last_ts
                     FROM public.solar_generation_summary
                 """
-            check_result = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
+            check_result = await urdhva_base.BasePostgresModel.get_aggr_data(
+                check_query
+            )
             last_ts = check_result.get("data", [{}])[0].get("last_ts")
 
             print("Last TS from DB:", last_ts)
@@ -180,10 +177,9 @@ class SolarService:
                         WHERE DATE(timestamp_ist) = '{start_of_today.strftime("%Y-%m-%d")}'
                     """)
 
-                intervals.append((
-                    start_of_today.strftime("%Y-%m-%d %H:%M:%S"),
-                    current_end
-                ))
+                intervals.append(
+                    (start_of_today.strftime("%Y-%m-%d %H:%M:%S"), current_end)
+                )
 
             # =========================
             # CASE 2: DATA EXISTS (FULL DAY REBUILD LOGIC - FIXED)
@@ -192,7 +188,9 @@ class SolarService:
                 # ---- HANDLE STRING / DATETIME ----
                 if isinstance(last_ts, str):
                     try:
-                        last_ts_dt = datetime.datetime.strptime(last_ts, "%Y-%m-%d %H:%M:%S")
+                        last_ts_dt = datetime.datetime.strptime(
+                            last_ts, "%Y-%m-%d %H:%M:%S"
+                        )
                     except:
                         last_ts_dt = datetime.datetime.fromisoformat(last_ts)
                 else:
@@ -203,7 +201,9 @@ class SolarService:
                 # =========================
                 # STEP 1: REBUILD LAST DAY (ONLY IF NOT TODAY)
                 # =========================
-                last_day_start = last_ts_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                last_day_start = last_ts_dt.replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
                 next_day_start = last_day_start + datetime.timedelta(days=1)
 
                 if last_day_start.date() != start_of_today.date():
@@ -222,10 +222,12 @@ class SolarService:
                     """)
 
                     # ADD INTERVAL
-                    intervals.append((
-                        last_day_start.strftime("%Y-%m-%d %H:%M:%S"),
-                        next_day_start.strftime("%Y-%m-%d %H:%M:%S")
-                    ))
+                    intervals.append(
+                        (
+                            last_day_start.strftime("%Y-%m-%d %H:%M:%S"),
+                            next_day_start.strftime("%Y-%m-%d %H:%M:%S"),
+                        )
+                    )
 
                     current_day = next_day_start
 
@@ -253,10 +255,12 @@ class SolarService:
                     """)
 
                     # ADD INTERVAL
-                    intervals.append((
-                        current_day.strftime("%Y-%m-%d %H:%M:%S"),
-                        next_day.strftime("%Y-%m-%d %H:%M:%S")
-                    ))
+                    intervals.append(
+                        (
+                            current_day.strftime("%Y-%m-%d %H:%M:%S"),
+                            next_day.strftime("%Y-%m-%d %H:%M:%S"),
+                        )
+                    )
 
                     current_day = next_day
 
@@ -275,10 +279,9 @@ class SolarService:
                     WHERE DATE(timestamp_ist) = '{start_of_today.strftime("%Y-%m-%d")}'
                 """)
 
-                intervals.append((
-                    start_of_today.strftime("%Y-%m-%d %H:%M:%S"),
-                    current_end
-                ))
+                intervals.append(
+                    (start_of_today.strftime("%Y-%m-%d %H:%M:%S"), current_end)
+                )
 
             print("Final intervals:", intervals)
 
@@ -290,7 +293,9 @@ class SolarService:
                 FROM public.solar_plant_capacity 
                 WHERE sap_id IN ({sap_ids_str})
             """
-            location_raw = await urdhva_base.BasePostgresModel.get_aggr_data(location_query)
+            location_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                location_query
+            )
             location_data = location_raw.get("data", [])
 
             location_map = {}
@@ -298,11 +303,13 @@ class SolarService:
                 sap_id = str(row["sap_id"])
                 if sap_id not in location_map:
                     location_map[sap_id] = []
-                location_map[sap_id].append({
-                    "location_name": row["location_name"],
-                    "zone": row["zone"],
-                    "capacity_kw": str(row.get("capacity_kw"))
-                })
+                location_map[sap_id].append(
+                    {
+                        "location_name": row["location_name"],
+                        "zone": row["zone"],
+                        "capacity_kw": str(row.get("capacity_kw")),
+                    }
+                )
 
             total_gen = 0
             total_outage = 0
@@ -574,7 +581,10 @@ class SolarService:
 
                     matched_info = {}
                     for loc in loc_info_list:
-                        if extracted_capacity and str(loc["capacity_kw"]) == extracted_capacity:
+                        if (
+                            extracted_capacity
+                            and str(loc["capacity_kw"]) == extracted_capacity
+                        ):
                             matched_info = loc
                             break
 
@@ -585,25 +595,41 @@ class SolarService:
 
                     # GENERATION
                     if power_flag == 0:
-                        final_records.append({
-                            "bu": str(bu),
-                            "sap_id": sap_id,
-                            "location_name": matched_info.get("location_name", row.get("LocationName", "")),
-                            "zone": matched_info.get("zone", ""),
-                            "source_id": source_id,
-                            "source_name": source_name,
-                            "source_type": str(row.get("SourceType", "")),
-                            "timestamp_ist": timestamp,
-                            "capacity_kw": matched_info.get("capacity_kw", ""),
-                            "solar_generation_kwh": str(round(row.get("SolarGen_kWh_entry", 0), 3)),
-                            "solar_generation_hrs": str(round(row.get("SolarGenHours_entry", 0), 3)),
-                            "solar_start_time": str(row.get("SolarStart_IST") or timestamp),
-                            "solar_end_time": str(row.get("SolarEnd_IST") or timestamp),
-                            "solar_window_hrs": (
-                                str(round(solar_window_val, 3)) if solar_window_val is not None else ""
-                            ),
-                            "solar_generation_hrs_day": str(round(row.get("SolarGenHours_day", 0), 3)),
-                        })
+                        final_records.append(
+                            {
+                                "bu": str(bu),
+                                "sap_id": sap_id,
+                                "location_name": matched_info.get(
+                                    "location_name", row.get("LocationName", "")
+                                ),
+                                "zone": matched_info.get("zone", ""),
+                                "source_id": source_id,
+                                "source_name": source_name,
+                                "source_type": str(row.get("SourceType", "")),
+                                "timestamp_ist": timestamp,
+                                "capacity_kw": matched_info.get("capacity_kw", ""),
+                                "solar_generation_kwh": str(
+                                    round(row.get("SolarGen_kWh_entry", 0), 3)
+                                ),
+                                "solar_generation_hrs": str(
+                                    round(row.get("SolarGenHours_entry", 0), 3)
+                                ),
+                                "solar_start_time": str(
+                                    row.get("SolarStart_IST") or timestamp
+                                ),
+                                "solar_end_time": str(
+                                    row.get("SolarEnd_IST") or timestamp
+                                ),
+                                "solar_window_hrs": (
+                                    str(round(solar_window_val, 3))
+                                    if solar_window_val is not None
+                                    else ""
+                                ),
+                                "solar_generation_hrs_day": str(
+                                    round(row.get("SolarGenHours_day", 0), 3)
+                                ),
+                            }
+                        )
 
                     # OUTAGE TRACKING
                     key = (sap_id, source_id)
@@ -616,7 +642,7 @@ class SolarService:
                             "last_outage_row": None,
                             "meta": matched_info,
                             "source_name": source_name,
-                            "source_type": str(row.get("SourceType", ""))
+                            "source_type": str(row.get("SourceType", "")),
                         }
 
                     tracker = outage_tracker[key]
@@ -633,28 +659,50 @@ class SolarService:
                         if tracker["active"]:
                             last_row = tracker["last_outage_row"]
 
-                            outage_records.append({
-                                "bu": str(bu),
-                                "sap_id": sap_id,
-                                "location_name": tracker["meta"].get("location_name", ""),
-                                "zone": tracker["meta"].get("zone", ""),
-                                "source_id": source_id,
-                                "source_name": tracker["source_name"],
-                                "source_type": tracker["source_type"],
-                                "capacity_kw": tracker["meta"].get("capacity_kw", ""),
-                                "grid_freq": str(last_row.get("Grid_Freq_Hz", "")) if last_row else "0",
-                                "timestamp_ist": timestamp,
-                                "solar_outage_hrs": str(round(tracker["hrs"], 3)),
-                                "outage_start_time": tracker["start"],
-                                "outage_end_time": timestamp,
-                                "solar_outage_hrs_day": str(
-                                    round(last_row.get("OutageDuringSolarHours_day", 0), 3)) if last_row else "0",
-                            })
+                            outage_records.append(
+                                {
+                                    "bu": str(bu),
+                                    "sap_id": sap_id,
+                                    "location_name": tracker["meta"].get(
+                                        "location_name", ""
+                                    ),
+                                    "zone": tracker["meta"].get("zone", ""),
+                                    "source_id": source_id,
+                                    "source_name": tracker["source_name"],
+                                    "source_type": tracker["source_type"],
+                                    "capacity_kw": tracker["meta"].get(
+                                        "capacity_kw", ""
+                                    ),
+                                    "grid_freq": (
+                                        str(last_row.get("Grid_Freq_Hz", ""))
+                                        if last_row
+                                        else "0"
+                                    ),
+                                    "timestamp_ist": timestamp,
+                                    "solar_outage_hrs": str(round(tracker["hrs"], 3)),
+                                    "outage_start_time": tracker["start"],
+                                    "outage_end_time": timestamp,
+                                    "solar_outage_hrs_day": (
+                                        str(
+                                            round(
+                                                last_row.get(
+                                                    "OutageDuringSolarHours_day", 0
+                                                ),
+                                                3,
+                                            )
+                                        )
+                                        if last_row
+                                        else "0"
+                                    ),
+                                }
+                            )
 
                             tracker["active"] = False
                             tracker["hrs"] = 0
 
-                print(f"Inserted Gen: {len(final_records)}, Outage: {len(outage_records)}")
+                print(
+                    f"Inserted Gen: {len(final_records)}, Outage: {len(outage_records)}"
+                )
 
                 if final_records:
                     await dashboard_studio_model.SolarGenerationSummary.bulk_update(
@@ -674,7 +722,7 @@ class SolarService:
             return {
                 "status": "success",
                 "generation_rows": total_gen,
-                "outage_rows": total_outage
+                "outage_rows": total_outage,
             }
 
         except Exception as e:
@@ -683,7 +731,5 @@ class SolarService:
 
 
 if __name__ == "__main__":
-    result = asyncio.run(
-        SolarService.load_today_solar_summary("SOD")
-    )
+    result = asyncio.run(SolarService.load_today_solar_summary("SOD"))
     print(result)

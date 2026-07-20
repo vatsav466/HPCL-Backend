@@ -34,7 +34,9 @@ class ROVAListener:
             try:
                 restart_triggered_time = int(await redis_ins.get(restart_trigger_key))
             except Exception as e:
-                logger.error(f"Exception while converting restart triggered time to integer, {e}")
+                logger.error(
+                    f"Exception while converting restart triggered time to integer, {e}"
+                )
         await redis_ins.connection_pool.disconnect()
         return restart_triggered_time
 
@@ -54,7 +56,7 @@ class ROVAListener:
                 return True
             if await cls.restart_validator() > start_time:
                 return True
-        except Exception as _:
+        except Exception:
             pass
         return False
 
@@ -67,9 +69,13 @@ class ROVAListener:
                 if task:
                     await self.process_task(json.loads(task))
             except Exception as e:
-                if 'Timeout reading' not in str(e):
-                    print(f"Exception in ro cleanliness task process {e}, {traceback.format_exc()}")
-                    logger.error(f"Exception in ro cleanliness task process {e}, {traceback.format_exc()}")
+                if "Timeout reading" not in str(e):
+                    print(
+                        f"Exception in ro cleanliness task process {e}, {traceback.format_exc()}"
+                    )
+                    logger.error(
+                        f"Exception in ro cleanliness task process {e}, {traceback.format_exc()}"
+                    )
             if (int(time.time()) - base_time) > 300:
                 if await self.validate_restart(self.worker_start_time):
                     logger.info(f"Restart message received for {self.queue_name}")

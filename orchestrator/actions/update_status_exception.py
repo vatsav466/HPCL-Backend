@@ -16,7 +16,7 @@ class Update_Status_Exception:
         """
         return ["alert_id"]
 
-    async def updatestatusexception(self, params):        
+    async def updatestatusexception(self, params):
         """
         Updates the status of the alert with the given alert_id to "Exception Approved",
         sets the role and rolelist to empty string and list, and sets the finalapproval to True.
@@ -29,26 +29,28 @@ class Update_Status_Exception:
             and a dictionary with the updated alert data.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get("alert_id"))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
-            
+
             if "_sa_instance_state" in alert_data.keys():
                 del alert_data["_sa_instance_state"]
-        
-            alert_data['role'] = ''
-            alert_data['rolelist'] = []
-            alert_data['finalapproval'] = True
-            alert_data['alert_id'] = params.get('alert_id')
+
+            alert_data["role"] = ""
+            alert_data["rolelist"] = []
+            alert_data["finalapproval"] = True
+            alert_data["alert_id"] = params.get("alert_id")
             alert_data["action_msg"] = "Exception Approved"
             alert_data["action_type"] = "ExceptionApproved"
-            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+            await alert_manager.AlertAction().update_alert_history(
+                input_data=alert_data, alert_data=alert_data
+            )
 
             data_object = hpcl_ceg_model.Alerts(**alert_data)
             await data_object.modify()
             return True, None
-        
+
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

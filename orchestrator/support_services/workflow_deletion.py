@@ -9,6 +9,7 @@ import time
 import random
 from requests.exceptions import RequestException, ConnectionError
 
+
 class Workflows_Deletion:
 
     async def delete_instance(self, camunda_url, business_key, instance_id, alert_id):
@@ -36,11 +37,15 @@ class Workflows_Deletion:
                     if attempt == retries:
                         raise
                     sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 1)
-                    print(f"Retrying {method.__name__.upper()} {url} in {sleep_time:.1f}s due to: {e}")
+                    print(
+                        f"Retrying {method.__name__.upper()} {url} in {sleep_time:.1f}s due to: {e}"
+                    )
                     time.sleep(sleep_time)
 
-        query_url = f"{camunda_url}/engine-rest/process-instance?businessKey={business_key}"
-        
+        query_url = (
+            f"{camunda_url}/engine-rest/process-instance?businessKey={business_key}"
+        )
+
         try:
             response = retry_request(requests.get, query_url)
             instances = response.json()
@@ -64,13 +69,15 @@ class Workflows_Deletion:
                     print(f"Deleted instance {instance_id} from {camunda_url}")
                     return [f"Deleted instance {instance_id} from {camunda_url}"]
 
-            return [f"Matching alert_id {alert_id} not found for instance_id {instance_id}"]
+            return [
+                f"Matching alert_id {alert_id} not found for instance_id {instance_id}"
+            ]
 
         except requests.exceptions.RequestException as e:
             print(f"Error deleting instance {instance_id}: {e}")
             return [f"Failed to delete instance {instance_id} due to: {str(e)}"]
-    
-    async def get_camunda_urls(self,alert_section):
+
+    async def get_camunda_urls(self, alert_section):
         """
         Retrieves a list of Camunda URLs based on the provided alert section.
 
@@ -87,8 +94,10 @@ class Workflows_Deletion:
                 if service["alert_section"] == alert_section:
                     urls.append(service["url"])
         return urls
-    
-    async def get_running_instances_in_urls(self, camunda_urls, max_retries=3, backoff_factor=1):
+
+    async def get_running_instances_in_urls(
+        self, camunda_urls, max_retries=3, backoff_factor=1
+    ):
         """
         Fetches running instances from multiple Camunda URLs with retry support.
 
@@ -114,11 +123,15 @@ class Workflows_Deletion:
 
                 except (RequestException, ConnectionError) as e:
                     if attempt == max_retries:
-                        print(f"[ERROR] Max retries reached for {url}. Skipping. Reason: {e}")
+                        print(
+                            f"[ERROR] Max retries reached for {url}. Skipping. Reason: {e}"
+                        )
                         instances = []
                     else:
                         sleep_time = backoff_factor * (2 ** (attempt - 1))
-                        print(f"[WARN] Attempt {attempt} failed for {url}: {e}. Retrying in {sleep_time} sec...")
+                        print(
+                            f"[WARN] Attempt {attempt} failed for {url}: {e}. Retrying in {sleep_time} sec..."
+                        )
                         time.sleep(sleep_time)
 
             for instance in instances:
@@ -139,16 +152,20 @@ class Workflows_Deletion:
                         instance_map[business_key] = {
                             "id": instance_id,
                             "url": camunda_url,
-                            "alert_id": int(alert_id) if alert_id else None
+                            "alert_id": int(alert_id) if alert_id else None,
                         }
                         break  # Successful, break out of retry
 
                     except (RequestException, ConnectionError) as e:
                         if attempt == max_retries:
-                            print(f"[ERROR] Failed to fetch variables for {instance_id} at {variables_url}: {e}")
+                            print(
+                                f"[ERROR] Failed to fetch variables for {instance_id} at {variables_url}: {e}"
+                            )
                         else:
                             sleep_time = backoff_factor * (2 ** (attempt - 1))
-                            print(f"[WARN] Attempt {attempt} failed for {variables_url}: {e}. Retrying in {sleep_time} sec...")
+                            print(
+                                f"[WARN] Attempt {attempt} failed for {variables_url}: {e}. Retrying in {sleep_time} sec..."
+                            )
                             time.sleep(sleep_time)
 
         return instance_map
@@ -166,46 +183,61 @@ class Workflows_Deletion:
         the instances in Camunda that do not exist in the database.
         """
         business_keys = []
-        camunda_urls=[]
-        present_keys=[]
+        camunda_urls = []
+        present_keys = []
         camunda_urls = await self.get_camunda_urls(alert_section)
         camunda_urls = list(set(camunda_urls))
-        print("camuda_urls--->",camunda_urls)
-        runnig_instances_in_urls = await self.get_running_instances_in_urls(camunda_urls)
-        print("runnig_instances_in_urls",len(runnig_instances_in_urls))
+        print("camuda_urls--->", camunda_urls)
+        runnig_instances_in_urls = await self.get_running_instances_in_urls(
+            camunda_urls
+        )
+        print("runnig_instances_in_urls", len(runnig_instances_in_urls))
         for key, details in runnig_instances_in_urls.items():
             if details["alert_id"] not in present_alert_ids_in_db:
                 business_keys.append(details["alert_id"])
-                #if details["url"] in camunda_urls:
-                    #await self.delete_instance(details["url"],key,details["id"],details["alert_id"])
+                # if details["url"] in camunda_urls:
+                # await self.delete_instance(details["url"],key,details["id"],details["alert_id"])
             else:
                 present_keys.append(details["alert_id"])
-        print("len of business_keys Keys",len(business_keys))
-        print("len of present_keys Keys",len(present_keys))
+        print("len of business_keys Keys", len(business_keys))
+        print("len of present_keys Keys", len(present_keys))
         present_keys = ", ".join(f"'{id}'" for id in present_keys)
-        test = pd.DataFrame({'ListValue': business_keys})
+        test = pd.DataFrame({"ListValue": business_keys})
         test.to_csv("/opt/ceg/algo/ListValues.csv", index=False)
         if present_keys:
-            query = (f"""select * from alerts """
-                    f"where id in ({present_keys}) and "
-                    f"alert_section = '{alert_section}'")
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = (
+                f"""select * from alerts """
+                f"where id in ({present_keys}) and "
+                f"alert_section = '{alert_section}'"
+            )
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+                1
+            )
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                "execute_query"
+            )
+            function = await charts_actions.charts_connection_vault_routing(
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+            )
             resp = await function(query=query)
             resp = pd.DataFrame(resp)
             resp.to_csv("/opt/ceg/algo/running_instance.csv", index=False)
-        
-        query = (f"""select * from alerts """
-                f"where id not in ({present_keys}) and "
-                f"alert_section = '{alert_section}'")
+
+        query = (
+            f"""select * from alerts """
+            f"where id not in ({present_keys}) and "
+            f"alert_section = '{alert_section}'"
+        )
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
         resp = await function(query=query)
         resp = pd.DataFrame(resp)
         resp.to_csv("/opt/ceg/algo/no_running_instances_in_camunda.csv", index=False)
-
 
     async def process_workflow_resp(self, workflow_resp):
         """
@@ -221,14 +253,22 @@ class Workflows_Deletion:
         for idx, record in workflow_resp.iterrows():
             if record["alert_section"] in ["VTS"]:
                 # continue
-                query = (f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'")
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                query = f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'"
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+                    1
+                )
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                    "execute_query"
+                )
+                function = await charts_actions.charts_connection_vault_routing(
+                    dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+                )
                 resp = await function(query=query)
                 data_resp = pd.DataFrame(resp)
                 present_alert_ids_in_db = data_resp["id"].tolist()
-                await self.delete_running_instances(present_alert_ids_in_db, record["alert_section"])
+                await self.delete_running_instances(
+                    present_alert_ids_in_db, record["alert_section"]
+                )
 
     async def instance_removal(self):
         """
@@ -243,9 +283,15 @@ class Workflows_Deletion:
 
         try:
             query = "SELECT DISTINCT(alert_section) FROM alerts"
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+                1
+            )
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                "execute_query"
+            )
+            function = await charts_actions.charts_connection_vault_routing(
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+            )
             resp = await function(query=query)
 
             workflow_resp = pd.DataFrame(resp)
@@ -259,6 +305,7 @@ class Workflows_Deletion:
             print("Exception Occurred While Removing Instances")
             print(e)
             print("Traceback:", traceback.format_exc())
+
 
 if __name__ == "__main__":
     Workflow = Workflows_Deletion()

@@ -7,11 +7,7 @@ connection_mapping = urdhva_base.settings.db_connection_config
 #     "cris": "2"
 # }
 
-schema_mapping = {
-    "cris": "HPCL_HOS",
-    "ims": "IMS_SAP",
-    "hpcl_ceg": "HPCL_HOS"
-}
+schema_mapping = {"cris": "HPCL_HOS", "ims": "IMS_SAP", "hpcl_ceg": "HPCL_HOS"}
 
 table_mapping = {
     "dry_out": "sch_inventory_forecast_dashboard",
@@ -37,23 +33,51 @@ camunda_listener_va_mapping = urdhva_base.settings.camunda_url_va_config
 #     "camunda_dryout_10": {"host": "10.90.38.167", "port": 9089}
 # }
 
-dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
-                  {"name": "Indent On Hold", "group": "pending"}, {"name": "Pending Indents", "group": "pending"},
-                  {"name": "Truck Allocated", "group": "wip"},
-                  {"name": "Sent to SAP", "group": "wip"}, {"name": "Sales Order Placed", "group": "wip"},
-                  {"name": "R2 Swiped", "group": "wip"}, {"name": "Invoice Created", "group": "wip"},
-                  {"name": "R3 Swiped", "group": "wip"}, {"name": "Transit(TAS→RO)", "group": "wip"},
-                  {"name": "ATG Ack", "group": "delivered"}, {"name": "Delivery Confirmation", "group": "delivered"},
-                  {"name": "EMLock", "group": "delivered"}, {"name": "VTS Return", "group": "delivered"},
-                  {"name": "Trip Completed", "group": "delivered"}]
+dry_out_top_x_axis = [
+    {"name": "Indent Not Raised", "group": "not_raised"},
+    {"name": "Indent On Hold", "group": "pending"},
+    {"name": "Pending Indents", "group": "pending"},
+    {"name": "Truck Allocated", "group": "wip"},
+    {"name": "Sent to SAP", "group": "wip"},
+    {"name": "Sales Order Placed", "group": "wip"},
+    {"name": "R2 Swiped", "group": "wip"},
+    {"name": "Invoice Created", "group": "wip"},
+    {"name": "R3 Swiped", "group": "wip"},
+    {"name": "Transit(TAS→RO)", "group": "wip"},
+    {"name": "ATG Ack", "group": "delivered"},
+    {"name": "Delivery Confirmation", "group": "delivered"},
+    {"name": "EMLock", "group": "delivered"},
+    {"name": "VTS Return", "group": "delivered"},
+    {"name": "Trip Completed", "group": "delivered"},
+]
 
-truck_details = ["Dealer TT", "TT Available", "Empty Dealer TT Return", "Empty Transporter Return"]
+truck_details = [
+    "Dealer TT",
+    "TT Available",
+    "Empty Dealer TT Return",
+    "Empty Transporter Return",
+]
 
-dryout_aging = ["DryOut < 2 Days", "DryOut < 7 Days", "DryOut < 15 Days", "DryOut < 30 Days"]
+dryout_aging = [
+    "DryOut < 2 Days",
+    "DryOut < 7 Days",
+    "DryOut < 15 Days",
+    "DryOut < 30 Days",
+]
 
 dry_out_bottom_x_axis = [
-        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
-    ]
+    "Dealer",
+    "SO\nRM",
+    "SO\nCO",
+    "SO",
+    "SO\nRM",
+    "SO\nRM",
+    "PO\nRM",
+    "PO\nRM",
+    "PO\nRM",
+    "PO\nRM",
+    "SO\nRM",
+]
 
 creds_type = urdhva_base.settings.db_connection_mapping
 
@@ -70,7 +94,7 @@ product_code_mapping = {
     "E20": "2822000",
     "POWER 95": "3672000",
     "POWER 99": "2816000",
-    "POWER 100": "3373000"
+    "POWER 100": "3373000",
 }
 
 item_name_mapping = {
@@ -80,7 +104,7 @@ item_name_mapping = {
     "2822000": "E20",
     "3672000": "POWER 95",
     "2816000": "POWER 99",
-    "3373000": "POWER 100"
+    "3373000": "POWER 100",
 }
 
 alert_action_category = {
@@ -91,13 +115,9 @@ alert_action_category = {
         "FalseAlert": "FalseAlert",
         "InvalidAlert": "InvalidAlert",
         "Quality": "Quality",
-        "Other": "Other"
+        "Other": "Other",
     },
-    "VTS": {
-        "Safety": "Safety",
-        "Pilferage": "Pilferage",
-        "Operations": "Operations"
-    }
+    "VTS": {"Safety": "Safety", "Pilferage": "Pilferage", "Operations": "Operations"},
 }
 
 alert_action_rca_reason = {
@@ -106,7 +126,7 @@ alert_action_rca_reason = {
         "Person Issue",
         "Equipment issue",
         "Location/Outlet Near by",
-        "Other"
+        "Other",
     ],
     "VA": [
         "Person issue",
@@ -116,8 +136,8 @@ alert_action_rca_reason = {
         "FalseAlert",
         "Maintenance Issue",
         "Calibration Issue",
-        "Other"
-    ]
+        "Other",
+    ],
 }
 
 rca_reason = {
@@ -126,115 +146,112 @@ rca_reason = {
         "Equipment overheating.",
         "Unauthorized fire-related activities.",
         "Negligence during operations.",
-        "Others"
+        "Others",
     ],
     "ABSENCE OF EARTHING": [
         "Equipment not properly grounded.",
         "Earthing mechanism damaged or removed.",
         "Neglect in routine earthing checks.",
-        "Others"
+        "Others",
     ],
     "ABSENCE OF WHEELCHOCK": [
         "Misplaced after previous use.",
         "Insufficient wheel chocks allocated.",
         "Lack of awareness or training.",
-        "Others"
+        "Others",
     ],
     "ALIGHT FROM TWO WHEELER": [
         "Unsafe behavior or oversight by personnel.",
         "Lack of adherence to safety guidelines.",
         "Lack of proper monitoring.",
-        "Others"
+        "Others",
     ],
     "UNAUTHORIZED FILLING OF CONTAINER": [
         "Negligence or lack of training.",
         "Absence of supervision in sensitive areas.",
         "Deliberate violation of procedures.",
-        "Others"
+        "Others",
     ],
     "ABSENCE OF FIRE EXTINGUISHER DECANTATION": [
         "Fire extinguisher removed for emergency use.",
         "Neglect in replacing after usage.",
         "Lack of periodic safety checks.",
-        "Others"
+        "Others",
     ],
     "Person not wearing Safety Helmet": [
         "Person not wearing helmets due to oversight.",
         "Helmets damaged or unavailable.",
         "Lack of training on PPE compliance.",
-        "Others"
+        "Others",
     ],
     "LINE OF FIRE": [
         "Personnel entering restricted or unsafe zones.",
         "Lack of awareness about safety protocols.",
         "Poor supervision or monitoring.",
-        "Others"
+        "Others",
     ],
     "ABSENCE OF SAFETY HARNESS": [
         "Safety harness not available at the site.",
         "Personnel neglecting safety protocols.",
         "Damaged or unusable harness not replaced.",
-        "Others"
+        "Others",
     ],
     "Fire-Extinguisher": [
         "Routine maintenance or refill pending.",
         "Misplacement during an emergency.",
         "Delay in procurement of replacements.",
-        "Others"
+        "Others",
     ],
     "Wheel-Chock": [
         "Chock not placed due to negligence.",
         "Damaged chock not replaced.",
         "Lack of proper storage or tracking.",
-        "Others"
+        "Others",
     ],
     "Intrusion-PersonAtPerimeter": [
         "Unauthorized entry due to lack of monitoring.",
         "Security personnel not alert.",
         "Malfunctioning perimeter systems.",
-        "Others"
+        "Others",
     ],
     "LPGLeak-FillingGun": [
         "Damaged or malfunctioning filling gun.",
         "Improper handling during operations.",
         "Lack of routine equipment checks.",
-        "Others"
+        "Others",
     ],
     "LPGLeak-Detection": [
         "Faulty or uncalibrated detection systems.",
         "Lack of routine maintenance.",
         "Leakage caused by improper operations.",
-        "Others"
+        "Others",
     ],
     "PPE-Compliance": [
         "Personnel unaware of PPE guidelines.",
         "Unavailability or damage to PPE equipment.",
         "Neglect in wearing mandatory PPE.",
-        "Others"
+        "Others",
     ],
-    "MAINTENANCE": [
-        "Insufficient spare parts inventory.",
-        "Others"
-    ],
+    "MAINTENANCE": ["Insufficient spare parts inventory.", "Others"],
     "HIGH-LEVEL ALARM": [
         "Exceeded operational limits",
         "Faulty level sensors.",
         "Incorrect calibration of setpoints.",
         "Blocked or restricted process flow.",
-        "Others"
+        "Others",
     ],
     "HCD ALARM": [
         "Misconfigured alarm thresholds.",
         "Process fluctuations beyond normal range.",
         "Sensor drift or errors.",
-        "Others"
+        "Others",
     ],
     "HCD FAULT": [
         "Loose wiring or connection fault.",
         "Power supply interruption.",
         "System software or firmware issues.",
-        "Others"
-    ]
+        "Others",
+    ],
 }
 
 vts_alert_section = {
@@ -246,39 +263,70 @@ vts_alert_section = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
-                              "Planning Officer SOD", "Zonal Transport Officer SOD", "Location In-Charge SOD"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Zonal Transport Officer SOD",
+                        "Location In-Charge SOD",
+                    ],
                 },
                 "Accept Violation": {
                     "name": "AcceptViolation",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
-                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Head SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Head SOD",
+                    ],
                 },
                 "False Violation": {
                     "name": "FalseViolation",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
-                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                    ],
+                },
             },
             "rca_reason": [
                 "Health Issue",
                 "Person Issue",
                 "Equipment issue",
                 "Location/Outlet Near by",
-                "Other"
-            ]
+                "Other",
+            ],
         }
     },
     "LPG": {
@@ -289,48 +337,81 @@ vts_alert_section = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Head LPG",
+                        "HQO HSE LPG",
+                        "HQO Operations LPG",
+                    ],
                 },
                 "Accept Violation": {
                     "name": "AcceptViolation",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Head LPG",
+                        "HQO HSE LPG",
+                        "HQO Operations LPG",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
-                              "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Head LPG",
+                        "HQO HSE LPG",
+                        "HQO Operations LPG",
+                    ],
                 },
                 "False Violation": {
                     "name": "FalseViolation",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Head LPG",
+                        "HQO HSE LPG",
+                        "HQO Operations LPG",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
-                              "HQO HSE LPG", "HQO Operations LPG"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Head LPG",
+                        "HQO HSE LPG",
+                        "HQO Operations LPG",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
                 "Pilferage": "Pilferage",
-                "Operations": "Operations"
+                "Operations": "Operations",
             },
             "rca_reason": [
                 "Health Issue",
                 "Person Issue",
                 "Equipment issue",
                 "Location/Outlet Near by",
-                "Other"
-            ]
+                "Other",
+            ],
         }
-    }
+    },
 }
 
 alert_action = {
@@ -342,32 +423,56 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Planning Officer SOD", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Planning Officer SOD",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Maintenance": {
                     "name": "Maintenance",
                     "close_alert": False,
-                    "roles": ["Admin", "Planning Officer SOD", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Planning Officer SOD",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Planning Officer SOD", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Planning Officer SOD",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal M&I Officer SOD",
+                        "M&I Officer SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Planning Officer SOD", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Planning Officer SOD",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal M&I Officer SOD",
+                        "M&I Officer SOD",
+                    ],
+                },
             },
-            "category": {
-                "Safety": "Safety",
-                "Process": "Process"
-            },
-            "rca_reason": [
-                "Equipment issue",
-                "Other"
-            ]
+            "category": {"Safety": "Safety", "Process": "Process"},
+            "rca_reason": ["Equipment issue", "Other"],
         },
         "VA": {
             "alert_section": "VA",
@@ -376,17 +481,45 @@ alert_action = {
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
-                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Location In-Charge SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Zonal SOD",
+                        "Zonal Manager SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Chief Manager SOD",
+                        "Zonal Executive Officer SOD",
+                        "Distribution Manager SOD",
+                        "HQO Manager SOD",
+                        "HQO Supply Officer SOD",
+                        "HQO HSE SOD",
+                    ],
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
-                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Location In-Charge SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Zonal SOD",
+                        "Zonal Manager SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Chief Manager SOD",
+                        "Zonal Executive Officer SOD",
+                        "Distribution Manager SOD",
+                        "HQO Manager SOD",
+                        "HQO Supply Officer SOD",
+                        "HQO HSE SOD",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
@@ -395,7 +528,7 @@ alert_action = {
                 "FalseAlert": "FalseAlert",
                 "InvalidAlert": "InvalidAlert",
                 "Quality": "Quality",
-                "Other": "Other"
+                "Other": "Other",
             },
             "rca_reason": [
                 "Person issue",
@@ -403,8 +536,8 @@ alert_action = {
                 "Lack of Awareness",
                 "InvalidAlert",
                 "FalseAlert",
-                "Other"
-            ]
+                "Other",
+            ],
         },
         "VTS": {
             "alert_section": "VTS",
@@ -413,46 +546,76 @@ alert_action = {
                 "UnBlock": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
-                              "Planning Officer SOD", "Zonal Transport Officer SOD", "Location In-Charge SOD"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Zonal Transport Officer SOD",
+                        "Location In-Charge SOD",
+                    ],
                 },
                 "Accept & Block": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
-                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Maintenance Officer SOD",
+                        "Plant In-Charge SOD",
+                        "Planning Officer SOD",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Head SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Head SOD",
+                    ],
                 },
                 "Send It Back": {
                     "name": "SendItBack",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Zonal Transport Officer SOD",
+                        "Zonal Head SOD",
+                    ],
+                },
             },
             "category": {
                 "Attributable to Transporter": [
-                    "Reason RCA", 
+                    "Reason RCA",
                     "Route Deviation without Stoppage",
                     "TT crew issue",
-                    "Location/Outlet Nearby"
-                    ],
+                    "Location/Outlet Nearby",
+                ],
                 "Non-Attributable to Transporter": [
-                    "Network Issue", "Equipment Issue", 
+                    "Network Issue",
+                    "Equipment Issue",
                     "Route deviation - Administrative orders",
                     "Route Deviation without Stoppage",
                     "TT crew issue",
-                    "Location/Outlet Nearby"
-                    ]
-            }
+                    "Location/Outlet Nearby",
+                ],
+            },
         },
         "EMLock": {
             "alert_section": "EMLock",
@@ -461,21 +624,25 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
+                },
             },
-            "category": {
-                "Other": "Other"
-            },
-            "rca_reason": [
-                "Other"
-            ]
-        }
+            "category": {"Other": "Other"},
+            "rca_reason": ["Other"],
+        },
     },
     "LPG": {
         "LPG": {
@@ -485,31 +652,91 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin","Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG", "Zonal Operations Head LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations Head LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG", "Zonal Operations Head LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations Head LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin","Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG", "Zonal Operations Head LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations Head LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin","Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG", "Zonal Operations Head LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations Head LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
@@ -518,7 +745,7 @@ alert_action = {
                 "FalseAlert": "FalseAlert",
                 "InvalidAlert": "InvalidAlert",
                 "Quality": "Quality",
-                "Other": "Other"
+                "Other": "Other",
             },
             "rca_reason": [
                 "Equipment issue",
@@ -527,8 +754,8 @@ alert_action = {
                 "FalseAlert",
                 "Maintenance Issue",
                 "Calibration Issue",
-                "Other"
-            ]
+                "Other",
+            ],
         },
         "VA": {
             "alert_section": "VA",
@@ -537,17 +764,45 @@ alert_action = {
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
-                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQO Operations LPG","HQO HSE LPG"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Location In-Charge LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Zonal HSE LPG",
+                        "Zonal Operations Chief Manager LPG",
+                        "Zonal Head LPG",
+                        "Zonal Officer LPG",
+                        "Zonal Operations LPG",
+                        "HQO LPG",
+                        "HQO Head LPG",
+                        "HQO Sale General Manager",
+                        "HQO Operations LPG",
+                        "HQO HSE LPG",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
@@ -556,7 +811,7 @@ alert_action = {
                 "FalseAlert": "FalseAlert",
                 "InvalidAlert": "InvalidAlert",
                 "Quality": "Quality",
-                "Other": "Other"
+                "Other": "Other",
             },
             "rca_reason": [
                 "Person issue",
@@ -566,8 +821,8 @@ alert_action = {
                 "FalseAlert",
                 "Maintenance Issue",
                 "Calibration Issue",
-                "Other"
-            ]
+                "Other",
+            ],
         },
         "VTS": {
             "alert_section": "VTS",
@@ -576,46 +831,77 @@ alert_action = {
                 "UnBlock": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Location In-Charge LPG", "Zonal Distributions Head LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Location In-Charge LPG",
+                        "Zonal Distributions Head LPG",
+                    ],
                 },
                 "Accept & Block": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG", "Maintenance Officer LPG", "Planning Officer LPG",
-                              "Location In-Charge LPG", "Zonal Distributions Head LPG"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer LPG",
+                        "Maintenance Officer LPG",
+                        "Planning Officer LPG",
+                        "Location In-Charge LPG",
+                        "Zonal Distributions Head LPG",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge LPG",
+                        "Zonal Distributions Head LPG",
+                        "Zonal Head LPG",
+                        "Zonal Operations LPG",
+                    ],
                 },
                 "Send It Back": {
                     "name": "SendItBack",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge LPG",
+                        "Zonal Distributions Head LPG",
+                        "Zonal Head LPG",
+                        "Zonal Operations LPG",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge LPG",
+                        "Zonal Distributions Head LPG",
+                        "Zonal Head LPG",
+                        "Zonal Operations LPG",
+                    ],
+                },
             },
             "category": {
                 "Attributable to Transporter": [
-                    "Reason RCA", 
+                    "Reason RCA",
                     "Route Deviation without Stoppage",
                     "TT crew issue",
-                    "Location/Outlet Nearby"
-                    ],
+                    "Location/Outlet Nearby",
+                ],
                 "Non-Attributable to Transporter": [
-                    "Network Issue", "Equipment Issue", 
+                    "Network Issue",
+                    "Equipment Issue",
                     "Route deviation - Administrative orders",
                     "Route Deviation without Stoppage",
                     "TT crew issue",
-                    "Location/Outlet Nearby"
-                    ]
-            }
+                    "Location/Outlet Nearby",
+                ],
+            },
         },
         "EMLock": {
             "alert_section": "EMLock",
@@ -624,21 +910,25 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
+                },
             },
-            "category": {
-                "Other": "Other"
-            },
-            "rca_reason": [
-                "Other"
-            ]
-        }
+            "category": {"Other": "Other"},
+            "rca_reason": ["Other"],
+        },
     },
     "RO": {
         "RO": {
@@ -650,25 +940,31 @@ alert_action = {
                     "name": "Raised",
                     "close_alert": False,
                     "create_workflow": True,
-                    "roles": ["Admin", "RO Dealer"]
+                    "roles": ["Admin", "RO Dealer"],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": False,
-                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Zonal Head RO"]
+                    "roles": [
+                        "Admin",
+                        "Sales Officer RO",
+                        "Regional Manager RO",
+                        "Zonal Head RO",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Zonal Head RO"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Sales Officer RO",
+                        "Regional Manager RO",
+                        "Zonal Head RO",
+                    ],
+                },
             },
-            "category": {
-                "Other": "Other"
-            },
-            "rca_reason": [
-                "Other"
-            ]
+            "category": {"Other": "Other"},
+            "rca_reason": ["Other"],
         },
         "VA": {
             "alert_section": "VA",
@@ -677,28 +973,66 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal Operations Head",
+                        "Zonal SOD Head",
+                        "HQO TAS Coordinator",
+                        "HQO Operations Team",
+                        "HQO HSSE Team",
+                    ],
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal Operations Head",
+                        "Zonal SOD Head",
+                        "HQO TAS Coordinator",
+                        "HQO Operations Team",
+                        "HQO HSSE Team",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
@@ -707,7 +1041,7 @@ alert_action = {
                 "FalseAlert": "FalseAlert",
                 "InvalidAlert": "InvalidAlert",
                 "Quality": "Quality",
-                "Other": "Other"
+                "Other": "Other",
             },
             "rca_reason": [
                 "Person issue",
@@ -715,8 +1049,8 @@ alert_action = {
                 "Lack of Awareness",
                 "InvalidAlert",
                 "FalseAlert",
-                "Other"
-            ]
+                "Other",
+            ],
         },
         "VTS": {
             "alert_section": "VTS",
@@ -725,41 +1059,79 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal Operations Head",
+                        "Zonal SOD Head",
+                        "HQO TAS Coordinator",
+                        "HQO Operations Team",
+                        "HQO HSSE Team",
+                    ],
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": [
+                        "Admin",
+                        "Safety Officer SOD",
+                        "Safety Officer LPG",
+                        "TAS Officer",
+                        "Zonal TAS Officer",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Location In-Charge LPG",
+                        "Zonal Safety Officer SOD",
+                        "Zonal Operations Head",
+                        "Zonal SOD Head",
+                        "HQO TAS Coordinator",
+                        "HQO Operations Team",
+                        "HQO HSSE Team",
+                    ],
+                },
             },
             "category": {
                 "Safety": "Safety",
                 "Pilferage": "Pilferage",
-                "Operations": "Operations"
+                "Operations": "Operations",
             },
             "rca_reason": [
                 "Health Issue",
                 "Person Issue",
                 "Equipment issue",
                 "Location/Outlet Near by",
-                "Other"
-            ]
+                "Other",
+            ],
         },
         "EMLock": {
             "alert_section": "EMLock",
@@ -768,22 +1140,26 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
-                }
+                    "roles": [
+                        "Admin",
+                        "Location In-Charge SOD",
+                        "Planning Officer SOD",
+                    ],
+                },
             },
-            "category": {
-                "Other": "Other"
-            },
-            "rca_reason": [
-                "Other"
-            ]
-        }
-    }
+            "category": {"Other": "Other"},
+            "rca_reason": ["Other"],
+        },
+    },
 }
 
 dry_out_query = f"""SELECT

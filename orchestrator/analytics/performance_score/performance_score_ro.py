@@ -4,6 +4,7 @@ Retail Outlet (RO) performance score — rules from pi_masters/ro_performance_ru
 TEMP: SALES_PERFORMANCE is disabled; NOZZLE_SALES_PATTERN (40%) uses last-30d daily nozzle
 pattern (stability) and compares nozzle 30d totals to estimated dryout sales loss.
 """
+
 from __future__ import annotations
 
 import json
@@ -36,7 +37,10 @@ def score_daily_nozzle_pattern_stability(cv: Optional[float]) -> Tuple[float, st
     Softer curve than min(1,cv) so typical retail volatility does not collapse to 0.
     """
     if cv is None:
-        return 50.0, "Insufficient daily nozzle data (need ≥3 days with volume); neutral 50."
+        return (
+            50.0,
+            "Insufficient daily nozzle data (need ≥3 days with volume); neutral 50.",
+        )
     c = max(0.0, float(cv))
     s = 100.0 * max(0.0, 1.0 - (c / RO_NOZZLE_CV_SOFT_CAP))
     return _clamp(s), (
@@ -133,7 +137,9 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
         self._clear_ro_input_cache()
         self._cache_nozzle_sales = await self._query_nozzle_sales_inputs(loc)
         self._cache_nozzle_daily = await self._query_nozzle_daily_volumes_30d(loc)
-        self._cache_dryout = await self._query_dryout_inputs(loc, window_days=30, sales=self._cache_nozzle_sales)
+        self._cache_dryout = await self._query_dryout_inputs(
+            loc, window_days=30, sales=self._cache_nozzle_sales
+        )
         self._ro_location_id = loc
 
     async def _fetch_nozzle_sales_inputs(self, location_id: str) -> Dict[str, Any]:
@@ -190,17 +196,26 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
             "prev_30d": prev_30,
         }
 
-    async def _fetch_dryout_inputs(self, location_id: str, window_days: int = 30) -> Dict[str, Any]:
+    async def _fetch_dryout_inputs(
+        self, location_id: str, window_days: int = 30
+    ) -> Dict[str, Any]:
         """Use cached dryout for default 30d window; otherwise re-query alerts with same cached sales."""
         await self._ensure_ro_inputs(location_id)
         if window_days == 30 and self._cache_dryout is not None:
             return dict(self._cache_dryout)
         sap_key = str(location_id).strip()
-        sales = self._cache_nozzle_sales or await self._query_nozzle_sales_inputs(sap_key)
-        return await self._query_dryout_inputs(sap_key, window_days=window_days, sales=sales)
+        sales = self._cache_nozzle_sales or await self._query_nozzle_sales_inputs(
+            sap_key
+        )
+        return await self._query_dryout_inputs(
+            sap_key, window_days=window_days, sales=sales
+        )
 
     async def _query_dryout_inputs(
-        self, location_id: str, window_days: int = 30, sales: Optional[Dict[str, Any]] = None
+        self,
+        location_id: str,
+        window_days: int = 30,
+        sales: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Dryout episodes for this RO: merge alerts on (sap_id, product_code) with
@@ -379,22 +394,39 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
                 "cris", "1"
             )
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                "execute_query"
+            )
             function = await charts_actions.charts_connection_vault_routing(
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams
             )
             data = await function(query=query)
-            return float(sum([row["loss_of_sale"] for row in data if
-                       row.get("loss_of_sale", 0)])) if data else None
+            return (
+                float(
+                    sum(
+                        [
+                            row["loss_of_sale"]
+                            for row in data
+                            if row.get("loss_of_sale", 0)
+                        ]
+                    )
+                )
+                if data
+                else None
+            )
         except Exception:
             return None
 
-    async def _fetch_nozzle_daily_volumes_30d(self, location_id: str) -> Tuple[List[float], Optional[float]]:
+    async def _fetch_nozzle_daily_volumes_30d(
+        self, location_id: str
+    ) -> Tuple[List[float], Optional[float]]:
         """Daily total nozzle sales_volume for last 30 days; uses cache from _ensure_ro_inputs."""
         await self._ensure_ro_inputs(location_id)
         return self._cache_nozzle_daily or ([], None)
 
-    async def _query_nozzle_daily_volumes_30d(self, loc: str) -> Tuple[List[float], Optional[float]]:
+    async def _query_nozzle_daily_volumes_30d(
+        self, loc: str
+    ) -> Tuple[List[float], Optional[float]]:
         """Daily total nozzle sales_volume for last 30 days; return (volumes, cv or None)."""
         loc = loc.replace("'", "''")
         query = f"""
@@ -421,7 +453,9 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
         cv = stdev / mean
         return volumes, cv
 
-    async def _compute_va_score_pi_score(self, name: str, rules: Dict, location_id: str):
+    async def _compute_va_score_pi_score(
+        self, name: str, rules: Dict, location_id: str
+    ):
         pi_score = []
         for rule in rules["rules"]:
             score = 0.0
@@ -437,7 +471,9 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
                 if raw_va is not None:
                     va_overall = raw_va
                     score = round((va_overall * 10.0 * rule["weightage"]) / 100.0, 2)
-                    msg = f"VA Portal overall score {va_overall}; scaled to rule weight."
+                    msg = (
+                        f"VA Portal overall score {va_overall}; scaled to rule weight."
+                    )
                 else:
                     va_overall = RO_VA_NEUTRAL_OVERALL
                     score = round((va_overall * 10.0 * rule["weightage"]) / 100.0, 2)
@@ -475,7 +511,9 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
         module_result["insights"] = psi.generate_summary_insights(module_result)
         return module_result
 
-    async def _compute_nozzle_sales_pattern_pi_score(self, name: str, rules: Dict, location_id: str):
+    async def _compute_nozzle_sales_pattern_pi_score(
+        self, name: str, rules: Dict, location_id: str
+    ):
         """
         TEMP replacement for SALES_PERFORMANCE: 30d daily nozzle pattern (stability)
         and comparison of nozzle 30d volume vs estimated dryout sales loss volume.
@@ -531,7 +569,9 @@ class ROPerformanceScore(performance_score_factory.PerformanceIndex):
         module_result["insights"] = psi.generate_summary_insights(module_result)
         return module_result
 
-    async def _compute_dryout_patterns_pi_score(self, name: str, rules: Dict, location_id: str):
+    async def _compute_dryout_patterns_pi_score(
+        self, name: str, rules: Dict, location_id: str
+    ):
         pi_score = []
         window = 30
         if rules.get("rules"):

@@ -12,7 +12,9 @@ class NotifySMS(notification_manager.NotificationManager):
         :return:
         """
 
-    def publish_message(self, body, subject, to_email, from_email=None, cc=None, **kwargs):
+    def publish_message(
+        self, body, subject, to_email, from_email=None, cc=None, **kwargs
+    ):
         """
         Function to send an email
         :param body:
@@ -23,5 +25,3 @@ class NotifySMS(notification_manager.NotificationManager):
         :param kwargs:
         :return:
         """
-
-

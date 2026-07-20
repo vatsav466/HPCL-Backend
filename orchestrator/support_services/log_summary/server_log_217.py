@@ -1,5 +1,3 @@
-import urdhva_base
-import os
 import paramiko
 import re
 import asyncio
@@ -11,14 +9,11 @@ REMOTE_USER = "novex"
 REMOTE_PASSWORD = "Hpcl@123"
 REMOTE_LOG_DIR = "/var/log/ceg_logs"
 
-SLOTS = [
-    (time(8, 0), "8AM"),
-    (time(12, 0), "12PM"),
-    (time(17, 0), "5PM")
-]
+SLOTS = [(time(8, 0), "8AM"), (time(12, 0), "12PM"), (time(17, 0), "5PM")]
 
-DATETIME_PATTERN = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')
-ERROR_PATTERN = re.compile(r'(ERROR|logger\.error)', re.IGNORECASE)
+DATETIME_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
+ERROR_PATTERN = re.compile(r"(ERROR|logger\.error)", re.IGNORECASE)
+
 
 async def monitor_remote_logs():
     print("Monitoring all logs on 217 from 211...")
@@ -28,10 +23,20 @@ async def monitor_remote_logs():
 
     for i in range(len(SLOTS)):
         if now_ist.time() < SLOTS[i][0]:
-            current_slot_start = datetime.combine(today, SLOTS[i-1][0], tzinfo=ZoneInfo("Asia/Kolkata")) if i > 0 else datetime.combine(today, SLOTS[0][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+            current_slot_start = (
+                datetime.combine(
+                    today, SLOTS[i - 1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+                )
+                if i > 0
+                else datetime.combine(
+                    today, SLOTS[0][0], tzinfo=ZoneInfo("Asia/Kolkata")
+                )
+            )
             break
     else:
-        current_slot_start = datetime.combine(today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+        current_slot_start = datetime.combine(
+            today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+        )
 
     slot_start_utc = current_slot_start.astimezone(timezone.utc)
 
@@ -64,8 +69,12 @@ async def monitor_remote_logs():
                     match = DATETIME_PATTERN.match(line)
                     if match:
                         try:
-                            log_time = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-                            if log_time >= slot_start_utc and ERROR_PATTERN.search(line):
+                            log_time = datetime.strptime(
+                                match.group(1), "%Y-%m-%d %H:%M:%S"
+                            ).replace(tzinfo=timezone.utc)
+                            if log_time >= slot_start_utc and ERROR_PATTERN.search(
+                                line
+                            ):
                                 errors.append(line.strip())
                         except Exception:
                             continue
@@ -77,7 +86,9 @@ async def monitor_remote_logs():
 
             except Exception as e:
                 print(f"Error reading {file_name}: {e}")
-                log_blocks.append(f"Log File   : {file_name}\nStatus     : FAIL\nError      : Could not read log file: {e}")
+                log_blocks.append(
+                    f"Log File   : {file_name}\nStatus     : FAIL\nError      : Could not read log file: {e}"
+                )
 
     finally:
         sftp.close()
@@ -89,7 +100,7 @@ async def monitor_remote_logs():
         f.write("\n\n".join(log_blocks))
 
     # Email
-    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+    formatted_time = now_ist.strftime("%d-%m-%Y %I:%M %p IST")
     html_body = f"""
     <html>
         <body>
@@ -106,8 +117,14 @@ async def monitor_remote_logs():
         try:
             print(f"Attempt {attempt} to send email with TXT attachment...")
             import orchestrator.notification_manager.notification_factory
-            ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
-            print("Email module imported from path:", orchestrator.notification_manager.notification_factory.__file__)
+
+            ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+                "email"
+            )
+            print(
+                "Email module imported from path:",
+                orchestrator.notification_manager.notification_factory.__file__,
+            )
             await ins.publish_message(
                 subject=f"SERVER 217 - Log Summary - {formatted_time}",
                 recipients=[
@@ -116,12 +133,12 @@ async def monitor_remote_logs():
                     "venu@algofusiontech.com",
                     "moufikali@algofusiontech.com",
                     "bala@algofusiontech.com",
-                    "manohar.v@algofusiontech.com"
+                    "manohar.v@algofusiontech.com",
                 ],
                 html_content=True,
                 body=html_body,
                 attachments=[txt_path],
-                force_send=True
+                force_send=True,
             )
             print("Email sent successfully.")
             break
@@ -129,6 +146,7 @@ async def monitor_remote_logs():
             print(f"Attempt {attempt} - Failed to send email: {e}")
             if attempt == 3:
                 print("All retries failed. Giving up.")
+
 
 if __name__ == "__main__":
     asyncio.run(monitor_remote_logs())

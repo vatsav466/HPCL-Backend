@@ -1,5 +1,4 @@
 import urdhva_base
-import os
 import sys
 import pytz
 import json
@@ -148,18 +147,22 @@ ORDER BY
     e.indent_raised_date
 """
 
-'''
+"""
 you can include cancel_time, user_cancel, indent_hold_release_time, indent_delivery_date, Indent_executed_datetime
 
 indent_delivery_date - action_msg: Indent Delivered, processed_time
 indent_hold_release_time - action_msg: Indent On Hold Released, processed_time
 cancel_time - action_msg: Indent Cancelled, processed_time
-'''
+"""
 
-mapping = {"Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
-           "Indent On Hold Released": {"action_msg": "Indent On Hold Released",
-                                       "time": "ims_datetime"},
-           "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"}}
+mapping = {
+    "Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
+    "Indent On Hold Released": {
+        "action_msg": "Indent On Hold Released",
+        "time": "ims_datetime",
+    },
+    "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"},
+}
 
 
 def get_column_data(record, key):
@@ -182,7 +185,7 @@ def get_column_data(record, key):
             if not ts:
                 return None
             try:
-                if mpa_data['time'] == 'ims_datetime':
+                if mpa_data["time"] == "ims_datetime":
                     return datetime.datetime.fromisoformat(ts).replace(tzinfo=None)
                 # Parse timestamp safely
                 utc_time = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -214,16 +217,20 @@ async def fetch_dry_out_report(start_date, end_date):
         # End of this month (exclusive end_date for queries)
         month_end = next_month - datetime.timedelta(seconds=1)
 
-        print(f"Processing month: {month_start.strftime('%B %Y')} "
-              f"({month_start.date()} to {month_end.date()})")
-        query_rebuilt = query_unique_alert.format(start_date=str(month_start),
-                                                  end_date=str(month_end))
-        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(query_rebuilt,
-                                                                               limit=1000000)
-        print(resp['total'])
-        if len(resp['data']) == 0:
+        print(
+            f"Processing month: {month_start.strftime('%B %Y')} "
+            f"({month_start.date()} to {month_end.date()})"
+        )
+        query_rebuilt = query_unique_alert.format(
+            start_date=str(month_start), end_date=str(month_end)
+        )
+        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(
+            query_rebuilt, limit=1000000
+        )
+        print(resp["total"])
+        if len(resp["data"]) == 0:
             break
-        records.extend(resp['data'])
+        records.extend(resp["data"])
         current = next_month
     df = pl.DataFrame(records)
 
@@ -231,7 +238,7 @@ async def fetch_dry_out_report(start_date, end_date):
         df = df.with_columns(
             pl.Series(
                 name=key,
-                values=[get_column_data(x, key) for x in df["alert_history"].to_list()]
+                values=[get_column_data(x, key) for x in df["alert_history"].to_list()],
             )
         )
     # Drop alert_history column
@@ -256,27 +263,21 @@ async def fetch_dry_out_report(start_date, end_date):
     # If Indent Status == 'Cancelled' and Indent Cancelled is null, use Dryout End Time
     df = df.with_columns(
         pl.when(
-            (pl.col("Indent Status") == "Cancelled") & (pl.col("Indent Cancelled").is_null())
+            (pl.col("Indent Status") == "Cancelled")
+            & (pl.col("Indent Cancelled").is_null())
         )
         .then(pl.col("Dryout End Time"))
         .otherwise(pl.col("Indent Cancelled"))
         .alias("Indent Cancelled")
     )
-    df = df.unique(subset=['Alert ID'])
+    df = df.unique(subset=["Alert ID"])
 
-    df = df.with_columns(
-        pl.col("Alert ID").cast(pl.Utf8).alias("alert_id_str")
-    )
+    df = df.with_columns(pl.col("Alert ID").cast(pl.Utf8).alias("alert_id_str"))
 
-    df = df.filter(
-        pl.col("Closure Status") != "NotAvailable"
-    )
-    df = df.filter(
-        pl.col("Indent Status") != "NotAvailable"
-    )
+    df = df.filter(pl.col("Closure Status") != "NotAvailable")
+    df = df.filter(pl.col("Indent Status") != "NotAvailable")
 
     # df = df.filter(pl.col("alert_id_str") == "8495969")
-
 
     # df = df.filter(
     #     pl.col("Dryout End Time").is_not_null() &
@@ -288,12 +289,11 @@ async def fetch_dry_out_report(start_date, end_date):
     # )
     df = df.filter(
         pl.col("Dryout End Time").is_not_null()
-        &
-        (
-                pl.when(pl.col("Indent On Hold Released").is_not_null())
-                .then(pl.col("Dryout End Time") - pl.col("Indent On Hold Released"))
-                .otherwise(pl.col("Dryout End Time") - pl.col("Indent Raised Date"))
-                > pl.duration(days=4)
+        & (
+            pl.when(pl.col("Indent On Hold Released").is_not_null())
+            .then(pl.col("Dryout End Time") - pl.col("Indent On Hold Released"))
+            .otherwise(pl.col("Dryout End Time") - pl.col("Indent Raised Date"))
+            > pl.duration(days=4)
         )
     )
     print("*" * 30)
@@ -302,22 +302,39 @@ async def fetch_dry_out_report(start_date, end_date):
     # print(df.to_dicts())
     for record in df.to_dicts():
         print(f"Alert Status - {record['alert_status']}, ID {record['Alert ID']}")
-        on_hold_released = record["Indent On Hold Released"] if record["Indent On Hold Released"] else record["Indent Raised Date"]
-        query = (f"SELECT * FROM dry_out_history where sap_id='{record['Location ID']}' "
-                 f" AND product_no='{record['Product Code']}' AND dry_out_in_days = '1' "
-                 f" AND dry_out_end_time::DATE >= '{on_hold_released.strftime('%Y-%m-%d')}' "
-                 f" ORDER BY id ASC ")
-        data = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(query, limit=5)
+        on_hold_released = (
+            record["Indent On Hold Released"]
+            if record["Indent On Hold Released"]
+            else record["Indent Raised Date"]
+        )
+        query = (
+            f"SELECT * FROM dry_out_history where sap_id='{record['Location ID']}' "
+            f" AND product_no='{record['Product Code']}' AND dry_out_in_days = '1' "
+            f" AND dry_out_end_time::DATE >= '{on_hold_released.strftime('%Y-%m-%d')}' "
+            f" ORDER BY id ASC "
+        )
+        data = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(
+            query, limit=5
+        )
         print("*" * 30)
-        print(f"LOC - {record['Location ID']}, PROD - {record['Product Code']}, "
-              f"Start - {record['Dryout Start Time']}, HOLD - {on_hold_released}, "
-              f"END - {record['Dryout End Time']}")
-        if len(data['data']):
-            for d in data['data']:
-                print(f"Start - {d['dry_out_start_time']}, END - {d['dry_out_end_time']}")
-            if data['data'][0]['dry_out_end_time'] < record['Dryout End Time'] and \
-                on_hold_released < data['data'][0]['dry_out_end_time'] and \
-                    (record['Dryout End Time'] - data['data'][0]['dry_out_end_time']).days > 1  :
+        print(
+            f"LOC - {record['Location ID']}, PROD - {record['Product Code']}, "
+            f"Start - {record['Dryout Start Time']}, HOLD - {on_hold_released}, "
+            f"END - {record['Dryout End Time']}"
+        )
+        if len(data["data"]):
+            for d in data["data"]:
+                print(
+                    f"Start - {d['dry_out_start_time']}, END - {d['dry_out_end_time']}"
+                )
+            if (
+                data["data"][0]["dry_out_end_time"] < record["Dryout End Time"]
+                and on_hold_released < data["data"][0]["dry_out_end_time"]
+                and (
+                    record["Dryout End Time"] - data["data"][0]["dry_out_end_time"]
+                ).days
+                > 1
+            ):
                 print("Valid")
                 q = (
                     "UPDATE alerts SET "
@@ -327,10 +344,15 @@ async def fetch_dry_out_report(start_date, end_date):
                 print(q)
                 if update_records:
                     await urdhva_base.postgresmodel.BasePostgresModel.update_by_query(q)
-            elif data['data'][0]['dry_out_end_time'] < record['Dryout End Time'] and \
-                not record['Indent On Hold Released'] and \
-                    record['Indent Raised Date'] < data['data'][0]['dry_out_end_time'] and \
-                    (record['Dryout End Time'] - data['data'][0]['dry_out_end_time']).days > 1  :
+            elif (
+                data["data"][0]["dry_out_end_time"] < record["Dryout End Time"]
+                and not record["Indent On Hold Released"]
+                and record["Indent Raised Date"] < data["data"][0]["dry_out_end_time"]
+                and (
+                    record["Dryout End Time"] - data["data"][0]["dry_out_end_time"]
+                ).days
+                > 1
+            ):
                 print("Valid")
                 q = (
                     "UPDATE alerts SET "
@@ -342,8 +364,10 @@ async def fetch_dry_out_report(start_date, end_date):
                     await urdhva_base.postgresmodel.BasePostgresModel.update_by_query(q)
         else:
             print(f"No data for {record['Location ID']}")
-            if (record['Dryout End Time'] - on_hold_released).days > 6 :
-                end_time = on_hold_released + datetime.timedelta(hours=random.randint(6, 20))
+            if (record["Dryout End Time"] - on_hold_released).days > 6:
+                end_time = on_hold_released + datetime.timedelta(
+                    hours=random.randint(6, 20)
+                )
                 print(f"End time: {end_time}")
                 q = (
                     "UPDATE alerts SET "
@@ -353,9 +377,13 @@ async def fetch_dry_out_report(start_date, end_date):
                 print(q)
                 if update_records:
                     await urdhva_base.postgresmodel.BasePostgresModel.update_by_query(q)
-            elif not record['Indent On Hold Released'] and \
-                    (record['Dryout End Time'] - record['Indent Raised Date']).days > 6 :
-                end_time = on_hold_released + datetime.timedelta(hours=random.randint(6, 20))
+            elif (
+                not record["Indent On Hold Released"]
+                and (record["Dryout End Time"] - record["Indent Raised Date"]).days > 6
+            ):
+                end_time = on_hold_released + datetime.timedelta(
+                    hours=random.randint(6, 20)
+                )
                 print(f"End time: {end_time}")
                 q = (
                     "UPDATE alerts SET "
@@ -371,7 +399,7 @@ async def fetch_dry_out_report(start_date, end_date):
 if __name__ == "__main__":
     update_records = False
     parser = argparse.ArgumentParser(
-        description='Generate dryout report for specified date range',
+        description="Generate dryout report for specified date range",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -383,28 +411,28 @@ Examples:
 
   # Generate report from start date to today
   python dry_out_report_generation.py --start-date 2024-01-01
-        """
+        """,
     )
 
     parser.add_argument(
-        '--start-date',
+        "--start-date",
         type=str,
-        help='Start date for the report (format: YYYY-MM-DD). Default: 6 months ago from today',
-        default=None
+        help="Start date for the report (format: YYYY-MM-DD). Default: 6 months ago from today",
+        default=None,
     )
 
     parser.add_argument(
-        '--end-date',
+        "--end-date",
         type=str,
-        help='End date for the report (format: YYYY-MM-DD). Default: today',
-        default=None
+        help="End date for the report (format: YYYY-MM-DD). Default: today",
+        default=None,
     )
 
     parser.add_argument(
-        '--update-records',
+        "--update-records",
         type=bool,
-        help='True value will update dryout records',
-        default=False
+        help="True value will update dryout records",
+        default=False,
     )
 
     args = parser.parse_args()
@@ -412,30 +440,38 @@ Examples:
     # Parse dates or use defaults
     if args.start_date:
         try:
-            start_date = datetime.datetime.strptime(args.start_date, '%Y-%m-%d')
+            start_date = datetime.datetime.strptime(args.start_date, "%Y-%m-%d")
         except ValueError:
             print(
-                f"Error: Invalid start-date format '{args.start_date}'. Expected format: YYYY-MM-DD")
+                f"Error: Invalid start-date format '{args.start_date}'. Expected format: YYYY-MM-DD"
+            )
             sys.exit(1)
     else:
         # Default: 6 months ago from today
-        start_date = (datetime.datetime.today() - datetime.timedelta(days=6 * 30))
-        start_date = start_date.replace(day=1, minute=0, hour=0, second=0, microsecond=0)
+        start_date = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        start_date = start_date.replace(
+            day=1, minute=0, hour=0, second=0, microsecond=0
+        )
 
     if args.end_date:
         try:
-            end_date = datetime.datetime.strptime(args.end_date, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(args.end_date, "%Y-%m-%d")
         except ValueError:
-            print(f"Error: Invalid end-date format '{args.end_date}'. Expected format: YYYY-MM-DD")
+            print(
+                f"Error: Invalid end-date format '{args.end_date}'. Expected format: YYYY-MM-DD"
+            )
             sys.exit(1)
     else:
         # Default: today
-        end_date = datetime.datetime.today().replace(minute=0, hour=0, second=0, microsecond=0)
+        end_date = datetime.datetime.today().replace(
+            minute=0, hour=0, second=0, microsecond=0
+        )
 
     # Validate date range
     if start_date > end_date:
         print(
-            f"Error: Start date ({start_date.date()}) must be before or equal to end date ({end_date.date()})")
+            f"Error: Start date ({start_date.date()}) must be before or equal to end date ({end_date.date()})"
+        )
         sys.exit(1)
 
     print(f"Generating dryout report from {start_date.date()} to {end_date.date()}")

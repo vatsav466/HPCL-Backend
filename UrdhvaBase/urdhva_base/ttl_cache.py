@@ -46,7 +46,9 @@ class InMemTTLCache:
                 await self.set(key, new_value)
                 return new_value
             except Exception as e:
-                print(f"Exception while doing get operation {e}, Traceback {traceback.format_exc()}")
+                print(
+                    f"Exception while doing get operation {e}, Traceback {traceback.format_exc()}"
+                )
                 return None
 
     async def set(self, key, value):
@@ -63,7 +65,9 @@ class InMemTTLCache:
         """
         String representation of the cache with non-expired items.
         """
-        return str({k: v[0] for k, v in self.store.items() if not self._is_expired(v[1])})
+        return str(
+            {k: v[0] for k, v in self.store.items() if not self._is_expired(v[1])}
+        )
 
 
 class CacheDataInstance:
@@ -76,7 +80,9 @@ class CacheDataInstance:
         """
         if cache_key not in CacheDataInstance._instances:
             print(f"Cache Key Not Available {cache_key}")
-            CacheDataInstance._instances[cache_key] = CacheDataInstance(loader_func).cache_handler
+            CacheDataInstance._instances[cache_key] = CacheDataInstance(
+                loader_func
+            ).cache_handler
 
         return CacheDataInstance._instances[cache_key]
 
@@ -84,8 +90,10 @@ class CacheDataInstance:
         """
         Initializing cache class
         """
-        self.cache_handler = InMemTTLCache(ttl_seconds=urdhva_base.settings.default_masters_cache_seconds,
-                                           fetch_function=loader_func)
+        self.cache_handler = InMemTTLCache(
+            ttl_seconds=urdhva_base.settings.default_masters_cache_seconds,
+            fetch_function=loader_func,
+        )
 
 
 """

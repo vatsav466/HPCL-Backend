@@ -1,5 +1,6 @@
 from marshmallow.validate import ValidationError
 
+
 class TimeRangeAmbiguousError(ValidationError):
     """
     Time range is ambiguous error.
@@ -32,6 +33,7 @@ class TimeDeltaAmbiguousError(ValidationError):
             ),
             field_name="time_range",
         )
+
 
 class TimeRangeParseFailError(ValidationError):
     def __init__(self, human_readable: str) -> None:

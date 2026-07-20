@@ -1,19 +1,21 @@
 import urdhva_base
 import traceback
+
 # import ThingsBoardApi
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
+
 
 class CheckHlsHealth:
     async def get_required_variables(self):
         """
         Returns a list of strings containing the required variables for the action.
-        
+
         Returns:
             list: A list containing the strings "alert_id", "deviceId", and "sapId".
         """
         return ["alert_id", "location_device_id", "sap_id"]
-    
+
     async def checkhlshealth(self, params):
         """
         Checks if the HLS (High Level Shutdown) for a given device is down.
@@ -39,11 +41,14 @@ class CheckHlsHealth:
             tuple: A tuple containing a boolean indicating success, and a dictionary with the key "triggerShutdown"
             set to the value of tankhlsstatus.
         """
-        logger.info("Check HLS Health alert_id:%s DeviceId:%s" % (params.get("alert_id"), params.get('location_device_id')))
+        logger.info(
+            "Check HLS Health alert_id:%s DeviceId:%s"
+            % (params.get("alert_id"), params.get("location_device_id"))
+        )
         try:
             alertid = params.get("alert_id")
-            deviceid = params.get('location_device_id')
-            sapId = params.get('sap_id')
+            deviceid = params.get("location_device_id")
+            params.get("sap_id")
             print("Check HLS Health Alertid:%s DeviceId:%s" % (alertid, deviceid))
             # tb = ThingsBoardApi.TB('tas', sapId)
             # tankhlsstatus = await tb.checkHLSDown(deviceid)

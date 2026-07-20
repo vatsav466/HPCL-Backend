@@ -3,23 +3,32 @@ from dashboard_studio_model import *
 import fastapi
 from orchestrator.dashboard.chart_factory import charts_functions
 
-router = fastapi.APIRouter(prefix='/dashboardgroups')
+router = fastapi.APIRouter(prefix="/dashboardgroups")
 
 
 # Action update_dashboard_groups
-@router.post('/update_dashboard_groups', tags=['DashboardGroups'])
-async def dashboardgroups_update_dashboard_groups(data: Dashboardgroups_Update_Dashboard_GroupsParams):
-    grp_data = DashboardGroups(**{"id": data.record_id, "name": data.name,
-                                  "created_by": data.created_by, "created_user": data.created_user,
-                                  "dashboard_order": data.dashboard_order
-                                  })
+@router.post("/update_dashboard_groups", tags=["DashboardGroups"])
+async def dashboardgroups_update_dashboard_groups(
+    data: Dashboardgroups_Update_Dashboard_GroupsParams,
+):
+    grp_data = DashboardGroups(
+        **{
+            "id": data.record_id,
+            "name": data.name,
+            "created_by": data.created_by,
+            "created_user": data.created_user,
+            "dashboard_order": data.dashboard_order,
+        }
+    )
     await grp_data.modify()
     return "Group Modified"
 
 
 # Action update_dashboard_group_order
-@router.post('/update_dashboard_group_order', tags=['DashboardGroups'])
-async def dashboardgroups_update_dashboard_group_order(data: Dashboardgroups_Update_Dashboard_Group_OrderParams):
+@router.post("/update_dashboard_group_order", tags=["DashboardGroups"])
+async def dashboardgroups_update_dashboard_group_order(
+    data: Dashboardgroups_Update_Dashboard_Group_OrderParams,
+):
     async_session = await charts_functions.check_db("db")
     session = async_session()
     try:

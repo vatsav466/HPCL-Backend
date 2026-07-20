@@ -1,16 +1,11 @@
 import typing
 import datetime
-import ipaddress
-import fastapi
 import pydantic
-import shutil
-import os
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 import ingestion_api_enum
 
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
@@ -130,7 +125,9 @@ class vtsBlockedTruckOldCreate(pydantic.BaseModel):
     first_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
     second_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
     third_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
-    active: typing.Optional[bool] = pydantic.Field(False, )
+    active: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
     approval_status: typing.Optional[str] = pydantic.Field("", **{})
     blocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
     unblocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
@@ -489,22 +486,94 @@ class Taslistener_Get_DataParams(pydantic.BaseModel):
 
 
 class TasAgentCommStatusSchema(UrdhvaPostgresBase):
-    __tablename__ = 'tas_agent_comm_status'
-    
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    message: Mapped[typing.Optional[str]] = mapped_column("message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    opcda_status: Mapped[typing.Optional[str]] = mapped_column("opcda_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    data_receiving_status: Mapped[typing.Optional[str]] = mapped_column("data_receiving_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    configuration_healthy: Mapped[typing.Optional[str]] = mapped_column("configuration_healthy", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    last_opc_failure: Mapped[typing.Optional[str]] = mapped_column("last_opc_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    last_rabbit_failure: Mapped[typing.Optional[str]] = mapped_column("last_rabbit_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    __tablename__ = "tas_agent_comm_status"
+
+    sap_id: Mapped[str] = mapped_column(
+        "sap_id",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    status: Mapped[typing.Optional[str]] = mapped_column(
+        "status",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    message: Mapped[typing.Optional[str]] = mapped_column(
+        "message",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    opcda_status: Mapped[typing.Optional[str]] = mapped_column(
+        "opcda_status",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    data_receiving_status: Mapped[typing.Optional[str]] = mapped_column(
+        "data_receiving_status",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    configuration_healthy: Mapped[typing.Optional[str]] = mapped_column(
+        "configuration_healthy",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    last_opc_failure: Mapped[typing.Optional[str]] = mapped_column(
+        "last_opc_failure",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    last_rabbit_failure: Mapped[typing.Optional[str]] = mapped_column(
+        "last_rabbit_failure",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    location_name: Mapped[typing.Optional[str]] = mapped_column(
+        "location_name",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
 
 
 class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'tas_agent_comm_status'
-    
+    __tablename__ = "tas_agent_comm_status"
+
     sap_id: str
     status: typing.Optional[str] = pydantic.Field("", **{})
     message: typing.Optional[str] = pydantic.Field("", **{})
@@ -516,7 +585,7 @@ class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasAgentCommStatusSchema
@@ -524,8 +593,8 @@ class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
 
 class TasAgentCommStatus(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'tas_agent_comm_status'
-    
+    __tablename__ = "tas_agent_comm_status"
+
     sap_id: typing.Optional[str] | None = None
     status: typing.Optional[str] = pydantic.Field("", **{})
     message: typing.Optional[str] = pydantic.Field("", **{})
@@ -537,7 +606,7 @@ class TasAgentCommStatus(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasAgentCommStatusSchema
@@ -582,10 +651,18 @@ class emlockStatusDataCreate(pydantic.BaseModel):
     emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_code: typing.Optional[str] = pydantic.Field("", **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
-    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
-    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
-    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
-    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l1: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
     l1_id: typing.Optional[str] = pydantic.Field("", **{})
     l2_id: typing.Optional[str] = pydantic.Field("", **{})
     created_date: typing.Optional[datetime.datetime] | None = None

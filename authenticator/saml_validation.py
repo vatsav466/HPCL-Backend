@@ -1,7 +1,5 @@
 import urdhva_base
 import uuid
-import fastapi
-import urllib.parse
 import hpcl_ceg_model
 from msal import ConfidentialClientApplication
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -32,32 +30,33 @@ def create_msal_app(client_id, client_secret, tenant_id):
 # Generating Azure Authorization URL
 # ----------------------------
 async def get_redirect_url(
-        tenant_id: str,
-        client_id: str,
-        client_secret: str,
-        redirect_uri: str,
-        resp_type: str = "json",
+    tenant_id: str,
+    client_id: str,
+    client_secret: str,
+    redirect_uri: str,
+    resp_type: str = "json",
 ):
     msal_app = create_msal_app(client_id, client_secret, tenant_id)
     auth_url = msal_app.get_authorization_request_url(
-        scopes=SCOPE,
-        state=str(uuid.uuid4()),
-        redirect_uri=redirect_uri
+        scopes=SCOPE, state=str(uuid.uuid4()), redirect_uri=redirect_uri
     )
-    return JSONResponse(content={"url": auth_url}) if resp_type == "json" else RedirectResponse(auth_url)
+    return (
+        JSONResponse(content={"url": auth_url})
+        if resp_type == "json"
+        else RedirectResponse(auth_url)
+    )
 
 
-async def auth_callback(code: str, tenant_id: str, client_id: str, client_secret: str,
-                        redirect_uri: str):
+async def auth_callback(
+    code: str, tenant_id: str, client_id: str, client_secret: str, redirect_uri: str
+):
     if not code:
         return False, "Missing expected input", {}
 
     msal_app = create_msal_app(client_id, client_secret, tenant_id)
 
     result = msal_app.acquire_token_by_authorization_code(
-        code,
-        scopes=SCOPE,
-        redirect_uri=redirect_uri
+        code, scopes=SCOPE, redirect_uri=redirect_uri
     )
 
     if "id_token_claims" not in result:
@@ -70,8 +69,11 @@ async def auth_callback(code: str, tenant_id: str, client_id: str, client_secret
 
     # Checking user exists in database or not
     query = f"username='{user_name.split('@')[0].strip()}'"
-    user_info = await hpcl_ceg_model.Users.get_all(urdhva_base.QueryParams(q=query, limit=1), resp_type='')
-    if not user_info['data']:
+    user_info = await hpcl_ceg_model.Users.get_all(
+        urdhva_base.QueryParams(q=query, limit=1), resp_type=""
+    )
+    if not user_info["data"]:
         return False, "Not a valid User", {}
     return await authentication_manager_ad.AuthenticationManager.generate_auth_info(
-        user_info=user_info['data'][0])
+        user_info=user_info["data"][0]
+    )

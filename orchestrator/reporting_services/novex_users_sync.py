@@ -6,12 +6,10 @@ import time
 import jinja2
 import asyncio
 import argparse
-import tempfile
 import psycopg2
 import traceback
 import pandas as pd
 import hpcl_ceg_model
-import datetime as dt
 import mysql.connector
 from pathlib import Path
 import urdhva_base.utilities
@@ -28,13 +26,20 @@ _TEMPLATES_DIR = _REPORTING_DIR / "templates"
 VALID_BUS = ("lpg", "tas", "ro", "ds")
 EMAIL_RECIPIENTS = {
     "to_receipts": ["venu@algofusiontech.com"],
-    "cc_receipts": ["moufikali@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com",
-                    "yesu.p@algofusiontech.com", "poojitha.gumma@algofusiontech.com",
-                    "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com",
-                    "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
-                    "vamsi.c@algofusiontech.com"],
+    "cc_receipts": [
+        "moufikali@algofusiontech.com",
+        "sreedhar.maddipati@algofusiontech.com",
+        "yesu.p@algofusiontech.com",
+        "poojitha.gumma@algofusiontech.com",
+        "pawann.k@algofusiontech.com",
+        "mohith.p@algofusiontech.com",
+        "manohar.v@algofusiontech.com",
+        "gayathri.m@algofusiontech.com",
+        "vamsi.c@algofusiontech.com",
+    ],
     "bcc_receipts": [],
 }
+
 
 def _app_pg_conn():
     creds = credential_loader.get_credentials("APP_DB")
@@ -104,7 +109,7 @@ def render_novex_users_sync_report_html(
         report_rows=report_rows,
         sync_start_ist=sync_start_ist,
         sync_end_ist=sync_end_ist,
-        environment=environment
+        environment=environment,
     )
 
 
@@ -130,14 +135,14 @@ async def get_db_connection():
     Returns:
         mysql.connector connection
     """
-    creds = credential_loader.get_credentials('TIBCO')
+    creds = credential_loader.get_credentials("TIBCO")
     connection = mysql.connector.connect(
-                host=creds['host'],
-                user=creds['user'],
-                passwd=creds['password'],
-                port=creds['port'],
-                database=creds['database']
-            )
+        host=creds["host"],
+        user=creds["user"],
+        passwd=creds["password"],
+        port=creds["port"],
+        database=creds["database"],
+    )
     return connection
 
 
@@ -154,21 +159,21 @@ async def fetch_data(cursor, query):
     """
     cursor.execute(query)
     data = cursor.fetchall()
-    print('Total Records :', len(data))
+    print("Total Records :", len(data))
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
-    return data    
+    return data
 
 
 async def clear_existing_user(bu):
-    creds = credential_loader.get_credentials('APP_DB')
+    creds = credential_loader.get_credentials("APP_DB")
     pg_conn = psycopg2.connect(
-                host=creds["host"],
-                database=creds["database"],
-                user=creds["user"],
-                password=creds["password"],
-                port=creds["port"]
-            )
+        host=creds["host"],
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        port=creds["port"],
+    )
     query = f""" DELETE FROM users WHERE '{bu.upper()}' = ANY(bu) and manual_user IS FALSE; """
     cursor = pg_conn.cursor()
     cursor.execute(query)
@@ -232,10 +237,17 @@ def exclude_manual_users_from_dataframe(
     usr = data["username"].map(_normalize_emp_key)
     raw_emp = data["employee_id"].astype(str)
     raw_usr = data["username"].astype(str)
-    mask = ~(emp.isin(manual_keys) | usr.isin(manual_keys) | raw_emp.isin(manual_keys) | raw_usr.isin(manual_keys))
+    mask = ~(
+        emp.isin(manual_keys)
+        | usr.isin(manual_keys)
+        | raw_emp.isin(manual_keys)
+        | raw_usr.isin(manual_keys)
+    )
     dropped = int((~mask).sum())
     if dropped:
-        print(f"Excluded {dropped} sync row(s) that match manual_user in APP_DB for this BU")
+        print(
+            f"Excluded {dropped} sync row(s) that match manual_user in APP_DB for this BU"
+        )
     return data.loc[mask].copy(), dropped
 
 
@@ -274,10 +286,19 @@ async def insert_users(data: list) -> Tuple[int, int]:
     total_upserted = 0
     total_dedupe = 0
     for i in range(0, len(data), BATCH_SIZE):
-        batch = data[i:i + BATCH_SIZE]
+        batch = data[i : i + BATCH_SIZE]
 
         for item in batch:
-            for key in ["bu", "sap_id", "region", "state", "zone", "sales_area", "system_role", "novex_role"]:
+            for key in [
+                "bu",
+                "sap_id",
+                "region",
+                "state",
+                "zone",
+                "sales_area",
+                "system_role",
+                "novex_role",
+            ]:
                 if item.get(key) is None or item[key] == "":
                     item[key] = []
                 if isinstance(item[key], str):
@@ -333,19 +354,49 @@ async def combine_roles(data, _id, role_name):
 
 
 async def process_data(data, bu):
-    novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
-                       "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
-                       "state", "zone", "sales_area", "is_ad_user", "status", "manual_user", "contact_number", "mfa"]
-    data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
-                                "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
-                                "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
-    if "SALES_GRP" in data.columns and bu.upper()=='LPG':
+    novex_model_col = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "password",
+        "employee_id",
+        "employee_number",
+        "bu",
+        "sap_id",
+        "system_role",
+        "novex_role",
+        "region",
+        "state",
+        "zone",
+        "sales_area",
+        "is_ad_user",
+        "status",
+        "manual_user",
+        "contact_number",
+        "mfa",
+    ]
+    data.rename(
+        columns={
+            "EMPLOYEE_NUMBER": "username",
+            "EMPLOYEE_NAME": "first_name",
+            "EMP_EMAIL": "email",
+            "PLANT_CODE": "sap_id",
+            "PLANT_DESC": "region",
+            "Zone": "zone",
+            "ROLE_NAME": "system_role",
+        },
+        inplace=True,
+    )
+    if "SALES_GRP" in data.columns and bu.upper() == "LPG":
         sales_master = pd.read_csv(_REPORTING_DIR / "lpg_sa_master.csv")
-        data['SALES_GRP'] = data['SALES_GRP'].astype(str)
-        sales_master['SACode'] = sales_master['SACode'].astype(str)
-        data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
+        data["SALES_GRP"] = data["SALES_GRP"].astype(str)
+        sales_master["SACode"] = sales_master["SACode"].astype(str)
+        data = pd.merge(
+            data, sales_master, left_on="SALES_GRP", right_on="SACode", how="left"
+        )
         data.rename(columns={"SAName": "sales_area"}, inplace=True)
-    elif "SALES_GROUP_DESC" in data.columns and bu != 'LPG':
+    elif "SALES_GROUP_DESC" in data.columns and bu != "LPG":
         data["sales_area"] = data["SALES_GROUP_DESC"]
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
@@ -356,10 +407,22 @@ async def process_data(data, bu):
     data["manual_user"] = False
     for col in ["username", "sap_id", "employee_id"]:
         if col in data.columns:
-            data[col] = data[col].astype(str).apply(lambda x: x.replace('.00', '').replace('.0', '').lstrip('0'))
-    data['zone'] = data['zone'].map(reporting_config.zone_map)
-    data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
-    data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
+            data[col] = (
+                data[col]
+                .astype(str)
+                .apply(lambda x: x.replace(".00", "").replace(".0", "").lstrip("0"))
+            )
+    data["zone"] = data["zone"].map(reporting_config.zone_map)
+    data["last_name"] = (
+        data["first_name"]
+        .fillna("")
+        .apply(lambda x: x.split(" ")[-1] if " " in x else "")
+    )
+    data["first_name"] = (
+        data["first_name"]
+        .fillna("")
+        .apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
+    )
     for col in ["zone", "region", "state", "sap_id", "bu", "sales_area"]:
         if col in data.columns:
             data[col] = data[col].fillna("").astype(str)
@@ -368,20 +431,20 @@ async def process_data(data, bu):
 
     for _role in ["Zonal", "Zone"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "region", "sales_area"]] = '[]'
+        data.loc[mask, ["sap_id", "region", "sales_area"]] = "[]"
 
     for _role in ["Regional", "Region"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "zone", "sales_area"]] = '[]'
+        data.loc[mask, ["sap_id", "zone", "sales_area"]] = "[]"
     for _role in ["Sales"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "region", "zone"]] = '[]'
+        data.loc[mask, ["sap_id", "region", "zone"]] = "[]"
     for _role in ["HQO"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "zone", "region", "sales_area"]] = '[]'
+        data.loc[mask, ["sap_id", "zone", "region", "sales_area"]] = "[]"
 
     for col in ["region", "sales_area"]:
-        data.loc[(data['sap_id'] != '[]'), col] = '[]'
+        data.loc[(data["sap_id"] != "[]"), col] = "[]"
 
     def update_ticketing_role(role):
         """
@@ -397,7 +460,11 @@ async def process_data(data, bu):
             if s.startswith("[") and s.endswith("]"):
                 try:
                     parsed = ast.literal_eval(s)
-                    roles = [str(x) for x in parsed] if isinstance(parsed, list) else [str(parsed)]
+                    roles = (
+                        [str(x) for x in parsed]
+                        if isinstance(parsed, list)
+                        else [str(parsed)]
+                    )
                 except (ValueError, SyntaxError):
                     roles = [s] if s else []
             else:
@@ -414,7 +481,7 @@ async def process_data(data, bu):
                 roles.append("Zonal SOD Ticketing")
         return roles
 
-    if bu.upper() == 'TAS':
+    if bu.upper() == "TAS":
         data["novex_role"] = data["novex_role"].apply(update_ticketing_role)
 
     for col in novex_model_col:
@@ -431,40 +498,42 @@ async def get_additional_data(bu, cursor):
     additional_data = pd.DataFrame()
     if queries:
         for query in queries:
-            additional_data = pd.concat([additional_data, await fetch_data(cursor, query)])
-        
+            additional_data = pd.concat(
+                [additional_data, await fetch_data(cursor, query)]
+            )
+
         additional_data.loc[
-            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
-            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
-            "novex_role"
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP")
+            & (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role",
         ] = "HQO Operations LPG"
         additional_data.loc[
-            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
-            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
-            "novex_role"
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP")
+            & (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role",
         ] = "Zonal Operations LPG"
-        
+
         # For IL_MANAGER_LPG
         additional_data.loc[
-            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
-            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
-            "novex_role"
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG")
+            & (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role",
         ] = "Zonal Manager LPG"
         additional_data.loc[
-            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
-            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
-            "novex_role"
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG")
+            & (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role",
         ] = "HQO Manager LPG"
 
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
-            "novex_role"
+            "novex_role",
         ] = "Zonal HSE LPG"
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_LPGCONT_OFFCER"),
-            "novex_role"
+            "novex_role",
         ] = "Location In-Charge LPG"
-        
+
         additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
     return additional_data
 
@@ -491,16 +560,25 @@ async def insert_ro_dealer(cursor) -> int:
             data["contact_number"] = data["dealer_phone"]
             data["password"] = ""
             data.rename(columns=reporting_config._rename, inplace=True)
-            data['first_name'], data['last_name'] = zip(*data['name'].apply(split_name))
+            data["first_name"], data["last_name"] = zip(*data["name"].apply(split_name))
             data["novex_role"] = "RO Dealer"
             data["system_role"] = "RO Dealer"
             data["manual_user"] = False
-            data["bu"] = 'RO'
-            data['zone'] = data['zone'].map(reporting_config.zone_map)
-            for col in ["zone", "region", "state", "sap_id", "bu", "sales_area", "novex_role", "system_role"]:
+            data["bu"] = "RO"
+            data["zone"] = data["zone"].map(reporting_config.zone_map)
+            for col in [
+                "zone",
+                "region",
+                "state",
+                "sap_id",
+                "bu",
+                "sales_area",
+                "novex_role",
+                "system_role",
+            ]:
                 if col in data.columns:
                     data[col] = data[col].fillna("").astype(str)
-                    data[col] = '["' + data[col] + '"]'            
+                    data[col] = '["' + data[col] + '"]'
             for col in ["status", "is_ad_user", "mfa"]:
                 data[col] = True
             for col in data.columns:
@@ -528,7 +606,9 @@ async def sync_users(bus_list=None) -> Dict[str, Any]:
     if not bus_list:
         bus_list = list(VALID_BUS)
 
-    sync_start_ist = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
+    sync_start_ist = urdhva_base.utilities.get_present_time().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     report_rows: List[Dict[str, Any]] = []
     ro_success_idx: Optional[int] = None
 
@@ -594,7 +674,9 @@ async def sync_users(bus_list=None) -> Dict[str, Any]:
                 data["bu"] = bu_upper
                 data = await process_data(data, bu)
                 manual_keys = await fetch_manual_user_keys_for_bu(bu)
-                data, excluded_ov = exclude_manual_users_from_dataframe(data, manual_keys)
+                data, excluded_ov = exclude_manual_users_from_dataframe(
+                    data, manual_keys
+                )
                 prepared = len(data)
 
                 await clear_existing_user(bu)
@@ -667,7 +749,10 @@ async def sync_users(bus_list=None) -> Dict[str, Any]:
                     "RO", manual=False
                 )
 
-            if ro_success_idx is not None and report_rows[ro_success_idx].get("status") == "success":
+            if (
+                ro_success_idx is not None
+                and report_rows[ro_success_idx].get("status") == "success"
+            ):
                 _apply_ro_dealers_to_row(ro_success_idx)
             else:
                 ro_any = next(
@@ -680,7 +765,9 @@ async def sync_users(bus_list=None) -> Dict[str, Any]:
         cursor.close()
         connection.close()
 
-    sync_end_ist = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
+    sync_end_ist = urdhva_base.utilities.get_present_time().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     return {
         "report_rows": report_rows,
         "sync_start_ist": sync_start_ist,
@@ -699,20 +786,20 @@ async def start_user_sync(bus_list, send_email=True):
             report,
             sync_start_ist=result["sync_start_ist"],
             sync_end_ist=result["sync_end_ist"],
-            environment=environment
+            environment=environment,
         )
 
         ins = await notification_factory.get_notification_module("email")
         await ins.publish_message(
             subject="Novex User Sync Report(From Tibco)",
-            recipients=EMAIL_RECIPIENTS['to_receipts'],
-            cc_recipients=EMAIL_RECIPIENTS['cc_receipts'] or [],
-            bcc_recipients=EMAIL_RECIPIENTS['bcc_receipts'] or [],
+            recipients=EMAIL_RECIPIENTS["to_receipts"],
+            cc_recipients=EMAIL_RECIPIENTS["cc_receipts"] or [],
+            bcc_recipients=EMAIL_RECIPIENTS["bcc_receipts"] or [],
             html_content=True,
             body=html,
             force_send=True,
             inline_images={},
-            attachments=[]
+            attachments=[],
         )
 
 
@@ -754,7 +841,11 @@ def main():
 
 if __name__ == "__main__":
     print("*" * 80)
-    print(f'Starting Novex User Sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}')
+    print(
+        f'Starting Novex User Sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}'
+    )
     main()
-    print(f'Completed Novex User Sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}')
+    print(
+        f'Completed Novex User Sync at {urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")}'
+    )
     print("*" * 80)

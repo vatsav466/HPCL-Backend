@@ -5,12 +5,13 @@ CAMUNDA_BASE_URL = "http://10.90.38.218:9092/engine-rest"
 
 camunda_listener_mapping = {
     "camunda_dryout_01": {"host": "10.90.38.218", "port": 9092},
-    "camunda_dryout_02": {"host": "10.90.38.218", "port": 9093}
+    "camunda_dryout_02": {"host": "10.90.38.218", "port": 9093},
 }
 
 # Camunda credentials (if required)
 USERNAME = "demo"
 PASSWORD = "demo"
+
 
 def get_failed_workflows(url):
     """
@@ -25,6 +26,7 @@ def get_failed_workflows(url):
     response.raise_for_status()
     return response.json()
 
+
 def retry_workflow(url, task_id):
     """
     Retry a specific failed workflow by its task ID.
@@ -35,6 +37,7 @@ def retry_workflow(url, task_id):
     response.raise_for_status()
     print("status: ", response.status_code)
     return response.status_code
+
 
 def main():
     try:
@@ -58,6 +61,7 @@ def main():
 
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     main()

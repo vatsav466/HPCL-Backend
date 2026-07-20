@@ -1,5 +1,3 @@
-import math
-
 import urdhva_base
 import os
 import sys
@@ -8,7 +6,6 @@ import pytz
 import json
 import asyncio
 import datetime
-import numpy as np
 import pandas as pd
 import polars as pl
 from dateutil.relativedelta import relativedelta
@@ -481,13 +478,13 @@ ORDER BY
 """
 
 
-'''
+"""
 you can include cancel_time, user_cancel, indent_hold_release_time, indent_delivery_date, Indent_executed_datetime
 
 indent_delivery_date - action_msg: Indent Delivered, processed_time
 indent_hold_release_time - action_msg: Indent On Hold Released, processed_time
 cancel_time - action_msg: Indent Cancelled, processed_time
-'''
+"""
 
 """
 Mapping configuration for extracting timestamps from alert_history JSON.
@@ -499,15 +496,20 @@ Business Rules:
 
 These timestamps are used to track indent lifecycle events in the dryout report.
 """
-mapping = {"Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
-               "Indent On Hold Released": {"action_msg": "Indent On Hold Released", "time": "ims_datetime"},
-               "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"}}
+mapping = {
+    "Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
+    "Indent On Hold Released": {
+        "action_msg": "Indent On Hold Released",
+        "time": "ims_datetime",
+    },
+    "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"},
+}
 
 
 def get_column_data(record, key):
     """
     Extract timestamp data from alert_history JSON based on mapping configuration.
-    
+
     Business Rules:
     - Parses alert_history JSON to find specific action messages
     - Extracts timestamps based on mapping configuration:
@@ -516,11 +518,11 @@ def get_column_data(record, key):
       * "Indent Cancelled" → uses processed_time
     - Converts UTC timestamps to IST (Asia/Kolkata)
     - Returns timezone-naive datetime for Excel compatibility
-    
+
     Args:
         record: alert_history field (can be string JSON or parsed dict/list)
         key: One of the keys in mapping dict ("Indent Delivered", "Indent On Hold Released", "Indent Cancelled")
-    
+
     Returns:
         datetime.datetime or None: Parsed timestamp in IST (timezone-naive) or None if not found/error
     """
@@ -543,7 +545,7 @@ def get_column_data(record, key):
             if not ts:
                 return None
             try:
-                if mpa_data['time'] == 'ims_datetime':
+                if mpa_data["time"] == "ims_datetime":
                     return datetime.datetime.fromisoformat(ts).replace(tzinfo=None)
                 # Parse timestamp safely
                 utc_time = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -565,7 +567,7 @@ def get_column_data(record, key):
 async def fetch_dry_out_report(start_date, end_date):
     """
     Generate dryout report for specified date range.
-    
+
     Process Flow:
     1. Process data month by month within the specified date range to avoid memory issues
     2. Extract alert history events (Indent Delivered, Cancelled, etc.)
@@ -574,23 +576,23 @@ async def fetch_dry_out_report(start_date, end_date):
     5. Generate Excel report with two sheets:
        - "Dryout Details": All individual alerts
        - "Dryout Summary": Merged intervals with start/end times
-    
+
     Business Rules Applied:
     - Indent status logic based on indent_raised_date and dryout_day
     - Closure status logic for false alarms
     - Interval merging: Alerts within 2 hours are considered continuous
     - Timezone conversion: UTC → IST (Asia/Kolkata)
-    
+
     Args:
         start_date (datetime.datetime): Start date for the report (inclusive)
         end_date (datetime.datetime): End date for the report (inclusive)
-    
+
     Output:
         Excel files saved to /home/novex/dry_out_report/
     """
-    if not os.path.exists('/home/novex/dry_out_report'):
-        os.makedirs('/home/novex/dry_out_report')
-    
+    if not os.path.exists("/home/novex/dry_out_report"):
+        os.makedirs("/home/novex/dry_out_report")
+
     # Normalize dates: set time to start of day
     start_date = start_date.replace(minute=0, hour=0, second=0, microsecond=0)
     end_date = end_date.replace(minute=0, hour=0, second=0, microsecond=0)
@@ -604,18 +606,24 @@ async def fetch_dry_out_report(start_date, end_date):
         # But cap it at the user-specified end_date
         month_end = min(next_month - datetime.timedelta(seconds=1), end_date)
 
-        print(f"Processing month: {month_start.strftime('%B %Y')} "
-              f"({month_start.date()} to {month_end.date()})")
-        query_rebuilt = query_unique_alert.format(start_date=str(month_start), end_date=str(month_end))
-        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(query_rebuilt, limit=1000000)
-        print(resp['total'])
-        if len(resp['data']) == 0:
+        print(
+            f"Processing month: {month_start.strftime('%B %Y')} "
+            f"({month_start.date()} to {month_end.date()})"
+        )
+        query_rebuilt = query_unique_alert.format(
+            start_date=str(month_start), end_date=str(month_end)
+        )
+        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(
+            query_rebuilt, limit=1000000
+        )
+        print(resp["total"])
+        if len(resp["data"]) == 0:
             # Check if we've reached the end date
             if month_end >= end_date:
                 break
-        records.extend(resp['data'])
+        records.extend(resp["data"])
         current = next_month
-        
+
         # Stop if we've processed beyond the end date
         if current > end_date:
             break
@@ -624,13 +632,15 @@ async def fetch_dry_out_report(start_date, end_date):
     index = 1
     step = 1000000
     for rec_start in range(0, len(records), step):
-        df = pl.DataFrame(records[rec_start:rec_start+step])
+        df = pl.DataFrame(records[rec_start : rec_start + step])
         # Generate computed columns from alert_history using mapping
         for key in mapping:
             df = df.with_columns(
                 pl.Series(
                     name=key,
-                    values=[get_column_data(x, key) for x in df["alert_history"].to_list()]
+                    values=[
+                        get_column_data(x, key) for x in df["alert_history"].to_list()
+                    ],
                 )
             )
 
@@ -660,13 +670,14 @@ async def fetch_dry_out_report(start_date, end_date):
         # Rationale: If cancelled but no explicit cancellation time, use when dryout ended
         df = df.with_columns(
             pl.when(
-                (pl.col("Indent Status") == "Cancelled") & (pl.col("Indent Cancelled").is_null())
+                (pl.col("Indent Status") == "Cancelled")
+                & (pl.col("Indent Cancelled").is_null())
             )
             .then(pl.col("Dryout End Time"))
             .otherwise(pl.col("Indent Cancelled"))
             .alias("Indent Cancelled")
         )
-        df = df.unique(subset=['Alert ID'])
+        df = df.unique(subset=["Alert ID"])
 
         # Business Rule: Clamp Dryout Start Time to report start date
         # Rationale: For dryouts that started before the report period, show start as report start date
@@ -678,27 +689,29 @@ async def fetch_dry_out_report(start_date, end_date):
         )
 
         # Business Rule: Recalculate Total Dryout Hours from actual start/end times
-        # Rationale: 
+        # Rationale:
         # - If both start and end times available: calculate from start to end
         # - If start time available but end time is null (ongoing dryout): calculate from start to now
         # - Otherwise: use SQL-calculated value
         current_time = datetime.datetime.now().replace(microsecond=0)
         df = df.with_columns(
             pl.when(
-                pl.col("Dryout Start Time").is_not_null() &
-                pl.col("Dryout End Time").is_not_null()
+                pl.col("Dryout Start Time").is_not_null()
+                & pl.col("Dryout End Time").is_not_null()
             )
             .then(
-                (pl.col("Dryout End Time") - pl.col("Dryout Start Time"))
-                .dt.total_seconds() / 3600
+                (
+                    pl.col("Dryout End Time") - pl.col("Dryout Start Time")
+                ).dt.total_seconds()
+                / 3600
             )
             .when(
-                pl.col("Dryout Start Time").is_not_null() &
-                pl.col("Dryout End Time").is_null()
+                pl.col("Dryout Start Time").is_not_null()
+                & pl.col("Dryout End Time").is_null()
             )
             .then(
-                (pl.lit(current_time) - pl.col("Dryout Start Time"))
-                .dt.total_seconds() / 3600
+                (pl.lit(current_time) - pl.col("Dryout Start Time")).dt.total_seconds()
+                / 3600
             )
             .otherwise(pl.col("Total Dryout Hours"))
             .alias("Total Dryout Hours")
@@ -708,23 +721,17 @@ async def fetch_dry_out_report(start_date, end_date):
         # Rationale: When dryout is completed, the end time represents when product was delivered
         df = df.with_columns(
             pl.when(
-                pl.col("Dryout End Time").is_not_null() &
-                (pl.col("Closure Status") == "Completed")
+                pl.col("Dryout End Time").is_not_null()
+                & (pl.col("Closure Status") == "Completed")
             )
             .then(pl.col("Dryout End Time"))
             .otherwise(pl.col("Indent Delivered"))
             .alias("Indent Delivered")
         )
 
-        cols_to_string = [
-            "Alert ID",
-            "Product Code",
-            "Location ID"
-        ]
+        cols_to_string = ["Alert ID", "Product Code", "Location ID"]
 
-        df = df.with_columns(
-            pl.col(cols_to_string).cast(pl.Utf8)
-        )
+        df = df.with_columns(pl.col(cols_to_string).cast(pl.Utf8))
 
         # Filtering Records
 
@@ -741,9 +748,9 @@ async def fetch_dry_out_report(start_date, end_date):
         # - Records with null start or end times are kept (ongoing dryouts)
         # - Records where end time is before start time are excluded (invalid data)
         df = df.filter(
-            (pl.col("Dryout Start Time").is_null()) |
-            (pl.col("Dryout End Time").is_null()) |
-            (pl.col("Dryout End Time") >= pl.col("Dryout Start Time"))
+            (pl.col("Dryout Start Time").is_null())
+            | (pl.col("Dryout End Time").is_null())
+            | (pl.col("Dryout End Time") >= pl.col("Dryout Start Time"))
         )
 
         # Creating Summary Report
@@ -773,13 +780,11 @@ async def fetch_dry_out_report(start_date, end_date):
             "Sales Area",
             "Location ID",
             "Location Name",
-            "Product Code"
+            "Product Code",
         ]
 
         # 1. Filter: Include alerts with start time (end time can be null for ongoing dryouts)
-        df_dryout = df.filter(
-            pl.col("Dryout Start Time").is_not_null()
-        )
+        df_dryout = df.filter(pl.col("Dryout Start Time").is_not_null())
 
         # 2. Sort: By group columns and start time
         df_dryout = df_dryout.sort(group_cols + ["Dryout Start Time"])
@@ -796,9 +801,7 @@ async def fetch_dry_out_report(start_date, end_date):
 
         # 4. Calculate gap from previous alert's effective end time
         df_dryout = df_dryout.with_columns(
-            prev_end=pl.col("effective_end")
-            .shift(1)
-            .over(group_cols)
+            prev_end=pl.col("effective_end").shift(1).over(group_cols)
         )
 
         # 5. Detect new merged group:
@@ -808,24 +811,28 @@ async def fetch_dry_out_report(start_date, end_date):
         #   - If current alert has null end time (ongoing), it starts a new group
         #   - If previous alert had null end time (ongoing), current starts a new group
         df_dryout = df_dryout.with_columns(
-            prev_end_time_null=pl.col("Dryout End Time").shift(1).is_null().over(group_cols)
+            prev_end_time_null=pl.col("Dryout End Time")
+            .shift(1)
+            .is_null()
+            .over(group_cols)
         )
-        
+
         df_dryout = df_dryout.with_columns(
             gap_hours=pl.when(pl.col("prev_end").is_not_null())
-            .then(
-                (pl.col("Dryout Start Time") - pl.col("prev_end"))
-                .dt.total_hours()
-            )
+            .then((pl.col("Dryout Start Time") - pl.col("prev_end")).dt.total_hours())
             .otherwise(None)
         )
-        
+
         df_dryout = df_dryout.with_columns(
             new_group=(
-                (pl.col("prev_end").is_null()) |  # First alert in group
-                (pl.col("gap_hours") >= 2.0) |   # Gap >= 2 hours
-                (pl.col("Dryout End Time").is_null()) |  # Ongoing dryout starts new group
-                (pl.col("prev_end_time_null"))  # Previous was ongoing, start new group
+                (pl.col("prev_end").is_null())  # First alert in group
+                | (pl.col("gap_hours") >= 2.0)  # Gap >= 2 hours
+                | (
+                    pl.col("Dryout End Time").is_null()
+                )  # Ongoing dryout starts new group
+                | (
+                    pl.col("prev_end_time_null")
+                )  # Previous was ongoing, start new group
             )
             .cast(pl.Int8)
             .cum_sum()
@@ -836,15 +843,16 @@ async def fetch_dry_out_report(start_date, end_date):
         # For end time: if any alert in group has null end time, result is null (ongoing)
         # Otherwise, take max end time
         df_merged = (
-            df_dryout
-            .group_by(group_cols + ["new_group"], maintain_order=True)
-            .agg([
-                pl.min("Dryout Start Time").alias("Dryout Start Time"),
-                pl.when(pl.col("Dryout End Time").null_count() > 0)
-                .then(None)
-                .otherwise(pl.max("Dryout End Time"))
-                .alias("Dryout End Time"),
-            ])
+            df_dryout.group_by(group_cols + ["new_group"], maintain_order=True)
+            .agg(
+                [
+                    pl.min("Dryout Start Time").alias("Dryout Start Time"),
+                    pl.when(pl.col("Dryout End Time").null_count() > 0)
+                    .then(None)
+                    .otherwise(pl.max("Dryout End Time"))
+                    .alias("Dryout End Time"),
+                ]
+            )
             .drop("new_group")
         )
 
@@ -853,12 +861,12 @@ async def fetch_dry_out_report(start_date, end_date):
         df_merged = df_merged.with_columns(
             pl.when(pl.col("Dryout End Time").is_not_null())
             .then(
-                (pl.col("Dryout End Time") - pl.col("Dryout Start Time"))
-                .dt.total_hours()
+                (
+                    pl.col("Dryout End Time") - pl.col("Dryout Start Time")
+                ).dt.total_hours()
             )
             .otherwise(
-                (pl.lit(current_time) - pl.col("Dryout Start Time"))
-                .dt.total_hours()
+                (pl.lit(current_time) - pl.col("Dryout Start Time")).dt.total_hours()
             )
             .round(2)
             .alias("Total Dryout Hours")
@@ -875,16 +883,10 @@ async def fetch_dry_out_report(start_date, end_date):
         # Save to Excel
         output_path = f"/home/novex/dry_out_report/dry_out_report_{index}.xlsx"
         with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
-            df.to_pandas().to_excel(
-                writer,
-                sheet_name="Dryout Details",
-                index=False
-            )
+            df.to_pandas().to_excel(writer, sheet_name="Dryout Details", index=False)
 
             final_result.to_pandas().to_excel(
-                writer,
-                sheet_name="Dryout Summary",
-                index=False
+                writer, sheet_name="Dryout Summary", index=False
             )
 
         # df.write_excel(output_path)
@@ -893,7 +895,7 @@ async def fetch_dry_out_report(start_date, end_date):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Generate dryout report for specified date range',
+        description="Generate dryout report for specified date range",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -905,51 +907,61 @@ Examples:
   
   # Generate report from start date to today
   python dry_out_report_generation.py --start-date 2024-01-01
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        '--start-date',
+        "--start-date",
         type=str,
-        help='Start date for the report (format: YYYY-MM-DD). Default: 6 months ago from today',
-        default=None
+        help="Start date for the report (format: YYYY-MM-DD). Default: 6 months ago from today",
+        default=None,
     )
-    
+
     parser.add_argument(
-        '--end-date',
+        "--end-date",
         type=str,
-        help='End date for the report (format: YYYY-MM-DD). Default: today',
-        default=None
+        help="End date for the report (format: YYYY-MM-DD). Default: today",
+        default=None,
     )
-    
+
     args = parser.parse_args()
-    
+
     # Parse dates or use defaults
     if args.start_date:
         try:
-            start_date = datetime.datetime.strptime(args.start_date, '%Y-%m-%d')
+            start_date = datetime.datetime.strptime(args.start_date, "%Y-%m-%d")
         except ValueError:
-            print(f"Error: Invalid start-date format '{args.start_date}'. Expected format: YYYY-MM-DD")
+            print(
+                f"Error: Invalid start-date format '{args.start_date}'. Expected format: YYYY-MM-DD"
+            )
             sys.exit(1)
     else:
         # Default: 6 months ago from today
-        start_date = (datetime.datetime.today() - datetime.timedelta(days=6*30))
-        start_date = start_date.replace(day=1, minute=0, hour=0, second=0, microsecond=0)
-    
+        start_date = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        start_date = start_date.replace(
+            day=1, minute=0, hour=0, second=0, microsecond=0
+        )
+
     if args.end_date:
         try:
-            end_date = datetime.datetime.strptime(args.end_date, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(args.end_date, "%Y-%m-%d")
         except ValueError:
-            print(f"Error: Invalid end-date format '{args.end_date}'. Expected format: YYYY-MM-DD")
+            print(
+                f"Error: Invalid end-date format '{args.end_date}'. Expected format: YYYY-MM-DD"
+            )
             sys.exit(1)
     else:
         # Default: today
-        end_date = datetime.datetime.today().replace(minute=0, hour=0, second=0, microsecond=0)
-    
+        end_date = datetime.datetime.today().replace(
+            minute=0, hour=0, second=0, microsecond=0
+        )
+
     # Validate date range
     if start_date > end_date:
-        print(f"Error: Start date ({start_date.date()}) must be before or equal to end date ({end_date.date()})")
+        print(
+            f"Error: Start date ({start_date.date()}) must be before or equal to end date ({end_date.date()})"
+        )
         sys.exit(1)
-    
+
     print(f"Generating dryout report from {start_date.date()} to {end_date.date()}")
     asyncio.run(fetch_dry_out_report(start_date, end_date))

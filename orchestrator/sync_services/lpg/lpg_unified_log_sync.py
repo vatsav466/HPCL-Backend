@@ -110,6 +110,7 @@ Run::
 
     python -m orchestrator.sync_services.lpg.lpg_unified_log_sync
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -294,7 +295,7 @@ def copy_dataframe_to_app_table(
                 aligned = aligned.with_columns(pl.lit(None).alias(c))
         aligned = aligned.select(existing_cols)
 
-        copy_sql = f'COPY "{table_name}" FROM STDIN CSV HEADER DELIMITER \'~\''
+        copy_sql = f"COPY \"{table_name}\" FROM STDIN CSV HEADER DELIMITER '~'"
         n = len(aligned)
         for start in range(0, n, batch_size):
             chunk = aligned.slice(start, min(batch_size, n - start))
@@ -389,12 +390,15 @@ def fetch_data(
                 write_timeout=query_timeout,
             )
             cursor = pg_conn.cursor()
-            cursor.execute(
-                f"SET SESSION max_execution_time = {query_timeout * 1000};"
+            cursor.execute(f"SET SESSION max_execution_time = {query_timeout * 1000};")
+            print(
+                f"fetch_data DB CONNECTED MySQL: {params.get('PlantName')}", flush=True
             )
-            print(f"fetch_data DB CONNECTED MySQL: {params.get('PlantName')}", flush=True)
         else:
-            print(f"fetch_data DB CONNECT PostgreSQL: {params.get('PlantName')}", flush=True)
+            print(
+                f"fetch_data DB CONNECT PostgreSQL: {params.get('PlantName')}",
+                flush=True,
+            )
             pg_conn = psycopg2.connect(
                 host=params["host"],
                 database=params["database"],
@@ -411,7 +415,10 @@ def fetch_data(
             pg_conn.set_session(autocommit=True)
             cursor = pg_conn.cursor()
             cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
-            print(f"fetch_data DB CONNECTED PostgreSQL: {params.get('PlantName')}", flush=True)
+            print(
+                f"fetch_data DB CONNECTED PostgreSQL: {params.get('PlantName')}",
+                flush=True,
+            )
 
     except Exception as e:
         logger.error(
@@ -441,7 +448,9 @@ def fetch_data(
             print(f"fetch_data DONE scalar: {params.get('PlantName')}", flush=True)
             return resp[0] if resp else None
         if "LIMIT" not in query.upper():
-            print(f"fetch_data QUERY mode=OFFSET: {params.get('PlantName')}", flush=True)
+            print(
+                f"fetch_data QUERY mode=OFFSET: {params.get('PlantName')}", flush=True
+            )
             base_query = query.rstrip(";")
             base_query += f" LIMIT {chunk_size} OFFSET "
         else:
@@ -491,7 +500,10 @@ def fetch_data(
             if offset > 2000000:
                 if verbose:
                     print("Reached maximum record limit (1M)", flush=True)
-                print(f"fetch_data OFFSET cap reached: {params.get('PlantName')}", flush=True)
+                print(
+                    f"fetch_data OFFSET cap reached: {params.get('PlantName')}",
+                    flush=True,
+                )
                 break
 
         if verbose:
@@ -531,9 +543,7 @@ def fetch_data(
         return _FETCH_TIMEOUT if getData else None
     except Exception as e:
         # MySQL raises DatabaseError errno 3024 when max_execution_time is hit.
-        is_mysql_timeout = (
-            hasattr(e, "errno") and getattr(e, "errno", None) == 3024
-        )
+        is_mysql_timeout = hasattr(e, "errno") and getattr(e, "errno", None) == 3024
         if is_mysql_timeout:
             logger.error(
                 "Plant query timed out after %ss (MySQL) for %s",
@@ -563,8 +573,7 @@ def ensure_cursor_table() -> None:
     conn = _app_db_connect()
     cur = conn.cursor()
     try:
-        cur.execute(
-            f"""
+        cur.execute(f"""
             CREATE TABLE IF NOT EXISTS {CURSOR_TABLE} (
                 plant_name VARCHAR(255) NOT NULL,
                 log_kind VARCHAR(32) NOT NULL,
@@ -574,14 +583,11 @@ def ensure_cursor_table() -> None:
                 updated_at TIMESTAMP DEFAULT NOW(),
                 PRIMARY KEY (plant_name, log_kind)
             );
-            """
-        )
-        cur.execute(
-            f"""
+            """)
+        cur.execute(f"""
             ALTER TABLE {CURSOR_TABLE}
             ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMP NULL
-            """
-        )
+            """)
         conn.commit()
     finally:
         cur.close()
@@ -671,9 +677,7 @@ def ensure_log_extra_columns_conn(conn, table: str) -> None:
 
 
 def _legacy_extraction_table(kind: LogKind) -> str:
-    return (
-        TABLE_EXTRACTION_EVENT if kind == "event" else TABLE_EXTRACTION_PRODUCTION
-    )
+    return TABLE_EXTRACTION_EVENT if kind == "event" else TABLE_EXTRACTION_PRODUCTION
 
 
 def get_resume_cursor_conn(
@@ -947,9 +951,7 @@ def _filter_new_rows(
     ids = [int(x) for x in ids_series.to_list()]
     if not ids:
         return data.head(0)
-    have = _existing_source_ids(
-        app_table, id_col, sap_id, ids, app_conn=app_conn
-    )
+    have = _existing_source_ids(app_table, id_col, sap_id, ids, app_conn=app_conn)
     if not have:
         return data
     keep: List[bool] = []
@@ -1044,7 +1046,12 @@ def _load_last_synced_at_map(
                 (master_name, master_name, master_name),
             )
             bucket = out[master_name]
-            for _cursor_plant, log_kind, last_synced_at, last_process_date in cur.fetchall():
+            for (
+                _cursor_plant,
+                log_kind,
+                last_synced_at,
+                last_process_date,
+            ) in cur.fetchall():
                 kind = str(log_kind).strip().lower()
                 if kind not in ("event", "production"):
                     continue
@@ -1446,7 +1453,6 @@ def sync_one_kind(
         # so the next run re-read the same stale cursor, applied rollback again, fetched
         # the same rows, deduped them all again — indefinitely until max_chunks was hit.
 
-
         # if not to_insert.is_empty():
         #     cur_ts, cur_id = _tail_cursor(to_insert, id_col,)
         # print("cur_ts->", cur_ts)
@@ -1487,7 +1493,7 @@ def sync_one_kind(
         "resume_source": resume_src,
         "dedupe_each_chunk": dedupe_chunks,
     }
-    
+
 
 def process_plant(plant_row: Dict[str, Any]) -> Dict[str, Any]:
     wall0 = time.perf_counter()
@@ -1677,9 +1683,13 @@ def _build_performance_summary(
                 "success": r.get("success", False),
                 "total_wall_seconds": round(wall, 2),
                 "event_log": {
-                    "fetch_seconds": round(float(ev.get("plant_fetch_seconds") or 0), 2),
+                    "fetch_seconds": round(
+                        float(ev.get("plant_fetch_seconds") or 0), 2
+                    ),
                     "copy_seconds": round(float(ev.get("app_db_copy_seconds") or 0), 2),
-                    "dedupe_seconds": round(float(ev.get("app_db_dedupe_seconds") or 0), 2),
+                    "dedupe_seconds": round(
+                        float(ev.get("app_db_dedupe_seconds") or 0), 2
+                    ),
                     "chunks_processed": ev.get("chunks_processed", 0),
                     "rows_fetched": ev.get("rows_fetched_from_plant_db", 0),
                     "rows_inserted": ev.get("rows_inserted_into_app_db", 0),
@@ -1687,9 +1697,13 @@ def _build_performance_summary(
                     "error_stage": ev.get("error_stage"),
                 },
                 "production_log": {
-                    "fetch_seconds": round(float(pr.get("plant_fetch_seconds") or 0), 2),
+                    "fetch_seconds": round(
+                        float(pr.get("plant_fetch_seconds") or 0), 2
+                    ),
                     "copy_seconds": round(float(pr.get("app_db_copy_seconds") or 0), 2),
-                    "dedupe_seconds": round(float(pr.get("app_db_dedupe_seconds") or 0), 2),
+                    "dedupe_seconds": round(
+                        float(pr.get("app_db_dedupe_seconds") or 0), 2
+                    ),
                     "chunks_processed": pr.get("chunks_processed", 0),
                     "rows_fetched": pr.get("rows_fetched_from_plant_db", 0),
                     "rows_inserted": pr.get("rows_inserted_into_app_db", 0),
@@ -1789,7 +1803,9 @@ def main() -> None:
         FROM lpg_plants_master
         ORDER BY id ASC
     """
-    result = asyncio.run(hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0))
+    result = asyncio.run(
+        hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+    )
     rows = result.get("data", []) if result else []
     if not rows:
         raise RuntimeError("No rows found in lpg_plants_master")
@@ -1861,18 +1877,21 @@ def main() -> None:
         results: List[Dict[str, Any]] = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
             futs = [
-                ex.submit(process_plant, dict(row)) for row in plants.iter_rows(named=True)
+                ex.submit(process_plant, dict(row))
+                for row in plants.iter_rows(named=True)
             ]
             for fut in concurrent.futures.as_completed(futs):
                 results.append(fut.result())
 
-        last_synced_map = _load_last_synced_at_map([r.get("plant_name") for r in results])
+        last_synced_map = _load_last_synced_at_map(
+            [r.get("plant_name") for r in results]
+        )
         for r in results:
             plant_name = r.get("plant_name", "")
             connected = bool(r.get("connected", False))
             bucket = last_synced_map.get(plant_name, {})
             latest_ts = _resolve_display_sync_ts(bucket, connected=connected)
-            r["status"] = ("CONNECTED" if connected else "NOT CONNECTED")
+            r["status"] = "CONNECTED" if connected else "NOT CONNECTED"
             r["last_synced_at"] = _last_synced_at_raw(latest_ts)
             r["time_elapsed"] = _time_elapsed_since(latest_ts)
 
@@ -1881,7 +1900,8 @@ def main() -> None:
         ok_n = sum(1 for r in results if r.get("success"))
         fail_n = n_plants - ok_n
         ev_rows = sum(
-            int(r.get("event_log", {}).get("rows_inserted_into_app_db") or 0) for r in results
+            int(r.get("event_log", {}).get("rows_inserted_into_app_db") or 0)
+            for r in results
         )
         pr_rows = sum(
             int(r.get("production_log", {}).get("rows_inserted_into_app_db") or 0)
@@ -1900,7 +1920,9 @@ def main() -> None:
                 "max_workers": max_workers,
                 "plants_source": "lpg_plants_master",
                 "connect_timeout_s": 45,
-                "query_timeout_s": int(os.environ.get("LPG_UNIFIED_QUERY_TIMEOUT_S", "600")),
+                "query_timeout_s": int(
+                    os.environ.get("LPG_UNIFIED_QUERY_TIMEOUT_S", "600")
+                ),
                 "totals": {
                     "event_log_rows_inserted_app_db": ev_rows,
                     "production_log_rows_inserted_app_db": pr_rows,
@@ -1910,8 +1932,13 @@ def main() -> None:
             "plants": results,
         }
 
-        summary_path = Path(tempfile.gettempdir()) / f"lpg_unified_sync_{uuid.uuid4().hex[:10]}.json"
-        summary_path.write_text(json.dumps(report, default=str, indent=2), encoding="utf-8")
+        summary_path = (
+            Path(tempfile.gettempdir())
+            / f"lpg_unified_sync_{uuid.uuid4().hex[:10]}.json"
+        )
+        summary_path.write_text(
+            json.dumps(report, default=str, indent=2), encoding="utf-8"
+        )
 
         _print_slow_plant_table(perf_summary)
         _sync_print(
@@ -1933,14 +1960,18 @@ def main() -> None:
             "yes",
         ):
             not_connected = _not_connected_from_sync_results(results)
-            _sync_print(f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…")
+            _sync_print(
+                f"Connectivity mail: checking {len(not_connected)} not-connected plant(s)…"
+            )
             try:
                 asyncio.run(_send_not_connected_plants_mail(not_connected))
             except Exception as exc:
                 logger.exception("Connectivity mail failed: %s", exc)
                 _sync_print(f"Connectivity mail FAILED: {exc}")
         else:
-            _sync_print("Connectivity mail: skipped (LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL)")
+            _sync_print(
+                "Connectivity mail: skipped (LPG_UNIFIED_SKIP_CONNECTIVITY_MAIL)"
+            )
 
     finally:
         # FIX 4: Releasing lock_conn releases the advisory lock automatically.

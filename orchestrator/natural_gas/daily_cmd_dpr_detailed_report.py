@@ -10,6 +10,7 @@ column (no nested ``actual_achieved_on`` /
 
 This module does not import other orchestrator natural_gas sync modules (avoids cycles).
 """
+
 from __future__ import annotations
 
 import json
@@ -83,7 +84,9 @@ def _is_section_title_row(row: pd.Series) -> bool:
 
 
 def _is_subheader_row(row: pd.Series) -> bool:
-    return _cell(row, 2) == "LMC (Registration - LMC)" and _cell(row, 3) == "NGC (LMC-NGC)"
+    return (
+        _cell(row, 2) == "LMC (Registration - LMC)" and _cell(row, 3) == "NGC (LMC-NGC)"
+    )
 
 
 def _is_total_row(row: pd.Series) -> bool:

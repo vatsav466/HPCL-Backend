@@ -1,6 +1,4 @@
-import urdhva_base
 import datetime
-import pytz
 import pandas as pd
 import polars as pl
 import charts_actions
@@ -26,9 +24,10 @@ async def cris_product_mapping():
         "2682000": "POWER 99",
         "2811000": "MS",
         "3912000": "TURBO",
-        "2816000": "POWER 99"
+        "2816000": "POWER 99",
     }
     return product_mapping
+
 
 async def sync_atg_ack():
     """
@@ -83,8 +82,12 @@ async def sync_atg_ack():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
             connection_mapping.connection_mapping.get("cris", "1")
         )
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
-        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
 
         atg_resp = await function(query=query)
 
@@ -95,25 +98,15 @@ async def sync_atg_ack():
         print("atg_resp ----->\n", atg_resp)
         if atg_resp.empty:
 
-            return {
-                "status": True,
-                "message": "No Records Found",
-                "data": []
-            }
+            return {"status": True, "message": "No Records Found", "data": []}
 
         # ======================================
         # Product Mapping
         # ======================================
-        atg_resp["item_name"] = (atg_resp["item_name"].astype(str))
+        atg_resp["item_name"] = atg_resp["item_name"].astype(str)
 
-        atg_resp.replace(
-            {
-                "item_name":
-                await cris_product_mapping()
-            },
-            inplace=True
-        )
-        
+        atg_resp.replace({"item_name": await cris_product_mapping()}, inplace=True)
+
         sync_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
         atg_resp["sync_time"] = sync_time
@@ -128,19 +121,23 @@ async def sync_atg_ack():
             "product_no": pl.Int64,
             "item_name": pl.String,
             "recptentrydate": pl.Datetime,
-            "sync_time": pl.Datetime
+            "sync_time": pl.Datetime,
         }
 
         atg_resp = pl.DataFrame(atg_resp, schema=atg_schema)
 
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+            connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        )
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams
         )
 
         # drop the table before upsert
-        drop_query="""DROP TABLE IF EXISTS "HPCL_HOS".atg_ack_confirmation"""
+        drop_query = """DROP TABLE IF EXISTS "HPCL_HOS".atg_ack_confirmation"""
 
         create_query = """
             CREATE TABLE "HPCL_HOS".atg_ack_confirmation (
@@ -154,42 +151,39 @@ async def sync_atg_ack():
                 CONSTRAINT uk_atg_ack UNIQUE (site_id, sap_ro_code, item_name)
             );
             """
-        
+
         # Delete table
         await function(query=drop_query)
         # Create table
         await function(query=create_query)
 
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "upsert_data"
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "upsert_data"
+        )
         function = await charts_actions.charts_connection_vault_routing(
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-        
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
+
         await function(
             schema_name="HPCL_HOS",
             table_name="atg_ack_confirmation",
             records=atg_resp.to_dicts(),
-            conflict_columns=[
-                "site_id",
-                "sap_ro_code",
-                "item_name"
-            ]
+            conflict_columns=["site_id", "sap_ro_code", "item_name"],
         )
         return {
             "status": True,
             "message": "ATG ACK Sync Completed Successfully",
-            "data": []
+            "data": [],
         }
 
     except Exception as e:
         import traceback
+
         print(traceback.format_exc())
-        return {
-            "status": False,
-            "message": str(e),
-            "data": []
-        }
-    
+        return {"status": False, "message": str(e), "data": []}
+
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(sync_atg_ack())

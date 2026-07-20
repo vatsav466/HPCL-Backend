@@ -1,10 +1,6 @@
 import typing
 import datetime
-import ipaddress
-import fastapi
 import pydantic
-import shutil
-import os
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
@@ -60,67 +56,485 @@ class CreatedHistoryCreate(pydantic.BaseModel):
 
 
 class TicketingSchema(UrdhvaPostgresBase):
-    __tablename__ = 'ticketing'
-    
-    ticket_name: Mapped[str] = mapped_column("ticket_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ticket_id: Mapped[str] = mapped_column("ticket_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    alert_section: Mapped[typing.Optional[str]] = mapped_column("alert_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("location_name", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
-    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    ticket_status: Mapped[typing.Any] = mapped_column("ticket_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    ticket_state: Mapped[typing.Any] = mapped_column("ticket_state", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    summary: Mapped[str] = mapped_column("summary", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    description: Mapped[str] = mapped_column("description", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ticket_severity: Mapped[typing.Any] = mapped_column("ticket_severity", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    assignee: Mapped[typing.Optional[typing.Any]] = mapped_column("assignee", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    reporter: Mapped[typing.Optional[str]] = mapped_column("reporter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    ticket_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("ticket_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    merge_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("merge_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    linked_alert_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("linked_alert_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    interlock_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("interlock_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    comment: Mapped[typing.Optional[str]] = mapped_column("comment", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    file_attachment: Mapped[typing.Optional[typing.List[str]]] = mapped_column("file_attachment", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    file_attachment_name: Mapped[typing.Optional[str]] = mapped_column("file_attachment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    file_attachment_id: Mapped[typing.Optional[str]] = mapped_column("file_attachment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    comment_text: Mapped[typing.Optional[str]] = mapped_column("comment_text", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    comment_id: Mapped[typing.Optional[str]] = mapped_column("comment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    comment_attachment_path: Mapped[typing.Optional[str]] = mapped_column("comment_attachment_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    context: Mapped[typing.Optional[str]] = mapped_column("context", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    merge_status: Mapped[typing.Optional[str]] = mapped_column("merge_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    parent_id: Mapped[typing.Optional[str]] = mapped_column("parent_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    subtask_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("subtask_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    ticket_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("ticket_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    truck_no: Mapped[typing.Optional[typing.List[str]]] = mapped_column("truck_no", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    ticket_section: Mapped[typing.Optional[str]] = mapped_column("ticket_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    reason: Mapped[typing.Optional[str]] = mapped_column("reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    auto_ticket_close: Mapped[typing.Optional[str]] = mapped_column("auto_ticket_close", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    escalation_level: Mapped[typing.Optional[str]] = mapped_column("escalation_level", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    comment_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("comment_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_id", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
-    re_assingee_employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_employee_id", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
-    re_assingee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("re_assingee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    reassigne_due_date: Mapped[typing.Optional[str]] = mapped_column("reassigne_due_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    employee_role: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_role", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    order_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("order_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    __tablename__ = "ticketing"
 
-    __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
+    ticket_name: Mapped[str] = mapped_column(
+        "ticket_name",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    ticket_id: Mapped[str] = mapped_column(
+        "ticket_id",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    alert_id: Mapped[typing.Optional[str]] = mapped_column(
+        "alert_id",
+        String,
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    bu: Mapped[typing.Any] = mapped_column(
+        "bu",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    alert_section: Mapped[typing.Optional[str]] = mapped_column(
+        "alert_section",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    sop_id: Mapped[typing.Optional[str]] = mapped_column(
+        "sop_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    sap_id: Mapped[typing.List[str]] = mapped_column(
+        "sap_id",
+        ARRAY(String),
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    location_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "location_name",
+        ARRAY(String),
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "zone",
+        ARRAY(String),
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    region: Mapped[typing.Optional[str]] = mapped_column(
+        "region",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    ticket_status: Mapped[typing.Any] = mapped_column(
+        "ticket_status",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    ticket_state: Mapped[typing.Any] = mapped_column(
+        "ticket_state",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "start_date",
+        DateTime(timezone=True),
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "end_date",
+        DateTime(timezone=True),
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    summary: Mapped[str] = mapped_column(
+        "summary",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    description: Mapped[str] = mapped_column(
+        "description",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    ticket_severity: Mapped[typing.Any] = mapped_column(
+        "ticket_severity",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    assignee: Mapped[typing.Optional[typing.Any]] = mapped_column(
+        "assignee",
+        String,
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    reporter: Mapped[typing.Optional[str]] = mapped_column(
+        "reporter",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    ticket_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column(
+        "ticket_history",
+        JSONB,
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    merge_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column(
+        "merge_history",
+        JSONB,
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    linked_alert_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "linked_alert_id",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    interlock_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "interlock_name",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    comment: Mapped[typing.Optional[str]] = mapped_column(
+        "comment",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    file_attachment: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "file_attachment",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    file_attachment_name: Mapped[typing.Optional[str]] = mapped_column(
+        "file_attachment_name",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    file_attachment_id: Mapped[typing.Optional[str]] = mapped_column(
+        "file_attachment_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    comment_text: Mapped[typing.Optional[str]] = mapped_column(
+        "comment_text",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    comment_id: Mapped[typing.Optional[str]] = mapped_column(
+        "comment_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    comment_attachment_path: Mapped[typing.Optional[str]] = mapped_column(
+        "comment_attachment_path",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    context: Mapped[typing.Optional[str]] = mapped_column(
+        "context",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    merge_status: Mapped[typing.Optional[str]] = mapped_column(
+        "merge_status",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    parent_id: Mapped[typing.Optional[str]] = mapped_column(
+        "parent_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    subtask_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "subtask_id",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    ticket_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "ticket_end_date",
+        DateTime(timezone=True),
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    truck_no: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "truck_no",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    ticket_section: Mapped[typing.Optional[str]] = mapped_column(
+        "ticket_section",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "category",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "sub_category",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    remarks: Mapped[typing.Optional[str]] = mapped_column(
+        "remarks",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    reason: Mapped[typing.Optional[str]] = mapped_column(
+        "reason",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    auto_ticket_close: Mapped[typing.Optional[str]] = mapped_column(
+        "auto_ticket_close",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "assignee_name",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "assignee_mail",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    escalation_level: Mapped[typing.Optional[str]] = mapped_column(
+        "escalation_level",
+        String,
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    comment_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column(
+        "comment_history",
+        JSONB,
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "employee_id",
+        ARRAY(String),
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    re_assingee_employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "re_assingee_employee_id",
+        ARRAY(String),
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    re_assingee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "re_assingee_mail",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    reassigne_due_date: Mapped[typing.Optional[str]] = mapped_column(
+        "reassigne_due_date",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    employee_role: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "employee_role",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    order_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "order_id",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),
+    )
 
 
 class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'ticketing'
-    
+    __tablename__ = "ticketing"
+
     ticket_name: str
     ticket_id: str
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -168,24 +582,26 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
     employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field(
+        "", **{}
+    )
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
     employee_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     order_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketingSchema
-        upsert_keys = ['ticket_id', 'sap_id']
-        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'ticket_id']
+        upsert_keys = ["ticket_id", "sap_id"]
+        search_fields = ["bu", "sap_id", "location_name", "zone", "ticket_id"]
 
 
 class Ticketing(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'ticketing'
-    
+    __tablename__ = "ticketing"
+
     ticket_name: typing.Optional[str] | None = None
     ticket_id: typing.Optional[str] | None = None
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -233,19 +649,21 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
     employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field(
+        "", **{}
+    )
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
     employee_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     order_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketingSchema
-        upsert_keys = ['ticket_id', 'sap_id']
-        search_fields = ['bu', 'sap_id', 'location_name', 'zone', 'ticket_id']
+        upsert_keys = ["ticket_id", "sap_id"]
+        search_fields = ["bu", "sap_id", "location_name", "zone", "ticket_id"]
 
 
 class TicketingGetResp(pydantic.BaseModel):
@@ -344,7 +762,9 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
-    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    re_assingee_employee_id: typing.Optional[typing.List[str]] = pydantic.Field(
+        "", **{}
+    )
     re_assingee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reassigne_due_date: typing.Optional[str] = pydantic.Field("", **{})
     ticket_end_date: typing.Optional[datetime.datetime] | None = None
@@ -515,7 +935,9 @@ class Ticketing_Vts_Block_TrucksParams(pydantic.BaseModel):
     block_days: typing.Optional[int] = pydantic.Field(0, **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
-    check_ticket_close: typing.Optional[bool] = pydantic.Field(False, )
+    check_ticket_close: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
     truck_info: typing.List[TruckInfoCreate]
 
     class Config:
@@ -569,18 +991,58 @@ class Ticketing_Run_Alert_CloserParams(pydantic.BaseModel):
 
 
 class TicketCommentSchema(UrdhvaPostgresBase):
-    __tablename__ = 'ticket_comment'
-    
-    ticket_id: Mapped[str] = mapped_column("ticket_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    created_by: Mapped[str] = mapped_column("created_by", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    content: Mapped[str] = mapped_column("content", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    documents: Mapped[typing.Optional[typing.List[str]]] = mapped_column("documents", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    update_history: Mapped[typing.Optional[typing.List[str]]] = mapped_column("update_history", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    __tablename__ = "ticket_comment"
+
+    ticket_id: Mapped[str] = mapped_column(
+        "ticket_id",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    created_by: Mapped[str] = mapped_column(
+        "created_by",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    content: Mapped[str] = mapped_column(
+        "content",
+        String,
+        index=False,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    documents: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "documents",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    update_history: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "update_history",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
 
 
 class TicketCommentCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'ticket_comment'
-    
+    __tablename__ = "ticket_comment"
+
     ticket_id: str
     created_by: str
     content: str
@@ -588,7 +1050,7 @@ class TicketCommentCreate(urdhva_base.postgresmodel.BasePostgresModel):
     update_history: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketCommentSchema
@@ -596,8 +1058,8 @@ class TicketCommentCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
 
 class TicketComment(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'ticket_comment'
-    
+    __tablename__ = "ticket_comment"
+
     ticket_id: typing.Optional[str] | None = None
     created_by: typing.Optional[str] | None = None
     content: typing.Optional[str] | None = None
@@ -605,7 +1067,7 @@ class TicketComment(urdhva_base.postgresmodel.PostgresModel):
     update_history: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketCommentSchema
@@ -668,21 +1130,85 @@ class Ticketcomment_Download_AttachmentParams(pydantic.BaseModel):
 
 
 class TicketUserMailsSchema(UrdhvaPostgresBase):
-    __tablename__ = 'ticket_user_mails'
-    
-    level: Mapped[typing.Optional[str]] = mapped_column("level", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    employee_name: Mapped[typing.Optional[str]] = mapped_column("employee_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    email_id: Mapped[typing.Optional[str]] = mapped_column("email_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    __tablename__ = "ticket_user_mails"
+
+    level: Mapped[typing.Optional[str]] = mapped_column(
+        "level",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    sap_id: Mapped[typing.Optional[str]] = mapped_column(
+        "sap_id",
+        String,
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    role: Mapped[str] = mapped_column(
+        "role",
+        String,
+        index=True,
+        nullable=False,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    location_name: Mapped[typing.Optional[str]] = mapped_column(
+        "location_name",
+        String,
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    zone: Mapped[typing.Optional[str]] = mapped_column(
+        "zone",
+        String,
+        index=True,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    employee_name: Mapped[typing.Optional[str]] = mapped_column(
+        "employee_name",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    email_id: Mapped[typing.Optional[str]] = mapped_column(
+        "email_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    employee_id: Mapped[typing.Optional[str]] = mapped_column(
+        "employee_id",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
 
 
 class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'ticket_user_mails'
-    
+    __tablename__ = "ticket_user_mails"
+
     level: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: str
@@ -693,7 +1219,7 @@ class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketUserMailsSchema
@@ -701,8 +1227,8 @@ class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
 
 class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'ticket_user_mails'
-    
+    __tablename__ = "ticket_user_mails"
+
     level: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[str] | None = None
@@ -713,7 +1239,7 @@ class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TicketUserMailsSchema
@@ -737,20 +1263,76 @@ class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
 
 
 class AlertCategoryMasterSchema(UrdhvaPostgresBase):
-    __tablename__ = 'alert_category_master'
-    
-    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    created_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    updated_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("updated_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    created_by: Mapped[typing.Optional[str]] = mapped_column("created_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    created_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("created_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    __tablename__ = "alert_category_master"
+
+    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "category",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column(
+        "sub_category",
+        ARRAY(String),
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    status: Mapped[typing.Optional[str]] = mapped_column(
+        "status",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    created_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "created_on",
+        DateTime(timezone=True),
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    updated_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "updated_on",
+        DateTime(timezone=True),
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
+    created_by: Mapped[typing.Optional[str]] = mapped_column(
+        "created_by",
+        String,
+        index=False,
+        nullable=True,
+        default="",
+        primary_key=False,
+        unique=False,
+    )
+    created_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column(
+        "created_history",
+        JSONB,
+        index=False,
+        nullable=True,
+        default=None,
+        primary_key=False,
+        unique=False,
+    )
 
 
 class AlertCategoryMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'alert_category_master'
-    
+    __tablename__ = "alert_category_master"
+
     category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
@@ -760,7 +1342,7 @@ class AlertCategoryMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = AlertCategoryMasterSchema
@@ -768,8 +1350,8 @@ class AlertCategoryMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
 
 class AlertCategoryMaster(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'alert_category_master'
-    
+    __tablename__ = "alert_category_master"
+
     category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
@@ -779,7 +1361,7 @@ class AlertCategoryMaster(urdhva_base.postgresmodel.PostgresModel):
     created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
 
     class Config:
-        collection_name = 'data_flow'
+        collection_name = "data_flow"
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = AlertCategoryMasterSchema

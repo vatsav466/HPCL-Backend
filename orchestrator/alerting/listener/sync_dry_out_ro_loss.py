@@ -1,4 +1,3 @@
-import urdhva_base
 import asyncio
 import numpy as np
 import pandas as pd
@@ -9,7 +8,7 @@ async def sync_dry_out_ro_loss():
     where_clauses = [
         f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
         "a.dry_out_in_days = '1'",
-        "a.indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')"
+        "a.indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')",
     ]
     where_clause = " AND ".join(where_clauses)
     query = f"""WITH product_mapping AS (
@@ -73,49 +72,112 @@ async def sync_dry_out_ro_loss():
                 ORDER BY ap.start_ts DESC"""
     data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
     data = pd.DataFrame(data.get("data", []))
-    products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
-                    '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
-                    '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
-    data['zone'] = data['zone'].fillna("")
-    data['region'] = data['region'].fillna("")
-    data['sales_area'] = data['sales_area'].fillna("")
-    data['location_name'] = data['location_name'].fillna("")
-    data.loc[data['region'] == '0', 'region'] = ''
-    data.loc[data['sales_area'] == '0', 'sales_area'] = ''
-    data.loc[data['location_name'] == '0', 'location_name'] = ''
+    products_map = {
+        "2811000": "MS",
+        "1322000": "MS",
+        "2812000": "HSD",
+        "1683000": "HSD",
+        "3912000": "TURBO",
+        "1683100": "TURBO",
+        "2816000": "POWER 99",
+        "2682000": "POWER 99",
+        "3672000": "POWER 95",
+        "3672000": "POWER 95",
+        "3373000": "POWER 100",
+        "3373000": "POWER 100",
+    }
+    data["zone"] = data["zone"].fillna("")
+    data["region"] = data["region"].fillna("")
+    data["sales_area"] = data["sales_area"].fillna("")
+    data["location_name"] = data["location_name"].fillna("")
+    data.loc[data["region"] == "0", "region"] = ""
+    data.loc[data["sales_area"] == "0", "sales_area"] = ""
+    data.loc[data["location_name"] == "0", "location_name"] = ""
     data = data.fillna(0)
-    data['product_name'] = data['product_no'].astype(str).map(products_map)
-    data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
-    data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
-    data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
+    data["product_name"] = data["product_no"].astype(str).map(products_map)
+    data["start_date"] = pd.to_datetime(data["start_date"]).dt.tz_localize(None)
+    data["end_date"] = pd.to_datetime(data["end_date"]).dt.tz_localize(None)
+    data["dryout_days"] = (data["end_date"] - data["start_date"]).dt.total_seconds() / (
+        60 * 60 * 24
+    )
     data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
     data["estimated_loss_amount"] = data["dryout_days"] * data["avg_daily_sales_amount"]
     data["estimated_loss"] = data["estimated_loss"].round(2)
     data["estimated_loss_amount"] = data["estimated_loss_amount"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
     data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].round(2).astype(str)
-    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales', 'avg_daily_sales_amount', 'region', 'sales_area', 'location_name'])[
-        ['estimated_loss', 'estimated_loss_amount', 'dryout_days']].sum().reset_index()
+    data = (
+        data.groupby(
+            [
+                "loss_month",
+                "sap_id",
+                "product_name",
+                "zone",
+                "tank_no",
+                "avg_daily_sales",
+                "avg_daily_sales_amount",
+                "region",
+                "sales_area",
+                "location_name",
+            ]
+        )[["estimated_loss", "estimated_loss_amount", "dryout_days"]]
+        .sum()
+        .reset_index()
+    )
     data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
     data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].astype(np.float64)
-    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'region', 'sales_area', 'location_name'])[
-        ['estimated_loss', 'estimated_loss_amount', 'dryout_days', 'avg_daily_sales', 'avg_daily_sales_amount']].sum().reset_index()
+    data = (
+        data.groupby(
+            [
+                "loss_month",
+                "sap_id",
+                "product_name",
+                "zone",
+                "tank_no",
+                "region",
+                "sales_area",
+                "location_name",
+            ]
+        )[
+            [
+                "estimated_loss",
+                "estimated_loss_amount",
+                "dryout_days",
+                "avg_daily_sales",
+                "avg_daily_sales_amount",
+            ]
+        ]
+        .sum()
+        .reset_index()
+    )
     data["estimated_loss"] = data["estimated_loss"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
     data["estimated_loss_amount"] = data["estimated_loss_amount"].round(2)
     data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].round(2)
-    data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
+    data["dryout_days"] = pd.to_timedelta(data["dryout_days"], unit="D")
 
-    data['dryout_days'] = data['dryout_days'].apply(
+    data["dryout_days"] = data["dryout_days"].apply(
         lambda td: f"{td.days} days {td.components.hours} hours"
     )
-    data = data.drop_duplicates(subset=["loss_month", "sap_id", "zone", "product_name", "tank_no", "location_name"])
+    data = data.drop_duplicates(
+        subset=[
+            "loss_month",
+            "sap_id",
+            "zone",
+            "product_name",
+            "tank_no",
+            "location_name",
+        ]
+    )
     print(data)
     print(data.columns)
     print(data.dtypes)
     data.to_csv("/tmp/dry_out_loss.csv", index=False)
     for split_df in np.array_split(data, 500):
-        await hpcl_ceg_model.DryOutRoLoss.bulk_update(split_df.to_dict(orient='records'), upsert=True)
+        await hpcl_ceg_model.DryOutRoLoss.bulk_update(
+            split_df.to_dict(orient="records"), upsert=True
+        )
+
 
 if __name__ == "__main__":
     asyncio.run(sync_dry_out_ro_loss())

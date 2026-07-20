@@ -1,7 +1,6 @@
 import urdhva_base
 import datetime, zoneinfo
 import hpcl_ceg_model
-import os
 import pandas as pd
 import numpy as np
 import urdhva_base.utilities
@@ -18,12 +17,11 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.reporting_services.lpg_reporting as lpg_reporting
 import orchestrator.dbconnector.credential_loader as credential_loader
 
-
-creds = credential_loader.get_credentials('APP_DB')
+creds = credential_loader.get_credentials("APP_DB")
 
 lpg_day_wise_trend_exl_path = ""
 monthly_score_path = ""
-plant_wise_score_path=""
+plant_wise_score_path = ""
 lpg_va_path = ""
 lpg_pq_path = ""
 
@@ -32,7 +30,7 @@ DB_CONFIG = {
     "port": creds["port"],
     "database": creds["database"],
     "user": creds["user"],
-    "password": creds["password"]
+    "password": creds["password"],
 }
 
 
@@ -42,18 +40,12 @@ async def get_lpg_rejection():
 
     # Yesterday
     date_yes = helpers.get_time_stamp_by_delta(
-        date,
-        days=1,
-        with_month_start_day=False,
-        date_time_format=None
+        date, days=1, with_month_start_day=False, date_time_format=None
     )
 
     # Current Month Start
     month_start = helpers.get_time_stamp_by_delta(
-        date_yes,
-        days=0,
-        with_month_start_day=True,
-        date_time_format="%Y-%m-%d"
+        date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d"
     )
 
     current_month_filter = f"""
@@ -69,7 +61,7 @@ async def get_lpg_rejection():
         connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     )
 
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
 
     function = await charts_connection_vault_routing(
         Charts_Connection_Vault_RoutingParams
@@ -113,28 +105,81 @@ async def get_lpg_rejection():
             "pq_critical_lpg": result["pq_total_lpg"],
             "pq_high_lpg": 0,
             "pq_total_lpg": result["pq_total_lpg"],
-            "pq_total_fy_lpg": result["total_pq_alerts_fy"]
+            "pq_total_fy_lpg": result["total_pq_alerts_fy"],
         }
 
     return {
         "pq_critical_lpg": 0,
         "pq_high_lpg": 0,
         "pq_total_lpg": 0,
-        "pq_total_fy_lpg": 0
+        "pq_total_fy_lpg": 0,
     }
 
 
 async def lpg_top_bottom_score_plants():
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     sap_ids = [
-        "2662", "2693", "2241", "2935", "2371", "2121", "2520", "2401", "2324", "2811",
-        "2435", "2891", "2663", "2314", "2844", "2402", "2455", "2203", "2892", "2504",
-        "2248", "2171", "2262", "2655", "2215", "2623", "2204", "2472", "2959", "2921",
-        "2330", "2126", "2947", "2539", "2777", "2507", "2829", "2779", "2373", "2657",
-        "2949", "2173", "2707", "2568", "2659", "2792", "2660", "2692", "2471", "2731",
-        "2630", "2408", "2316", "2117", "2732"
+        "2662",
+        "2693",
+        "2241",
+        "2935",
+        "2371",
+        "2121",
+        "2520",
+        "2401",
+        "2324",
+        "2811",
+        "2435",
+        "2891",
+        "2663",
+        "2314",
+        "2844",
+        "2402",
+        "2455",
+        "2203",
+        "2892",
+        "2504",
+        "2248",
+        "2171",
+        "2262",
+        "2655",
+        "2215",
+        "2623",
+        "2204",
+        "2472",
+        "2959",
+        "2921",
+        "2330",
+        "2126",
+        "2947",
+        "2539",
+        "2777",
+        "2507",
+        "2829",
+        "2779",
+        "2373",
+        "2657",
+        "2949",
+        "2173",
+        "2707",
+        "2568",
+        "2659",
+        "2792",
+        "2660",
+        "2692",
+        "2471",
+        "2731",
+        "2630",
+        "2408",
+        "2316",
+        "2117",
+        "2732",
     ]
     sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids])
     top_query = f"""WITH plant_avg_scores AS (
@@ -181,7 +226,7 @@ async def lpg_top_bottom_score_plants():
                         ON p.sap_id = pd.sap_id
                     ORDER BY p.avg_score DESC
                     LIMIT 3"""
-    
+
     bottom_query = f"""WITH plant_avg_scores AS (
                         SELECT
                             sap_id,
@@ -236,12 +281,16 @@ async def lpg_top_bottom_score_plants():
     bottom_resp = await function(query=bottom_query)
     lpg_avg_score_resp = pd.DataFrame(lpg_avg_score_resp)
     if not lpg_avg_score_resp.empty:
-        lpg_avg_score_value = lpg_avg_score_resp['lpg_average_score'].iloc[0]
+        lpg_avg_score_value = lpg_avg_score_resp["lpg_average_score"].iloc[0]
     else:
         lpg_avg_score_value = None  # or 0 or 'N/A'
     top_resp = pd.DataFrame(top_resp)
     bottom_resp = pd.DataFrame(bottom_resp)
-    return {"lpg_top_data": top_resp, "lpg_bottom_data": bottom_resp, "lpg_avg_score_resp": lpg_avg_score_value}
+    return {
+        "lpg_top_data": top_resp,
+        "lpg_bottom_data": bottom_resp,
+        "lpg_avg_score_resp": lpg_avg_score_value,
+    }
 
 
 def generate_monthly_lpg_score_chart(df, output_path="/tmp/lpg_monthly_score.png"):
@@ -268,10 +317,7 @@ def generate_monthly_lpg_score_chart(df, output_path="/tmp/lpg_monthly_score.png
     plt.figure(figsize=(10, 5.2))
 
     bars = plt.bar(
-        month_labels,
-        df["score"],
-        width=0.45,
-        color="#0B4F6C"  # exact dark blue shade
+        month_labels, df["score"], width=0.45, color="#0B4F6C"  # exact dark blue shade
     )
 
     # Title
@@ -299,7 +345,7 @@ def generate_monthly_lpg_score_chart(df, output_path="/tmp/lpg_monthly_score.png
             ha="center",
             va="bottom",
             fontsize=10,
-            fontweight="bold"
+            fontweight="bold",
         )
 
     # Tight layout
@@ -313,8 +359,7 @@ def generate_monthly_lpg_score_chart(df, output_path="/tmp/lpg_monthly_score.png
 
 
 def generate_plant_wise_score_chart(
-    df,
-    output_path="/tmp/lpg_plant_wise_average_score.png"
+    df, output_path="/tmp/lpg_plant_wise_average_score.png"
 ):
     """
     df columns required:
@@ -334,12 +379,7 @@ def generate_plant_wise_score_chart(
     # ===== Figure (same feel as dry-out chart) =====
     plt.figure(figsize=(17, 9))
 
-    bars = plt.bar(
-        x_labels,
-        scores,
-        width=0.45,              # same bar thickness
-        color="#0B4F6C"
-    )
+    bars = plt.bar(x_labels, scores, width=0.45, color="#0B4F6C")  # same bar thickness
 
     # ===== Title =====
     plt.title("Plant wise Average Score", fontsize=18, pad=20)
@@ -349,25 +389,13 @@ def generate_plant_wise_score_chart(
     upper_limit = int(np.ceil(max_val / 10.0) * 10)
 
     plt.ylim(0, upper_limit + 15)
-    plt.yticks(
-        np.arange(0, upper_limit + 1, 10),
-        fontsize=14
-    )
+    plt.yticks(np.arange(0, upper_limit + 1, 10), fontsize=14)
 
     # ===== Grid (same as dry-out chart) =====
-    plt.grid(
-        axis="y",
-        linestyle="--",
-        linewidth=0.6,
-        alpha=0.5
-    )
+    plt.grid(axis="y", linestyle="--", linewidth=0.6, alpha=0.5)
 
     # ===== X-axis formatting (KEY FIX) =====
-    plt.xticks(
-        rotation=90,
-        ha="right",
-        fontsize=14
-    )
+    plt.xticks(rotation=90, ha="right", fontsize=14)
 
     plt.xlabel("Plant Name", fontsize=16, labelpad=20)
     plt.ylabel("", fontsize=14)
@@ -389,7 +417,7 @@ def generate_plant_wise_score_chart(
             va="bottom",
             rotation=90,
             fontsize=14,
-            fontweight="bold"
+            fontweight="bold",
         )
 
     # ===== Layout & Save =====
@@ -475,18 +503,15 @@ async def get_va_path():
             sheet_name="Plant Wise VA Alerts",
             index=False,
             startrow=1,
-            header=False   #important
+            header=False,  # important
         )
 
         workbook = writer.book
         worksheet = writer.sheets["Plant Wise VA Alerts"]
 
-        header_format = workbook.add_format({
-            "bold": True,
-            "align": "center",
-            "valign": "middle",
-            "border": 1
-        })
+        header_format = workbook.add_format(
+            {"bold": True, "align": "center", "valign": "middle", "border": 1}
+        )
 
         # Write header ONCE
         for col_num, col_name in enumerate(df.columns):
@@ -499,10 +524,12 @@ async def get_va_path():
 async def get_pq_path():
     # Making sure alerts considering only after May 31st in prod
     date = urdhva_base.utilities.get_present_time()
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
-                                               date_time_format="%Y-%m-%d")
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d"
+    )
     date_filter = (
         f"(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= '{month_start}' "
         f"AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
@@ -571,18 +598,15 @@ async def get_pq_path():
             sheet_name="Plant Wise PQ Alerts",
             index=False,
             startrow=1,
-            header=False   # IMPORTANT
+            header=False,  # IMPORTANT
         )
 
         workbook = writer.book
         worksheet = writer.sheets["Plant Wise PQ Alerts"]
 
-        header_format = workbook.add_format({
-            "bold": True,
-            "align": "center",
-            "valign": "middle",
-            "border": 1
-        })
+        header_format = workbook.add_format(
+            {"bold": True, "align": "center", "valign": "middle", "border": 1}
+        )
 
         # Write header ONCE
         for col_num, col_name in enumerate(df.columns):
@@ -595,11 +619,13 @@ async def get_pq_path():
 async def get_vts_lpg_blocked_counts():
     # Making sure alerts considering only after May 31st in prod
     date = urdhva_base.utilities.get_present_time()
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
-                                               date_time_format="%Y-%m-%d")
-    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d"
+    )
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"  # As per HPCL request changed the date to be in the present month
     lpg_query = f"""SELECT
                         CASE violation_type
                             WHEN 'route_deviation_count'      THEN 'Route Deviation'
@@ -672,22 +698,34 @@ async def get_vts_lpg_blocked_counts():
                             AND tt_type= 'packed'
                             AND {date_filter}
                             """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     lpg_blocked_data_resp = await function(query=lpg_query)
     lpg_blocked_data_resp = pd.DataFrame(lpg_blocked_data_resp)
-    
+
     lpg_blocked_packed_resp = await function(query=lpg_blocked_packed)
     lpg_blocked_packed_data_resp = pd.DataFrame(lpg_blocked_packed_resp)
     lpg_blocked_packed_data_resp = lpg_blocked_packed_data_resp.iloc[0].to_dict()
     # Extract values from the first (and only) row safely
     if not lpg_blocked_data_resp.empty:
         lpg_blocked_data = {
-            "TTs_Blocked_by_Novex_LPG": int(lpg_blocked_data_resp["TTs_Blocked_by_Novex"].sum()),
-            "TTs_Manually_Unblocked_LPG": int(lpg_blocked_data_resp["TTs_Manually_Unblocked"].sum()),
-            "TTs_currently_under_Block_LPG": int(lpg_blocked_data_resp["TTs_currently_under_Block"].sum()),
-            "TTs_Auto_Unblocked_LPG": int(lpg_blocked_data_resp["TTs_Unblocked_as_per_ITDG"].sum())
+            "TTs_Blocked_by_Novex_LPG": int(
+                lpg_blocked_data_resp["TTs_Blocked_by_Novex"].sum()
+            ),
+            "TTs_Manually_Unblocked_LPG": int(
+                lpg_blocked_data_resp["TTs_Manually_Unblocked"].sum()
+            ),
+            "TTs_currently_under_Block_LPG": int(
+                lpg_blocked_data_resp["TTs_currently_under_Block"].sum()
+            ),
+            "TTs_Auto_Unblocked_LPG": int(
+                lpg_blocked_data_resp["TTs_Unblocked_as_per_ITDG"].sum()
+            ),
         }
     else:
         # Default if no data returned
@@ -695,21 +733,25 @@ async def get_vts_lpg_blocked_counts():
             "TTs_Blocked_by_Novex_LPG": 0,
             "TTs_Manually_Unblocked_LPG": 0,
             "TTs_currently_under_Block_LPG": 0,
-            "TTs_Auto_Unblocked_LPG": 0
+            "TTs_Auto_Unblocked_LPG": 0,
         }
-    lpg_blocked_data_resp.rename(columns={
-        "TTs_Blocked_by_Novex": "TTs Blocked by Novex",
-        "TTs_Manually_Unblocked": "TTs Manually Unblocked",
-        "TTs_Unblocked_as_per_ITDG": "TTs unblocked as per ITDG",
-        "TTs_currently_under_Block": "TTs currently under Block"
-    }, inplace=True)
+    lpg_blocked_data_resp.rename(
+        columns={
+            "TTs_Blocked_by_Novex": "TTs Blocked by Novex",
+            "TTs_Manually_Unblocked": "TTs Manually Unblocked",
+            "TTs_Unblocked_as_per_ITDG": "TTs unblocked as per ITDG",
+            "TTs_currently_under_Block": "TTs currently under Block",
+        },
+        inplace=True,
+    )
 
-    print('*'*200)
+    print("*" * 200)
     print(lpg_blocked_data_resp)
-    print('*'*200)
+    print("*" * 200)
 
-    
-    lpg_day_wise_trend = await lpg_reporting.get_lpg_day_wise_trends(by_day=True, by_plant=True)
+    lpg_day_wise_trend = await lpg_reporting.get_lpg_day_wise_trends(
+        by_day=True, by_plant=True
+    )
     lpg_day_wise_trend_df = pd.DataFrame(lpg_day_wise_trend)
     # Ensure correct types
     lpg_day_wise_trend_df["timestamp"] = pd.to_datetime(
@@ -720,7 +762,7 @@ async def get_vts_lpg_blocked_counts():
         index="timestamp",
         columns="name",
         values="score",
-        aggfunc="mean"   # safe if duplicates exist
+        aggfunc="mean",  # safe if duplicates exist
     )
 
     # Sort by date
@@ -735,21 +777,23 @@ async def get_vts_lpg_blocked_counts():
     global lpg_day_wise_trend_exl_path
     output_file = "/tmp/LPG Plant Day Wise Trend.xlsx"
     lpg_day_wise_trend_exl_path = output_file
-    excel_df.to_excel(
-        output_file,
-        sheet_name="Day Wise Trend"
-    )
+    excel_df.to_excel(output_file, sheet_name="Day Wise Trend")
 
     start_date = "2025-06-01"
     end_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     time_range = f"{start_date},{end_date}"
 
-    monthly_average_plant_score = await lpg_reporting.get_lpg_day_wise_trends(by_day=False, by_month=True, time_range=time_range)
+    monthly_average_plant_score = await lpg_reporting.get_lpg_day_wise_trends(
+        by_day=False, by_month=True, time_range=time_range
+    )
     monthly_average_plant_score_df = pd.DataFrame(monthly_average_plant_score)
-    lpg_monthyl_score_path = generate_monthly_lpg_score_chart(monthly_average_plant_score_df)
+    lpg_monthyl_score_path = generate_monthly_lpg_score_chart(
+        monthly_average_plant_score_df
+    )
 
-
-    plant_wise_score = await lpg_reporting.get_lpg_day_wise_trends(by_day=False, by_plant=True)
+    plant_wise_score = await lpg_reporting.get_lpg_day_wise_trends(
+        by_day=False, by_plant=True
+    )
     plant_wise_score_df = pd.DataFrame(plant_wise_score)
     plant_wise_score_df_path = generate_plant_wise_score_chart(plant_wise_score_df)
 
@@ -760,15 +804,15 @@ async def get_vts_lpg_blocked_counts():
     await get_pq_path()
 
     return {
-        "lpg_blocked_data_resp":lpg_blocked_data, 
+        "lpg_blocked_data_resp": lpg_blocked_data,
         "lpg_blocked_packed_resp": lpg_blocked_packed_data_resp,
         "lpg_blocked_data_resp_violation": lpg_blocked_data_resp,
         "zone_wise_cylinder_count_df": zone_wise_cylinder_count_df,
-        "lpg_monthyl_score_path" : lpg_monthyl_score_path,
-        "plant_wise_score_df_path" : plant_wise_score_df_path,
+        "lpg_monthyl_score_path": lpg_monthyl_score_path,
+        "plant_wise_score_df_path": plant_wise_score_df_path,
         "lpg_day_wise_trend_exl_path": lpg_day_wise_trend_exl_path,
         "lpg_va_path": lpg_va_path,
-        "lpg_pq_path": lpg_pq_path
+        "lpg_pq_path": lpg_pq_path,
     }
 
 
@@ -779,7 +823,7 @@ def check_socket(host, port):
         result = sock.connect_ex((host, int(port)))
         sock.close()
         return result == 0
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -793,93 +837,125 @@ def get_counts(conn, event_table, prod_table, plant_name=None, is_central=False)
     cur = conn.cursor()
     now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(
+        minute=0, second=0, microsecond=0
+    )
 
     if is_central:
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(*) FROM event_log
             WHERE process_date >= %s AND process_date < %s
             AND LOWER("Plant Name") = LOWER(%s)
-        """, (start_date, end_date, plant_name))
+        """,
+            (start_date, end_date, plant_name),
+        )
         event_count = cur.fetchone()
 
-        cur.execute("""
+        cur.execute(
+            """
                     SELECT MAX(process_date) FROM event_log
                     WHERE LOWER("Plant Name") = LOWER(%s)
-                """, (plant_name,))
+                """,
+            (plant_name,),
+        )
         event_max = cur.fetchone()
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(*) FROM production_log
             WHERE process_date >= %s AND process_date < %s
             AND LOWER("Plant Name") = LOWER(%s)
-        """, (start_date, end_date, plant_name))
+        """,
+            (start_date, end_date, plant_name),
+        )
         prod_count = cur.fetchone()
 
-        cur.execute("""
+        cur.execute(
+            """
                     SELECT MAX(process_date) FROM production_log
                     WHERE LOWER("Plant Name") = LOWER(%s)
-                """, (plant_name,))
+                """,
+            (plant_name,),
+        )
         prod_max = cur.fetchone()
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(*) FROM (
                 SELECT COUNT(*) OVER (PARTITION BY process_date, production_log_id) AS cnt
                 FROM production_log
                 WHERE process_date >= %s AND process_date < %s
                 AND LOWER("Plant Name") = LOWER(%s)
             ) t WHERE cnt > 1
-        """, (start_date, end_date, plant_name))
+        """,
+            (start_date, end_date, plant_name),
+        )
         prod_dup = cur.fetchone()
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(*) FROM (
                 SELECT COUNT(*) OVER (PARTITION BY process_date, event_log_id) AS cnt
                 FROM event_log
                 WHERE process_date >= %s AND process_date < %s
                 AND LOWER("Plant Name") = LOWER(%s)
             ) t WHERE cnt > 1
-        """, (start_date, end_date, plant_name))
+        """,
+            (start_date, end_date, plant_name),
+        )
         event_dup = cur.fetchone()
 
     else:
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT COUNT(*) FROM {event_table}
             WHERE process_date >= %s AND process_date < %s
-        """, (start_date, end_date))
+        """,
+            (start_date, end_date),
+        )
         event_count = cur.fetchone()
 
         cur.execute(f"""
             SELECT MAX(process_date) FROM {event_table} """)
         event_max = cur.fetchone()
 
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT COUNT(*) FROM {prod_table}
             WHERE process_date >= %s AND process_date < %s
-        """, (start_date, end_date))
+        """,
+            (start_date, end_date),
+        )
         prod_count = cur.fetchone()
 
         cur.execute(f"""
             SELECT MAX(process_date) FROM {prod_table}""")
         prod_max = cur.fetchone()
 
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT COUNT(*) FROM (
                 SELECT COUNT(*) OVER (PARTITION BY process_date, production_log_id) AS cnt
                 FROM {prod_table}
                 WHERE process_date >= %s AND process_date < %s
             ) t WHERE cnt > 1
-        """, (start_date, end_date))
+        """,
+            (start_date, end_date),
+        )
         prod_dup = cur.fetchone()
 
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT COUNT(*) FROM (
                 SELECT COUNT(*) OVER (PARTITION BY process_date, event_log_id) AS cnt
                 FROM {event_table}
                 WHERE process_date >= %s AND process_date < %s
             ) t WHERE cnt > 1
-        """, (start_date, end_date))
+        """,
+            (start_date, end_date),
+        )
         event_dup = cur.fetchone()
 
     cur.close()
@@ -892,27 +968,35 @@ def get_missing_production_count(plant_conn, central_conn, prod_table, plant_nam
 
     now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(
+        minute=0, second=0, microsecond=0
+    )
 
-    plant_cur.execute(f"""
+    plant_cur.execute(
+        f"""
         SELECT production_log_id, process_date
         FROM {prod_table}
         WHERE process_date >= %s AND process_date < %s
-    """, (start_date, end_date))
+    """,
+        (start_date, end_date),
+    )
     plant_rows = plant_cur.fetchall()
     if not plant_rows:
         return 0
     plant_ids = {(r[0], r[1]) for r in plant_rows}
 
-    central_cur.execute("""
+    central_cur.execute(
+        """
         SELECT production_log_id, process_date
         FROM production_log
         WHERE process_date >= %s AND process_date < %s
         AND LOWER("Plant Name") = LOWER(%s)
-    """, (start_date, end_date, plant_name))
+    """,
+        (start_date, end_date, plant_name),
+    )
     central_rows = central_cur.fetchall()
     central_ids = {(r[0], r[1]) for r in central_rows}
-    
+
     missing = plant_ids - central_ids
     plant_cur.close()
     central_cur.close()
@@ -926,27 +1010,35 @@ def get_missing_event_count(plant_conn, central_conn, event_table, plant_name=No
 
     now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = (now - datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    end_date = (now - datetime.timedelta(hours=1)).replace(
+        minute=0, second=0, microsecond=0
+    )
 
-    plant_cur.execute(f"""
+    plant_cur.execute(
+        f"""
             SELECT event_log_id, process_date
             FROM {event_table}
             WHERE process_date >= %s AND process_date < %s
-        """, (start_date, end_date))
+        """,
+        (start_date, end_date),
+    )
     plant_rows = plant_cur.fetchall()
     if not plant_rows:
         return 0
     plant_ids = {(r[0], r[1]) for r in plant_rows}
 
-    central_cur.execute("""
+    central_cur.execute(
+        """
             SELECT event_log_id, process_date
             FROM event_log
             WHERE process_date >= %s AND process_date < %s
             AND LOWER("Plant Name") = LOWER(%s)
-        """, (start_date, end_date, plant_name))
+        """,
+        (start_date, end_date, plant_name),
+    )
     central_rows = central_cur.fetchall()
     central_ids = {(r[0], r[1]) for r in central_rows}
-    
+
     missing = plant_ids - central_ids
     plant_cur.close()
     central_cur.close()
@@ -962,7 +1054,26 @@ def process_plant(plant):
 
     connection = check_socket(host, port)
     if not connection:
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, "Socket Failed"]
+        return [
+            plant_name,
+            host,
+            False,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "Socket Failed",
+        ]
 
     try:
         event_table, prod_table = get_tables(db_type)
@@ -972,34 +1083,54 @@ def process_plant(plant):
             database=plant["db_database"],
             user=plant["db_user"],
             password=plant["db_password"],
-            port=port
+            port=port,
         )
-        p_event, p_event_dup, p_event_max, p_prod, p_prod_dup, p_prod_max = get_counts(plant_conn, event_table, prod_table)
+        p_event, p_event_dup, p_event_max, p_prod, p_prod_dup, p_prod_max = get_counts(
+            plant_conn, event_table, prod_table
+        )
         # Central DB
         central_conn = psycopg2.connect(**DB_CONFIG)
 
-        c_event, c_event_dup, c_event_max, c_prod, c_prod_dup, c_prod_max = get_counts(central_conn, None, None, plant_name, True)
-       
+        c_event, c_event_dup, c_event_max, c_prod, c_prod_dup, c_prod_max = get_counts(
+            central_conn, None, None, plant_name, True
+        )
+
         missing_prod = get_missing_production_count(
             plant_conn=plant_conn,
             central_conn=central_conn,
             prod_table=prod_table,
-            plant_name=plant_name
+            plant_name=plant_name,
         )
 
         missing_event = get_missing_event_count(
             plant_conn=plant_conn,
             central_conn=central_conn,
             event_table=event_table,
-            plant_name=plant_name
+            plant_name=plant_name,
         )
 
         plant_conn.close()
         central_conn.close()
 
         return [
-            plant_name, host, True, p_event, p_event_dup, p_event_max, p_prod, p_prod_dup, p_prod_max,
-            c_event, c_event_dup, c_event_max, c_prod, c_prod_dup, c_prod_max, missing_event, missing_prod, "Connected"
+            plant_name,
+            host,
+            True,
+            p_event,
+            p_event_dup,
+            p_event_max,
+            p_prod,
+            p_prod_dup,
+            p_prod_max,
+            c_event,
+            c_event_dup,
+            c_event_max,
+            c_prod,
+            c_prod_dup,
+            c_prod_max,
+            missing_event,
+            missing_prod,
+            "Connected",
         ]
 
     except Exception as e:
@@ -1017,7 +1148,26 @@ def process_plant(plant):
         else:
             status = "Unknown Error"
         print(f"  Error processing {plant_name}: {e}")
-        return [plant_name, host, False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, status]
+        return [
+            plant_name,
+            host,
+            False,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            status,
+        ]
 
 
 async def log_count_excel():
@@ -1058,38 +1208,23 @@ async def log_count_excel():
     worksheet = workbook.add_worksheet("Count")
 
     # ===== Formats =====
-    header_format = workbook.add_format({
-        "bold": True,
-        "align": "center",
-        "valign": "middle",
-        "border": 1
-    })
+    header_format = workbook.add_format(
+        {"bold": True, "align": "center", "valign": "middle", "border": 1}
+    )
 
-    cell_format = workbook.add_format({
-        "border": 1,
-        "align": "center"
-    })
+    cell_format = workbook.add_format({"border": 1, "align": "center"})
 
-    fail_format = workbook.add_format({
-        "border": 1,
-        "align": "center",
-        "font_color": "#9d0101",
-        "bold": True
-    })
+    fail_format = workbook.add_format(
+        {"border": 1, "align": "center", "font_color": "#9d0101", "bold": True}
+    )
 
-    dup_format = workbook.add_format({
-        "border": 1,
-        "align": "center",
-        "bg_color": "#FFF3CD",
-        "font_color": "#856404"
-    })
+    dup_format = workbook.add_format(
+        {"border": 1, "align": "center", "bg_color": "#FFF3CD", "font_color": "#856404"}
+    )
 
-    zero_log_format = workbook.add_format({
-        "border": 1,
-        "align": "center",
-        "bg_color": "#F8D7DA",
-        "font_color": "#721C24"
-    })
+    zero_log_format = workbook.add_format(
+        {"border": 1, "align": "center", "bg_color": "#F8D7DA", "font_color": "#721C24"}
+    )
 
     # ===== Headers (A1 style) =====
     worksheet.merge_range("A1:A2", "Location", header_format)
@@ -1128,7 +1263,9 @@ async def log_count_excel():
         missing_event_col = 16
         event_max_date = [5, 11]
         prod_max_date = [8, 14]
-        now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(tzinfo=None)
+        now = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).replace(
+            tzinfo=None
+        )
         today = now.date()
         t = now - datetime.timedelta(hours=2)
 
@@ -1149,12 +1286,24 @@ async def log_count_excel():
                 fmt = cell_format if status == "Connected" else fail_format
             elif col_idx in log_cols and value in (0, "0"):
                 fmt = zero_log_format
-            elif col_idx in duplicate_cols and isinstance(value, (int, float)) and value > 0:
+            elif (
+                col_idx in duplicate_cols
+                and isinstance(value, (int, float))
+                and value > 0
+            ):
                 fmt = dup_format
-            elif col_idx == missing_prod_col and isinstance(value, (int, float)) and value > 0:
-                fmt = dup_format   
-            elif col_idx == missing_event_col and isinstance(value, (int, float)) and value > 0:
-                fmt = dup_format 
+            elif (
+                col_idx == missing_prod_col
+                and isinstance(value, (int, float))
+                and value > 0
+            ):
+                fmt = dup_format
+            elif (
+                col_idx == missing_event_col
+                and isinstance(value, (int, float))
+                and value > 0
+            ):
+                fmt = dup_format
             elif col_idx in event_max_date or col_idx in prod_max_date:
                 if isinstance(raw_value, datetime.datetime):
                     if raw_value.date() < today or raw_value < t:
@@ -1172,17 +1321,19 @@ async def log_count_excel():
 
     workbook.close()
 
-    return {
-        "lpg_log_count": output_path
-    }
+    return {"lpg_log_count": output_path}
 
 
 async def lpg_production_report():
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    yesterday_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    yesterday_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime(
+        "%Y-%m-%d"
+    )
     query = f"""SELECT * FROM public.lpg_plant_operations where process_date >= '{yesterday_date}' and process_date < '{current_date}' """
 
-    plant_details_query = """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
+    plant_details_query = (
+        """SELECT DISTINCT sap_id, plant_name, zone FROM lpg_plants_master"""
+    )
 
     stoppages_query = """SELECT
                             a.erp_id,
@@ -1214,9 +1365,13 @@ async def lpg_production_report():
                             c.heads;
                     """
 
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     resp = await function(query=query)
 
     plant_details = await function(query=plant_details_query)
@@ -1241,59 +1396,76 @@ async def lpg_production_report():
 
     clean_resp = clean_decimals(resp)
 
-    drop_cols = [
-        "created_at",
-        "updated_at",
-        "lst_cyl_production",
-        "fst_cyl_production"
-    ]
+    drop_cols = ["created_at", "updated_at", "lst_cyl_production", "fst_cyl_production"]
     for row in clean_resp:
         for col in drop_cols:
             row.pop(col, None)
 
-    
     plant_details_df = plant_details_df.with_columns(pl.col("sap_id").cast(pl.Utf8))
 
-    carousal_master_df = (
-        stoppages_df
-        .select(["erp_id", "carousal_id", "heads", "rated_productivity"])
-        .with_columns([
+    carousal_master_df = stoppages_df.select(
+        ["erp_id", "carousal_id", "heads", "rated_productivity"]
+    ).with_columns(
+        [
             pl.col("erp_id").cast(pl.Utf8),
             pl.col("carousal_id").cast(pl.Int64),
-        ])
+        ]
     )
 
-    base_df = (
-        carousal_master_df
-        .join(plant_details_df, left_on="erp_id", right_on="sap_id", how="left")
-        .rename({
+    base_df = carousal_master_df.join(
+        plant_details_df, left_on="erp_id", right_on="sap_id", how="left"
+    ).rename(
+        {
             "erp_id": "sap_id",
             "carousal_id": "carousel",
             "heads": "filling_head",
             "plant_name": "location_name",
-        })
+        }
     )
 
     production_cols = [
-        "sap_id", "carousel",
-        "production_14_2kg", "production_19kg",
-        "normal_total_production", "normal_net_hours", "normal_gap_hrs", "normal_productivity",
-        "break_total_production", "break_net_hours", "break_productivity",
-        "overtime_total_production", "overtime_net_hours", "overtime_productivity",
-        "cs_rejection", "gd_rejection", "pt_rejection",
+        "sap_id",
+        "carousel",
+        "production_14_2kg",
+        "production_19kg",
+        "normal_total_production",
+        "normal_net_hours",
+        "normal_gap_hrs",
+        "normal_productivity",
+        "break_total_production",
+        "break_net_hours",
+        "break_productivity",
+        "overtime_total_production",
+        "overtime_net_hours",
+        "overtime_productivity",
+        "cs_rejection",
+        "gd_rejection",
+        "pt_rejection",
     ]
 
     if not clean_resp:
         ops_df = pl.DataFrame(
             {c: [] for c in production_cols},
-            schema={c: (pl.Utf8 if c == "sap_id" else pl.Int64 if c == "carousel" else pl.Float64)
-                    for c in production_cols},
+            schema={
+                c: (
+                    pl.Utf8
+                    if c == "sap_id"
+                    else pl.Int64 if c == "carousel" else pl.Float64
+                )
+                for c in production_cols
+            },
         )
     else:
-        ops_df = pl.DataFrame(clean_resp).with_columns([
-            pl.col("sap_id").cast(pl.Utf8),
-            pl.col("carousel").cast(pl.Int64),
-        ]).select(production_cols)
+        ops_df = (
+            pl.DataFrame(clean_resp)
+            .with_columns(
+                [
+                    pl.col("sap_id").cast(pl.Utf8),
+                    pl.col("carousel").cast(pl.Int64),
+                ]
+            )
+            .select(production_cols)
+        )
 
     df = base_df.join(ops_df, on=["sap_id", "carousel"], how="left")
 
@@ -1304,60 +1476,103 @@ async def lpg_production_report():
     )
 
     rename_cols = {
-        "location_name": "Plant Name", "sap_id": "SAP Code", "zone": "Zone", "carousel": "Carousel",
-        "filling_head": "Heads", "production_14_2kg": "14.2kg Cylinders", "production_19kg": "19kg Cylinders",
-        "normal_total_production": "Normal Total Production", "normal_net_hours": "Normal Net Hours",
-        "normal_gap_hrs": "Stoppage Hours", "normal_productivity": "Normal Productivity",
-        "break_total_production": "Break Total Production", "break_net_hours": "Break Net Hours",
-        "break_productivity": "Break Productivity", "overtime_total_production": "Overtime Total Production",
-        "overtime_net_hours": "Overtime Net Hours", "overtime_productivity": "Overtime Productivity",
-        "cs_rejection": "Check Scale Rejection", "gd_rejection": "ELD", "pt_rejection": "ORT",
-        "rated_productivity": "Comparision Normal Productivity"
+        "location_name": "Plant Name",
+        "sap_id": "SAP Code",
+        "zone": "Zone",
+        "carousel": "Carousel",
+        "filling_head": "Heads",
+        "production_14_2kg": "14.2kg Cylinders",
+        "production_19kg": "19kg Cylinders",
+        "normal_total_production": "Normal Total Production",
+        "normal_net_hours": "Normal Net Hours",
+        "normal_gap_hrs": "Stoppage Hours",
+        "normal_productivity": "Normal Productivity",
+        "break_total_production": "Break Total Production",
+        "break_net_hours": "Break Net Hours",
+        "break_productivity": "Break Productivity",
+        "overtime_total_production": "Overtime Total Production",
+        "overtime_net_hours": "Overtime Net Hours",
+        "overtime_productivity": "Overtime Productivity",
+        "cs_rejection": "Check Scale Rejection",
+        "gd_rejection": "ELD",
+        "pt_rejection": "ORT",
+        "rated_productivity": "Comparision Normal Productivity",
     }
 
     df = (
         df.select(list(rename_cols.keys()) + ["no_ops_data"])
-        .with_columns([
-            pl.sum_horizontal([
-                pl.col("production_14_2kg").fill_null(0),
-                pl.col("production_19kg").fill_null(0)
-            ]).alias("Total Cylinders")
-        ])
+        .with_columns(
+            [
+                pl.sum_horizontal(
+                    [
+                        pl.col("production_14_2kg").fill_null(0),
+                        pl.col("production_19kg").fill_null(0),
+                    ]
+                ).alias("Total Cylinders")
+            ]
+        )
         .rename(rename_cols)
     )
 
     fill_cols = [
-        "Normal Productivity", "Break Productivity", "Overtime Productivity",
-        "Normal Total Production", "Break Total Production", "Overtime Total Production",
+        "Normal Productivity",
+        "Break Productivity",
+        "Overtime Productivity",
+        "Normal Total Production",
+        "Break Total Production",
+        "Overtime Total Production",
     ]
-    df = df.with_columns([
-        pl.when(pl.col("no_ops_data"))
-          .then(None)
-          .otherwise(pl.col(c).fill_null(0))
-          .alias(c)
-        for c in fill_cols
-    ])
-    df = df.with_columns([
-        pl.col("Normal Productivity").round(0),
-        pl.col("Break Productivity").round(0),
-        pl.col("Overtime Productivity").round(0),
-        pl.col("Normal Total Production").round(0),
-        pl.col("Break Total Production").round(0),
-        pl.col("Overtime Total Production").round(0),
-    ])
+    df = df.with_columns(
+        [
+            pl.when(pl.col("no_ops_data"))
+            .then(None)
+            .otherwise(pl.col(c).fill_null(0))
+            .alias(c)
+            for c in fill_cols
+        ]
+    )
+    df = df.with_columns(
+        [
+            pl.col("Normal Productivity").round(0),
+            pl.col("Break Productivity").round(0),
+            pl.col("Overtime Productivity").round(0),
+            pl.col("Normal Total Production").round(0),
+            pl.col("Break Total Production").round(0),
+            pl.col("Overtime Total Production").round(0),
+        ]
+    )
     # Total Cylinders should also read NA, not 0, when there's no ops record at all
     df = df.with_columns(
-        pl.when(pl.col("no_ops_data")).then(None).otherwise(pl.col("Total Cylinders")).alias("Total Cylinders")
+        pl.when(pl.col("no_ops_data"))
+        .then(None)
+        .otherwise(pl.col("Total Cylinders"))
+        .alias("Total Cylinders")
     )
 
     df = df.sort(["Plant Name", "SAP Code", "Zone", "Carousel"])
     final_order = [
-        "Plant Name", "SAP Code", "Zone", "Carousel", "Heads",
-        "14.2kg Cylinders", "19kg Cylinders", "Total Cylinders",
-        "Normal Total Production", "Normal Net Hours", "Stoppage Hours", "Normal Productivity",
-        "Break Total Production", "Break Net Hours", "Break Productivity",
-        "Overtime Total Production", "Overtime Net Hours", "Overtime Productivity",
-        "Check Scale Rejection", "ELD", "ORT", "Comparision Normal Productivity"
+        "Plant Name",
+        "SAP Code",
+        "Zone",
+        "Carousel",
+        "Heads",
+        "14.2kg Cylinders",
+        "19kg Cylinders",
+        "Total Cylinders",
+        "Normal Total Production",
+        "Normal Net Hours",
+        "Stoppage Hours",
+        "Normal Productivity",
+        "Break Total Production",
+        "Break Net Hours",
+        "Break Productivity",
+        "Overtime Total Production",
+        "Overtime Net Hours",
+        "Overtime Productivity",
+        "Check Scale Rejection",
+        "ELD",
+        "ORT",
+        "Comparision Normal Productivity",
     ]
     df = df.select(final_order + ["no_ops_data"])
 
@@ -1377,38 +1592,40 @@ async def lpg_production_report():
     worksheet = workbook.add_worksheet("Report")
 
     # ---------------- Formats ----------------
-    cell_format = workbook.add_format({
-        "align": "center",
-        "valign": "vcenter",
-        "border": 1,
-        "text_wrap": True
-    })
+    cell_format = workbook.add_format(
+        {"align": "center", "valign": "vcenter", "border": 1, "text_wrap": True}
+    )
 
-    header_format = workbook.add_format({
-        "bold": True,
-        "align": "center",
-        "valign": "vcenter",
-        "border": 1,
-        "text_wrap": True
-    })
+    header_format = workbook.add_format(
+        {
+            "bold": True,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "text_wrap": True,
+        }
+    )
 
-    red_format = workbook.add_format({
-        "bg_color": "#FFC7CE",  
-        "font_color": "#9C0006",
-        "align": "center",
-        "valign": "vcenter",
-        "border": 1
-    })
+    red_format = workbook.add_format(
+        {
+            "bg_color": "#FFC7CE",
+            "font_color": "#9C0006",
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+        }
+    )
 
-    na_format = workbook.add_format({
-        "bold": True,
-        "align": "center",
-        "valign": "vcenter",
-        "border": 1,
-        "italic": True,
-        "font_color":  "#000000",
-    })
-
+    na_format = workbook.add_format(
+        {
+            "bold": True,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "italic": True,
+            "font_color": "#000000",
+        }
+    )
 
     # ---------------- Headers ----------------
     worksheet.merge_range("A1:A2", "Plant Name", header_format)
@@ -1490,18 +1707,14 @@ async def lpg_production_report():
     for i in range(len(data)):
         is_last = i == len(data) - 1
 
-        current = (
-            data[i]["Plant Name"],
-            data[i]["SAP Code"],
-            data[i]["Zone"]
-        )
+        current = (data[i]["Plant Name"], data[i]["SAP Code"], data[i]["Zone"])
 
         next_value = None
         if not is_last:
             next_value = (
                 data[i + 1]["Plant Name"],
                 data[i + 1]["SAP Code"],
-                data[i + 1]["Zone"]
+                data[i + 1]["Zone"],
             )
 
         if is_last or current != next_value:
@@ -1525,7 +1738,7 @@ async def lpg_production_report():
     # ---------------- Column Widths ----------------
     worksheet.set_column(0, 0, 30)
     worksheet.set_column(1, 2, 15)
-    worksheet.set_column(3, len(headers)-1, 15)
+    worksheet.set_column(3, len(headers) - 1, 15)
 
     worksheet.set_row(0, 30)
     worksheet.set_row(1, 30)
@@ -1537,20 +1750,12 @@ async def lpg_production_report():
     final_data = []
     i = 0
     while i < len(data):
-        current = (
-            data[i]["Plant Name"],
-            data[i]["SAP Code"],
-            data[i]["Zone"]
-        )
+        current = (data[i]["Plant Name"], data[i]["SAP Code"], data[i]["Zone"])
 
         group = [data[i]]
         j = i + 1
         while j < len(data):
-            nxt = (
-                data[j]["Plant Name"],
-                data[j]["SAP Code"],
-                data[j]["Zone"]
-            )
+            nxt = (data[j]["Plant Name"], data[j]["SAP Code"], data[j]["Zone"])
             if nxt == current:
                 group.append(data[j])
                 j += 1
@@ -1570,7 +1775,4 @@ async def lpg_production_report():
         i = j
     data = final_data
 
-    return {
-        "data": data,
-        "lpg_production_report": output_path
-    }
+    return {"data": data, "lpg_production_report": output_path}

@@ -36,7 +36,7 @@ async def process_and_enqueue_alert_closer():
                 "id": ticket["id"],
                 "ticket_id": ticket["ticket_id"],
                 "linked_alert_id": linked_ids,
-                "ticket_history": ticket.get("ticket_history", [])
+                "ticket_history": ticket.get("ticket_history", []),
             }
         }
 

@@ -30,9 +30,6 @@
 #     print("Failed to send telemetry data. Status code:", response.status_code)
 
 
-
-
-
 import requests
 import json
 
@@ -52,7 +49,7 @@ access_tokens = {
         "ESD Hooter activated in control room": "0",
         "Power ESD Activation after 120 Sec": "0",
         "TTL Dispatch in Dormant Mode": "0",
-        "All ROSOVs closed": "0"
+        "All ROSOVs closed": "0",
     },
     "1AG23sgb97El0Iw6zTL7": {
         "Tank Receipt Mode": "0",
@@ -64,7 +61,7 @@ access_tokens = {
         "ROSOV OPEN STATUS IL1": "0",
         "ROSOV OPEN STATUS IL2": "1",
         "ROSOV OPEN STATUS OL": "0",
-        "ROSOV OPEN STATUS RCL": "0"
+        "ROSOV OPEN STATUS RCL": "0",
     },
     "5JTcBcSxSeHEOTb2Cfgz": {
         "Tank Receipt Mode": "1",
@@ -76,7 +73,7 @@ access_tokens = {
         "ROSOV OPEN STATUS IL1": "1",
         "ROSOV OPEN STATUS IL2": "0",
         "ROSOV OPEN STATUS OL": "0",
-        "ROSOV OPEN STATUS RCL": "0"
+        "ROSOV OPEN STATUS RCL": "0",
     },
     "I91nu7zTCP4Sx7Zjp05Y": {
         "Tank Receipt Mode": "1",
@@ -88,7 +85,7 @@ access_tokens = {
         "ROSOV OPEN STATUS IL1": "1",
         "ROSOV OPEN STATUS IL2": "0",
         "ROSOV OPEN STATUS OL": "0",
-        "ROSOV OPEN STATUS RCL": "0"
+        "ROSOV OPEN STATUS RCL": "0",
     },
     "3noJTFTIhfAZYAsKUyFB": {
         "Tank Receipt Mode": "0",
@@ -100,7 +97,7 @@ access_tokens = {
         "ROSOV OPEN STATUS IL1": "0",
         "ROSOV OPEN STATUS IL2": "0",
         "ROSOV OPEN STATUS OL": "0",
-        "ROSOV OPEN STATUS RCL": "0"
+        "ROSOV OPEN STATUS RCL": "0",
     },
     "Lx5436xzG98ggyFKaZfD": {
         "Tank Receipt Mode": "0",
@@ -112,24 +109,24 @@ access_tokens = {
         "ROSOV OPEN STATUS IL1": "0",
         "ROSOV OPEN STATUS IL2": "0",
         "ROSOV OPEN STATUS OL": "0",
-        "ROSOV OPEN STATUS RCL": "0"
-    }
-    #TK-01_BS VI MS@Rewari_M
+        "ROSOV OPEN STATUS RCL": "0",
+    },
+    # TK-01_BS VI MS@Rewari_M
     # "94kRWKMciCeupo8hCmMI": {
-        # "LEVEL SWITCH MAINTENANCE": "1",
-        # "RADAR MAINTENANCE": "1",
-        # "ROSOV MAINTENANCE IL1": "1",
-        # "ROSOV MAINTENANCE OL": "1",
-        # "MOV MAINTENANCE IL1": "1",
-        # "MOV MAINTENANCE OL": "1",
-        # "RIM SEAL MAINTENANCE STATUS": "1",
-        # "TANK MAINTENANCE": "1"
-    }
+    # "LEVEL SWITCH MAINTENANCE": "1",
+    # "RADAR MAINTENANCE": "1",
+    # "ROSOV MAINTENANCE IL1": "1",
+    # "ROSOV MAINTENANCE OL": "1",
+    # "MOV MAINTENANCE IL1": "1",
+    # "MOV MAINTENANCE OL": "1",
+    # "RIM SEAL MAINTENANCE STATUS": "1",
+    # "TANK MAINTENANCE": "1"
+}
 # }
 for access_token, data in access_tokens.items():
     headers = {
         "Content-Type": "application/json",
-        "X-Authorization": f"Bearer {access_token}"
+        "X-Authorization": f"Bearer {access_token}",
     }
     telemetry_json = json.dumps(data)
 
@@ -138,9 +135,11 @@ for access_token, data in access_tokens.items():
         f"{base_url}/api/v1/{access_token}/telemetry",
         data=telemetry_json,
         headers=headers,
-        verify=False
+        verify=False,
     )
     if response.status_code == 200:
         print(f"Telemetry data sent successfully for access_token: {access_token}")
     else:
-        print(f"Failed to send telemetry data for access_token: {access_token}. Status code: {response.status_code}")
+        print(
+            f"Failed to send telemetry data for access_token: {access_token}. Status code: {response.status_code}"
+        )

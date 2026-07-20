@@ -1,13 +1,9 @@
 import os
-import uuid
-import pyodbc
 import psycopg2
-import traceback
 import datetime
 import pandas as pd
 import polars as pl
 import mysql.connector
-from dateutil.relativedelta import relativedelta
 import hashlib
 import urdhva_base
 import sys
@@ -18,10 +14,12 @@ import orchestrator.notification_manager.notification_factory
 import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
-logger = urdhva_base.logger.Logger.getInstance('sales_day_data_sync_log')
+logger = urdhva_base.logger.Logger.getInstance("sales_day_data_sync_log")
+
 
 def get_db_connection(params):
     """
@@ -31,9 +29,9 @@ def get_db_connection(params):
     Returns:
         pyodbc connection
     """
-    server = params['host']
-    database = params['database']
-    username = params['user']
+    server = params["host"]
+    database = params["database"]
+    username = params["user"]
     password = params["password"]
     port = params["port"]
     if "connection_type" in params:
@@ -43,23 +41,23 @@ def get_db_connection(params):
                 database=database,
                 user=username,
                 password=password,
-                port=port
+                port=port,
             )
         if params["connection_type"].lower() == "mssql":
             connection = mysql.connector.connect(
                 host=server,
                 user=username,
                 passwd=password,
-                port=port
-                #database=database
+                port=port,
+                # database=database
             )
     print(connection)
     return connection
 
 
 def insertToDB(data, table_name, indexing_col=()):
-    #data.write_csv(f"/tmp/table_name.csv",separator='~')
-    '''
+    # data.write_csv(f"/tmp/table_name.csv",separator='~')
+    """
     for col in data.columns:
         try:
             data = data.with_columns(pl.col(col).fill_null(0).cast(pl.float64).alias(col))
@@ -67,13 +65,17 @@ def insertToDB(data, table_name, indexing_col=()):
         except Exception as e:
             print("Couldn't convert to Integer :", col)
             continue
-    '''
+    """
     data = data.with_columns(
-    pl.struct(data.columns).map_elements(
-        lambda row: hashlib.md5("|".join(str(v) for v in row.values()).encode()).hexdigest()
-    ).alias("engine_id")
-)
-    
+        pl.struct(data.columns)
+        .map_elements(
+            lambda row: hashlib.md5(
+                "|".join(str(v) for v in row.values()).encode()
+            ).hexdigest()
+        )
+        .alias("engine_id")
+    )
+
     print(data.schema)
     """
     below line are for reading the data of FY23-24 APr,May and Jun
@@ -86,11 +88,11 @@ def insertToDB(data, table_name, indexing_col=()):
     )
     """
     for col in data.columns:
-        if data.schema[col] in [pl.Float32, pl.Float64] :
+        if data.schema[col] in [pl.Float32, pl.Float64]:
             data = data.with_columns(pl.col(col).alias(col))
-        if 'Decimal' in str(data.schema[col]):
+        if "Decimal" in str(data.schema[col]):
             data = data.with_columns(pl.col(col).cast(float).alias(col))
-    '''
+    """
     for col in data.columns:
         if data.schema[col] in [pl.Float32, pl.Float64]:
              data = data.with_columns(pl.col(col).round(2).alias(col))
@@ -99,58 +101,89 @@ def insertToDB(data, table_name, indexing_col=()):
         if 'Decimal' in str(data.schema[col]):
             print("decimal type col")
             data = data.with_columns(pl.col(col).cast(pl.Int64).round(0).alias(col))
-    '''
+    """
     print(data)
     print(data.schema)
-    month_map = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'}
-    data= data.with_columns( pl.lit("").cast(pl.Utf8).alias("month_name"))
-    data = data.with_columns(pl.col('YEARMONTH').cast(pl.Utf8))
-    for each_month in data['YEARMONTH'].unique().to_list():
+    month_map = {
+        "01": "Jan",
+        "02": "Feb",
+        "03": "Mar",
+        "04": "Apr",
+        "05": "May",
+        "06": "Jun",
+        "07": "Jul",
+        "08": "Aug",
+        "09": "Sep",
+        "10": "Oct",
+        "11": "Nov",
+        "12": "Dec",
+    }
+    data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("month_name"))
+    data = data.with_columns(pl.col("YEARMONTH").cast(pl.Utf8))
+    for each_month in data["YEARMONTH"].unique().to_list():
         month_key = each_month[4:]
         month_value = month_map.get(month_key)
-        data = data.with_columns(pl.when(pl.col("YEARMONTH") == each_month).then(pl.lit(month_value)).otherwise(pl.col("month_name")) .alias("month_name") )
-    #data.write_csv(f"/tmp/table_name1.csv",separator='~')
+        data = data.with_columns(
+            pl.when(pl.col("YEARMONTH") == each_month)
+            .then(pl.lit(month_value))
+            .otherwise(pl.col("month_name"))
+            .alias("month_name")
+        )
+    # data.write_csv(f"/tmp/table_name1.csv",separator='~')
     print("-" * 50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
-    
+
     print(len(data))
-    #data = data.unique(['engine_id'])
+    # data = data.unique(['engine_id'])
     print(len(data))
-    creds = credential_loader.get_credentials('APP_DB')
+    creds = credential_loader.get_credentials("APP_DB")
     pg_conn = psycopg2.connect(
-                host=creds['host'],
-                database=creds['database'],
-                user=creds['user'],
-                password=creds['password'],
-                port=creds['port']
-            )
-    
-    table_create_sql = ''
+        host=creds["host"],
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        port=creds["port"],
+    )
+
+    table_create_sql = ""
     cur = pg_conn.cursor()
-    print(data['NETWEIGHT_KG'].unique())
-    print(data['NETWEIGHT_KG'].dtype)
-    data = data.with_columns([
-    #pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
-    pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_KG"),
-    #pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
-    pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_TMT")
-    
-])
+    print(data["NETWEIGHT_KG"].unique())
+    print(data["NETWEIGHT_KG"].dtype)
+    data = data.with_columns(
+        [
+            # pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
+            pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_KG"),
+            # pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
+            pl.col("NETWEIGHT_TMT")
+            .fill_null(0)
+            .cast(pl.Float64)
+            .alias("NETWEIGHT_TMT"),
+        ]
+    )
     if "PLANT_CD" in data.columns:
         data = data.rename({"PLANT_CD": "plant_cd"})
 
-    if 'plant_cd' not in data.columns:
+    if "plant_cd" not in data.columns:
         data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("plant_cd"))
-        
-    dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
-                  'Float64': str('double precision'), 'Float32': str('double precision'),
-                  #'Float64':'Float64',
-                  'Object': str('text'), 'Datetime': str('timestamp'), 'Date': str('timestamp'), 'Utf8': str('text'),
-                  "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
-                  "Datetime(time_unit='ns', time_zone=None)": str('timestamp'),
-                  "Decimal(precision=5, scale=2)": str('double precision')}
-    print('Data Types :', data.dtypes)
+
+    dtype_dict = {
+        "String": str("text"),
+        "Int64": str("bigint"),
+        "Int32": str("bigint"),
+        "Boolean": str("text"),
+        "Float64": str("double precision"),
+        "Float32": str("double precision"),
+        #'Float64':'Float64',
+        "Object": str("text"),
+        "Datetime": str("timestamp"),
+        "Date": str("timestamp"),
+        "Utf8": str("text"),
+        "Datetime(time_unit='us', time_zone=None)": str("timestamp"),
+        "Datetime(time_unit='ns', time_zone=None)": str("timestamp"),
+        "Decimal(precision=5, scale=2)": str("double precision"),
+    }
+    print("Data Types :", data.dtypes)
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
@@ -159,7 +192,7 @@ def insertToDB(data, table_name, indexing_col=()):
     if not isinstance(indexing_col, list):
         indexing_col = [indexing_col]
     columns_formatted = ", ".join(f'"{col}"' for col in indexing_col)
-    create_table_index = f"""CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ({columns_formatted})"""
+    f"""CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ({columns_formatted})"""
 
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
 
@@ -185,7 +218,7 @@ def insertToDB(data, table_name, indexing_col=()):
     '''
     pg_conn.commit()
     print(columns_formatted)
-    #cur.execute(create_table_index)
+    # cur.execute(create_table_index)
 
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
@@ -193,54 +226,61 @@ def insertToDB(data, table_name, indexing_col=()):
     columns = []
     for i in column_names:
         columns.append(i)
-    
+
     data = data.select(columns)
 
-    #data.write_csv('/tmp/sales_data.csv')
+    # data.write_csv('/tmp/sales_data.csv')
     print(data)
-    #data.write_csv(f"/tmp/table_name.csv",separator='~')
+    # data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
         #  Step 1: Delete dynamically
-        fiscal_years = data['fiscal_year'].unique().to_list()
+        fiscal_years = data["fiscal_year"].unique().to_list()
         print("Fiscal years to delete:", fiscal_years)
 
         for fy in fiscal_years:
-            if fy == '2023-2024':
-                cur.execute(f"""
+            if fy == "2023-2024":
+                cur.execute(
+                    f"""
                     DELETE FROM "MOM_DAY_LEVEL_DATA"
                     WHERE "fiscal_year" = %s
                     AND "month_name" NOT IN ('Apr','May','Jun')
-                """, (fy,))
+                """,
+                    (fy,),
+                )
             else:
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     DELETE FROM "MOM_DAY_LEVEL_DATA"
                     WHERE "fiscal_year" = %s
-                """, (fy,))
-        query = f'''
+                """,
+                    (fy,),
+                )
+        query = f"""
         COPY "{table_name}"
         FROM STDIN
         CSV HEADER DELIMITER '~';
-        '''
+        """
         print(query)
-        for g, split_df in data.group_by(len(data)// 10000000):
-            csv_file = f'/tmp/{table_name}.csv'
-            split_df.write_csv(csv_file, separator='~')
-            with open(csv_file, 'r') as f:
+        for g, split_df in data.group_by(len(data) // 10000000):
+            csv_file = f"/tmp/{table_name}.csv"
+            split_df.write_csv(csv_file, separator="~")
+            with open(csv_file, "r") as f:
                 cur.copy_expert(query, f)
                 pg_conn.commit()
         cur.close()
-        if os.path.exists(f'/tmp/{table_name}.csv'):
-            os.remove(f'/tmp/{table_name}.csv')
-    
+        if os.path.exists(f"/tmp/{table_name}.csv"):
+            os.remove(f"/tmp/{table_name}.csv")
+
         print(f"-- Data has been inserted to {table_name} --")
         with pg_conn.cursor() as cur:
-             cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
-             row_count = cur.fetchone()[0]
-             print(f"Total records in {table_name}: {row_count}")
+            cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+            row_count = cur.fetchone()[0]
+            print(f"Total records in {table_name}: {row_count}")
 
-    # call the async email from sync context
+        # call the async email from sync context
         import asyncio
+
         asyncio.run(send_sales_sync_email(table_name, row_count))
     except Exception as e:
         print("Error :", str(e))
@@ -250,20 +290,24 @@ def insertToDB(data, table_name, indexing_col=()):
 
 async def send_sales_sync_email(table_name: str, total_records: int):
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
-    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+    formatted_time = now_ist.strftime("%d-%m-%Y %I:%M %p IST")
 
-    df_summary = pd.DataFrame([{
-        "Table Name": table_name,
-        "Load Timestamp (IST)": formatted_time,
-        "Total Records": f"{total_records:,}"
-    }])
+    df_summary = pd.DataFrame(
+        [
+            {
+                "Table Name": table_name,
+                "Load Timestamp (IST)": formatted_time,
+                "Total Records": f"{total_records:,}",
+            }
+        ]
+    )
 
     html_table = df_summary.to_html(
         index=False,
         border=1,
-        justify='center',
-        classes='sales-sync-table',
-        escape=False
+        justify="center",
+        classes="sales-sync-table",
+        escape=False,
     )
 
     html_body = f"""
@@ -279,18 +323,16 @@ async def send_sales_sync_email(table_name: str, total_records: int):
     </html>
     """
 
-    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+        "email"
+    )
     await ins.publish_message(
         subject=f"Sales Sync - {formatted_time}",
-        recipients=[
-            "aditya@algofusiontech.com","gayathri.m@algofusiontech.com"
-        ],
+        recipients=["aditya@algofusiontech.com", "gayathri.m@algofusiontech.com"],
         html_content=True,
         body=html_body,
-        force_send=True
+        force_send=True,
     )
-    
-    
 
 
 def get_and_insert_data(cursor, query, params=None, debug=False):
@@ -308,47 +350,106 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
     print("Running Query ...")
     cursor.execute(query)
     data = cursor.fetchall()
-    print('Total Records :', len(data))
+    print("Total Records :", len(data))
     logger.info(f"Total Records : {len(data)}")
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
-    
+
     if debug:
-        data.to_csv('/tmp/actual_sales_data.csv', index=False)
+        data.to_csv("/tmp/actual_sales_data.csv", index=False)
     print(len(data))
-    
+
     print(len(data))
     print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
     print(len(data))
     if debug:
-        data.to_csv('/tmp/data_org_drop.csv', index=False)
-    print(data['CURFISCALYEAR'].unique())
-    data['CURFISCALYEAR'] = data['CURFISCALYEAR'].fillna('0').astype(str).apply(lambda x :x.split('.')[0] if '.' in x else x)
-    print(data['CURFISCALYEAR'].unique())
+        data.to_csv("/tmp/data_org_drop.csv", index=False)
+    print(data["CURFISCALYEAR"].unique())
+    data["CURFISCALYEAR"] = (
+        data["CURFISCALYEAR"]
+        .fillna("0")
+        .astype(str)
+        .apply(lambda x: x.split(".")[0] if "." in x else x)
+    )
+    print(data["CURFISCALYEAR"].unique())
     print(data.columns)
-    data['fiscal_year'] = data['FISCALYEAR'].apply(lambda x:x.strip('FY').strip()if 'FY' in x else x)
-    print(data['fiscal_year'].unique())
-    print(data['ORGSBUNAME'].unique())
-    data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' '))>2  else x )
+    data["fiscal_year"] = data["FISCALYEAR"].apply(
+        lambda x: x.strip("FY").strip() if "FY" in x else x
+    )
+    print(data["fiscal_year"].unique())
+    print(data["ORGSBUNAME"].unique())
+    data["ORGSBUNAME"] = (
+        data["ORGSBUNAME"]
+        .fillna("0")
+        .astype(str)
+        .apply(
+            lambda x: (
+                " ".join(x.split(" ")[2:]) if x != None and len(x.split(" ")) > 2 else x
+            )
+        )
+    )
 
-    #data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
-    print(data['ORGSBUNAME'].unique())
-    data = data.rename(columns = {'ORGSBUNAME':'SBU_Name','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
-                                  'ORGSANAME':'SalesArea_Name','MATERIALGROUPNAME':'ProductName'})
-    data['ORGSBUCD'] = data['ORGSBUCD'].fillna('').astype(str).apply(lambda x:x.split('.')[0] if '.' in x else x)
-    data['SBU_Name'] = data['SBU_Name'].str.replace('DS I&C','I&C').str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C').str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
-    data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').str.replace('North Central Retail Zone','North Central Retail')
-    data['Zone_Name'] = data['Zone_Name'].str.replace('East Zone','East').str.replace('West Zone','West').str.replace('North Zone','North').str.replace('South Zone','South')
-    data.loc[(data['SBU_Name'] == 'I&C') & (data['ProductName'] == 'PETCHEM'), 'SBU_Name'] = 'PETCHEM'
-    data.loc[(data['SBU_Name'] == 'Lubes') & (data['ProductName'] == 'Solvent 2445'), ['ORGSBUCD', 'SBU_Name']] = ['3000', 'I&C']
+    # data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
+    print(data["ORGSBUNAME"].unique())
+    data = data.rename(
+        columns={
+            "ORGSBUNAME": "SBU_Name",
+            "ORGZONENAME": "Zone_Name",
+            "ORGRONAME": "Region_Name",
+            "ORGSANAME": "SalesArea_Name",
+            "MATERIALGROUPNAME": "ProductName",
+        }
+    )
+    data["ORGSBUCD"] = (
+        data["ORGSBUCD"]
+        .fillna("")
+        .astype(str)
+        .apply(lambda x: x.split(".")[0] if "." in x else x)
+    )
+    data["SBU_Name"] = (
+        data["SBU_Name"]
+        .str.replace("DS I&C", "I&C")
+        .str.replace("Direct", "I&C")
+        .str.replace("DS Lubes", "Lubes")
+        .str.replace("Direct I&C", "I&C")
+        .str.replace("PETROCHEMICALS SBU", "PETCHEM")
+        .str.replace("GAS HQO", "GAS")
+    )
+    data["Zone_Name"] = (
+        data["Zone_Name"]
+        .str.replace("North Central LPG Zone", "North Central LPG Zo")
+        .str.replace("South Central Retail Zone", "South Central Retail")
+        .str.replace("South Central LPG Zone ", "South Central LPG Zo")
+        .str.replace("EAST CENTRAL ZONE", "East Central Zone")
+        .str.replace("North West Frontier Zone", "North West Frontier")
+        .str.replace("North West Retail Zone", "North West Retail Zo")
+        .str.replace("North Central Retail Zone", "North Central Retail")
+    )
+    data["Zone_Name"] = (
+        data["Zone_Name"]
+        .str.replace("East Zone", "East")
+        .str.replace("West Zone", "West")
+        .str.replace("North Zone", "North")
+        .str.replace("South Zone", "South")
+    )
+    data.loc[
+        (data["SBU_Name"] == "I&C") & (data["ProductName"] == "PETCHEM"), "SBU_Name"
+    ] = "PETCHEM"
+    data.loc[
+        (data["SBU_Name"] == "Lubes") & (data["ProductName"] == "Solvent 2445"),
+        ["ORGSBUCD", "SBU_Name"],
+    ] = ["3000", "I&C"]
 
-    
-    print(data['MATERIAL_CD'].unique().tolist())
+    print(data["MATERIAL_CD"].unique().tolist())
     print(data.dtypes)
-    data.loc[(data['MATERIAL_CD'] == '1739000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'LNG'
-    data.loc[(data['MATERIAL_CD'] == '0992000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'CNG'
-    
+    data.loc[
+        (data["MATERIAL_CD"] == "1739000") & (data["SBU_Name"] == "GAS"), "ProductName"
+    ] = "LNG"
+    data.loc[
+        (data["MATERIAL_CD"] == "0992000") & (data["SBU_Name"] == "GAS"), "ProductName"
+    ] = "CNG"
+
     cursor.execute(f"""
                    
                 select inv3.*,zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC FROM CONN_ENT.VW_AY_INV3_LUBES_STG inv3
@@ -360,28 +461,40 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
                 INNER join CONN_ENT.EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
                    """)
     di = {}
-    
-    
+
     lubes_data = cursor.fetchall()
     columns = [column[0] for column in cursor.description]
     lubes_data = pd.DataFrame.from_records(lubes_data, columns=columns)
-    for idx,row_data in lubes_data.iterrows():
-        if row_data['SUPPLY_LOC'] not in di:
-            di[row_data['SUPPLY_LOC']] = row_data['SALES_DISTRICT']
+    for idx, row_data in lubes_data.iterrows():
+        if row_data["SUPPLY_LOC"] not in di:
+            di[row_data["SUPPLY_LOC"]] = row_data["SALES_DISTRICT"]
 
-    lubes_ps_data = data[data['SBU_Name'] == 'Lubes']
-    data = data[~(data['SBU_Name'] == 'Lubes')]
-    lubes_ps_data['PLANT_CD'] = lubes_ps_data['PLANT_CD'].astype(str)
-    lubes_data['SUPPLY_LOC'] = lubes_data['SUPPLY_LOC'].astype(str)
-    for each_plant in lubes_ps_data['PLANT_CD'].unique().tolist():
+    lubes_ps_data = data[data["SBU_Name"] == "Lubes"]
+    data = data[~(data["SBU_Name"] == "Lubes")]
+    lubes_ps_data["PLANT_CD"] = lubes_ps_data["PLANT_CD"].astype(str)
+    lubes_data["SUPPLY_LOC"] = lubes_data["SUPPLY_LOC"].astype(str)
+    for each_plant in lubes_ps_data["PLANT_CD"].unique().tolist():
         if each_plant in di:
-            lubes_ps_data.loc[lubes_ps_data['PLANT_CD'] == each_plant,'ZZONE']= di[each_plant]
-    zone_map = {'WES':'West','NOR':'North','SOU':'South','EAS':'East','HQO':'HQO Customer'}
-    #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
-    lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
-    lubes_ps_data = lubes_ps_data.rename(columns={'SALES_OFFICE_DESC':'Region_Name','SALES_GROUP_DESC':'SalesArea_Name'})
+            lubes_ps_data.loc[lubes_ps_data["PLANT_CD"] == each_plant, "ZZONE"] = di[
+                each_plant
+            ]
+    zone_map = {
+        "WES": "West",
+        "NOR": "North",
+        "SOU": "South",
+        "EAS": "East",
+        "HQO": "HQO Customer",
+    }
+    # lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
+    lubes_ps_data["Zone_Name"] = lubes_ps_data["ZZONE"].map(zone_map)
+    lubes_ps_data = lubes_ps_data.rename(
+        columns={
+            "SALES_OFFICE_DESC": "Region_Name",
+            "SALES_GROUP_DESC": "SalesArea_Name",
+        }
+    )
     if debug:
-        lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv', index=False)
+        lubes_ps_data.to_csv("/tmp/lubes_ps_data.csv", index=False)
     '''
     cursor.execute(f"""
                    select * FROM CONN_ENT.ZSDCV_SO_PARAM_STG
@@ -407,9 +520,8 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
             lubes_ps_data.loc[lubes_ps_data['ORDER_COMPANY'] == each_ro,'Region_Name']= ro_di[each_ro]
     lubes_ps_data.to_csv('/tmp/lubes_latest_data.csv',index = False)
     '''
-    data = pd.concat([lubes_ps_data,data])
+    data = pd.concat([lubes_ps_data, data])
 
-    
     '''
     
     cursor.execute(f"""
@@ -447,28 +559,43 @@ def get_and_insert_data(cursor, query, params=None, debug=False):
     data = pd.concat([data,lubes_ps_data])
     data = pl.from_pandas(data)
     '''
-    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='031'),'ProductName'] = 'ALPROL'
-    data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'].isin(['014','14'])),'ProductName'] = 'Lubes-Exports'
-    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12'])),'ProductName'] = 'HP DEF-Retail'
-    replacements = {'EAS':'EZ',
-                    'CEN':'CEN',
-                    'SOU':'SZ' ,'SWZ':'SWZ','WES':'WZ'}
-    
-    mapping_dict = {
-    "West": "WZ",
-    "East": "EZ",
-    "North": "NZ",
-    "South": "SZ"
-    }
-    data["ORGZONECD"] = data["Zone_Name"].map(mapping_dict).combine_first(data["ORGZONECD"])
-    print("replacements",replacements)
-    data['ORGZONECD'] = data['ORGZONECD'].replace(replacements)
-    
-    #data.loc[((data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12']) &(data['ORGSBUCD'] == '4000')),'SBU_Name','ORGSBUCD'] = ['Retail','7000']        
-    data.loc[(data['MATERIAL_GROUP_CD'] == '038') & (data['DISTRIBUTION_CHANNEL_CD'].isin(['011', '11', '012', '12'])) & (data['ORGSBUCD'] == '4000'), ['SBU_Name', 'ORGSBUCD']] = ['Retail', '7000']
-    data.loc[data['ProductName'] == 'DEF/Diesel Exhaust Field',['ORGSBUCD','SBU_Name']] =['4000','Lubes']
+    data.loc[
+        (data["ORGSBUCD"] == "4000") & (data["MATERIAL_GROUP_CD"] == "031"),
+        "ProductName",
+    ] = "ALPROL"
+    data.loc[
+        (data["ORGSBUCD"] == "4000")
+        & (~(data["MATERIAL_GROUP_CD"].isin(["031", "038"])))
+        & (data["DISTRIBUTION_CHANNEL_CD"].isin(["014", "14"])),
+        "ProductName",
+    ] = "Lubes-Exports"
+    data.loc[
+        (data["ORGSBUCD"] == "4000")
+        & (data["MATERIAL_GROUP_CD"] == "038")
+        & (data["DISTRIBUTION_CHANNEL_CD"].isin(["011", "11", "012", "12"])),
+        "ProductName",
+    ] = "HP DEF-Retail"
+    replacements = {"EAS": "EZ", "CEN": "CEN", "SOU": "SZ", "SWZ": "SWZ", "WES": "WZ"}
+
+    mapping_dict = {"West": "WZ", "East": "EZ", "North": "NZ", "South": "SZ"}
+    data["ORGZONECD"] = (
+        data["Zone_Name"].map(mapping_dict).combine_first(data["ORGZONECD"])
+    )
+    print("replacements", replacements)
+    data["ORGZONECD"] = data["ORGZONECD"].replace(replacements)
+
+    # data.loc[((data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12']) &(data['ORGSBUCD'] == '4000')),'SBU_Name','ORGSBUCD'] = ['Retail','7000']
+    data.loc[
+        (data["MATERIAL_GROUP_CD"] == "038")
+        & (data["DISTRIBUTION_CHANNEL_CD"].isin(["011", "11", "012", "12"]))
+        & (data["ORGSBUCD"] == "4000"),
+        ["SBU_Name", "ORGSBUCD"],
+    ] = ["Retail", "7000"]
+    data.loc[
+        data["ProductName"] == "DEF/Diesel Exhaust Field", ["ORGSBUCD", "SBU_Name"]
+    ] = ["4000", "Lubes"]
     data = pl.from_pandas(data)
-    
+
     insertToDB(data, params["table_name"])
 
 
@@ -478,26 +605,24 @@ if __name__ == "__main__":
         "--debug",
         type=str,
         default="false",
-        help="Enable debug file writing (true/false)"
+        help="Enable debug file writing (true/false)",
     )
 
     args = parser.parse_args()
     DEBUG_MODE = args.debug.lower() == "true"
 
     print("DEBUG_MODE:", DEBUG_MODE)
-    creds = credential_loader.get_credentials('TIBCO') 
-    print("creds",creds)
+    creds = credential_loader.get_credentials("TIBCO")
+    print("creds", creds)
     params = {
-            "host":creds['host'],
-            "database":creds['database'],
-            "user":creds['user'],
-            "password":creds['password'],
-            "port":creds['port'],
-            "table_name":"MOM_DAY_LEVEL_DATA",
-            "connection_type":"mssql"
-                
-            }
-    
+        "host": creds["host"],
+        "database": creds["database"],
+        "user": creds["user"],
+        "password": creds["password"],
+        "port": creds["port"],
+        "table_name": "MOM_DAY_LEVEL_DATA",
+        "connection_type": "mssql",
+    }
 
     query = """SELECT ZS.Plant AS Plantcd,
              ZS.UNRESTRICTED_STOCK_VALUE AS Stock_value,
@@ -520,7 +645,7 @@ if __name__ == "__main__":
                IM.itemcode,
                IM.ITEMNAME,
                ZV.Invoice_date"""
-    query  = """
+    query = """
             WITH UniqueTSD AS (
 
     SELECT DISTINCT 
@@ -569,7 +694,7 @@ ON
 
     AND edw.SA_CD = tsd.SA; 
     """
-    query= """
+    query = """
     WITH fiscal_year_bounds AS (
     -- Define the bounds for fiscal years dynamically
     SELECT 
@@ -920,8 +1045,6 @@ ORDER BY month_year DESC;
 
     """
 
-
-
     query = f"""
     select
 
@@ -1001,7 +1124,7 @@ E1.WEIGHT_UNIT
 ) OrigView
  ORDER BY 1,2,3,4
     """
-    
+
     query_daywise = f"""
     SELECT
     ORGSBUCD,
@@ -1113,7 +1236,7 @@ ORDER BY ORGSBUCD, DAY_ID;
 
 
     """
-    query_daywise =f"""
+    query_daywise = f"""
     SELECT
     ORGSBUCD,
     ORGSBUNAME,
@@ -1230,8 +1353,6 @@ FROM (
 ORDER BY ORGSBUCD, DAY_ID;
     """
     connection = get_db_connection(params)
-    
+
     cursor = connection.cursor()
     get_and_insert_data(cursor, query_daywise, params=params, debug=DEBUG_MODE)
-
-

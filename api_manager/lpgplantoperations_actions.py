@@ -4,7 +4,7 @@ import fastapi
 import time
 import asyncio
 
-router = fastapi.APIRouter(prefix='/lpgplantoperations')
+router = fastapi.APIRouter(prefix="/lpgplantoperations")
 
 
 async def check_telnet(host_ip: str, port: int):
@@ -12,9 +12,8 @@ async def check_telnet(host_ip: str, port: int):
     try:
         # asyncio open_connection is fully async
         reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(host_ip, port),
-            timeout=5
-            )
+            asyncio.open_connection(host_ip, port), timeout=5
+        )
         writer.close()
         await writer.wait_closed()
         latency = round((time.time() - start_time) * 1000)  # ms
@@ -24,8 +23,10 @@ async def check_telnet(host_ip: str, port: int):
 
 
 # Action check_connection_status
-@router.post('/check_connection_status', tags=['LpgPlantOperations'])
-async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Check_Connection_StatusParams):
+@router.post("/check_connection_status", tags=["LpgPlantOperations"])
+async def lpgplantoperations_check_connection_status(
+    data: Lpgplantoperations_Check_Connection_StatusParams,
+):
     sap_id = data.sap_id
 
     query = f"""
@@ -43,33 +44,34 @@ async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Ch
     for row in rows:
         if not row.get("port_no"):
             continue
-        plants.append({
-            "plant_name": row.get("plant_name"),
-            "host_ip": row.get("ip_address"),
-            "port": int(row.get("port_no")),
-        })
+        plants.append(
+            {
+                "plant_name": row.get("plant_name"),
+                "host_ip": row.get("ip_address"),
+                "port": int(row.get("port_no")),
+            }
+        )
 
     if not plants:
         return {"status": True, "message": "success", "data": {sap_id: []}}
 
     # Run checks concurrently using asyncio
-    tasks = [check_telnet(p['host_ip'], p['port']) for p in plants]
+    tasks = [check_telnet(p["host_ip"], p["port"]) for p in plants]
     statuses = await asyncio.gather(*tasks)
 
     # Combine results
     results = []
     for plant, status in zip(plants, statuses):
-        results.append({
-            "plant_name": plant["plant_name"],
-            "status": status["status"],
-            "latency": status["latency"]
-        })
+        results.append(
+            {
+                "plant_name": plant["plant_name"],
+                "status": status["status"],
+                "latency": status["latency"],
+            }
+        )
 
     return {
         "status": True,
         "message": "success",
-        "data": {
-            "sap_id": sap_id,
-            "connection_status": results
-        }
+        "data": {"sap_id": sap_id, "connection_status": results},
     }

@@ -1,5 +1,4 @@
 import urdhva_base
-import json
 import traceback
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
@@ -9,7 +8,9 @@ logger = urdhva_base.logger.Logger.getInstance("ro_alert_processing")
 
 class ROAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
+    async def create_bu_alert(
+        cls, alert_data, camunda_url=urdhva_base.settings.camunda_url
+    ):
         """
         Create a business unit level alert
 
@@ -32,27 +33,27 @@ class ROAlertManager(alert_factory.AlertFactory):
         try:
             # logger.info(f"alert_data received to create alert {alert_data}")
             # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            static_alert_data = alert_data.get('staticalert_data', {}) 
-            ''' 
+            bu_location_type = alert_data["bu"]
+            sap_id = alert_data["sap_id"]
+            alert_data["sop_id"]
+            alert_data.get("staticalert_data", {})
+            """ 
             staticalert_data': {'alertHistory': [alerthistorymessage],
             'VehicleNumber': doc['TL_Number'],
             'vendor': doc['Vendor_Code'],
             "VendorName": doc['Vendor_Name'],
             "vendormail": vendormail} 
-            '''
-            deviceid = alert_data.get('deviceId', '')
-            interlockname = alert_data['interlock_name']
-            
+            """
+            alert_data.get("deviceId", "")
+            alert_data["interlock_name"]
+
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(
                 bu=bu_location_type, sap_id=sap_id
             )
             # if status:
             #     alert_data['location_data'] = loc_dt
-        
+
             return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
@@ -75,10 +76,10 @@ class ROAlertManager(alert_factory.AlertFactory):
 
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
-        """        
+        """
         try:
             # logger.info(f"Alert data received to close alert: {alert_data}")
             return await cls.close_alert(alert_data)
-            
+
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e

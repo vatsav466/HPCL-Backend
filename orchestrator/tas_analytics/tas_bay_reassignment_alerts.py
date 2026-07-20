@@ -2,11 +2,11 @@ import asyncio
 import urdhva_base
 import polars as pl
 from datetime import datetime, timedelta
+
 # import orchestrator.alerting.alert_factory as alert_factory
 from orchestrator.alerting import alert_factory
 import hpcl_ceg_model
 from hpcl_ceg_model import Alerts
-
 
 # ==========================================================
 # CONFIG
@@ -46,7 +46,7 @@ async def fetch_reassignment_data():
         "reassigned_bay",
         "location_name",
         "zone",
-        "date"
+        "date",
     ]
 
     resp = await hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain")
@@ -89,15 +89,9 @@ async def append_skip_history(alert, reason):
         return
 
     history = alert.get("alert_history") or []
-    history.append({
-        "action_type": "Message",
-        "action_msg": reason
-    })
+    history.append({"action_type": "Message", "action_msg": reason})
 
-    await Alerts(
-        id=alert["id"],
-        alert_history=history
-    ).modify()
+    await Alerts(id=alert["id"], alert_history=history).modify()
 
 
 # ==========================================================
@@ -122,9 +116,7 @@ async def host_bay_reassignment_alert_job():
     print("\n[COND-1] DAILY BAY CHECK")
 
     daily_df = (
-        df.group_by(
-            ["location_name", "reassigned_bay", "date", "sap_id", "zone"]
-        )
+        df.group_by(["location_name", "reassigned_bay", "date", "sap_id", "zone"])
         .agg(pl.count().alias("cnt"))
         .filter(pl.col("cnt") > 2)
     )
@@ -132,8 +124,7 @@ async def host_bay_reassignment_alert_job():
     print("[COND-1] Rows > threshold:", daily_df.height)
 
     existing_daily_alerts = await fetch_existing_alerts(
-        DAILY_BAY_INTERLOCK,
-        last_7_days_date()
+        DAILY_BAY_INTERLOCK, last_7_days_date()
     )
 
     # DB-level dedup
@@ -142,7 +133,7 @@ async def host_bay_reassignment_alert_job():
             a.get("location_name"),
             a.get("device_name"),
             a.get("sap_id"),
-            a.get("created_at").date()
+            a.get("created_at").date(),
         ): a
         for a in existing_daily_alerts
     }
@@ -151,12 +142,7 @@ async def host_bay_reassignment_alert_job():
 
     for row in daily_df.to_dicts():
 
-        key = (
-            row["location_name"],
-            row["reassigned_bay"],
-            row["sap_id"],
-            utc_today()
-        )
+        key = (row["location_name"], row["reassigned_bay"], row["sap_id"], utc_today())
 
         print("[COND-1] Processing:", key)
 
@@ -164,8 +150,7 @@ async def host_bay_reassignment_alert_job():
         if key in daily_alert_map:
             print("[COND-1] SKIP (already exists in DB)")
             await append_skip_history(
-                daily_alert_map[key],
-                "Skipped: Bay reassigned more than twice again"
+                daily_alert_map[key], "Skipped: Bay reassigned more than twice again"
             )
             continue
 
@@ -186,10 +171,12 @@ async def host_bay_reassignment_alert_job():
             "alert_section": "TAS",
             "message": "Specific bay reassigned more than two times in last 7 days",
             "alert_message": "Specific bay reassigned more than two times in last 7 days",
-            "alert_history": [{
-                "action_type": "Created",
-                "action_msg": "Bay reassigned more than twice in last 7 days"
-            }]
+            "alert_history": [
+                {
+                    "action_type": "Created",
+                    "action_msg": "Bay reassigned more than twice in last 7 days",
+                }
+            ],
         }
 
         try:
@@ -211,9 +198,7 @@ async def host_bay_reassignment_alert_job():
     print("\n[COND-2] WEEKLY TT CHECK")
 
     weekly_df = (
-        df.group_by(
-            ["truck_number", "reassigned_bay", "sap_id", "zone"]
-        )
+        df.group_by(["truck_number", "reassigned_bay", "sap_id", "zone"])
         .agg(pl.count().alias("cnt"))
         .filter(pl.col("cnt") > 2)
     )
@@ -221,8 +206,7 @@ async def host_bay_reassignment_alert_job():
     print("[COND-2] Rows > threshold:", weekly_df.height)
 
     existing_weekly_alerts = await fetch_existing_alerts(
-        WEEKLY_TT_INTERLOCK,
-        last_7_days_date()
+        WEEKLY_TT_INTERLOCK, last_7_days_date()
     )
 
     weekly_alert_map = {
@@ -240,8 +224,7 @@ async def host_bay_reassignment_alert_job():
         if key in weekly_alert_map:
             print("[COND-2] SKIP (exists in DB)")
             await append_skip_history(
-                weekly_alert_map[key],
-                "Skipped: TT reassigned more than twice again"
+                weekly_alert_map[key], "Skipped: TT reassigned more than twice again"
             )
             continue
 
@@ -261,10 +244,12 @@ async def host_bay_reassignment_alert_job():
             "alert_section": "TAS",
             "message": "Specific TT reassigned more than two times in last 7 days",
             "alert_message": "Specific TT reassigned more than two times in last 7 days",
-            "alert_history": [{
-                "action_type": "Created",
-                "action_msg": "TT reassigned more than twice in last 7 days"
-            }]
+            "alert_history": [
+                {
+                    "action_type": "Created",
+                    "action_msg": "TT reassigned more than twice in last 7 days",
+                }
+            ],
         }
 
         try:

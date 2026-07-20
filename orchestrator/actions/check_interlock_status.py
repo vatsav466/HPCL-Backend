@@ -1,5 +1,6 @@
 import urdhva_base
 import traceback
+
 # import ThingsBoardApi
 import hpcl_ceg_model
 import orchestrator.alerting.alert_manager as alert_manager
@@ -11,12 +12,12 @@ class InterlockStatus:
     async def get_required_variables(self):
         """
         Returns a list of strings representing the required variables for the action.
-        
+
         Returns:
             list: A list containing a single string, "alert_id".
         """
         return ["alert_id"]
-    
+
     async def checkInterlockStatus(self, params):
         """
         Checks the interlock status for a given alert ID.
@@ -39,7 +40,7 @@ class InterlockStatus:
         try:
             tbAltStatus = False
             print("params --> ", params)
-            alert_id = params.get('alert_id')
+            alert_id = params.get("alert_id")
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if alert_data:
@@ -47,32 +48,38 @@ class InterlockStatus:
                     alert_data = alert_data.__dict__
                 else:
                     alert_data = alert_data
-                
-                tbAlertId = alert_data['external_id']
-                bu = alert_data.get('bu', "")
-                sap_id = alert_data.get('sap_id', '0')
+
+                alert_data["external_id"]
+                alert_data.get("bu", "")
+                alert_data.get("sap_id", "0")
 
                 # tb = ThingsBoardApi.TB(bu, sap_id)
                 try:
                     # tbAltStatus = await tb.getTbAlertStatus(tbAlertId)
                     tbAltStatus = False
-                    #TODO: Might change the action msg as reuired for the 
+                    # TODO: Might change the action msg as reuired for the
                     if tbAltStatus:
-                        alert_data['alert_id'] = alert_id
+                        alert_data["alert_id"] = alert_id
                         alert_data["action_msg"] = "Interlock Cleared"
                         alert_data["action_type"] = "InterlockCleared"
-                        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                        await alert_manager.AlertAction().update_alert_history(
+                            input_data=alert_data, alert_data=alert_data
+                        )
                     else:
-                        alert_data['alert_id'] = alert_id
+                        alert_data["alert_id"] = alert_id
                         alert_data["action_msg"] = "Interlock not Cleared"
                         alert_data["action_type"] = "InterlockNotCleared"
-                        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                        await alert_manager.AlertAction().update_alert_history(
+                            input_data=alert_data, alert_data=alert_data
+                        )
                 except Exception as e:
-                    print("Exception in getting current Alert status in thingsboard %s" % (e))
+                    print(
+                        "Exception in getting current Alert status in thingsboard %s"
+                        % (e)
+                    )
             return True, {"interlockcleared": tbAltStatus}
-        
+
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)
             return False, {"interlockcleared": False}
-            

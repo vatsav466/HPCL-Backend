@@ -7,8 +7,14 @@ import json
 
 
 def sanitize_alert_data(alert_data):
-    for key in ["region", "district", "terminal_plant_id", "terminal_plant_name", 
-                "sales_area", "category"]:
+    for key in [
+        "region",
+        "district",
+        "terminal_plant_id",
+        "terminal_plant_name",
+        "sales_area",
+        "category",
+    ]:
         if not alert_data.get(key):
             alert_data[key] = None
     return alert_data
@@ -24,21 +30,20 @@ async def fetch_cancelled():
         "(NOW() AT TIME ZONE 'Asia/Kolkata')::date"
     )
 
-    fields = json.dumps([
-        "sap_id",
-        "truck_number",
-        "load_number",
-        "created_date",
-        "location_name",
-        "zone"
-    ])
+    fields = json.dumps(
+        [
+            "sap_id",
+            "truck_number",
+            "load_number",
+            "created_date",
+            "location_name",
+            "zone",
+        ]
+    )
 
     params = urdhva_base.queryparams.QueryParams(q=query, limit=0, fields=fields)
 
-    resp = await hpcl_ceg_model.HostCancelledTts.get_all(
-        params,
-        resp_type="plain"
-    )
+    resp = await hpcl_ceg_model.HostCancelledTts.get_all(params, resp_type="plain")
 
     return resp.get("data", [])
 
@@ -65,15 +70,14 @@ async def append_skip_history(existing_alert):
 
     history = existing_alert.get("alert_history") or []
 
-    history.append({
-        "action_type": "Message",
-        "action_msg": "Skipped: distinct cancelled TT count again crossed >3"
-    })
+    history.append(
+        {
+            "action_type": "Message",
+            "action_msg": "Skipped: distinct cancelled TT count again crossed >3",
+        }
+    )
 
-    await hpcl_ceg_model.Alerts(
-        id=existing_alert["id"],
-        alert_history=history
-    ).modify()
+    await hpcl_ceg_model.Alerts(id=existing_alert["id"], alert_history=history).modify()
 
 
 # ============================================
@@ -95,11 +99,7 @@ async def process_high_cancel_alert():
     df = df.drop_nulls(["sap_id", "truck_number", "load_number"])
 
     # sap_id cleaning
-    df = df.with_columns(
-        pl.col("sap_id")
-        .str.replace_all("\x00", "")
-        .str.strip_chars()
-    )
+    df = df.with_columns(pl.col("sap_id").str.replace_all("\x00", "").str.strip_chars())
 
     # DISTINCT truck + load logic
     distinct_df = (
@@ -146,19 +146,15 @@ async def process_high_cancel_alert():
             "alert_history": [
                 {
                     "action_type": "Created",
-                    "action_msg": "Distinct truck + load cancellation count crossed threshold"
+                    "action_msg": "Distinct truck + load cancellation count crossed threshold",
                 }
-            ]
+            ],
         }
 
         print("CREATING ALERT:", alert_data)
 
-        await alert_factory.AlertFactory.create_alert(
-            sanitize_alert_data(alert_data)
-        )
+        await alert_factory.AlertFactory.create_alert(sanitize_alert_data(alert_data))
 
 
 if __name__ == "__main__":
     asyncio.run(process_high_cancel_alert())
-
-

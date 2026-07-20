@@ -1,4 +1,3 @@
-import urdhva_base
 import asyncio
 import pytz
 import datetime
@@ -6,7 +5,6 @@ import requests
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 import orchestrator.notification_manager.notification_factory as notification_factory
-
 
 urls = [
     "http://localhost:9010/api/ping",
@@ -18,17 +16,22 @@ urls = [
 
 # failure tracking dict
 failure_counts = {url: 0 for url in urls}
-alert_sent = {url: False for url in urls}   # prevent spamming
+alert_sent = {url: False for url in urls}  # prevent spamming
 
 
 # ---------- email ----------
 async def send_notification(subject: str, body: str) -> None:
     try:
         ins = await notification_factory.get_notification_module("email")
-        recipients = [["sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com",
-                       "yesu.p@algofusiontech.com"]]
+        recipients = [
+            [
+                "sreedhar.maddipati@algofusiontech.com",
+                "venu@algofusiontech.com",
+                "yesu.p@algofusiontech.com",
+            ]
+        ]
         IST = pytz.timezone("Asia/Kolkata")
-        today_ist = datetime.datetime.now(IST).strftime("%d-%m-%Y")
+        datetime.datetime.now(IST).strftime("%d-%m-%Y")
 
         for recipient in recipients:
             await ins.publish_message(
@@ -60,7 +63,9 @@ def check_url(url: str) -> bool:
         ok = False
         if payload == "pong":
             ok = True
-        elif isinstance(payload, dict) and any(str(v).lower() == "pong" for v in payload.values()):
+        elif isinstance(payload, dict) and any(
+            str(v).lower() == "pong" for v in payload.values()
+        ):
             ok = True
 
         if ok:
@@ -81,8 +86,8 @@ async def run_health_checks(executor: ThreadPoolExecutor) -> None:
         global failure_counts, alert_sent
 
         if ok:
-            failure_counts[url] = 0      # reset counter on success
-            alert_sent[url] = False      # reset alert flag
+            failure_counts[url] = 0  # reset counter on success
+            alert_sent[url] = False  # reset alert flag
         else:
             failure_counts[url] += 1
             if failure_counts[url] == 5 and not alert_sent[url]:

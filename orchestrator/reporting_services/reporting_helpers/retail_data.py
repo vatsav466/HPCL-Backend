@@ -21,8 +21,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.credential_loader as credential_loader
 import orchestrator.reporting_services.reporting_helpers.sales_data as sales_data
 
-
-creds = credential_loader.get_credentials('APP_DB')
+creds = credential_loader.get_credentials("APP_DB")
 
 chart_path = ""
 zone_wise_pdf_path = ""
@@ -33,38 +32,44 @@ DB_CONFIG = {
     "port": creds["port"],
     "database": creds["database"],
     "user": creds["user"],
-    "password": creds["password"]
+    "password": creds["password"],
 }
 
 
-async def dry_out_trends_chart(last_30_days_trends_df, output_path='/tmp/dry_out_trends.png'):
+async def dry_out_trends_chart(
+    last_30_days_trends_df, output_path="/tmp/dry_out_trends.png"
+):
     global last_30_days_chart_path
     last_30_days_chart_path = output_path
 
     # If Polars DF → convert to Pandas
     if not isinstance(last_30_days_trends_df, pd.DataFrame):
         last_30_days_trends_df = last_30_days_trends_df.to_pandas()
-    
+
     # Fix types
-    last_30_days_trends_df['dry_out_count'] = pd.to_numeric(
-        last_30_days_trends_df['dry_out_count'], errors='coerce'
+    last_30_days_trends_df["dry_out_count"] = pd.to_numeric(
+        last_30_days_trends_df["dry_out_count"], errors="coerce"
     )
-    
-    last_30_days_trends_df['dry_out_date'] = pd.to_datetime(
-        last_30_days_trends_df['dry_out_date'], errors='coerce'
+
+    last_30_days_trends_df["dry_out_date"] = pd.to_datetime(
+        last_30_days_trends_df["dry_out_date"], errors="coerce"
     )
-    last_30_days_trends_df = last_30_days_trends_df.sort_values('dry_out_date').reset_index(drop=True)
+    last_30_days_trends_df = last_30_days_trends_df.sort_values(
+        "dry_out_date"
+    ).reset_index(drop=True)
 
     # Format date label: Nov-21
-    last_30_days_trends_df['x_label'] = last_30_days_trends_df['dry_out_date'].dt.strftime('%b-%d')
+    last_30_days_trends_df["x_label"] = last_30_days_trends_df[
+        "dry_out_date"
+    ].dt.strftime("%b-%d")
 
     plt.figure(figsize=(17, 9))
 
     bars = plt.bar(
-        last_30_days_trends_df['x_label'],
-        last_30_days_trends_df['dry_out_count'],
+        last_30_days_trends_df["x_label"],
+        last_30_days_trends_df["dry_out_count"],
         width=0.45,
-        color="#A9A9A9"
+        color="#A9A9A9",
     )
 
     # Add labels above bars
@@ -73,16 +78,16 @@ async def dry_out_trends_chart(last_30_days_trends_df, output_path='/tmp/dry_out
         plt.text(
             bar.get_x() + bar.get_width() / 2,
             height + 30,
-            f'{int(height)}',
-            ha='center',
-            va='bottom',
-            rotation=90,        
+            f"{int(height)}",
+            ha="center",
+            va="bottom",
+            rotation=90,
             fontsize=14,
-            fontweight='bold'
+            fontweight="bold",
         )
-    
+
     # Y-axis ticks → 0, 200, 400, ...
-    max_val = last_30_days_trends_df['dry_out_count'].max()
+    max_val = last_30_days_trends_df["dry_out_count"].max()
     upper_limit = int(np.ceil(max_val / 200.0) * 200)
     plt.yticks(np.arange(0, upper_limit + 1, 200), fontsize=14)
 
@@ -90,80 +95,100 @@ async def dry_out_trends_chart(last_30_days_trends_df, output_path='/tmp/dry_out
     plt.ylim(0, upper_limit + 300)
 
     # Add vertical grid lines (like image)
-    plt.grid(axis='y', linestyle='--', linewidth=0.6, alpha=0.5)
+    plt.grid(axis="y", linestyle="--", linewidth=0.6, alpha=0.5)
 
     plt.xlabel("Day Wise Count", fontsize=16, labelpad=20)
-    plt.xticks(rotation=45, ha='right', fontsize=14)
+    plt.xticks(rotation=45, ha="right", fontsize=14)
 
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
 
     return output_path
 
 
-async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
+async def generate_chart(zone_fuel_df, out_path="/tmp/monthly_loss_chart.png"):
     global chart_path
     chart_path = out_path
     df = zone_fuel_df.copy()
-    df['Month'] = df['Month'].astype(str)
-    df['MS in KL'] = pd.to_numeric(df['MS in KL'], errors='coerce').fillna(0)
-    df['HSD in KL'] = pd.to_numeric(df['HSD in KL'], errors='coerce').fillna(0)
+    df["Month"] = df["Month"].astype(str)
+    df["MS in KL"] = pd.to_numeric(df["MS in KL"], errors="coerce").fillna(0)
+    df["HSD in KL"] = pd.to_numeric(df["HSD in KL"], errors="coerce").fillna(0)
 
-    df['MS in KL'] = df['MS in KL'] / 1000.0
-    df['HSD in KL'] = df['HSD in KL'] / 1000.0
+    df["MS in KL"] = df["MS in KL"] / 1000.0
+    df["HSD in KL"] = df["HSD in KL"] / 1000.0
 
     try:
-        order_key = pd.to_datetime(df['Month'], format="%b'%y")
-        df = df.assign(_order=order_key).sort_values('_order')
+        order_key = pd.to_datetime(df["Month"], format="%b'%y")
+        df = df.assign(_order=order_key).sort_values("_order")
     except Exception:
         df = df.reset_index(drop=True)
 
-    months = df['Month'].tolist()
-    ms_vals = df['MS in KL'].to_numpy()
-    hsd_vals = df['HSD in KL'].to_numpy()
+    months = df["Month"].tolist()
+    ms_vals = df["MS in KL"].to_numpy()
+    hsd_vals = df["HSD in KL"].to_numpy()
 
     x = np.arange(len(months))
-    width = 0.32   # Reduced for gap
-    bar_gap = 0.10 # Small gap between bars
+    width = 0.32  # Reduced for gap
+    bar_gap = 0.10  # Small gap between bars
 
-    plt.style.use('default')
+    plt.style.use("default")
     fig, ax = plt.subplots(figsize=(10, 5.2))
-    ms_color = '#ff0000'
-    hsd_color = '#00008B'
+    ms_color = "#ff0000"
+    hsd_color = "#00008B"
 
     # Add bars
-    ms_bars = ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
-    hsd_bars = ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
+    ms_bars = ax.bar(
+        x - width / 2 - bar_gap / 2, ms_vals, width, label="MS", color=ms_color
+    )
+    hsd_bars = ax.bar(
+        x + width / 2 + bar_gap / 2, hsd_vals, width, label="HSD", color=hsd_color
+    )
 
     # Add value labels on top of bars for MS
     for bar in ms_bars:
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{int(height)}', 
-                ha='center', va='bottom', fontsize=8)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 0.01,
+            f"{int(height)}",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
 
     # Add value labels on top of bars for HSD
     for bar in hsd_bars:
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{int(height)}', 
-                ha='center', va='bottom', fontsize=8)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 0.01,
+            f"{int(height)}",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
 
-    ax.set_title('Monthly Loss of Sales Due to Partial Dryouts (KL)', fontsize=14, pad=10)
+    ax.set_title(
+        "Monthly Loss of Sales Due to Partial Dryouts (KL)", fontsize=14, pad=10
+    )
     ax.set_xticks(x)
     ax.set_xticklabels(months, fontsize=10)
-    ax.yaxis.grid(True, linestyle='-', linewidth=0.6, alpha=0.35)
+    ax.yaxis.grid(True, linestyle="-", linewidth=0.6, alpha=0.35)
     ax.set_axisbelow(True)
     ax.margins(x=0.02)
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
 
     fig.tight_layout()
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return out_path
 
 
-async def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_nozzel_sales_chart.png"):
+async def generate_nozzel_sales_chart(
+    nozzel_sales_df, out_path="/tmp/grouped_nozzel_sales_chart.png"
+):
     global chart_path
     chart_path = out_path
 
@@ -172,22 +197,20 @@ async def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_no
     df["transaction_date"] = pd.to_datetime(df["transaction_date"]).dt.tz_localize(None)
     df = df.sort_values("transaction_date")
 
-
     days = df["transaction_date"].dt.strftime("%b-%d").tolist()
     ms_vals = df["MS_TMT"].tolist()
     hsd_vals = df["HSD_TMT"].tolist()
 
-
-    x = np.arange(len(days))       
-    width = 0.35                    
+    x = np.arange(len(days))
+    width = 0.35
 
     fig, ax = plt.subplots(figsize=(12, 5))
-    ms_color = '#ff0000'
-    hsd_color = '#00008B'
+    ms_color = "#ff0000"
+    hsd_color = "#00008B"
 
-    ms_bars = ax.bar(x - width/2,ms_vals,width,label="MS",color=ms_color)
+    ms_bars = ax.bar(x - width / 2, ms_vals, width, label="MS", color=ms_color)
 
-    hsd_bars = ax.bar(x + width/2,hsd_vals,width,label="HSD",color=hsd_color)
+    hsd_bars = ax.bar(x + width / 2, hsd_vals, width, label="HSD", color=hsd_color)
 
     for bars in (ms_bars, hsd_bars):
         for bar in bars:
@@ -198,9 +221,8 @@ async def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_no
                 f"{int(height)}",
                 ha="center",
                 va="bottom",
-                fontsize=8
+                fontsize=8,
             )
-
 
     ax.set_title("Daily Product Wise Nozzle Sales (in TMT)", fontsize=14)
     ax.set_xticks(x)
@@ -208,7 +230,7 @@ async def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_no
     ax.yaxis.grid(True, alpha=0.35)
     ax.set_axisbelow(True)
 
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15),ncol=2,frameon=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=2, frameon=False)
 
     fig.tight_layout()
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -244,8 +266,12 @@ async def supply_terminal_wise_counts(by_ro=False):
                     AND a.terminal_plant_name NOT ILIKE '%retail%'
                     AND a.product_code IN ('2811000', '2812000');"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     resp = await function(query=query)
     data_resp = pd.DataFrame(resp)
     data_resp = data_resp.drop(["sales_area", "zones"], axis=1)
@@ -255,7 +281,7 @@ async def supply_terminal_wise_counts(by_ro=False):
     all_batches = []
     carry_forward_bacthes = []
     for i in range(0, len(sap_ids), batch_size):
-        batch = sap_ids[i:i + batch_size]
+        batch = sap_ids[i : i + batch_size]
         print(f"Processing batch {i//batch_size + 1}: {len(batch)} items")
         batch_str = ",".join([f"'{str(s)}'" for s in batch])
         ims_query = f"""SELECT 
@@ -282,8 +308,12 @@ async def supply_terminal_wise_counts(by_ro=False):
                                   ORDER BY b."ZONECD",a."LOCN_CODE"
                                   """
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
         resp = await function(query=ims_query)
         batch_df = pd.DataFrame(resp)
         all_batches.append(batch_df)
@@ -302,8 +332,7 @@ async def supply_terminal_wise_counts(by_ro=False):
     # Handle empty IMS batches safely
 
     valid_ims_dfs = [
-        df for df in all_batches
-        if not df.empty and "SAP_ID" in df.columns
+        df for df in all_batches if not df.empty and "SAP_ID" in df.columns
     ]
 
     if valid_ims_dfs:
@@ -312,26 +341,24 @@ async def supply_terminal_wise_counts(by_ro=False):
         final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
     else:
         final_df = pd.DataFrame(columns=["SAP_ID", "VALID_COUNT"])
-    
+
     valid_carry_dfs = [
-        df for df in carry_forward_bacthes
-        if not df.empty and "SAP_ID" in df.columns
+        df for df in carry_forward_bacthes if not df.empty and "SAP_ID" in df.columns
     ]
 
     if valid_carry_dfs:
         carry_forward_final_df = pd.concat(valid_carry_dfs, ignore_index=True)
         carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
-        carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+        carry_forward_final_df["SAP_ID"] = (
+            carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+        )
     else:
         carry_forward_final_df = pd.DataFrame(columns=["SAP_ID", "INDCNT"])
 
     # print(final_df)
     # print("Combined DataFrame created successfully with", len(final_df), "records.")
     merged_df = data_resp.merge(
-        final_df,
-        how="left",
-        left_on="sap_id",
-        right_on="SAP_ID"
+        final_df, how="left", left_on="sap_id", right_on="SAP_ID"
     )
     merged_df["VALID_COUNT"] = merged_df["VALID_COUNT"].fillna(0).astype(int)
     # Drop the extra SAP_ID column (from IMS data)
@@ -341,10 +368,7 @@ async def supply_terminal_wise_counts(by_ro=False):
     # print(f"\n Combined DataFrame created successfully with {len(merged_df)} records.")
     # print(" VALID_COUNT column added successfully based on SAP_ID.")
     carry_merge_df = merged_df.merge(
-        carry_forward_final_df,
-        how="left",
-        left_on="sap_id",
-        right_on="SAP_ID"
+        carry_forward_final_df, how="left", left_on="sap_id", right_on="SAP_ID"
     )
     carry_merge_df["INDCNT"] = carry_merge_df["INDCNT"].fillna(0).astype(int)
     carry_merge_df.drop(columns=["SAP_ID"], inplace=True)
@@ -359,7 +383,10 @@ async def supply_terminal_wise_counts(by_ro=False):
             **{
                 "Count of Dryout ROs": ("sap_id", "nunique"),
                 "Valid Indent Count (Supply Location+Region)": ("VALID_COUNT", "sum"),
-                "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": ("INDCNT", "sum")
+                "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": (
+                    "INDCNT",
+                    "sum",
+                ),
             }
         )
         .reset_index()
@@ -380,46 +407,56 @@ async def supply_terminal_wise_counts(by_ro=False):
     summary_df.insert(0, "Sl No", range(1, len(summary_df) + 1))
     # Step 8: Display results
     print(summary_df.head())
-    #print(f"Summary DataFrame created successfully with {len(summary_df)} rows.")
+    # print(f"Summary DataFrame created successfully with {len(summary_df)} rows.")
     return summary_df
 
 
 async def generate_sales_queries(product_name):
     """Generates the set of SQL queries needed for the sales report metrics."""
-    today = datetime.datetime.now() 
+    today = datetime.datetime.now()
     yesterday = today - datetime.timedelta(days=1)
     # Day
-    day_current_start = day_current_end = yesterday.strftime('%Y%m%d')
+    day_current_start = day_current_end = yesterday.strftime("%Y%m%d")
 
-    day_historical_start = day_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
+    day_historical_start = day_historical_end = (
+        yesterday - datetime.timedelta(days=365)
+    ).strftime("%Y%m%d")
 
     # Month
     month_start = yesterday.replace(day=1)
-    month_current_start = month_start.strftime('%Y%m%d')
-    month_current_end = yesterday.strftime('%Y%m%d')
+    month_current_start = month_start.strftime("%Y%m%d")
+    month_current_end = yesterday.strftime("%Y%m%d")
 
-    month_historical_start = (month_start - datetime.timedelta(days=365)).strftime('%Y%m%d')
-    month_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
-    
+    month_historical_start = (month_start - datetime.timedelta(days=365)).strftime(
+        "%Y%m%d"
+    )
+    month_historical_end = (yesterday - datetime.timedelta(days=365)).strftime("%Y%m%d")
+
     # Year (Financial Year = April 1)
     fy_start_year = yesterday.year if yesterday.month >= 4 else yesterday.year - 1
-    year_current_start = datetime.datetime(fy_start_year, 4, 1).strftime('%Y%m%d')
-    year_current_end = yesterday.strftime('%Y%m%d')
-    month_start_date = month_start.strftime("%Y-%m-%d")
+    year_current_start = datetime.datetime(fy_start_year, 4, 1).strftime("%Y%m%d")
+    year_current_end = yesterday.strftime("%Y%m%d")
+    month_start.strftime("%Y-%m-%d")
 
-    year_historical_start = datetime.datetime(fy_start_year - 1, 4, 1).strftime('%Y%m%d')
-    year_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
+    year_historical_start = datetime.datetime(fy_start_year - 1, 4, 1).strftime(
+        "%Y%m%d"
+    )
+    year_historical_end = (yesterday - datetime.timedelta(days=365)).strftime("%Y%m%d")
 
-    last_year_same_month_start = datetime.datetime(yesterday.year - 1, yesterday.month, 1)
+    last_year_same_month_start = datetime.datetime(
+        yesterday.year - 1, yesterday.month, 1
+    )
     if yesterday.month == 12:
-        last_year_same_month_end = datetime.datetime(yesterday.year, 1, 1) - datetime.timedelta(days=1)
+        last_year_same_month_end = datetime.datetime(
+            yesterday.year, 1, 1
+        ) - datetime.timedelta(days=1)
     else:
         next_month = datetime.datetime(yesterday.year - 1, yesterday.month + 1, 1)
         last_year_same_month_end = next_month - datetime.timedelta(days=1)
 
-    month_total_historical_start = last_year_same_month_start.strftime('%Y%m%d')
-    month_total_historical_end = last_year_same_month_end.strftime('%Y%m%d')
-    
+    month_total_historical_start = last_year_same_month_start.strftime("%Y%m%d")
+    month_total_historical_end = last_year_same_month_end.strftime("%Y%m%d")
+
     base_condition = """
         "SBU_Name" != '0' 
         AND "SBU_Name" IN ('Retail') 
@@ -434,19 +471,43 @@ async def generate_sales_queries(product_name):
     """
 
     queries = {
-        "day_current": query_template.format(condition=base_condition.format(product=product_name), start=day_current_start, end=day_current_end),
-        "day_historical": query_template.format(condition=base_condition.format(product=product_name), start=day_historical_start, end=day_historical_end),
-        "month_current": query_template.format(condition=base_condition.format(product=product_name), start=month_current_start, end=month_current_end),
-        "month_historical": query_template.format(condition=base_condition.format(product=product_name), start=month_historical_start, end=month_historical_end),
-        "year_current": query_template.format(condition=base_condition.format(product=product_name), start=year_current_start, end=year_current_end),
-        "month_total_historical": query_template.format(
-        condition=base_condition.format(product=product_name),
-        start=month_total_historical_start,
-        end=month_total_historical_end
+        "day_current": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=day_current_start,
+            end=day_current_end,
         ),
-        "year_historical": query_template.format(condition=base_condition.format(product=product_name), start=year_historical_start, end=year_historical_end)
+        "day_historical": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=day_historical_start,
+            end=day_historical_end,
+        ),
+        "month_current": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=month_current_start,
+            end=month_current_end,
+        ),
+        "month_historical": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=month_historical_start,
+            end=month_historical_end,
+        ),
+        "year_current": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=year_current_start,
+            end=year_current_end,
+        ),
+        "month_total_historical": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=month_total_historical_start,
+            end=month_total_historical_end,
+        ),
+        "year_historical": query_template.format(
+            condition=base_condition.format(product=product_name),
+            start=year_historical_start,
+            end=year_historical_end,
+        ),
     }
-    print("queries",queries)
+    print("queries", queries)
     return queries
 
 
@@ -457,7 +518,7 @@ async def fetch_value(conn, query):
             cur.execute(query)
             result = cur.fetchone()
             return float(result[0]) if result and result[0] is not None else 0.0
-    except Exception as e:
+    except Exception:
         # print(f"Error fetching data: {e}") # Suppress verbose printing on failure
         return 0.0
 
@@ -486,31 +547,37 @@ async def generate_report(product_name):
         keys = ["day_current", "month_current", "projected_sales", "year_current"]
         for key in keys:
             report[key] = 0.0
-    
+
     # Calculate growths
-    report["day_growth"] = await calculate_growth(report.get("day_current", 0), report.get("day_historical", 0))
-    report["month_growth"] = await calculate_growth(report.get("month_current", 0), report.get("month_historical", 0))
-    report["year_growth"] = await calculate_growth(report.get("year_current", 0), report.get("year_historical", 0))
+    report["day_growth"] = await calculate_growth(
+        report.get("day_current", 0), report.get("day_historical", 0)
+    )
+    report["month_growth"] = await calculate_growth(
+        report.get("month_current", 0), report.get("month_historical", 0)
+    )
+    report["year_growth"] = await calculate_growth(
+        report.get("year_current", 0), report.get("year_historical", 0)
+    )
     month_growth = report["month_growth"]
     month_total_historical = report["month_total_historical"]
-    projected_sales = month_total_historical + (month_total_historical * month_growth) / 100
+    projected_sales = (
+        month_total_historical + (month_total_historical * month_growth) / 100
+    )
     report["projected_sales"] = round(projected_sales, 2)
-    report["month_target_growth"] = await calculate_growth(report.get("projected_sales", 0), report.get("month_total_historical", 0))
+    report["month_target_growth"] = await calculate_growth(
+        report.get("projected_sales", 0), report.get("month_total_historical", 0)
+    )
 
     # Structure the data for the final DataFrame row
     excel_report_data = {
-        # FINAL FIX: Set SBU column to empty string in the data rows 
-        "Product Group": product_name, # 'MS' or 'HSD'
-        
+        # FINAL FIX: Set SBU column to empty string in the data rows
+        "Product Group": product_name,  # 'MS' or 'HSD'
         "Day's Sales (Current)": report["day_current"],
         "% Growth (Day)": report["day_growth"],
-        
         "Month's Cumulative Sales Till Date (Current)": report["month_current"],
         "% Growth (Month MTD)": report["month_growth"],
-        
         "Projected Sales for The Month": report["projected_sales"],
         "% Growth (Full Month)": report["month_target_growth"],
-        
         "Year Cumulative Sales Till Date (Current)": report["year_current"],
         "% Growth (Year YTD)": report["year_growth"],
     }
@@ -683,14 +750,13 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
             WHERE dry_out_date = '{report_date}'
         """
         existing = await hpcl_ceg_model.DryOutDailyReport.get_aggr_data(check_query)
-        all_ids_list = [str(i) for i in report_data["all_ids"]] if report_data["all_ids"] else []
+        all_ids_list = (
+            [str(i) for i in report_data["all_ids"]] if report_data["all_ids"] else []
+        )
         dry_out_zone = []
         for key, value in report_data.items():
             if key not in ["report_date", "Grand Total", "all_ids"]:
-                dry_out_zone.append({
-                    "zone": key,
-                    "count": str(value or 0)
-                })
+                dry_out_zone.append({"zone": key, "count": str(value or 0)})
         if not existing.get("data", []):
             data = {
                 "dry_out_date": report_date,
@@ -701,41 +767,61 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
             await hpcl_ceg_model.DryOutDailyReportCreate(**data).create()
         else:
             if WRITE_TO_DB:
-                alert_id = existing['data'][0]['id']
-                await hpcl_ceg_model.DryOutDailyReport(**{"id": alert_id, 
-                                                          "dry_out_count": str(report_data["Grand Total"]),
-                                                          "dry_out_zone": dry_out_zone,
-                                                          "dry_out_alert_ids": all_ids_list}).modify()
+                alert_id = existing["data"][0]["id"]
+                await hpcl_ceg_model.DryOutDailyReport(
+                    **{
+                        "id": alert_id,
+                        "dry_out_count": str(report_data["Grand Total"]),
+                        "dry_out_zone": dry_out_zone,
+                        "dry_out_alert_ids": all_ids_list,
+                    }
+                ).modify()
                 print("Data Inserted Successfully")
             else:
                 print("Cannot update already existing Data")
-            
 
-    payload_dict = {"filters": [{"key": "interlock_name", "cond": "=", "value": ["Dry Out Each Indent Wise MainFlow"]},
-                                {"key": "zone", "cond": "=", "value": []}, {"key": "plant", "cond": "=", "value": []},
-                                {"key": "dealer_id", "cond": "=", "value": []},
-                                {"key": "product_code", "cond": "=", "value": ["2811000", "2812000", "2822000"]},
-                                {"key": "region", "cond": "=", "value": []},
-                                {"key": "sales_area", "cond": "=", "value": []},
-                                {"key": "progress_rate", "cond": "=", "value": []},
-                                {"key": "dry_out_in_days", "cond": "=", "value": ["1"]},
-                                {"key": "category", "cond": "=", "value": []}],
-                    "bu_type": "ro"}
-    payload_obj = indentdryout_actions.Indentdryout_Get_Dried_Out_RoParams(**payload_dict)
+    payload_dict = {
+        "filters": [
+            {
+                "key": "interlock_name",
+                "cond": "=",
+                "value": ["Dry Out Each Indent Wise MainFlow"],
+            },
+            {"key": "zone", "cond": "=", "value": []},
+            {"key": "plant", "cond": "=", "value": []},
+            {"key": "dealer_id", "cond": "=", "value": []},
+            {
+                "key": "product_code",
+                "cond": "=",
+                "value": ["2811000", "2812000", "2822000"],
+            },
+            {"key": "region", "cond": "=", "value": []},
+            {"key": "sales_area", "cond": "=", "value": []},
+            {"key": "progress_rate", "cond": "=", "value": []},
+            {"key": "dry_out_in_days", "cond": "=", "value": ["1"]},
+            {"key": "category", "cond": "=", "value": []},
+        ],
+        "bu_type": "ro",
+    }
+    payload_obj = indentdryout_actions.Indentdryout_Get_Dried_Out_RoParams(
+        **payload_dict
+    )
     response = await indentdryout_actions.indentdryout_get_dried_out_ro(payload_obj)
     cat_a = carry_fwd_dry_out = carry_fwd_indent = indent_not_raised = indent_raised = 0
-    dry_out_details = {stat['section']: int(stat['value']) for stat in response['stats']}
-    for stat in response['stats']:
-        if stat['section'] == "CATA Carry Fwd Indent":
-            cat_a = stat['value']
-        elif stat['section'] == "DryOut Carry Fwd Indent":
-            carry_fwd_dry_out = stat['value']
-        elif stat['section'] == "Carry Fwd Indent":
-            carry_fwd_indent = stat['value']
-        elif stat['section'] == 'Indent Not Raised':
-            indent_not_raised = stat['value']
-        elif stat['section'] == 'Indent Raised':
-            indent_raised = stat['value']
+    dry_out_details = {
+        stat["section"]: int(stat["value"]) for stat in response["stats"]
+    }
+    for stat in response["stats"]:
+        if stat["section"] == "CATA Carry Fwd Indent":
+            cat_a = stat["value"]
+        elif stat["section"] == "DryOut Carry Fwd Indent":
+            carry_fwd_dry_out = stat["value"]
+        elif stat["section"] == "Carry Fwd Indent":
+            carry_fwd_indent = stat["value"]
+        elif stat["section"] == "Indent Not Raised":
+            indent_not_raised = stat["value"]
+        elif stat["section"] == "Indent Raised":
+            indent_raised = stat["value"]
 
     query = f""" 
         SELECT dry_out_date, dry_out_zone, dry_out_count
@@ -743,88 +829,116 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         WHERE dry_out_date::DATE >= date_trunc('month', CURRENT_DATE)
         AND dry_out_date::DATE < (date_trunc('month', CURRENT_DATE) + interval '1 month')
     """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     resp_target = await function(query=query)
 
     data = pd.DataFrame(resp_target)
 
-    zones = ["Bengaluru Zone", "Bhopal Zone", "Bhubaneswar Zone", "Chandigarh Zone" ,"Cochin Zone", "EZ", 
-             "Guwahati Zone", "Jaipur Zone", "NCZ", "Noida Zone", "NWZ", "NZ", "Patna Zone", "SCZ","SZ", "WZ"]
+    zones = [
+        "Bengaluru Zone",
+        "Bhopal Zone",
+        "Bhubaneswar Zone",
+        "Chandigarh Zone",
+        "Cochin Zone",
+        "EZ",
+        "Guwahati Zone",
+        "Jaipur Zone",
+        "NCZ",
+        "Noida Zone",
+        "NWZ",
+        "NZ",
+        "Patna Zone",
+        "SCZ",
+        "SZ",
+        "WZ",
+    ]
 
     # Parse dry_out_zone JSON
-    data['dry_out_zone'] = data['dry_out_zone'].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+    data["dry_out_zone"] = data["dry_out_zone"].apply(
+        lambda x: json.loads(x) if isinstance(x, str) else x
+    )
 
     # Prepare records for flattening
     records = []
     for _, row in data.iterrows():
-        date = row['dry_out_date']
-        for z in row['dry_out_zone']:
-            records.append({
-                'Date': date,
-                'Zone': z['zone'],
-                'Count': int(z['count'])
-            })
+        date = row["dry_out_date"]
+        for z in row["dry_out_zone"]:
+            records.append({"Date": date, "Zone": z["zone"], "Count": int(z["count"])})
 
     flat_df = pd.DataFrame(records)
 
     # Pivot to zone-wise columns
-    pivot = flat_df.pivot_table(index='Date', columns='Zone', values='Count', fill_value=0)
+    pivot = flat_df.pivot_table(
+        index="Date", columns="Zone", values="Count", fill_value=0
+    )
     for zone in zones:
         if zone not in pivot.columns:
             pivot[zone] = 0
     pivot = pivot[zones]
 
     # Convert dry_out_date to datetime for merging
-    data['dry_out_date'] = pd.to_datetime(data['dry_out_date'])
+    data["dry_out_date"] = pd.to_datetime(data["dry_out_date"])
 
     # Map original dry_out_count per date (converted to int)
-    dry_out_count_map = data.groupby('dry_out_date')['dry_out_count'].first().astype(int)
+    dry_out_count_map = (
+        data.groupby("dry_out_date")["dry_out_count"].first().astype(int)
+    )
 
     # Prepare pivot for merge
     pivot = pivot.reset_index()
-    pivot['Date'] = pd.to_datetime(pivot['Date'])
+    pivot["Date"] = pd.to_datetime(pivot["Date"])
 
     # Merge dry_out_count into pivot by date, replacing 'Grand Total'
-    pivot = pivot.merge(dry_out_count_map.rename('dry_out_count'), left_on='Date', right_index=True, how='left')
+    pivot = pivot.merge(
+        dry_out_count_map.rename("dry_out_count"),
+        left_on="Date",
+        right_index=True,
+        how="left",
+    )
 
     # Rename pivot date column to match desired column name
-    pivot.rename(columns={'Date': 'Day wise No. of Dryout ROs'}, inplace=True)
+    pivot.rename(columns={"Date": "Day wise No. of Dryout ROs"}, inplace=True)
 
     # Set 'Grand Total' to dry_out_count from original query
-    pivot['Grand Total'] = pivot['dry_out_count'].fillna(0).astype(int)
+    pivot["Grand Total"] = pivot["dry_out_count"].fillna(0).astype(int)
 
     # Drop helper column
-    pivot.drop(columns=['dry_out_count'], inplace=True)
+    pivot.drop(columns=["dry_out_count"], inplace=True)
 
     # Convert zone counts to int
     pivot[zones] = pivot[zones].astype(int)
 
-
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'Bengaluru Zone': 1725,
-        'Bhopal Zone' : 1710,
-        'Bhubaneswar Zone' : 1426,
-        'Chandigarh Zone' : 1557,
-        'Cochin Zone': 883,
-        'EZ': 735,
-        'Guwahati Zone': 481,
-        'Jaipur Zone': 1916,
-        'NCZ': 1599,
-        'Noida Zone' : 1718,
-        'NWZ': 1400,
-        'NZ': 1199,
-        'Patna Zone': 1320,
-        'SCZ': 2860,
-        'SZ': 1941,
-        'WZ': 2690
+        "Bengaluru Zone": 1725,
+        "Bhopal Zone": 1710,
+        "Bhubaneswar Zone": 1426,
+        "Chandigarh Zone": 1557,
+        "Cochin Zone": 883,
+        "EZ": 735,
+        "Guwahati Zone": 481,
+        "Jaipur Zone": 1916,
+        "NCZ": 1599,
+        "Noida Zone": 1718,
+        "NWZ": 1400,
+        "NZ": 1199,
+        "Patna Zone": 1320,
+        "SCZ": 2860,
+        "SZ": 1941,
+        "WZ": 2690,
     }
 
     default_ro_values = {
-        'Day wise No. of Dryout ROs': 'Zone wise Total ROs',
-        'Grand Total': sum(val for key, val in default_ro_values_base.items() if key in zones)
+        "Day wise No. of Dryout ROs": "Zone wise Total ROs",
+        "Grand Total": sum(
+            val for key, val in default_ro_values_base.items() if key in zones
+        ),
     }
     for col in zones:
         default_ro_values[col] = default_ro_values_base.get(col, 0)
@@ -832,12 +946,14 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     # Prepend summary row
     pivot = pd.concat([pd.DataFrame([default_ro_values]), pivot], ignore_index=True)
 
-    pivot.loc[1:, 'Day wise No. of Dryout ROs'] = pd.to_datetime(pivot.loc[1:, 'Day wise No. of Dryout ROs']).dt.strftime('%Y-%m-%d')
+    pivot.loc[1:, "Day wise No. of Dryout ROs"] = pd.to_datetime(
+        pivot.loc[1:, "Day wise No. of Dryout ROs"]
+    ).dt.strftime("%Y-%m-%d")
 
     # Reorder columns to put Grand Total as last column
     cols = list(pivot.columns)
-    cols.remove('Grand Total')
-    cols.append('Grand Total')
+    cols.remove("Grand Total")
+    cols.append("Grand Total")
     pivot = pivot[cols]
 
     # Print final pivot table without index
@@ -846,25 +962,32 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     pivot_final = pivot
     zone_totals = pivot_final.iloc[0].to_dict()
     zone_daily = pivot_final.iloc[1:].to_dict(orient="records")
-   
 
     # Prepare and print summary (date-wise dryout count)
     summary_df = pivot.copy()
-    summary_df["Day wise No. of Dryout ROs"] = pd.to_datetime(summary_df["Day wise No. of Dryout ROs"], errors="coerce").dt.strftime("%b %-d").fillna(summary_df["Day wise No. of Dryout ROs"])
-    summary_df = summary_df.rename(columns={"Day wise No. of Dryout ROs": "Date", "Grand Total": "Dry out Count"})[["Date", "Dry out Count"]]
+    summary_df["Day wise No. of Dryout ROs"] = (
+        pd.to_datetime(summary_df["Day wise No. of Dryout ROs"], errors="coerce")
+        .dt.strftime("%b %-d")
+        .fillna(summary_df["Day wise No. of Dryout ROs"])
+    )
+    summary_df = summary_df.rename(
+        columns={"Day wise No. of Dryout ROs": "Date", "Grand Total": "Dry out Count"}
+    )[["Date", "Dry out Count"]]
     summary_df = summary_df[summary_df["Date"] != "Zone wise Total ROs"]
     summary_df["Dry out Count"] = summary_df["Dry out Count"].astype(int)
     summary_df = summary_df[~summary_df["Date"].str.contains("Day wise", na=False)]
-    #summary_df = summary_df.iloc[:-1]
+    # summary_df = summary_df.iloc[:-1]
 
     print("\n===== Summary (Date vs Dry out Count) =====")
     print(summary_df.to_string(index=False))
 
     date = urdhva_base.utilities.get_present_time()
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
-                                               date_time_format="%Y-%m-%d")
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d"
+    )
     loss_query = f"""SELECT
                             TO_CHAR(stock_date, 'Mon''YY') AS "Month",
                             SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
@@ -914,32 +1037,38 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                         """
     nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' 
                                     and zone is not null"""
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("cris", "2")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     # zone_data = await function(query=loss_query)
-    zone_data = await helpers.retry_async(function, retries=3, delay=10, query=loss_query)
+    zone_data = await helpers.retry_async(
+        function, retries=3, delay=10, query=loss_query
+    )
     zone_fuel_df = pd.DataFrame(zone_data)
 
-
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     last_30_days_trends = await function(query=last_30_days_dry_out_trends_query)
     last_30_days_trends_df = pd.DataFrame(last_30_days_trends)
 
-    nozzel_sales= await function(query= nozzle_sales_query)
+    nozzel_sales = await function(query=nozzle_sales_query)
     nozzel_sales_df = pd.DataFrame(nozzel_sales)
     print("nozzel_sales_df = pd.DataFrame(nozzel_sales) ---->\n", nozzel_sales_df)
-    nozzel_previous_day = await function(query= nozzel_previous_day_query)
+    nozzel_previous_day = await function(query=nozzel_previous_day_query)
     print("nozzel_previous_day ---->\n", nozzel_previous_day)
 
-    nozzle_sales_percentage = round(
-        (nozzel_previous_day[0]['count'] / 25160) * 100,
-        1
-    )
+    nozzle_sales_percentage = round((nozzel_previous_day[0]["count"] / 25160) * 100, 1)
     print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)
-    
+
     zone_wise_chart = await dry_out_trends_chart(last_30_days_trends_df)
     chart_path = await generate_chart(zone_fuel_df)
     nozzel_sales_chart = await generate_nozzel_sales_chart(nozzel_sales_df)
@@ -947,10 +1076,12 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
 
     bottom_3_per_zone_sorted = (
-        supply_terminal_query_ro_count_df
-        .groupby("Zone", group_keys=True)
-        .apply(lambda x: x.nlargest(3, "Count of Dryout ROs")
-                        .sort_values("Count of Dryout ROs", ascending=False))
+        supply_terminal_query_ro_count_df.groupby("Zone", group_keys=True)
+        .apply(
+            lambda x: x.nlargest(3, "Count of Dryout ROs").sort_values(
+                "Count of Dryout ROs", ascending=False
+            )
+        )
         .reset_index(drop=True)
     )
 
@@ -959,20 +1090,33 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     # Step 4: Reorder columns for readability
     bottom_3_per_zone_sorted = bottom_3_per_zone_sorted[
-        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Valid Indent Count (Supply Location+Region)", "Average Pending Indent counts from Last 3 Days (Supply Location+Region)"]
+        [
+            "Sl No",
+            "Zone",
+            "Supply Location (Terminal)",
+            "Region",
+            "Count of Dryout ROs",
+            "Valid Indent Count (Supply Location+Region)",
+            "Average Pending Indent counts from Last 3 Days (Supply Location+Region)",
+        ]
     ]
     print(bottom_3_per_zone_sorted)
 
     # Convert DataFrame to styled HTML
     supply_terminal_query_ro_count_df = supply_terminal_query_ro_count_df.sort_values(
-        by=["Zone", "Count of Dryout ROs"],
-        ascending=[True, False]
+        by=["Zone", "Count of Dryout ROs"], ascending=[True, False]
     )
-    supply_terminal_query_ro_count_df["Sl No"] = range(1, len(supply_terminal_query_ro_count_df) + 1)
+    supply_terminal_query_ro_count_df["Sl No"] = range(
+        1, len(supply_terminal_query_ro_count_df) + 1
+    )
 
     total_dryout_ros = supply_terminal_query_ro_count_df["Count of Dryout ROs"].sum()
-    total_valid_indent = supply_terminal_query_ro_count_df["Valid Indent Count (Supply Location+Region)"].sum()
-    avg_pending_indents = supply_terminal_query_ro_count_df["Average Pending Indent counts from Last 3 Days (Supply Location+Region)"].sum()
+    total_valid_indent = supply_terminal_query_ro_count_df[
+        "Valid Indent Count (Supply Location+Region)"
+    ].sum()
+    avg_pending_indents = supply_terminal_query_ro_count_df[
+        "Average Pending Indent counts from Last 3 Days (Supply Location+Region)"
+    ].sum()
 
     # Create total row
     total_row = {
@@ -982,22 +1126,19 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
         "Region": "TOTAL",
         "Count of Dryout ROs": total_dryout_ros,
         "Valid Indent Count (Supply Location+Region)": total_valid_indent,
-        "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": avg_pending_indents
+        "Average Pending Indent counts from Last 3 Days (Supply Location+Region)": avg_pending_indents,
     }
 
     # Append to dataframe
     supply_terminal_query_ro_count_df = pd.concat(
         [supply_terminal_query_ro_count_df, pd.DataFrame([total_row])],
-        ignore_index=True
+        ignore_index=True,
     )
-    today = datetime.datetime.now() 
+    today = datetime.datetime.now()
     current_date = today.strftime("%d %B %Y")
 
     html_table = supply_terminal_query_ro_count_df.to_html(
-        index=False,
-        classes="styled-table",
-        border=0,
-        justify="center"
+        index=False, classes="styled-table", border=0, justify="center"
     )
 
     retail_html_content = f"""  <html>
@@ -1089,31 +1230,48 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     retail_sales = await fetch_retail_sales()
 
     dry_out_cf = {
-        'cat_a': cat_a,
-        'dry_out': carry_fwd_dry_out,
-        'others': carry_fwd_indent - carry_fwd_dry_out - cat_a,
-        'total': carry_fwd_indent
+        "cat_a": cat_a,
+        "dry_out": carry_fwd_dry_out,
+        "others": carry_fwd_indent - carry_fwd_dry_out - cat_a,
+        "total": carry_fwd_indent,
     }
     dry_out = {
         "dry_out": indent_not_raised + indent_raised,
-        'indent_not_raised': indent_not_raised,
-        "indent_raised": indent_raised
+        "indent_not_raised": indent_not_raised,
+        "indent_raised": indent_raised,
     }
 
     print("dry_out_cf :", dry_out_cf)
     print("dry_out :", dry_out)
-    return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
-            'dry_out_trends': summary_df.to_dict(orient='records'),
-             "zone_totals": zone_totals, "zone_daily": zone_daily, "zone_columns": list(pivot_final.columns), 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
-            'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
-            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage}
+    return {
+        "dry_out_cf": dry_out_cf,
+        "dry_out": dry_out,
+        "dry_out_details": dry_out_details,
+        "dry_out_trends": summary_df.to_dict(orient="records"),
+        "zone_totals": zone_totals,
+        "zone_daily": zone_daily,
+        "zone_columns": list(pivot_final.columns),
+        "zone_fuel_df": zone_fuel_df,
+        "supply_terminal_query_ro_count_df": bottom_3_per_zone_sorted,
+        "retail_sales": retail_sales,
+        "zone_wise_chart": zone_wise_chart,
+        "chart_path": chart_path,
+        "zone_wise_pdf_path": zone_wise_pdf_path,
+        "nozzel_sales_chart": nozzel_sales_chart,
+        "nozzel_previous_day": nozzel_previous_day,
+        "nozzle_sales_percentage": nozzle_sales_percentage,
+    }
 
 
 async def get_ro_alerts():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     query = f""" SELECT count(interlock_name) as total_count, severity FROM alerts where bu='RO' and 
     interlock_name != 'Dry Out Each Indent Wise MainFlow' and alert_section='RO' and 
     created_at>='{today}' and alert_status='Open' GROUP BY severity; """
@@ -1132,7 +1290,7 @@ async def get_ro_alerts():
 
 
 async def get_bi_hourly_intra_dryout():
-    """ Reading Intra Day Dryout details from CRIS DB"""
+    """Reading Intra Day Dryout details from CRIS DB"""
     intra_dryout_query = """
         WITH base_data AS (
         SELECT
@@ -1176,18 +1334,26 @@ async def get_bi_hourly_intra_dryout():
     GROUP BY status
     ORDER BY status;
     """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("cris", "2")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     # resp = await function(query=intra_dryout_query)
-    resp = await helpers.retry_async(function, retries=3, delay=10, query=intra_dryout_query)
-    resp = {rec['stock_status']: rec['site_count'] for rec in resp}
-    resp['partial_dryout'] = sum([resp[key] for key in ['hr_0_6', 'hr_6_12', 'hr_12_24']])
-    resp['online'] = resp['offline'] = 0
+    resp = await helpers.retry_async(
+        function, retries=3, delay=10, query=intra_dryout_query
+    )
+    resp = {rec["stock_status"]: rec["site_count"] for rec in resp}
+    resp["partial_dryout"] = sum(
+        [resp[key] for key in ["hr_0_6", "hr_6_12", "hr_12_24"]]
+    )
+    resp["online"] = resp["offline"] = 0
     location_status = await get_ro_location_status()
 
     if location_status:
-        resp['online'] = location_status[0]['count']
+        resp["online"] = location_status[0]["count"]
 
     # for rec in location_status:
     #     if rec['ro_status'] == 'Online':
@@ -1205,10 +1371,10 @@ async def get_ro_location_status():
     """
 
     # query = """SELECT COUNT(DISTINCT site_id),
-    #             CASE 
+    #             CASE
     #                 WHEN enable THEN 'Online'
-    #                 ELSE 'Offline' 
-    #                 END AS ro_status 
+    #                 ELSE 'Offline'
+    #                 END AS ro_status
     #             FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
 
     query = f"""select 
@@ -1217,27 +1383,36 @@ async def get_ro_location_status():
                     "HPCL_HOS".sch_inventory_forecast_dashboard 
                     where volume>0 and product_grp IN ('MS','HSD','E20')
                 """
-    
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("cris", "2")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     # resp = await function(query=query)
     resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     return resp
 
 
 async def get_ro_locations_sch():
-    query = """select distinct rosapcode from "HPCL_HOS".sch_inventory_forecast_dashboard"""
+    query = (
+        """select distinct rosapcode from "HPCL_HOS".sch_inventory_forecast_dashboard"""
+    )
 
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("cris", "2")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     # resp = await function(query=query)
     resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     resp = pl.DataFrame(resp)
     print("resp----> \n", resp)
     return resp
-
 
 
 # Default product groups and conversion factors for nozzle_sales TMT calculation
@@ -1306,18 +1481,30 @@ def _nozzle_sales_parse_date_spec(date_spec, reference_date=None):
         end_date = date_spec[1]
         if isinstance(start_date, str):
             try:
-                start_date = datetime.datetime.strptime(start_date.strip()[:10], "%Y-%m-%d").date()
+                start_date = datetime.datetime.strptime(
+                    start_date.strip()[:10], "%Y-%m-%d"
+                ).date()
             except ValueError:
                 start_date = yesterday
         if isinstance(end_date, str):
             try:
-                end_date = datetime.datetime.strptime(end_date.strip()[:10], "%Y-%m-%d").date()
+                end_date = datetime.datetime.strptime(
+                    end_date.strip()[:10], "%Y-%m-%d"
+                ).date()
             except ValueError:
                 end_date = yesterday
         if start_date > end_date:
             start_date, end_date = end_date, start_date
-        start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
-        end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+        start_date = (
+            start_date.strftime("%Y-%m-%d")
+            if hasattr(start_date, "strftime")
+            else to_str(start_date)
+        )
+        end_date = (
+            end_date.strftime("%Y-%m-%d")
+            if hasattr(end_date, "strftime")
+            else to_str(end_date)
+        )
         return start_date, end_date
     elif isinstance(date_spec, (datetime.date, datetime.datetime)):
         d = date_spec.date() if isinstance(date_spec, datetime.datetime) else date_spec
@@ -1326,8 +1513,16 @@ def _nozzle_sales_parse_date_spec(date_spec, reference_date=None):
     else:
         start_date = end_date = yesterday
 
-    start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
-    end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+    start_date = (
+        start_date.strftime("%Y-%m-%d")
+        if hasattr(start_date, "strftime")
+        else to_str(start_date)
+    )
+    end_date = (
+        end_date.strftime("%Y-%m-%d")
+        if hasattr(end_date, "strftime")
+        else to_str(end_date)
+    )
     return start_date, end_date
 
 
@@ -1373,7 +1568,9 @@ def _nozzle_sales_build_filter_conditions(filters):
             continue
         tbl, col = key_to_col[key]
         qual = f"{tbl}.{col}"
-        if values is not None and (isinstance(values, (list, tuple)) and len(values) > 0):
+        if values is not None and (
+            isinstance(values, (list, tuple)) and len(values) > 0
+        ):
             vals = [str(v).strip() for v in values if v is not None]
             if not vals:
                 continue
@@ -1425,21 +1622,27 @@ async def nozzle_sales(
         {"daily_zone_product_nozzle_sales": [{"transaction_date", "<segment_col>", "connected_sites", "MS_volume(TMT)", "HSD_volume(TMT)"[, "name"], ...]}.
         For segregation sap_id, each row includes "sap_id" and "name" (location name).
     """
-    ms_products = ms_products if ms_products is not None else NOZZLE_SALES_MS_PRODUCTS_DEFAULT
-    hsd_products = hsd_products if hsd_products is not None else NOZZLE_SALES_HSD_PRODUCTS_DEFAULT
+    ms_products = (
+        ms_products if ms_products is not None else NOZZLE_SALES_MS_PRODUCTS_DEFAULT
+    )
+    hsd_products = (
+        hsd_products if hsd_products is not None else NOZZLE_SALES_HSD_PRODUCTS_DEFAULT
+    )
     seg = segregation.strip().lower()
     if seg not in ("global", "zone", "sales_area", "state", "sap_id"):
         seg = "sales_area"
 
     filters = filters if filters is not None else []
     filter_conditions = _nozzle_sales_build_filter_conditions(filters)
-    print("*"*40)
+    print("*" * 40)
     print("filter_conditions ---->\n", filter_conditions)
 
     need_lm_for_filters = any("lm." in c for c in filter_conditions)
     extra_where = " AND ".join(filter_conditions) if filter_conditions else ""
 
-    start_d, end_d = _nozzle_sales_parse_date_spec(date_spec, reference_date=reference_date)
+    start_d, end_d = _nozzle_sales_parse_date_spec(
+        date_spec, reference_date=reference_date
+    )
     if start_d == end_d:
         date_filter = f"ns.transaction_date::DATE = '{start_d}'"
     else:
@@ -1448,12 +1651,16 @@ async def nozzle_sales(
     if extra_where:
         where_parts.append(extra_where)
     where_clause = " AND ".join(where_parts)
-    print("*"*40)
+    print("*" * 40)
     print("where clause ---->\n", where_clause)
 
-    ms_expr = _nozzle_sales_build_tmt_expr(ms_products, NOZZLE_SALES_MS_DIVISOR, "ms_tmt")
-    hsd_expr = _nozzle_sales_build_tmt_expr(hsd_products, NOZZLE_SALES_HSD_DIVISOR, "hsd_tmt")
-    
+    ms_expr = _nozzle_sales_build_tmt_expr(
+        ms_products, NOZZLE_SALES_MS_DIVISOR, "ms_tmt"
+    )
+    hsd_expr = _nozzle_sales_build_tmt_expr(
+        hsd_products, NOZZLE_SALES_HSD_DIVISOR, "hsd_tmt"
+    )
+
     if seg == "global":
         join_lm = need_lm_for_filters
         from_join = "FROM public.nozzle_sales ns"
@@ -1472,7 +1679,7 @@ async def nozzle_sales(
         """
         group_cols = []
         dim_col = None
-        print("*"*20)
+        print("*" * 20)
         print("nozzle sales query global ---->\n", nozzle_sales_query)
     elif seg == "sap_id":
         dim_col = "sap_id"
@@ -1493,7 +1700,7 @@ async def nozzle_sales(
             ORDER BY ns.transaction_date, ns.sap_id
         """
         group_by_lm = None
-        print("*"*20)
+        print("*" * 20)
         print("nozzle sale query sap id ---->\n", nozzle_sales_query)
     else:
         if seg == "state":
@@ -1523,26 +1730,29 @@ async def nozzle_sales(
             GROUP BY ns.transaction_date::DATE, {group_by_lm}
             ORDER BY ns.transaction_date::DATE, {group_by_lm}
         """
-        print("*"*20)
-        print("nozzle sales query else ---->\n",nozzle_sales_query)
+        print("*" * 20)
+        print("nozzle sales query else ---->\n", nozzle_sales_query)
 
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
     Charts_Connection_Vault_RoutingParams.action = "execute_query"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     rows = await function(query=nozzle_sales_query)
     nozzle_sales_df = pl.DataFrame(rows)
-    print("&"*20)
-    print("nozzle sales df --->\n",nozzle_sales_df)
+    print("&" * 20)
+    print("nozzle sales df --->\n", nozzle_sales_df)
 
     if dim_col and nozzle_sales_df.height > 0:
         nozzle_sales_df = nozzle_sales_df.filter(pl.col(dim_col).is_not_null())
 
-    nozzle_sales_df = nozzle_sales_df.rename({
-        "ms_tmt": "MS_volume(TMT)",
-        "hsd_tmt": "HSD_volume(TMT)"
-    })
+    nozzle_sales_df = nozzle_sales_df.rename(
+        {"ms_tmt": "MS_volume(TMT)", "hsd_tmt": "HSD_volume(TMT)"}
+    )
 
-    print("%"*20)
+    print("%" * 20)
     print("nozzle sales df rename ---->\n ", nozzle_sales_df)
 
     if include_expected_sites and dim_col and dim_col != "sap_id":
@@ -1556,12 +1766,16 @@ async def nozzle_sales(
             lm_rows = await function(query=lm_query)
             expected_df = pl.DataFrame(lm_rows)
             if "expected_sites" in expected_df.columns:
-                expected_df = expected_df.rename({"expected_sites": "connected_sites_right"})
+                expected_df = expected_df.rename(
+                    {"expected_sites": "connected_sites_right"}
+                )
             nozzle_sales_df = nozzle_sales_df.join(expected_df, on=dim_col, how="left")
-            print("$"*20)
+            print("$" * 20)
             print("nozzle_sales df if location mastet table--->\n", nozzle_sales_df)
         except Exception:
-            nozzle_sales_df = nozzle_sales_df.with_columns(pl.lit(None).alias("connected_sites_right"))
+            nozzle_sales_df = nozzle_sales_df.with_columns(
+                pl.lit(None).alias("connected_sites_right")
+            )
 
     if dim_col and nozzle_sales_df.height > 0:
         sum_cols = ["connected_sites", "MS_volume(TMT)", "HSD_volume(TMT)"]
@@ -1571,34 +1785,34 @@ async def nozzle_sales(
         ]
         if dim_col == "sap_id" and "name" in nozzle_sales_df.columns:
             total_select.append(pl.lit(None).alias("name"))
-        total_select.extend([pl.sum(c).alias(c) for c in sum_cols if c in nozzle_sales_df.columns])
+        total_select.extend(
+            [pl.sum(c).alias(c) for c in sum_cols if c in nozzle_sales_df.columns]
+        )
         if "connected_sites_right" in nozzle_sales_df.columns:
             total_select.append(pl.lit(None).alias("connected_sites_right"))
         total_row = nozzle_sales_df.select(total_select)
         nozzle_sales_df = pl.concat([nozzle_sales_df, total_row])
-        print("8"*20)
+        print("8" * 20)
         print("nozzle sales df finla concat---->\n", nozzle_sales_df)
 
     sort_cols = ["transaction_date"] + (group_cols if group_cols else [])
-    print("*&"*10)
+    print("*&" * 10)
     print("sortcols --->\n", sort_cols)
     sort_cols = [c for c in sort_cols if c in nozzle_sales_df.columns]
     print("sort cols last --->\n ", sort_cols)
-   # if sort_cols:
+    # if sort_cols:
     #    nozzle_sales_df = nozzle_sales_df.sort(sort_cols)
-    
-    print("*"*40)
+
+    print("*" * 40)
     print("nozzle sales df final---->\n", nozzle_sales_df)
 
-    return {
-        "daily_zone_product_nozzle_sales": nozzle_sales_df.to_dicts()
-    }
+    return {"daily_zone_product_nozzle_sales": nozzle_sales_df.to_dicts()}
 
 
 async def sales_tmt_excel():
     """
     Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
-    
+
     This function:
     - Fetches daily nozzle sales data
     - Fetches month-to-date (MTD) nozzle and SAP sales data
@@ -1613,7 +1827,7 @@ async def sales_tmt_excel():
 
     Returns:
     - Dictionary with file path of the generated report
-    
+
     """
 
     # daily sales data
@@ -1621,155 +1835,176 @@ async def sales_tmt_excel():
     nozzle_sales_df = pl.DataFrame(nozzle_sales_df["daily_zone_product_nozzle_sales"])
     nozzle_sales_df = nozzle_sales_df.filter(pl.col("sales_area") != "Total")
 
-    location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
-    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
-    location_master_df = pl.DataFrame(location_master_details['data'])
+    location_master_query = (
+        f"""select distinct sales_area, state from location_master where bu ='RO' """
+    )
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(
+        location_master_query, limit=0
+    )
+    location_master_df = pl.DataFrame(location_master_details["data"])
 
-    merge_with_lm = nozzle_sales_df.join(location_master_df, on="sales_area", how="left")
-    merge_with_lm = (merge_with_lm
-        .group_by("state")
-        .agg([
+    merge_with_lm = nozzle_sales_df.join(
+        location_master_df, on="sales_area", how="left"
+    )
+    merge_with_lm = merge_with_lm.group_by("state").agg(
+        [
             pl.col("connected_sites").sum(),
             pl.col("MS_volume(TMT)").sum(),
             pl.col("HSD_volume(TMT)").sum(),
-        ])
+        ]
     )
 
-    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details = pd.read_csv(
+        "/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv"
+    )
     sales_details_df = pl.DataFrame(sales_details)
 
-    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
-    merged_sales_location = (merged_sales_location
-        .group_by("state")
-        .agg([pl.col("outlets").sum().alias("total_sites")])
+    merged_sales_location = sales_details_df.join(
+        location_master_df, on="sales_area", how="left"
     )
-   
-    final_df = merge_with_lm.join(merged_sales_location,on ='state',how = "left")
+    merged_sales_location = merged_sales_location.group_by("state").agg(
+        [pl.col("outlets").sum().alias("total_sites")]
+    )
 
-    total_rows = final_df.select([
-        pl.lit("Total").alias("state"),
-        pl.sum("connected_sites"),
-        pl.sum("MS_volume(TMT)"),
-        pl.sum("HSD_volume(TMT)"),
-        pl.sum("total_sites")
-    ])
-    final_data = pl.concat([final_df,total_rows])
-    
+    final_df = merge_with_lm.join(merged_sales_location, on="state", how="left")
+
+    total_rows = final_df.select(
+        [
+            pl.lit("Total").alias("state"),
+            pl.sum("connected_sites"),
+            pl.sum("MS_volume(TMT)"),
+            pl.sum("HSD_volume(TMT)"),
+            pl.sum("total_sites"),
+        ]
+    )
+    final_data = pl.concat([final_df, total_rows])
+
     # monthly sales data
     start_of_month = datetime.date.today().replace(day=1)
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
 
     nozzle_sales_monthly = await nozzle_sales(date_spec=(start_of_month, yesterday))
 
-    nozzle_sales_monthly = pl.DataFrame(nozzle_sales_monthly["daily_zone_product_nozzle_sales"])
+    nozzle_sales_monthly = pl.DataFrame(
+        nozzle_sales_monthly["daily_zone_product_nozzle_sales"]
+    )
     nozzle_sales_monthly = nozzle_sales_monthly.filter(pl.col("sales_area") != "Total")
 
-    nozzle_sales_monthly = (nozzle_sales_monthly
-        .group_by("sales_area")
-        .agg([
+    nozzle_sales_monthly = nozzle_sales_monthly.group_by("sales_area").agg(
+        [
             pl.col("connected_sites").unique().max().alias("monthly_connected_sites"),
             pl.col("MS_volume(TMT)").sum().alias("monthly_MS_volume(TMT)"),
             pl.col("HSD_volume(TMT)").sum().alias("monthly_HSD_volume(TMT)"),
-        ])
+        ]
     )
 
-    location_master_query = f"""select distinct sales_area, state from location_master where bu ='RO' """
-    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query, limit=0)
-    location_master_df = pl.DataFrame(location_master_details['data'])
+    location_master_query = (
+        f"""select distinct sales_area, state from location_master where bu ='RO' """
+    )
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(
+        location_master_query, limit=0
+    )
+    location_master_df = pl.DataFrame(location_master_details["data"])
 
-    merge_with_lm_monthly = nozzle_sales_monthly.join(location_master_df, on="sales_area", how="left")
-    
+    merge_with_lm_monthly = nozzle_sales_monthly.join(
+        location_master_df, on="sales_area", how="left"
+    )
 
-    sales_details = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv")
+    sales_details = pd.read_csv(
+        "/opt/ceg/algo/orchestrator/reporting_services/sarea_area_wise_connected_sites.csv"
+    )
     sales_details_df = pl.DataFrame(sales_details)
 
-    merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
-
-    sap_sales_monthly = await sales_data.get_sales_tmt(date_filter= 'month')
-    sap_sales_monthly = pl.DataFrame(sap_sales_monthly)
-    sap_sales_monthly = sap_sales_monthly.filter(pl.col("sales_area") != "GRAND TOTAL")
-    sap_sales_monthly = sap_sales_monthly.with_columns([
-        pl.col("MS_SALES_TMT").fill_null(0),
-        pl.col("HSD_SALES_TMT").fill_null(0)
-    ])
-    sap_sales_monthly = (
-        sap_sales_monthly
-        .group_by("sales_area")
-        .agg([
-            pl.col("MS_SALES_TMT").sum().alias("monthly_MS_SALES_TMT"),
-            pl.col("HSD_SALES_TMT").sum().alias("monthly_HSD_SALES_TMT")
-        ])
+    merged_sales_location = sales_details_df.join(
+        location_master_df, on="sales_area", how="left"
     )
 
-    merged_data = sap_sales_monthly.join(location_master_df, on ="sales_area", how = "left")
-    merge_with_lm_monthly = (merge_with_lm_monthly
-        .group_by("state")
-        .agg([
+    sap_sales_monthly = await sales_data.get_sales_tmt(date_filter="month")
+    sap_sales_monthly = pl.DataFrame(sap_sales_monthly)
+    sap_sales_monthly = sap_sales_monthly.filter(pl.col("sales_area") != "GRAND TOTAL")
+    sap_sales_monthly = sap_sales_monthly.with_columns(
+        [pl.col("MS_SALES_TMT").fill_null(0), pl.col("HSD_SALES_TMT").fill_null(0)]
+    )
+    sap_sales_monthly = sap_sales_monthly.group_by("sales_area").agg(
+        [
+            pl.col("MS_SALES_TMT").sum().alias("monthly_MS_SALES_TMT"),
+            pl.col("HSD_SALES_TMT").sum().alias("monthly_HSD_SALES_TMT"),
+        ]
+    )
+
+    merged_data = sap_sales_monthly.join(
+        location_master_df, on="sales_area", how="left"
+    )
+    merge_with_lm_monthly = merge_with_lm_monthly.group_by("state").agg(
+        [
             pl.col("monthly_connected_sites").sum(),
             pl.col("monthly_MS_volume(TMT)").sum(),
             pl.col("monthly_HSD_volume(TMT)").sum(),
-        ])
+        ]
     )
 
-    merged_sales_location = (merged_sales_location
-        .group_by("state")
-        .agg([pl.col("outlets").sum().alias("total_sites")])
+    merged_sales_location = merged_sales_location.group_by("state").agg(
+        [pl.col("outlets").sum().alias("total_sites")]
     )
 
-    merged_data = (merged_data
-        .group_by("state")
-        .agg([
-            pl.col("monthly_MS_SALES_TMT").sum(),
-            pl.col("monthly_HSD_SALES_TMT").sum()
-        ])
+    merged_data = merged_data.group_by("state").agg(
+        [pl.col("monthly_MS_SALES_TMT").sum(), pl.col("monthly_HSD_SALES_TMT").sum()]
     )
 
-    final_data_monthly = merge_with_lm_monthly.join(merged_data,on ='state',how = "left")
-    final_data_monthly = final_data_monthly.join(merged_sales_location, on="state", how="left")
-
-    total_rows = final_data_monthly.select([
-        pl.lit("Total").alias("state"),
-        pl.sum("monthly_connected_sites"),
-        pl.sum("monthly_MS_volume(TMT)"),
-        pl.sum("monthly_HSD_volume(TMT)"),
-        pl.sum("monthly_MS_SALES_TMT"),
-        pl.sum("monthly_HSD_SALES_TMT"),
-        pl.sum("total_sites")
-    ])
-    
-    final_data_monthly = pl.concat([final_data_monthly,total_rows])
-
-    final_data_monthly = final_data_monthly.with_columns([
-        (100 * (pl.col("monthly_MS_volume(TMT)").cast(pl.Float64) / pl.col("monthly_MS_SALES_TMT").cast(pl.Float64)))
-            .round(2).alias("monthly_MS_percentage"),
-
-        (100 * (pl.col("monthly_HSD_volume(TMT)").cast(pl.Float64) / pl.col("monthly_HSD_SALES_TMT").cast(pl.Float64)))
-            .round(2).alias("monthly_HSD_percentage")
-    ])
-
-    final_result = final_data.join(
-        final_data_monthly,
-        on="state",
-        how="left"
+    final_data_monthly = merge_with_lm_monthly.join(merged_data, on="state", how="left")
+    final_data_monthly = final_data_monthly.join(
+        merged_sales_location, on="state", how="left"
     )
+
+    total_rows = final_data_monthly.select(
+        [
+            pl.lit("Total").alias("state"),
+            pl.sum("monthly_connected_sites"),
+            pl.sum("monthly_MS_volume(TMT)"),
+            pl.sum("monthly_HSD_volume(TMT)"),
+            pl.sum("monthly_MS_SALES_TMT"),
+            pl.sum("monthly_HSD_SALES_TMT"),
+            pl.sum("total_sites"),
+        ]
+    )
+
+    final_data_monthly = pl.concat([final_data_monthly, total_rows])
+
+    final_data_monthly = final_data_monthly.with_columns(
+        [
+            (
+                100
+                * (
+                    pl.col("monthly_MS_volume(TMT)").cast(pl.Float64)
+                    / pl.col("monthly_MS_SALES_TMT").cast(pl.Float64)
+                )
+            )
+            .round(2)
+            .alias("monthly_MS_percentage"),
+            (
+                100
+                * (
+                    pl.col("monthly_HSD_volume(TMT)").cast(pl.Float64)
+                    / pl.col("monthly_HSD_SALES_TMT").cast(pl.Float64)
+                )
+            )
+            .round(2)
+            .alias("monthly_HSD_percentage"),
+        ]
+    )
+
+    final_result = final_data.join(final_data_monthly, on="state", how="left")
 
     excel_path = "/tmp/primary_&_secondary_sales.xlsx"
     workbook = xlsxwriter.Workbook(excel_path)
     worksheet = workbook.add_worksheet("Retail Sales")
 
     # -------------------- FORMATS --------------------
-    header_format = workbook.add_format({
-        "bold": True,
-        "align": "center",
-        "valign": "middle",
-        "border": 1
-    })
+    header_format = workbook.add_format(
+        {"bold": True, "align": "center", "valign": "middle", "border": 1}
+    )
 
-    cell_format = workbook.add_format({
-        "border": 1,
-        "align": "center"
-    })
-
+    cell_format = workbook.add_format({"border": 1, "align": "center"})
 
     # -------------------- HEADERS --------------------
     worksheet.merge_range("A1:A2", "State", header_format)
@@ -1778,7 +2013,9 @@ async def sales_tmt_excel():
     worksheet.merge_range("D1:E1", "Nozzle day sales (TMT)", header_format)
     worksheet.write("D2", "MS (all variants)", header_format)
     worksheet.write("E2", "HSD (all variants)", header_format)
-    worksheet.merge_range("F1:G1", "Nozzle Cum. sales of the month (TMT)", header_format)
+    worksheet.merge_range(
+        "F1:G1", "Nozzle Cum. sales of the month (TMT)", header_format
+    )
     worksheet.write("F2", "MS (all variants)", header_format)
     worksheet.write("G2", "HSD (all variants)", header_format)
     worksheet.merge_range("H1:I1", "SAP Cum. sales of the month (TMT)", header_format)
@@ -1787,7 +2024,6 @@ async def sales_tmt_excel():
     worksheet.merge_range("J1:K1", "% of Cum. Nozzle Sales", header_format)
     worksheet.write("J2", "MS (all variants)", header_format)
     worksheet.write("K2", "HSD (all variants)", header_format)
-
 
     # -------------------- DATA --------------------
     data_rows = final_result.to_dicts()
@@ -1824,39 +2060,51 @@ async def sales_tmt_excel():
         cell_range = f"{col}{start_row+1}:{col}{end_row+1}"
 
         # < 70 → Dark Red
-        worksheet.conditional_format(cell_range, {
-            "type": "cell",
-            "criteria": "<",
-            "value": 70,
-            "format": workbook.add_format({"bg_color": "#c00000"})
-        })
+        worksheet.conditional_format(
+            cell_range,
+            {
+                "type": "cell",
+                "criteria": "<",
+                "value": 70,
+                "format": workbook.add_format({"bg_color": "#c00000"}),
+            },
+        )
 
         # 70–80 → Orange
-        worksheet.conditional_format(cell_range, {
-            "type": "cell",
-            "criteria": "between",
-            "minimum": 70,
-            "maximum": 80,
-            "format": workbook.add_format({"bg_color": "#f1a470"})
-        })
+        worksheet.conditional_format(
+            cell_range,
+            {
+                "type": "cell",
+                "criteria": "between",
+                "minimum": 70,
+                "maximum": 80,
+                "format": workbook.add_format({"bg_color": "#f1a470"}),
+            },
+        )
 
         # 80–90 → Light Orange
-        worksheet.conditional_format(cell_range, {
-            "type": "cell",
-            "criteria": "between",
-            "minimum": 80,
-            "maximum": 90,
-            "format": workbook.add_format({"bg_color": "#ef7d39"})
-        })
+        worksheet.conditional_format(
+            cell_range,
+            {
+                "type": "cell",
+                "criteria": "between",
+                "minimum": 80,
+                "maximum": 90,
+                "format": workbook.add_format({"bg_color": "#ef7d39"}),
+            },
+        )
 
         # > 90 → Dark Orange
-        worksheet.conditional_format(cell_range, {
-            "type": "cell",
-            "criteria": ">",
-            "value": 90,
-            "format": workbook.add_format({"bg_color": "#d25704"})
-        })
-    
+        worksheet.conditional_format(
+            cell_range,
+            {
+                "type": "cell",
+                "criteria": ">",
+                "value": 90,
+                "format": workbook.add_format({"bg_color": "#d25704"}),
+            },
+        )
+
     legend_start_row = 2
     legend_col = "M"
     color_col = "N"
@@ -1869,8 +2117,12 @@ async def sales_tmt_excel():
 
     for i, (label, color) in enumerate(legend_items):
         worksheet.write(f"{legend_col}{legend_start_row + i}", label, cell_format)
-        worksheet.write_blank(f"{color_col}{legend_start_row + i}", None, workbook.add_format({"bg_color": color}))
-        
+        worksheet.write_blank(
+            f"{color_col}{legend_start_row + i}",
+            None,
+            workbook.add_format({"bg_color": color}),
+        )
+
     workbook.close()
 
     print("Excel created at:", excel_path)

@@ -1,12 +1,6 @@
 import urdhva_base
 import time
-import json
-import msgpack
-import datetime
-import traceback
-import dateutil.tz
 import urdhva_base.redispool
-from dateutil.tz import tzlocal
 
 logger = urdhva_base.logger.Logger.getInstance("worker")
 
@@ -25,7 +19,6 @@ class Worker:
         self.worker_queue_name = worker_queue_name
         self.worker_start_time = int(time.time())
 
-
     @classmethod
     async def validate_restart(cls, start_time):
         """
@@ -40,6 +33,6 @@ class Worker:
         try:
             if await cls.restart_validator() > start_time:
                 return True
-        except Exception as _:
+        except Exception:
             pass
         return False

@@ -1,5 +1,3 @@
-import math
-
 import urdhva_base
 import os
 import sys
@@ -7,10 +5,7 @@ import pytz
 import json
 import asyncio
 import datetime
-import numpy as np
-import pandas as pd
 import polars as pl
-from dateutil.relativedelta import relativedelta
 
 query_unique_alert = """
 SELECT
@@ -107,18 +102,22 @@ ORDER BY
     e.indent_raised_date,
 """
 
-'''
+"""
 you can include cancel_time, user_cancel, indent_hold_release_time, indent_delivery_date, Indent_executed_datetime
 
 indent_delivery_date - action_msg: Indent Delivered, processed_time
 indent_hold_release_time - action_msg: Indent On Hold Released, processed_time
 cancel_time - action_msg: Indent Cancelled, processed_time
-'''
+"""
 
-mapping = {"Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
-           "Indent On Hold Released": {"action_msg": "Indent On Hold Released",
-                                       "time": "ims_datetime"},
-           "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"}}
+mapping = {
+    "Indent Delivered": {"action_msg": "Indent Delivered", "time": "processed_time"},
+    "Indent On Hold Released": {
+        "action_msg": "Indent On Hold Released",
+        "time": "ims_datetime",
+    },
+    "Indent Cancelled": {"action_msg": "Indent Cancelled", "time": "processed_time"},
+}
 
 
 def get_column_data(record, key):
@@ -141,7 +140,7 @@ def get_column_data(record, key):
             if not ts:
                 return None
             try:
-                if mpa_data['time'] == 'ims_datetime':
+                if mpa_data["time"] == "ims_datetime":
                     return datetime.datetime.fromisoformat(ts).replace(tzinfo=None)
                 # Parse timestamp safely
                 utc_time = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -161,32 +160,36 @@ def get_column_data(record, key):
 
 
 async def fetch_dry_out_report(timeperiod):
-    if not os.path.exists('/home/novex/dry_out_report'):
-        os.makedirs('/home/novex/dry_out_report')
+    if not os.path.exists("/home/novex/dry_out_report"):
+        os.makedirs("/home/novex/dry_out_report")
     start_date = timeperiod
     end_date = start_date
     records = []
     # Get the first day of the next month
-    query_rebuilt = query_unique_alert.format(start_date=str(start_date),
-                                              end_date=str(end_date))
+    query_rebuilt = query_unique_alert.format(
+        start_date=str(start_date), end_date=str(end_date)
+    )
     print(f"QUERY {query_rebuilt}")
-    resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(query_rebuilt,
-                                                                           limit=1000000)
-    print(resp['total'])
-    if len(resp['data']) > 0:
-        records.extend(resp['data'])
+    resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(
+        query_rebuilt, limit=1000000
+    )
+    print(resp["total"])
+    if len(resp["data"]) > 0:
+        records.extend(resp["data"])
     # df = pd.DataFrame(resp['data'])
     # df.to_excel(f'/home/novex/dry_out_report/dry_out_report_{month_start.month}-{month_start.day}_{month_end.month}-{month_end.day}.xlsx', index=False)
     index = 1
     step = 1000000
     for rec_start in range(0, len(records), step):
-        df = pl.DataFrame(records[rec_start:rec_start + step])
+        df = pl.DataFrame(records[rec_start : rec_start + step])
         # Generate computed columns from alert_history using mapping
         for key in mapping:
             df = df.with_columns(
                 pl.Series(
                     name=key,
-                    values=[get_column_data(x, key) for x in df["alert_history"].to_list()]
+                    values=[
+                        get_column_data(x, key) for x in df["alert_history"].to_list()
+                    ],
                 )
             )
 
@@ -306,7 +309,7 @@ async def fetch_dry_out_report(timeperiod):
         #     updated
         # ])
 
-        df_final = df.unique(subset=['Alert ID'])
+        df_final = df.unique(subset=["Alert ID"])
 
         # df_final = df_final.with_columns(
         #     pl.when(pl.col("Indent Status") == "Cancelled")

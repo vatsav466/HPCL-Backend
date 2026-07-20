@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
+
 # import pyodbc
 import pymysql
 import psycopg2
@@ -8,18 +9,16 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 
 class DBConnectorFactory(ABC):
     def __init__(self, conn_type):
-        self.conn_type=conn_type
+        self.conn_type = conn_type
         self.connection = None
 
     @abstractmethod
     def get_connection(self, cred_type):
         """Establish a connection to the database."""
-        pass
 
     @abstractmethod
     def generate_query(self, table_name: str, conditions: dict = None):
         """Generate a query based on the table name and conditions."""
-        pass
 
     @staticmethod
     def get_default_conditions():
@@ -37,49 +36,66 @@ class DBConnectorFactory(ABC):
             conditions = []
 
             for filter_item in filters:
-                key = filter_item['key']
-                condition = filter_item['cond']
-                value = filter_item['value']
+                key = filter_item["key"]
+                condition = filter_item["cond"]
+                value = filter_item["value"]
 
-                if condition == 'equals':
+                if condition == "equals":
                     conditions.append(f"{key} = '{value}'")
-                elif condition == 'prefix':
+                elif condition == "prefix":
                     conditions.append(f"{key} LIKE '{value}%'")
-                elif condition == 'contains':
+                elif condition == "contains":
                     conditions.append(f"{key} LIKE '%{value}%'")
-                elif condition == 'suffix':
+                elif condition == "suffix":
                     conditions.append(f"{key} LIKE '%{value}'")
-                elif condition == 'oneof' and isinstance(value, list):
+                elif condition == "oneof" and isinstance(value, list):
                     values = "', '".join(map(str, value))
                     conditions.append(f"{key} IN ('{values}')")
-                elif condition == 'pattern':
+                elif condition == "pattern":
                     conditions.append(f"{key} ILIKE '%{value}%'")
-                elif condition == 'date_filter':
-                    if value == '24h':
-                        conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
-                    elif value == 't':
+                elif condition == "date_filter":
+                    if value == "24h":
+                        conditions.append(
+                            f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'"
+                        )
+                    elif value == "t":
                         conditions.append(f"{key}::DATE = CURRENT_DATE")
-                    elif value == '1d':
-                        conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
-                    elif value == '1w':
-                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '7 DAY'")
-                    elif value == '15d':
-                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '15 DAY'")
-                    elif value == '1m':
-                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
-                    elif value == '3m':
-                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'") 
-                elif condition == 'date_range':
+                    elif value == "1d":
+                        conditions.append(
+                            f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'"
+                        )
+                    elif value == "1w":
+                        conditions.append(
+                            f"{key}::DATE >= CURRENT_DATE - INTERVAL '7 DAY'"
+                        )
+                    elif value == "15d":
+                        conditions.append(
+                            f"{key}::DATE >= CURRENT_DATE - INTERVAL '15 DAY'"
+                        )
+                    elif value == "1m":
+                        conditions.append(
+                            f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'"
+                        )
+                    elif value == "3m":
+                        conditions.append(
+                            f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'"
+                        )
+                elif condition == "date_range":
                     value = value.split(",")
                     start, end = value
                     if not isinstance(value, str):
                         if len(value) == 1:
                             conditions.append(f"{key}::DATE = '{value}'")
                         else:
-                            conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")
+                            conditions.append(
+                                f"{key}::DATE BETWEEN '{start}' AND '{end}'"
+                            )
                 else:
                     raise ValueError(f"Unsupported condition: {condition}")
-        return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())
+
+        return "WHERE " + " AND ".join(
+            f"{col} = '{val}'" for col, val in filters.items()
+        )
 
     def execute_query(self, query):
         """
@@ -104,7 +120,10 @@ class DBConnectorFactory(ABC):
                 **dict(
                     zip(
                         keys,
-                        [float(col) if isinstance(col, Decimal) else col for col in row]
+                        [
+                            float(col) if isinstance(col, Decimal) else col
+                            for col in row
+                        ],
                     )
                 )
             }
@@ -112,14 +131,10 @@ class DBConnectorFactory(ABC):
         ]
 
 
-
 class MySQLConnector(DBConnectorFactory):
     def get_connection(self):
         self.connection = pymysql.connect(
-            host="localhost",
-            user="root",
-            password="password",
-            database="mysql_db"
+            host="localhost", user="root", password="password", database="mysql_db"
         )
         return self.connection
 
@@ -133,12 +148,12 @@ class MySQLConnector(DBConnectorFactory):
 
 class MSSQLConnector(DBConnectorFactory):
     def get_connection(self):
-        self.connection = "" '''pyodbc.connect(
+        self.connection = "" """pyodbc.connect(
             "Driver={SQL Server};"
             "Server=localhost;"
             "Database=mssql_db;"
             "Trusted_Connection=yes;"
-        )'''
+        )"""
         return self.connection
 
     def generate_query(self, table_name: str, conditions: dict = None):
@@ -153,10 +168,10 @@ class PostgreSQLConnector(DBConnectorFactory):
     def get_connection(self):
         creds = credential_loader.get_credentials(self.conn_type)
         self.connection = psycopg2.connect(
-            host=creds["host"], # localhost
-            user=creds["user"], # postgres
-            password=creds["password"], # password
-            database=creds["database"] # postgres_db
+            host=creds["host"],  # localhost
+            user=creds["user"],  # postgres
+            password=creds["password"],  # password
+            database=creds["database"],  # postgres_db
         )
         return self.connection
 
@@ -173,7 +188,7 @@ def example_usage():
     db_factories = {
         "mysql": MySQLConnector(),
         "mssql": MSSQLConnector(),
-        "postgres": PostgreSQLConnector()
+        "postgres": PostgreSQLConnector(),
     }
 
     # Select a database type
@@ -181,7 +196,7 @@ def example_usage():
     connector = db_factories[db_type]
 
     # Connect to the database
-    connection = connector.get_connection()
+    connector.get_connection()
     print(f"Connected to {db_type} database.")
 
     # Generate a query
@@ -192,8 +207,8 @@ def example_usage():
 if __name__ == "__main__":
     """
     Filters Example
-    [{'key': 'name', 'cond': 'equals', 'value': 'abcd'}, {'key': 'name', 'cond': 'prefix', 'value': 'abcd'}, 
-    {'key': 'name', 'cond': 'contains', 'value': 'abcd'}, {'key': 'name', 'cond': 'suffix', 'value': 'abcd'}, 
+    [{'key': 'name', 'cond': 'equals', 'value': 'abcd'}, {'key': 'name', 'cond': 'prefix', 'value': 'abcd'},
+    {'key': 'name', 'cond': 'contains', 'value': 'abcd'}, {'key': 'name', 'cond': 'suffix', 'value': 'abcd'},
     {'key': 'name', 'cond': 'oneof', 'value': ['a', 'b']}]
     """
     example_usage()

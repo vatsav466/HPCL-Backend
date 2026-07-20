@@ -11,6 +11,7 @@ Supports (case-insensitive, spaces optional):
 * ``YTD`` — with ``date_from``: Jan 1 of the current year; with ``date_to``: today
 * ``1W``, ``2D``, ``3D``, ``5D``, ``15D``, ``30D``, … — rolling window: ``N`` + ``D`` (days) or ``W`` (weeks = ``N``×7 days). On ``date_from``: start = today − span; on ``date_to``: end = today
 """
+
 from __future__ import annotations
 
 import datetime
@@ -53,7 +54,7 @@ def resolve_gateway_date_bound(
     # Support YYYYMMDD format
     if len(s) == 8 and s.isdigit():
         return s
-    
+
     if len(s) >= 10 and s[4] == "-" and s[7] == "-":
         try:
             return datetime.date.fromisoformat(s[:10])

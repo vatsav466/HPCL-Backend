@@ -10,21 +10,24 @@ from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
-from utilities.analog_data_mapping import Maintenance, Fault
+
 # import urdhva_base.queryparams
 
-router = fastapi.APIRouter(prefix='/architecturedata')
+router = fastapi.APIRouter(prefix="/architecturedata")
 
-if urdhva_base.settings.environment == 'prod':
+if urdhva_base.settings.environment == "prod":
     base_path = "/opt/ceg/algo/prod/"
-elif urdhva_base.settings.environment == 'uat':
+elif urdhva_base.settings.environment == "uat":
     base_path = "/opt/ceg/algo/uat/"
 else:
     base_path = "/opt/ceg/algo/things_board/device_data/"
 
+
 # Action architecture_details
-@router.post('/architecture_details', tags=['ArchitectureData'])
-async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
+@router.post("/architecture_details", tags=["ArchitectureData"])
+async def architecturedata_architecture_details(
+    data: Architecturedata_Architecture_DetailsParams,
+):
     try:
         # Setup connection
         # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -32,15 +35,17 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         # execute_query = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         charts_ins = Charts_Connection_Vault_RoutingParams(
             connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
-            action='execute_query'
+            action="execute_query",
         )
         execute_query = await charts_connection_vault_routing(charts_ins)
 
         # Fetch TAS BU locations
-        location_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
+        location_query = (
+            "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
+        )
         location_df = await execute_query(query=location_query)
         location_df = pd.DataFrame(location_df)
-        
+
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         mfm_map = {}
@@ -52,7 +57,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
         if not mfm_df.empty:
-            mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
+            mfm_map = dict(zip(mfm_df["sap_id"], mfm_df["mfm_count"]))
 
         final_records = []
 
@@ -63,24 +68,22 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                 ("RADAR HHH", "Radar"),
                 ("ROSOV OPEN", "ROSOV"),
                 ("MOV", "MOV"),
-                ("RIMSEAL FIRE", "RIMSEAL")
+                ("RIMSEAL FIRE", "RIMSEAL"),
             ],
             "OI": [
                 ("Fire", "Fire Engine"),
                 ("Jockey Pump Run", "Jockey Pump"),
                 ("Pt", "PT"),
-                ("PT", "PT")
+                ("PT", "PT"),
             ],
-            "ESD": [
-                ("ESD MAINTENANCE", "ESD")
-            ]
+            "ESD": [("ESD MAINTENANCE", "ESD")],
         }
 
         # Process each location
         for _, row in location_df.iterrows():
-            sap_id = str(row['sap_id'])
-            location_name = str(row['name'])
-            zone = str(row['zone'])
+            sap_id = str(row["sap_id"])
+            location_name = str(row["name"])
+            zone = str(row["zone"])
 
             json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
@@ -88,8 +91,8 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                 continue
 
             try:
-                with open(json_path, 'r') as file:
-                    devices = json.load(file).get('data', [])
+                with open(json_path, "r") as file:
+                    devices = json.load(file).get("data", [])
             except json.JSONDecodeError:
                 print(f"Invalid JSON for {sap_id}.")
                 continue
@@ -97,25 +100,27 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
             location_counts = defaultdict(list)
 
             for device in devices:
-                device_type = str(device.get('device_type', 'Unknown'))
-                sensors = device.get('sensors', [])
-                device_name = str(device.get('device_name', ''))
-                if device_type in ['Tank', 'OI', 'ESD']:
+                device_type = str(device.get("device_type", "Unknown"))
+                sensors = device.get("sensors", [])
+                device_name = str(device.get("device_name", ""))
+                if device_type in ["Tank", "OI", "ESD"]:
                     # Tank/OI: Count based on sensors with valid tags
                     for sensor in sensors:
-                        sensor_tag = str(sensor.get('sensor_tag', '')).strip()
+                        sensor_tag = str(sensor.get("sensor_tag", "")).strip()
                         if not sensor_tag:
                             continue  # Skip sensors without tags
-                        sensor_name = str(sensor.get('sensor_name', '')).lower()
-                        
+                        sensor_name = str(sensor.get("sensor_name", "")).lower()
+
                         # Special handling for OI "Pt/PT" at end of string
-                        if device_type == 'OI':
-                            for keyword, mapped_type in device_type_mapping[device_type]:
-                                if keyword == 'Fire':
+                        if device_type == "OI":
+                            for keyword, mapped_type in device_type_mapping[
+                                device_type
+                            ]:
+                                if keyword == "Fire":
                                     if sensor_name.startswith(keyword.lower()):
                                         location_counts[mapped_type].append(device_name)
                                         break
-                                elif keyword in ['Pt', 'PT']:
+                                elif keyword in ["Pt", "PT"]:
                                     if sensor_name.endswith(keyword.lower()):
                                         location_counts[mapped_type].append(device_name)
                                         break
@@ -123,15 +128,17 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                                     location_counts[mapped_type].append(device_name)
                                     break
                         else:  # Tank devices
-                            for keyword, mapped_type in device_type_mapping[device_type]:
+                            for keyword, mapped_type in device_type_mapping[
+                                device_type
+                            ]:
                                 if keyword.lower() in sensor_name:
                                     location_counts[mapped_type].append(device_name)
                                     break
-                elif device_type in ['PLC']:
+                elif device_type in ["PLC"]:
                     # Classify PLCs
-                    if 'SFT PLC' in device_name.upper():
+                    if "SFT PLC" in device_name.upper():
                         location_counts["Safety PLC"].append(device_name)
-                    elif 'GEPLC' in device_name.upper():
+                    elif "GEPLC" in device_name.upper():
                         location_counts["Process PLC"].append(device_name)
                 else:
                     location_counts[device_type].append(device_name)
@@ -140,13 +147,24 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
             tank_devices = set()
             for dev_type, device_names in location_counts.items():
                 # If this is a tank-related device type (from device_type_mapping["Tank"])
-                if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
+                if dev_type in [
+                    "Primary Level",
+                    "VFT",
+                    "Radar",
+                    "ROSOV",
+                    "MOV",
+                    "RIMSEAL",
+                ]:
                     for device_name in device_names:
                         # Extract the tank name from the device name
                         # Assuming tank name is before the '@' symbol in device_name
-                        tank_name = device_name.split('@')[0] if '@' in device_name else device_name
+                        tank_name = (
+                            device_name.split("@")[0]
+                            if "@" in device_name
+                            else device_name
+                        )
                         tank_devices.add(tank_name)
-            
+
             # Calculate total tank count
             total_tank_count = len(tank_devices)
 
@@ -154,15 +172,19 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
             for dev_type, device_names in location_counts.items():
                 count = 0
                 for device_name in device_names:
-                    if dev_type == "Hooter" and device_name.split('@')[0].endswith("HOOTER_ACK"):
+                    if dev_type == "Hooter" and device_name.split("@")[0].endswith(
+                        "HOOTER_ACK"
+                    ):
                         continue
-                    if dev_type == "Pump" and any(kw in device_name.upper() for kw in ["BLUE DYE", "FO"]):
+                    if dev_type == "Pump" and any(
+                        kw in device_name.upper() for kw in ["BLUE DYE", "FO"]
+                    ):
                         continue
-                    count +=1
-                if dev_type in ["Tank Maintenance","Fire Pump"]:
+                    count += 1
+                if dev_type in ["Tank Maintenance", "Fire Pump"]:
                     continue
                 if dev_type == "Loading Point":
-                    dev_type = "Gantry BCU" 
+                    dev_type = "Gantry BCU"
 
                 if count > 0:
                     record = {
@@ -170,24 +192,33 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                         "name": location_name,
                         "zone": zone,
                         "device_type": dev_type,
-                        "count": str(count)
+                        "count": str(count),
                     }
-                    
+
                     # Add total_tank_count field to tank-related devices
-                    if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
+                    if dev_type in [
+                        "Primary Level",
+                        "VFT",
+                        "Radar",
+                        "ROSOV",
+                        "MOV",
+                        "RIMSEAL",
+                    ]:
                         record["total_tank_count"] = total_tank_count
-                    
+
                     final_records.append(record)
-                    
+
             # Add MFM count if available
             if sap_id in mfm_map:
-                final_records.append({
-                    "sap_id": sap_id,
-                    "name": location_name,
-                    "zone": zone,
-                    "device_type": "MFM",
-                    "count": str(mfm_map[sap_id])
-                })
+                final_records.append(
+                    {
+                        "sap_id": sap_id,
+                        "name": location_name,
+                        "zone": zone,
+                        "device_type": "MFM",
+                        "count": str(mfm_map[sap_id]),
+                    }
+                )
         # Update database
         try:
             df = pl.DataFrame(final_records)
@@ -205,16 +236,23 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
-        
+
 
 # Action architecture_data
-@router.post('/architecture_data', tags=['ArchitectureData'])
-async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
+@router.post("/architecture_data", tags=["ArchitectureData"])
+async def architecturedata_architecture_data(
+    data: Architecturedata_Architecture_DataParams,
+):
     try:
-        arch_result = await architecturedata_architecture_details(Architecturedata_Architecture_DetailsParams())
-        if not arch_result.get('status'):
-            return {"status": False, "message": "Failed to referesh the architecture data"}
-                                                                
+        arch_result = await architecturedata_architecture_details(
+            Architecturedata_Architecture_DetailsParams()
+        )
+        if not arch_result.get("status"):
+            return {
+                "status": False,
+                "message": "Failed to referesh the architecture data",
+            }
+
         limit = 10000
         skip = 0
         res = []
@@ -223,30 +261,34 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
         while True:
             resp = await ArchitectureData.get_all(
                 urdhva_base.queryparams.QueryParams(
-                    limit=limit, 
-                    skip=skip, 
-                    sort=json.dumps({'created_at': 'DESC'})
+                    limit=limit, skip=skip, sort=json.dumps({"created_at": "DESC"})
                 ),
-                resp_type='plain'
+                resp_type="plain",
             )
-            if not resp['data']:
+            if not resp["data"]:
                 break
-            res.extend(resp['data'])
-            if len(resp['data']) < limit:
+            res.extend(resp["data"])
+            if len(resp["data"]) < limit:
                 break
             skip += limit  # Increase skip to fetch next batch
 
         # Convert to DataFrame if data exists
         if res:
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
-            
+
             # Convert 'count' to integer (handle any invalid data gracefully)
-            df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
+            df["count"] = (
+                pd.to_numeric(df["count"], errors="coerce").fillna(0).astype(int)
+            )
             # Select only required columns
-            df = df[['sap_id', 'name', 'count', 'device_type', 'zone']]
- 
+            df = df[["sap_id", "name", "count", "device_type", "zone"]]
+
             # Convert DataFrame to list of dictionaries
-            return {"status": True, "message": "Success", "data": df.to_dict(orient='records')}
+            return {
+                "status": True,
+                "message": "Success",
+                "data": df.to_dict(orient="records"),
+            }
 
         return {"status": False, "message": "No data found"}
 

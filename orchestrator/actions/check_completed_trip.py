@@ -42,21 +42,21 @@ class CheckCompletedTrip:
                 timeout=30,
             )
             response.raise_for_status()
-            
+
             try:
-              response_data = response.json()
+                response_data = response.json()
             except Exception:
                 logger.info(f"No trip for {truck_number}")
                 return True, {"tripCompleted": False}
-            
+
             logger.info(f"VTS truck status response: {response_data}")
 
-            if isinstance(response_data, str) and 'no trip' in response_data.lower():
+            if isinstance(response_data, str) and "no trip" in response_data.lower():
                 return True, {"tripCompleted": True}
 
             if not isinstance(response_data, dict):
                 return True, {"tripCompleted": False}
-            
+
             # Only when trip is still loaded
             if response_data.get("TripStatus", "").lower() == "loaded":
                 now_utc = urdhva_base.utilities.get_present_time(utc=True)
@@ -65,8 +65,7 @@ class CheckCompletedTrip:
                 if last_ongoing and last_ongoing.get("processed_time"):
                     pt = last_ongoing["processed_time"]
                     last_time = (
-                        pt if isinstance(pt, datetime)
-                        else datetime.fromisoformat(pt)
+                        pt if isinstance(pt, datetime) else datetime.fromisoformat(pt)
                     )
                     # Skip update if checked within last 1 hour
                     if now_utc - last_time < timedelta(hours=1):
@@ -78,11 +77,14 @@ class CheckCompletedTrip:
                 )
                 alert_data["action_type"] = "OngoingTrip"
 
-                await hpcl_ceg_model.Alerts(**{"id": id, 
-                                               "block_status":hpcl_ceg_enum.BlockStatus.OnGoingTrip}).modify()
-                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                await hpcl_ceg_model.Alerts(
+                    **{"id": id, "block_status": hpcl_ceg_enum.BlockStatus.OnGoingTrip}
+                ).modify()
+                await alert_manager.AlertAction().update_alert_history(
+                    input_data=alert_data, alert_data=alert_data
+                )
                 return True, {"tripCompleted": False}
-            
+
             # Trip not loaded → completed
             return True, {"tripCompleted": True}
 

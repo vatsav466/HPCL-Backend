@@ -1,6 +1,6 @@
 class NotificationManager:
     def __init__(self):
-        self.notification_type = ''
+        self.notification_type = ""
 
     @classmethod
     def load_credentials(cls):

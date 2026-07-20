@@ -16,7 +16,9 @@ def get_minio_client():
     """
     try:
         return Minio(
-            urdhva_base.settings.minio_endpoint.replace("https://", "").replace("http://", ""),
+            urdhva_base.settings.minio_endpoint.replace("https://", "").replace(
+                "http://", ""
+            ),
             access_key=urdhva_base.settings.minio_access_key,
             secret_key=urdhva_base.settings.minio_secret_key,
             region="us-east-1",
@@ -50,7 +52,9 @@ def upload_to_minio(bu, section, unique_id, filepath):
         return False, "Missing MinIO endpoint"
 
     # Construct full object path within the bucket
-    object_path = "/".join(["novex", bu, section, unique_id, os.path.basename(filepath)])
+    object_path = "/".join(
+        ["novex", bu, section, unique_id, os.path.basename(filepath)]
+    )
 
     # --- Connect to MinIO ---
     try:
@@ -62,10 +66,14 @@ def upload_to_minio(bu, section, unique_id, filepath):
     # --- Upload file to bucket ---
     try:
         # Uploads local file to MinIO
-        minio_client.fput_object(urdhva_base.settings.minio_bucket, object_path, filepath)
+        minio_client.fput_object(
+            urdhva_base.settings.minio_bucket, object_path, filepath
+        )
 
         # Validate that file exists in MinIO (optional verification)
-        object_stat = minio_client.stat_object(urdhva_base.settings.minio_bucket, object_path)
+        object_stat = minio_client.stat_object(
+            urdhva_base.settings.minio_bucket, object_path
+        )
         return True, object_stat.object_name
 
     except FileNotFoundError:
@@ -118,7 +126,9 @@ def download_from_minio(object_path):
         output_file = os.path.join("/tmp", os.path.basename(object_path))
 
         # Retrieve object to local file path
-        minio_client.fget_object(urdhva_base.settings.minio_bucket, object_path, output_file)
+        minio_client.fget_object(
+            urdhva_base.settings.minio_bucket, object_path, output_file
+        )
 
         return True, output_file
 

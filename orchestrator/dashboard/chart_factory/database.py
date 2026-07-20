@@ -17,8 +17,6 @@ async def get_db_session(id):
     database_url = str(urdhva_base.settings.db_urls["postgres_async"][0])
     database_engine = create_async_engine(database_url, echo=False, poolclass=NullPool)
     database_async_session = sessionmaker(
-        bind=database_engine,
-        expire_on_commit=False,
-        class_=AsyncSession
+        bind=database_engine, expire_on_commit=False, class_=AsyncSession
     )
     return database_async_session

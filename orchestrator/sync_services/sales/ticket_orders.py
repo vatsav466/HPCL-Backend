@@ -1,10 +1,7 @@
 import mysql.connector
 import psycopg2
 import polars as pl
-import sys
-import urdhva_base
 import orchestrator.dbconnector.credential_loader as credential_loader
-
 
 TARGET_TABLE = "pm_orders"
 
@@ -35,7 +32,7 @@ def fetch_active_orders(mysql_conn):
 
     df = pl.from_dicts(
         [{k: None if v is None else str(v) for k, v in row.items()} for row in rows],
-        infer_schema_length=None
+        infer_schema_length=None,
     )
     df.columns = [c.lower() for c in df.columns]
     return df
@@ -53,7 +50,6 @@ def create_table_if_not_exists(pg_conn, df):
             )
         """)
     pg_conn.commit()
-
 
 
 # ---------- UPSERT ----------
@@ -101,7 +97,6 @@ def sync_pm_orders():
 
         print("Ensuring target table exists...")
         create_table_if_not_exists(pg_conn, df)
-
 
         print("Upserting active orders...")
         upsert_orders(pg_conn, df)

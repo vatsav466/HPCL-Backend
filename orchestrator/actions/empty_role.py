@@ -4,6 +4,7 @@ import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
+
 class EmptyRole:
     async def get_required_variables(self):
         """
@@ -13,7 +14,7 @@ class EmptyRole:
             list: A list containing two strings, "alert_id" and "maintenance".
         """
         return ["alert_id", "maintenance"]
-    
+
     async def emptyrole(self, params):
         """
         Updates the status of the alert with the given alert_id to "Under Maintenance",
@@ -21,7 +22,7 @@ class EmptyRole:
 
         Args:
             alert_id (str): The id of the alert to be updated.
-            maintenance (bool): A boolean indicating whether the maintenance status 
+            maintenance (bool): A boolean indicating whether the maintenance status
                 should be set to True.
 
         Returns:
@@ -29,20 +30,20 @@ class EmptyRole:
             and None.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get("alert_id"))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            alert_data['role'] = ''
-            alert_data['rolelist'] = []
+            alert_data["role"] = ""
+            alert_data["rolelist"] = []
 
-            if params.get('maintenance'):
-                alert_data['alert_status'] = "Under Maintenance"
+            if params.get("maintenance"):
+                alert_data["alert_status"] = "Under Maintenance"
 
             data_object = hpcl_ceg_model.Alerts(**alert_data)
             await data_object.modify()
             return True, None
-        
+
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

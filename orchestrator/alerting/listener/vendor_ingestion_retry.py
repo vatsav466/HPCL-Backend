@@ -16,31 +16,40 @@ async def ingestion_retry(to_day=urdhva_base.utilities.get_present_time()):
         retry_data = retry_data.get("data", [])
         retry_data = pd.DataFrame(retry_data)
         retry_data["response_msg"] = retry_data["response_msg"].apply(json.loads)
-        resp = await cris_retry(retry_data[retry_data['vendor'] == 'CRIS'])
+        resp = await cris_retry(retry_data[retry_data["vendor"] == "CRIS"])
+
 
 async def cris_retry(retry_data):
-    retry_data = retry_data.to_dict(orient='records')
+    retry_data = retry_data.to_dict(orient="records")
     filtered_records = [
-        record for record in retry_data
-        if not record.get('response')
-           or record['response_msg'].get('status_code') not in (200, 201)
-           or not record['response_msg'].get('response', {}).get('strSuccessId', '')
+        record
+        for record in retry_data
+        if not record.get("response")
+        or record["response_msg"].get("status_code") not in (200, 201)
+        or not record["response_msg"].get("response", {}).get("strSuccessId", "")
     ]
     filtered_records = [
-        record for record in filtered_records
-        if record['response_msg'].get('response', {}).get('strFailureMsg', '') != 'Req no already exist.'
+        record
+        for record in filtered_records
+        if record["response_msg"].get("response", {}).get("strFailureMsg", "")
+        != "Req no already exist."
     ]
 
     default_headers = {"Content-Type": "application/json"}
 
     for record in filtered_records:
-        url = record['url']
+        url = record["url"]
         try:
-            response = requests.post(url, json=record['payload'], headers=default_headers)
+            response = requests.post(
+                url, json=record["payload"], headers=default_headers
+            )
             response_data = response.json()
-            log_payload = {"status_code": response.status_code, "response": response_data}
-            record['response'] = str(response.status_code)
-            record['response_msg'] = json.dumps(log_payload)
+            log_payload = {
+                "status_code": response.status_code,
+                "response": response_data,
+            }
+            record["response"] = str(response.status_code)
+            record["response_msg"] = json.dumps(log_payload)
             await hpcl_ceg_model.VendorApiAudit(**record).modify()
         except Exception as e:
             print(traceback.format_exc())
@@ -48,6 +57,7 @@ async def cris_retry(retry_data):
             return {"status": False, "message": "Failed to retry"}
 
     return {"status": True, "message": "Success"}
+
 
 if __name__ == "__main__":
     asyncio.run(ingestion_retry())

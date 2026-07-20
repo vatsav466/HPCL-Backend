@@ -1,30 +1,21 @@
 import datetime
-import calendar
 import traceback
-import hashlib
-import json
-import functools
-import io
-import os
-import pandas as pd
 import urdhva_base
 import polars as pl
 import dashboard_studio_model
-from fastapi.responses import StreamingResponse
-import datetime ,time
-from collections import defaultdict
-import calendar
+import datetime
 import polars as pl
 
 
 import orchestrator.dbconnector.widget_actions.widget_actions as widget_actions
+
 
 class SolarCapacity:
 
     @classmethod
     async def route_action(
         cls,
-        data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams
+        data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams,
     ):
         """
         Routes to the appropriate function based on the action parameter.
@@ -51,7 +42,7 @@ class SolarCapacity:
             return {
                 "status": "error",
                 "message": f"Unknown action: {action}",
-                "error": f"Action '{action}' is not supported. Available actions: {list(function_mapping.keys())}"
+                "error": f"Action '{action}' is not supported. Available actions: {list(function_mapping.keys())}",
             }
 
         try:
@@ -62,7 +53,7 @@ class SolarCapacity:
 
             return {
                 "status": "error",
-                "message": f"Handler for action '{action}' is not callable"
+                "message": f"Handler for action '{action}' is not callable",
             }
 
         except Exception as e:
@@ -70,7 +61,7 @@ class SolarCapacity:
             return {
                 "status": "error",
                 "message": "Something went wrong while processing the request",
-                "error": str(e)
+                "error": str(e),
             }
 
     @classmethod
@@ -85,11 +76,8 @@ class SolarCapacity:
             # ---------------- APPLY FILTERS ----------------
             if getattr(data, "filters", None):
                 base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    base_query,
-                    data.filters,
-                    getattr(data, "drill_state", None)
+                    base_query, data.filters, getattr(data, "drill_state", None)
                 )
-
 
             # ---------------- FINAL QUERY ----------------
             final_query = f"""
@@ -100,9 +88,11 @@ class SolarCapacity:
             print("Final Query:", final_query)
 
             # ---------------- FETCH DATA ----------------
-            sql_df = await urdhva_base.BasePostgresModel.get_aggr_data(final_query,limit=0)
+            sql_df = await urdhva_base.BasePostgresModel.get_aggr_data(
+                final_query, limit=0
+            )
             sql_df = sql_df.get("data", [])
-            print("sql_dfL ",sql_df)
+            print("sql_dfL ", sql_df)
 
             if not sql_df or len(sql_df) == 0:
                 return {"status": "No SQL Server data"}
@@ -116,7 +106,9 @@ class SolarCapacity:
                 WHERE sap_id IS NOT NULL AND LOWER(TRIM("monitoring")) = 'yes' AND LOWER(TRIM("doc")) <> 'pending'
             """
 
-            pg_raw = await urdhva_base.BasePostgresModel.get_aggr_data(postgres_query,limit=0)
+            pg_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                postgres_query, limit=0
+            )
             pg_data = pg_raw.get("data", [])
 
             sap_id_list = {str(row["sap_id"]) for row in pg_data if row.get("sap_id")}
@@ -129,7 +121,7 @@ class SolarCapacity:
             return {
                 "status": "success",
                 "matched_sap_ids": matched_sap_ids,
-                "count": len(matched_sap_ids)
+                "count": len(matched_sap_ids),
             }
 
         except Exception as e:
@@ -153,9 +145,7 @@ class SolarCapacity:
                 for f in data.filters:
                     # get column safely (dict or object)
                     col = (
-                        f.get("key")
-                        if isinstance(f, dict)
-                        else getattr(f, "key", None)
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
                     )
 
                     # skip TimestampUTC
@@ -165,10 +155,12 @@ class SolarCapacity:
                     cleaned_filters.append(f)
 
                 if cleaned_filters:
-                    base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                        base_query,
-                        cleaned_filters,
-                        getattr(data, "drill_state", None)
+                    base_query = (
+                        await widget_actions.WidgetActions.apply_filter_drilldown(
+                            base_query,
+                            cleaned_filters,
+                            getattr(data, "drill_state", None),
+                        )
                     )
 
             # ---------------- FINAL QUERY ----------------
@@ -176,13 +168,11 @@ class SolarCapacity:
                 SELECT COALESCE(SUM(capacity_kw::numeric), 0) AS total_capacity_kw
                 {base_query}
             """
-            print("overall_query: ",overall_query)
+            print("overall_query: ", overall_query)
 
             # ---------------- EXECUTE ----------------
             overall_res = await urdhva_base.BasePostgresModel.get_aggr_data(
-                overall_query,
-                limit=0,
-                skip=0
+                overall_query, limit=0, skip=0
             )
 
             overall_rows = overall_res.get("data", [])
@@ -190,7 +180,7 @@ class SolarCapacity:
 
             return {
                 "status": "success",
-                "total_installed_capacity": round(float(total_capacity),2)
+                "total_installed_capacity": round(float(total_capacity), 2),
             }
 
         except Exception as e:
@@ -198,14 +188,12 @@ class SolarCapacity:
             return {
                 "status": "error",
                 "message": "Failed to fetch total installed capacity",
-                "error": str(e)
+                "error": str(e),
             }
 
     @classmethod
     async def get_actual_generated(cls, data):
         try:
-
-
 
             # ---------------- BASE QUERY ----------------
             base_query = """
@@ -215,9 +203,7 @@ class SolarCapacity:
             # ---------------- APPLY FILTERS ----------------
             if getattr(data, "filters", None):
                 base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    base_query,
-                    data.filters,
-                    getattr(data, "drill_state", None)
+                    base_query, data.filters, getattr(data, "drill_state", None)
                 )
 
             # ---------------- OVERALL ENERGY ----------------
@@ -231,9 +217,7 @@ class SolarCapacity:
                 overall_query, limit=0, skip=0
             )
 
-            overall_energy = (
-                overall_res.get("data", [{}])[0].get("total_energy", 0)
-            )
+            overall_energy = overall_res.get("data", [{}])[0].get("total_energy", 0)
 
             # ---------------- LOCATION-WISE ----------------
             location_query = f"""
@@ -276,34 +260,29 @@ class SolarCapacity:
             return {
                 "status": "success",
                 "actual_energy": round(float(overall_energy), 2),
-
                 "location_wise": [
                     {
                         "timestamp_ist": str(row["date"]),
                         "location_name": row["location_name"],
                         "sap_id": row["sap_id"],
-                        "energy_generated": round(float(row["energy_generated"]), 2)
+                        "energy_generated": round(float(row["energy_generated"]), 2),
                     }
                     for row in location_data
                 ],
-
                 "zone_wise": [
                     {
                         "timestamp_ist": str(row["date"]),
                         "zone": row["zone"],
                         "location_name": row["location_name"],
                         "sap_id": row["sap_id"],
-                        "energy_generated": round(float(row["energy_generated"]), 2)
+                        "energy_generated": round(float(row["energy_generated"]), 2),
                     }
                     for row in zone_data
-                ]
+                ],
             }
 
         except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
 
     @classmethod
     async def get_estimated_generated_today(cls, data, sap_ids=None):
@@ -314,10 +293,14 @@ class SolarCapacity:
             if sap_ids:
                 matched_sap_ids = sap_ids
             else:
-                sap_filter = raw_filters.get("sap_id") if isinstance(raw_filters, dict) else None
+                sap_filter = (
+                    raw_filters.get("sap_id") if isinstance(raw_filters, dict) else None
+                )
 
                 if sap_filter:
-                    matched_sap_ids = sap_filter if isinstance(sap_filter, list) else [sap_filter]
+                    matched_sap_ids = (
+                        sap_filter if isinstance(sap_filter, list) else [sap_filter]
+                    )
                 else:
                     matched_result = await cls.get_matched_sap_ids(data)
                     if matched_result.get("status") != "success":
@@ -336,7 +319,9 @@ class SolarCapacity:
                 WHERE sap_id IN ({sap_ids_str})
             """
 
-            meta_res = await urdhva_base.BasePostgresModel.get_aggr_data(meta_query, limit=0,skip=0)
+            meta_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                meta_query, limit=0, skip=0
+            )
             meta_map = {row["sap_id"]: row for row in meta_res.get("data", [])}
 
             # ---------------- BASE QUERY ----------------
@@ -352,16 +337,16 @@ class SolarCapacity:
             if isinstance(raw_filters, list):
                 cleaned_filters = []
                 for f in raw_filters:
-                    col = f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
+                    col = (
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
+                    )
                     if col and col.lower() == "timestamp_ist":
                         continue
                     cleaned_filters.append(f)
 
             if cleaned_filters:
                 base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    base_query,
-                    cleaned_filters,
-                    getattr(data, "drill_state", None)
+                    base_query, cleaned_filters, getattr(data, "drill_state", None)
                 )
 
             # ---------------- CAPACITY ----------------
@@ -371,7 +356,9 @@ class SolarCapacity:
                 GROUP BY sap_id
             """
 
-            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(cap_query,limit=0,skip=0)
+            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                cap_query, limit=0, skip=0
+            )
             cap_rows = cap_res.get("data", [])
 
             if not cap_rows:
@@ -392,14 +379,18 @@ class SolarCapacity:
                 GROUP BY sap_id
             """
 
-            gen_res = await urdhva_base.BasePostgresModel.get_aggr_data(gen_query,limit=0)
+            gen_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                gen_query, limit=0
+            )
             avg_window_map = {
                 row["sap_id"]: min(float(row["avg_window_h"] or 0), 24)
                 for row in gen_res.get("data", [])
             }
 
             # ---------------- CURRENT TIME ----------------
-            now = (datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)).time()
+            now = (
+                datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
+            ).time()
 
             solar_start = datetime.time(5, 30)
             solar_end = datetime.time(19, 30)
@@ -410,10 +401,10 @@ class SolarCapacity:
                 elapsed_hours = 14
             else:
                 elapsed_hours = (
-                                        datetime.datetime.combine(datetime.datetime.today(), now) -
-                                        datetime.datetime.combine(datetime.datetime.today(), solar_start)
-                                ).total_seconds() / 3600
-            print("elapsed_hours: ",elapsed_hours)
+                    datetime.datetime.combine(datetime.datetime.today(), now)
+                    - datetime.datetime.combine(datetime.datetime.today(), solar_start)
+                ).total_seconds() / 3600
+            print("elapsed_hours: ", elapsed_hours)
 
             # ---------------- CALCULATION ----------------
             total_estimated_energy = 0.0
@@ -423,21 +414,23 @@ class SolarCapacity:
             for row in cap_rows:
                 sap_id = row["sap_id"]
                 cap = float(row["capacity_kw"] or 0)
-                print("cap : ",cap)
+                print("cap : ", cap)
 
                 avg_windows = avg_window_map.get(sap_id, 14)
                 avg_window = max(avg_windows, 14)
-                window_h = min(avg_window if avg_window else elapsed_hours, elapsed_hours)
-                print("window_h: ",window_h)
+                window_h = min(
+                    avg_window if avg_window else elapsed_hours, elapsed_hours
+                )
+                print("window_h: ", window_h)
 
                 if cap > 0 and avg_window > 0:
-                    print("avg_window; ",avg_window)
+                    print("avg_window; ", avg_window)
                     per_hour_energy = cap / avg_window
-                    print("per_hour_energy: ",per_hour_energy)
+                    print("per_hour_energy: ", per_hour_energy)
                     estimated_energy = per_hour_energy * window_h
-                    print("estimated_energy: ",estimated_energy)
+                    print("estimated_energy: ", estimated_energy)
                     total_estimated_energy += estimated_energy
-                    print("total_estimated_energy: ",total_estimated_energy)
+                    print("total_estimated_energy: ", total_estimated_energy)
                 else:
                     estimated_energy = 0
 
@@ -445,40 +438,39 @@ class SolarCapacity:
                 location = meta.get("location_name", "UNKNOWN")
                 zone = meta.get("zone", "UNKNOWN")
 
-                location_map[(location, sap_id)] = location_map.get((location, sap_id), 0) + estimated_energy
-                zone_map[(zone, location, sap_id)] = zone_map.get((zone, location, sap_id), 0) + estimated_energy
+                location_map[(location, sap_id)] = (
+                    location_map.get((location, sap_id), 0) + estimated_energy
+                )
+                zone_map[(zone, location, sap_id)] = (
+                    zone_map.get((zone, location, sap_id), 0) + estimated_energy
+                )
 
             return {
                 "status": "success",
                 "estimated_energy": round(total_estimated_energy, 2),
                 "elapsed_solar_hours": round(elapsed_hours, 2),
-
                 "location_wise": [
                     {
                         "location_name": loc,
                         "sap_id": sap,
-                        "estimated_energy": round(val, 2)
+                        "estimated_energy": round(val, 2),
                     }
                     for (loc, sap), val in location_map.items()
                 ],
-
                 "zone_wise": [
                     {
                         "zone": zone,
                         "location_name": loc,
                         "sap_id": sap,
-                        "estimated_energy": round(val, 2)
+                        "estimated_energy": round(val, 2),
                     }
                     for (zone, loc, sap), val in zone_map.items()
-                ]
+                ],
             }
 
         except Exception as e:
             traceback.print_exc()
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
 
     @classmethod
     def get_days_from_filter(cls, filters):
@@ -491,7 +483,6 @@ class SolarCapacity:
 
         if isinstance(filters, list):
             for f in filters:
-
 
                 if isinstance(f, dict):
                     key = f.get("key")
@@ -568,7 +559,9 @@ class SolarCapacity:
         try:
             raw_filters = getattr(data, "filters", None) or {}
 
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             if num_days == 0 and not is_yesterday_only:
                 return {"status": "success", "estimated_energy": 0}
@@ -577,10 +570,14 @@ class SolarCapacity:
             if sap_ids:
                 matched_sap_ids = sap_ids
             else:
-                sap_filter = raw_filters.get("sap_id") if isinstance(raw_filters, dict) else None
+                sap_filter = (
+                    raw_filters.get("sap_id") if isinstance(raw_filters, dict) else None
+                )
 
                 if sap_filter:
-                    matched_sap_ids = sap_filter if isinstance(sap_filter, list) else [sap_filter]
+                    matched_sap_ids = (
+                        sap_filter if isinstance(sap_filter, list) else [sap_filter]
+                    )
                 else:
                     matched_result = await cls.get_matched_sap_ids(data)
                     if matched_result.get("status") != "success":
@@ -599,7 +596,9 @@ class SolarCapacity:
                 WHERE sap_id IN ({sap_ids_str})
             """
 
-            meta_res = await urdhva_base.BasePostgresModel.get_aggr_data(meta_query, limit=0, skip=0)
+            meta_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                meta_query, limit=0, skip=0
+            )
             meta_rows = meta_res.get("data", [])
             meta_map = {row["sap_id"]: row for row in meta_rows}
 
@@ -616,16 +615,16 @@ class SolarCapacity:
             if isinstance(raw_filters, list):
                 cleaned_filters = []
                 for f in raw_filters:
-                    col = f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
+                    col = (
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
+                    )
                     if col and col.lower() == "timestamp_ist":
                         continue
                     cleaned_filters.append(f)
 
             if cleaned_filters:
                 base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    base_query,
-                    cleaned_filters,
-                    getattr(data, "drill_state", None)
+                    base_query, cleaned_filters, getattr(data, "drill_state", None)
                 )
 
             # ---------------- CAPACITY QUERY ----------------
@@ -637,7 +636,9 @@ class SolarCapacity:
                 GROUP BY sap_id
             """
 
-            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(cap_query, limit=0, skip=0)
+            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                cap_query, limit=0, skip=0
+            )
             cap_rows = cap_res.get("data", [])
 
             if not cap_rows:
@@ -674,7 +675,7 @@ class SolarCapacity:
                 if loc_key not in location_map:
                     location_map[loc_key] = {
                         "estimated_energy": 0,
-                        "total_capacity_kw": 0
+                        "total_capacity_kw": 0,
                     }
 
                 location_map[loc_key]["estimated_energy"] += energy
@@ -683,10 +684,7 @@ class SolarCapacity:
                 # -------- ZONE AGG --------
                 zone_key = (zone, location, sap_id)
                 if zone_key not in zone_map:
-                    zone_map[zone_key] = {
-                        "estimated_energy": 0,
-                        "total_capacity_kw": 0
-                    }
+                    zone_map[zone_key] = {"estimated_energy": 0, "total_capacity_kw": 0}
 
                 zone_map[zone_key]["estimated_energy"] += energy
                 zone_map[zone_key]["total_capacity_kw"] += cap
@@ -696,18 +694,16 @@ class SolarCapacity:
                 "estimated_energy": round(total_estimated_energy, 2),
                 "total_capacity_kw": round(total_capacity, 2),
                 "days_counted": num_days,
-
                 "location_wise": [
                     {
                         "location_name": loc,
                         "sap_id": sap,
                         "estimated_energy": round(val["estimated_energy"], 2),
                         "total_capacity_kw": round(val["total_capacity_kw"], 2),
-                        "days_counted": num_days
+                        "days_counted": num_days,
                     }
                     for (loc, sap), val in location_map.items()
                 ],
-
                 "zone_wise": [
                     {
                         "zone": zone,
@@ -715,10 +711,10 @@ class SolarCapacity:
                         "sap_id": sap,
                         "estimated_energy": round(val["estimated_energy"], 2),
                         "total_capacity_kw": round(val["total_capacity_kw"], 2),
-                        "days_counted": num_days
+                        "days_counted": num_days,
                     }
                     for (zone, loc, sap), val in zone_map.items()
-                ]
+                ],
             }
 
         except Exception as e:
@@ -726,7 +722,7 @@ class SolarCapacity:
             return {
                 "status": "error",
                 "message": "Failed to fetch estimated energy",
-                "error": str(e)
+                "error": str(e),
             }
 
     # MAIN ENERGY FUNCTION
@@ -736,7 +732,9 @@ class SolarCapacity:
             raw_filters = getattr(data, "filters", None) or {}
 
             # ---------------- FLAGS ----------------
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             # safety rule
             if is_yesterday_only:
@@ -774,7 +772,8 @@ class SolarCapacity:
             # =====================================================
             efficiency = (
                 (total_actual_energy / total_estimated_energy) * 100
-                if total_estimated_energy > 0 else 0
+                if total_estimated_energy > 0
+                else 0
             )
 
             # =====================================================
@@ -784,7 +783,7 @@ class SolarCapacity:
                 "status": "success",
                 "estimated_energy": f"{total_estimated_energy:.2f}",
                 "actual_energy": f"{total_actual_energy:.2f}",
-                "efficiency_percentage": f"{efficiency:.2f}"
+                "efficiency_percentage": f"{efficiency:.2f}",
             }
 
         except Exception as e:
@@ -792,7 +791,7 @@ class SolarCapacity:
             return {
                 "status": "error",
                 "message": "Failed to fetch energy generated",
-                "error": str(e)
+                "error": str(e),
             }
 
     @classmethod
@@ -808,7 +807,9 @@ class SolarCapacity:
 
             for f in raw_filters:
                 key = f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
-                value = f.get("value") if isinstance(f, dict) else getattr(f, "value", None)
+                value = (
+                    f.get("value") if isinstance(f, dict) else getattr(f, "value", None)
+                )
 
                 if key == "efficiency_category":
                     efficiency_filter = value
@@ -824,8 +825,12 @@ class SolarCapacity:
             # ==============================
             if raw_filters:
                 raw_filters = [
-                    f for f in raw_filters
-                    if (f.get("key") if isinstance(f, dict) else getattr(f, "key", None)) != "efficiency_category"
+                    f
+                    for f in raw_filters
+                    if (
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
+                    )
+                    != "efficiency_category"
                 ]
             else:
                 raw_filters = []
@@ -837,7 +842,9 @@ class SolarCapacity:
             category = getattr(data, "category", None)
 
             # ---------------- FLAGS ----------------
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             if is_yesterday_only:
                 include_today = False
@@ -855,11 +862,15 @@ class SolarCapacity:
             actual_map = {}
             for row in actual_list:
                 key = (str(row["location_name"]).strip(), str(row["sap_id"]).strip())
-                actual_map[key] = actual_map.get(key, 0) + float(row.get("energy_generated", 0))
+                actual_map[key] = actual_map.get(key, 0) + float(
+                    row.get("energy_generated", 0)
+                )
 
             zone_lookup = {
-                (str(row["location_name"]).strip(), str(row["sap_id"]).strip()):
-                    row.get("zone", "UNKNOWN")
+                (
+                    str(row["location_name"]).strip(),
+                    str(row["sap_id"]).strip(),
+                ): row.get("zone", "UNKNOWN")
                 for row in zone_list
             }
 
@@ -871,8 +882,9 @@ class SolarCapacity:
                 return est_res
 
             estimated_map = {
-                (str(row["location_name"]).strip(), str(row["sap_id"]).strip()):
-                    float(row.get("estimated_energy", 0))
+                (str(row["location_name"]).strip(), str(row["sap_id"]).strip()): float(
+                    row.get("estimated_energy", 0)
+                )
                 for row in est_res.get("location_wise", [])
             }
 
@@ -885,8 +897,13 @@ class SolarCapacity:
                     return today_res
 
                 for row in today_res.get("location_wise", []):
-                    key = (str(row["location_name"]).strip(), str(row["sap_id"]).strip())
-                    estimated_map[key] = estimated_map.get(key, 0) + float(row.get("estimated_energy", 0))
+                    key = (
+                        str(row["location_name"]).strip(),
+                        str(row["sap_id"]).strip(),
+                    )
+                    estimated_map[key] = estimated_map.get(key, 0) + float(
+                        row.get("estimated_energy", 0)
+                    )
 
             # =====================================================
             # STEP 4: PROCESS
@@ -922,7 +939,7 @@ class SolarCapacity:
                     "Plant_cd": sap_id,
                     "energy_generated": f"{actual:.2f}",
                     "efficiency": f"{efficiency:.2f}",
-                    "estimated_energy": f"{estimated:.2f}"
+                    "estimated_energy": f"{estimated:.2f}",
                 }
 
                 # ================= CATEGORY =================
@@ -954,10 +971,14 @@ class SolarCapacity:
                     if location not in plant_bucket:
                         plant_bucket[location] = {
                             "plant": location,
-                            "exceptional": {"count": 0}, "exceptional_data": [],
-                            "normal": {"count": 0}, "normal_data": [],
-                            "underperforming": {"count": 0}, "underperforming_data": [],
-                            "critical": {"count": 0}, "critical_data": []
+                            "exceptional": {"count": 0},
+                            "exceptional_data": [],
+                            "normal": {"count": 0},
+                            "normal_data": [],
+                            "underperforming": {"count": 0},
+                            "underperforming_data": [],
+                            "critical": {"count": 0},
+                            "critical_data": [],
                         }
 
                     plant_bucket[location][bucket]["count"] += 1
@@ -968,10 +989,14 @@ class SolarCapacity:
                     if zone not in zone_bucket:
                         zone_bucket[zone] = {
                             "zone": zone,
-                            "exceptional": {"count": 0}, "exceptional_data": [],
-                            "normal": {"count": 0}, "normal_data": [],
-                            "underperforming": {"count": 0}, "underperforming_data": [],
-                            "critical": {"count": 0}, "critical_data": []
+                            "exceptional": {"count": 0},
+                            "exceptional_data": [],
+                            "normal": {"count": 0},
+                            "normal_data": [],
+                            "underperforming": {"count": 0},
+                            "underperforming_data": [],
+                            "critical": {"count": 0},
+                            "critical_data": [],
                         }
 
                     zone_bucket[zone][bucket]["count"] += 1
@@ -983,14 +1008,17 @@ class SolarCapacity:
             if selected_plant:
                 return {
                     "status": "success",
-                    "data": underperforming + critical + normal + exceptional
+                    "data": underperforming + critical + normal + exceptional,
                 }
 
             # =====================================================
             # RESPONSE
             # =====================================================
             if category == "plant":
-                return {"status": "success", "heatmap_data": list(plant_bucket.values())}
+                return {
+                    "status": "success",
+                    "heatmap_data": list(plant_bucket.values()),
+                }
 
             if category == "zone":
                 return {"status": "success", "heatmap_data": list(zone_bucket.values())}
@@ -1004,7 +1032,7 @@ class SolarCapacity:
                 "exceptional_data": exceptional,
                 "normal_data": normal,
                 "underperforming_data": underperforming,
-                "critical_data": critical
+                "critical_data": critical,
             }
 
         except Exception as e:
@@ -1029,9 +1057,7 @@ class SolarCapacity:
 
             if filters:
                 base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    base_query,
-                    filters,
-                    drill_state
+                    base_query, filters, drill_state
                 )
 
             filtered_query = f"""
@@ -1039,12 +1065,13 @@ class SolarCapacity:
                 {base_query}
             """
 
-            filtered_raw = await urdhva_base.BasePostgresModel.get_aggr_data(filtered_query,limit=0)
+            filtered_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                filtered_query, limit=0
+            )
             filtered_data = filtered_raw.get("data", [])
 
             filtered_sap_ids = {
-                str(row["sap_id"]).strip()
-                for row in filtered_data if row.get("sap_id")
+                str(row["sap_id"]).strip() for row in filtered_data if row.get("sap_id")
             }
 
             # ---------------- ALL-TIME DB ----------------
@@ -1054,12 +1081,13 @@ class SolarCapacity:
                 WHERE sap_id IS NOT NULL
             """
 
-            all_db_raw = await urdhva_base.BasePostgresModel.get_aggr_data(all_db_query, limit=0)
+            all_db_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                all_db_query, limit=0
+            )
             all_db_data = all_db_raw.get("data", [])
 
             all_db_sap_ids = {
-                str(row["sap_id"]).strip()
-                for row in all_db_data if row.get("sap_id")
+                str(row["sap_id"]).strip() for row in all_db_data if row.get("sap_id")
             }
 
             # ---------------- EXCEL (PLANT MASTER) ----------------
@@ -1078,9 +1106,7 @@ class SolarCapacity:
                 for f in data.filters:
                     # get column safely (dict or object)
                     col = (
-                        f.get("key")
-                        if isinstance(f, dict)
-                        else getattr(f, "key", None)
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
                     )
 
                     # skip TimestampUTC
@@ -1090,29 +1116,28 @@ class SolarCapacity:
                     cleaned_filters.append(f)
 
                 if cleaned_filters:
-                    excel_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                        excel_query,
-                        cleaned_filters,
-                        getattr(data, "drill_state", None)
+                    excel_query = (
+                        await widget_actions.WidgetActions.apply_filter_drilldown(
+                            excel_query,
+                            cleaned_filters,
+                            getattr(data, "drill_state", None),
+                        )
                     )
 
-            excel_raw = await urdhva_base.BasePostgresModel.get_aggr_data(excel_query, limit=0)
+            excel_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                excel_query, limit=0
+            )
             excel_data = excel_raw.get("data", [])
 
             if not excel_data:
-                return {
-                    "status": "error",
-                    "message": "No plant capacity data found"
-                }
+                return {"status": "error", "message": "No plant capacity data found"}
 
             # ---------------- STEP 1: AGGREGATE EXCEL DATA ----------------
             from collections import defaultdict
 
-            plant_map = defaultdict(lambda: {
-                "PLANT_CD": None,
-                "LocationName": "",
-                "Plant_Capacity": 0.0
-            })
+            plant_map = defaultdict(
+                lambda: {"PLANT_CD": None, "LocationName": "", "Plant_Capacity": 0.0}
+            )
 
             for row in excel_data:
                 sap_id = str(row.get("sap_id")).strip() if row.get("sap_id") else None
@@ -1122,7 +1147,9 @@ class SolarCapacity:
                 plant_map[sap_id]["PLANT_CD"] = sap_id
                 plant_map[sap_id]["LocationName"] = row.get("location_name") or ""
 
-                plant_map[sap_id]["Plant_Capacity"] += float(row.get("capacity_kw") or 0)
+                plant_map[sap_id]["Plant_Capacity"] += float(
+                    row.get("capacity_kw") or 0
+                )
 
             total_plants_list = list(plant_map.values())
 
@@ -1156,16 +1183,14 @@ class SolarCapacity:
             return {
                 "status": "success",
                 "bu": bu_code,
-
                 "total_plants": total_plants,
                 "active_plants": active_plants,
                 "inactive_plants": inactive_plants,
                 "not_connected_plants": not_connected_plants,
-
                 "total_plants_list": total_plants_list,
                 "active_plants_list": active_plants_list,
                 "inactive_plants_list": inactive_plants_list,
-                "not_connected_plants_list": not_connected_plants_list
+                "not_connected_plants_list": not_connected_plants_list,
             }
 
         except Exception as e:
@@ -1180,7 +1205,7 @@ class SolarCapacity:
                 "total_plants_list": [],
                 "active_plants_list": [],
                 "inactive_plants_list": [],
-                "not_connected_plants_list": []
+                "not_connected_plants_list": [],
             }
 
     @classmethod
@@ -1190,7 +1215,9 @@ class SolarCapacity:
             drill_state = getattr(data, "drill_state", None)
 
             # ---------------- FLAGS ----------------
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             if is_yesterday_only:
                 include_today = False
@@ -1220,9 +1247,7 @@ class SolarCapacity:
                 for f in data.filters:
                     # get column safely (dict or object)
                     col = (
-                        f.get("key")
-                        if isinstance(f, dict)
-                        else getattr(f, "key", None)
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
                     )
 
                     # skip TimestampUTC
@@ -1232,13 +1257,17 @@ class SolarCapacity:
                     cleaned_filters.append(f)
 
                 if cleaned_filters:
-                    master_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                        master_query,
-                        cleaned_filters,
-                        getattr(data, "drill_state", None)
+                    master_query = (
+                        await widget_actions.WidgetActions.apply_filter_drilldown(
+                            master_query,
+                            cleaned_filters,
+                            getattr(data, "drill_state", None),
+                        )
                     )
 
-            master_res = await urdhva_base.BasePostgresModel.get_aggr_data(master_query,limit=0,skip=0)
+            master_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                master_query, limit=0, skip=0
+            )
             master_data = master_res.get("data", [])
 
             if not master_data:
@@ -1255,7 +1284,7 @@ class SolarCapacity:
                     "name": row.get("location_name", ""),
                     "zone": row.get("zone", ""),
                     "bu": row.get("bu", ""),
-                    "capacity": float(row.get("capacity_kw") or 0)
+                    "capacity": float(row.get("capacity_kw") or 0),
                 }
 
             all_master_sap_ids = list(master_map.keys())
@@ -1275,11 +1304,14 @@ class SolarCapacity:
 
             # -------- FILTERED (ONLINE) --------
             filtered_query = f"""SELECT DISTINCT sap_id {base_query}"""
-            filtered_raw = await urdhva_base.BasePostgresModel.get_aggr_data(filtered_query,limit=0,skip=0)
+            filtered_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                filtered_query, limit=0, skip=0
+            )
 
             filtered_sap_ids = {
                 str(row["sap_id"]).strip()
-                for row in filtered_raw.get("data", []) if row.get("sap_id")
+                for row in filtered_raw.get("data", [])
+                if row.get("sap_id")
             }
 
             # -------- ALL DB (OFFLINE) --------
@@ -1289,11 +1321,14 @@ class SolarCapacity:
                 WHERE sap_id IS NOT NULL
             """
 
-            all_db_raw = await urdhva_base.BasePostgresModel.get_aggr_data(all_db_query, limit=0,skip=0)
+            all_db_raw = await urdhva_base.BasePostgresModel.get_aggr_data(
+                all_db_query, limit=0, skip=0
+            )
 
             all_db_sap_ids = {
                 str(row["sap_id"]).strip()
-                for row in all_db_raw.get("data", []) if row.get("sap_id")
+                for row in all_db_raw.get("data", [])
+                if row.get("sap_id")
             }
 
             # =====================================================
@@ -1309,12 +1344,16 @@ class SolarCapacity:
             for r in actual_res.get("location_wise", []):
                 sap_id = str(r.get("sap_id")).strip() if r.get("sap_id") else None
                 if sap_id:
-                    actual_map[sap_id] = actual_map.get(sap_id, 0) + float(r.get("energy_generated") or 0)
+                    actual_map[sap_id] = actual_map.get(sap_id, 0) + float(
+                        r.get("energy_generated") or 0
+                    )
 
             # =====================================================
             # STEP 4: ESTIMATED ENERGY (ALL PLANTS)
             # =====================================================
-            est_res = await cls.get_estimated_generated(data, sap_ids=all_master_sap_ids)
+            est_res = await cls.get_estimated_generated(
+                data, sap_ids=all_master_sap_ids
+            )
             if est_res.get("status") != "success":
                 return est_res
 
@@ -1324,7 +1363,9 @@ class SolarCapacity:
             for r in est_res.get("zone_wise", []):
                 sap_id = str(r.get("sap_id")).strip() if r.get("sap_id") else None
                 if sap_id:
-                    estimated_map[sap_id] = estimated_map.get(sap_id, 0) + float(r.get("estimated_energy") or 0)
+                    estimated_map[sap_id] = estimated_map.get(sap_id, 0) + float(
+                        r.get("estimated_energy") or 0
+                    )
 
             # ---------------- TODAY ESTIMATION ----------------
             if include_today:
@@ -1363,24 +1404,27 @@ class SolarCapacity:
                 else:
                     status = "Not connected"
 
-                summary.append({
-                    "bu": meta["bu"],
-                    "zone": meta["zone"],
-                    "sap_id": sap_id,
-                    "name": meta["name"],
-                    "Plant_Capacity": round(meta["capacity"], 2),
-                    "estimated_energy": round(estimated, 2),
-                    "actual_energy": round(actual, 2),
-                    "efficiency": round(efficiency, 2),
-                    "status": status
-                })
+                summary.append(
+                    {
+                        "bu": meta["bu"],
+                        "zone": meta["zone"],
+                        "sap_id": sap_id,
+                        "name": meta["name"],
+                        "Plant_Capacity": round(meta["capacity"], 2),
+                        "estimated_energy": round(estimated, 2),
+                        "actual_energy": round(actual, 2),
+                        "efficiency": round(efficiency, 2),
+                        "status": status,
+                    }
+                )
 
             # =====================================================
             # FINAL RESPONSE
             # =====================================================
             overall_efficiency = (
                 (total_actual_energy / total_estimated_energy) * 100
-                if total_estimated_energy > 0 else 0
+                if total_estimated_energy > 0
+                else 0
             )
 
             return {
@@ -1388,15 +1432,12 @@ class SolarCapacity:
                 "total_actual_energy": round(total_actual_energy, 2),
                 "total_estimated_energy": round(total_estimated_energy, 2),
                 "efficiency_percentage": round(overall_efficiency, 2),
-                "summary": summary
+                "summary": summary,
             }
 
         except Exception as e:
             traceback.print_exc()
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
 
     @classmethod
     async def get_efficiency_last_30_days(cls, data):
@@ -1438,7 +1479,9 @@ class SolarCapacity:
                 ORDER BY DATE(timestamp_ist)
             """
 
-            actual_res = await urdhva_base.BasePostgresModel.get_aggr_data(actual_query,limit=0)
+            actual_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                actual_query, limit=0
+            )
             actual_rows = actual_res.get("data", [])
 
             if not actual_rows:
@@ -1463,9 +1506,7 @@ class SolarCapacity:
                 for f in data.filters:
                     # get column safely (dict or object)
                     col = (
-                        f.get("key")
-                        if isinstance(f, dict)
-                        else getattr(f, "key", None)
+                        f.get("key") if isinstance(f, dict) else getattr(f, "key", None)
                     )
 
                     # skip TimestampUTC
@@ -1475,13 +1516,17 @@ class SolarCapacity:
                     cleaned_filters.append(f)
 
                 if cleaned_filters:
-                    cap_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                        cap_query,
-                        cleaned_filters,
-                        getattr(data, "drill_state", None)
+                    cap_query = (
+                        await widget_actions.WidgetActions.apply_filter_drilldown(
+                            cap_query,
+                            cleaned_filters,
+                            getattr(data, "drill_state", None),
+                        )
                     )
 
-            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(cap_query,limit=0)
+            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                cap_query, limit=0
+            )
             total_capacity = float(
                 cap_res.get("data", [{}])[0].get("total_capacity", 0)
             )
@@ -1503,26 +1548,25 @@ class SolarCapacity:
 
                 efficiency = (generation / estimated) * 100 if estimated > 0 else 0
 
-                data_list.append({
-                    "date": date,
-                    "generation": round(generation, 2),
-                    "efficiency": round(efficiency, 2)
-                })
+                data_list.append(
+                    {
+                        "date": date,
+                        "generation": round(generation, 2),
+                        "efficiency": round(efficiency, 2),
+                    }
+                )
 
             # =====================================================
             # FINAL RESPONSE
             # =====================================================
-            return {
-                "status": "success",
-                "data": data_list
-            }
+            return {"status": "success", "data": data_list}
 
         except Exception as e:
             traceback.print_exc()
             return {
                 "status": "error",
                 "message": "Failed to fetch efficiency trend",
-                "error": str(e)
+                "error": str(e),
             }
 
     @classmethod
@@ -1532,7 +1576,9 @@ class SolarCapacity:
             raw_filters = getattr(data, "filters", None) or {}
 
             # ================= FLAGS =================
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             if is_yesterday_only:
                 include_today = False
@@ -1560,7 +1606,9 @@ class SolarCapacity:
             actual_map = {}
             for r in actual_res.get("location_wise", []):
                 sap = str(r.get("sap_id")).strip()
-                actual_map[sap] = actual_map.get(sap, 0) + float(r.get("energy_generated") or 0)
+                actual_map[sap] = actual_map.get(sap, 0) + float(
+                    r.get("energy_generated") or 0
+                )
 
             # =====================================================
             # STEP 3: ESTIMATED ENERGY
@@ -1572,7 +1620,9 @@ class SolarCapacity:
             estimated_map = {}
             for r in est_res.get("zone_wise", []):
                 sap = str(r.get("sap_id")).strip()
-                estimated_map[sap] = estimated_map.get(sap, 0) + float(r.get("estimated_energy") or 0)
+                estimated_map[sap] = estimated_map.get(sap, 0) + float(
+                    r.get("estimated_energy") or 0
+                )
 
             # -------- TODAY ESTIMATION --------
             if include_today:
@@ -1582,7 +1632,9 @@ class SolarCapacity:
 
                 for r in today_res.get("zone_wise", []):
                     sap = str(r.get("sap_id")).strip()
-                    estimated_map[sap] = estimated_map.get(sap, 0) + float(r.get("estimated_energy") or 0)
+                    estimated_map[sap] = estimated_map.get(sap, 0) + float(
+                        r.get("estimated_energy") or 0
+                    )
 
             # =====================================================
             # STEP 4: CAPACITY
@@ -1596,7 +1648,9 @@ class SolarCapacity:
                 GROUP BY sap_id, location_name
             """
 
-            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(cap_query,limit=0)
+            cap_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                cap_query, limit=0
+            )
             cap_rows = cap_res.get("data", [])
 
             # STEP 4.5: OUTAGE
@@ -1610,13 +1664,15 @@ class SolarCapacity:
             """
 
             if raw_filters:
-                outage_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    outage_query,
-                    raw_filters,
-                    getattr(data, "drill_state", None)
+                outage_query = (
+                    await widget_actions.WidgetActions.apply_filter_drilldown(
+                        outage_query, raw_filters, getattr(data, "drill_state", None)
+                    )
                 )
 
-            outage_res = await urdhva_base.BasePostgresModel.get_aggr_data(outage_query,limit=0)
+            outage_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                outage_query, limit=0
+            )
             outage_rows = outage_res.get("data", [])
 
             outage_map = {
@@ -1634,13 +1690,17 @@ class SolarCapacity:
             """
 
             if raw_filters:
-                solar_window_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    solar_window_query,
-                    raw_filters,
-                    getattr(data, "drill_state", None)
+                solar_window_query = (
+                    await widget_actions.WidgetActions.apply_filter_drilldown(
+                        solar_window_query,
+                        raw_filters,
+                        getattr(data, "drill_state", None),
+                    )
                 )
 
-            solar_window_res = await urdhva_base.BasePostgresModel.get_aggr_data(solar_window_query,limit=0)
+            solar_window_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                solar_window_query, limit=0
+            )
             solar_window_rows = solar_window_res.get("data", [])
 
             solar_window_df = pl.DataFrame(solar_window_rows)
@@ -1650,80 +1710,98 @@ class SolarCapacity:
             solar_window_map_mean = {}
             generation_hours_map_mean = {}
 
-
             if not solar_window_df.is_empty():
 
                 grouped = solar_window_df.partition_by("sap_id")
-                print("grouped: ",grouped)
+                print("grouped: ", grouped)
 
                 for df in grouped:
                     sap_id = str(df.select(pl.col("sap_id").first()).item()).strip()
 
                     # ---- SOLAR WINDOW HOURS ----
                     solar_window_hours = (
-                            df.select([
+                        df.select(
+                            [
                                 pl.col("solar_start_time"),
-
-                                pl.when(pl.col("solar_window_hrs").cast(pl.Utf8).str.strip_chars() == "")
+                                pl.when(
+                                    pl.col("solar_window_hrs")
+                                    .cast(pl.Utf8)
+                                    .str.strip_chars()
+                                    == ""
+                                )
                                 .then(None)
                                 .otherwise(pl.col("solar_window_hrs"))
                                 .cast(pl.Float64)
-                                .alias("solar_window_hrs")
-
-                            ])
-                            .drop_nulls(subset=["solar_start_time"])
-                            .unique(subset=["solar_start_time"])
-                            .select(pl.col("solar_window_hrs").sum())
-                            .item() or 0
+                                .alias("solar_window_hrs"),
+                            ]
+                        )
+                        .drop_nulls(subset=["solar_start_time"])
+                        .unique(subset=["solar_start_time"])
+                        .select(pl.col("solar_window_hrs").sum())
+                        .item()
+                        or 0
                     )
 
                     # ---- GENERATION HOURS ----
                     generation_hours = (
-                            df.select(
-                                pl.when(pl.col("solar_generation_hrs").cast(pl.Utf8).str.strip_chars() == "")
-                                .then(None)
-                                .otherwise(pl.col("solar_generation_hrs"))
-                                .cast(pl.Float64)
-                                .sum()
-                            ).item() or 0
+                        df.select(
+                            pl.when(
+                                pl.col("solar_generation_hrs")
+                                .cast(pl.Utf8)
+                                .str.strip_chars()
+                                == ""
+                            )
+                            .then(None)
+                            .otherwise(pl.col("solar_generation_hrs"))
+                            .cast(pl.Float64)
+                            .sum()
+                        ).item()
+                        or 0
                     )
 
                     solar_window_hours_mean = (
-                            df.select([
+                        df.select(
+                            [
                                 pl.col("solar_start_time"),
-
-                                pl.when(pl.col("solar_window_hrs").cast(pl.Utf8).str.strip_chars() == "")
+                                pl.when(
+                                    pl.col("solar_window_hrs")
+                                    .cast(pl.Utf8)
+                                    .str.strip_chars()
+                                    == ""
+                                )
                                 .then(None)
                                 .otherwise(pl.col("solar_window_hrs"))
                                 .cast(pl.Float64)
-                                .alias("solar_window_hrs")
-
-                            ])
-                            .drop_nulls(subset=["solar_start_time"])
-                            .unique(subset=["solar_start_time"])
-                            .select(pl.col("solar_window_hrs").mean())
-                            .item() or 0
+                                .alias("solar_window_hrs"),
+                            ]
+                        )
+                        .drop_nulls(subset=["solar_start_time"])
+                        .unique(subset=["solar_start_time"])
+                        .select(pl.col("solar_window_hrs").mean())
+                        .item()
+                        or 0
                     )
-
-
 
                     generation_hours_mean = (
-                            df.select(
-                                pl.when(pl.col("solar_generation_hrs_day").cast(pl.Utf8).str.strip_chars() == "")
-                                .then(None)
-                                .otherwise(pl.col("solar_generation_hrs_day"))
-                                .cast(pl.Float64)
-                                .mean()
-                            ).item() or 0
+                        df.select(
+                            pl.when(
+                                pl.col("solar_generation_hrs_day")
+                                .cast(pl.Utf8)
+                                .str.strip_chars()
+                                == ""
+                            )
+                            .then(None)
+                            .otherwise(pl.col("solar_generation_hrs_day"))
+                            .cast(pl.Float64)
+                            .mean()
+                        ).item()
+                        or 0
                     )
-
 
                     solar_window_map[sap_id] = float(solar_window_hours)
                     generation_hours_map[sap_id] = float(generation_hours)
                     solar_window_map_mean[sap_id] = float(solar_window_hours_mean)
                     generation_hours_map_mean[sap_id] = float(generation_hours_mean)
-
-
 
             # =====================================================
             # STEP 5: FINAL CALCULATIONS
@@ -1733,16 +1811,15 @@ class SolarCapacity:
             for row in cap_rows:
                 sap_id = str(row["sap_id"]).strip()
                 location = row.get("location_name", "")
-                capacity = float(row.get("capacity_kw") or 0)
+                float(row.get("capacity_kw") or 0)
 
                 actual_energy = actual_map.get(sap_id, 0)
                 estimated_energy = estimated_map.get(sap_id, 0)
 
                 solar_window_hours = solar_window_map.get(sap_id, 0)
-                energy_generation_hours = generation_hours_map.get(sap_id, 0)
+                generation_hours_map.get(sap_id, 0)
                 solar_window_hours_mean = solar_window_map_mean.get(sap_id, 0)
                 energy_generation_hours_mean = generation_hours_map_mean.get(sap_id, 0)
-
 
                 power_outage_hours = outage_map.get(sap_id, 0)
 
@@ -1750,15 +1827,15 @@ class SolarCapacity:
 
                 if solar_window_hours > 0:
                     grid_availability_percentage = (
-                            (export_available_hour / solar_window_hours) * 100
-                    )
+                        export_available_hour / solar_window_hours
+                    ) * 100
 
                     loss_of_power_outage = estimated_energy * (
-                            power_outage_hours / solar_window_hours
+                        power_outage_hours / solar_window_hours
                     )
 
                     adjusted_expected = estimated_energy * (
-                            export_available_hour / solar_window_hours
+                        export_available_hour / solar_window_hours
                     )
                 else:
                     grid_availability_percentage = 0
@@ -1767,56 +1844,63 @@ class SolarCapacity:
 
                 loss_of_power_outage_percentage = (
                     (loss_of_power_outage / estimated_energy) * 100
-                    if estimated_energy else 0
+                    if estimated_energy
+                    else 0
                 )
 
                 dust_loss = max(0, adjusted_expected - actual_energy)
 
                 dust_loss_percentage = (
-                    (dust_loss / adjusted_expected) * 100
-                    if adjusted_expected else 0
+                    (dust_loss / adjusted_expected) * 100 if adjusted_expected else 0
                 )
 
                 efficiency = (
                     (actual_energy / adjusted_expected) * 100
-                    if adjusted_expected else 0
+                    if adjusted_expected
+                    else 0
                 )
 
-                insights.append({
-                    "sap_id": sap_id,
-                    "LocationName": location,
-                    "actual_energy": round(actual_energy, 2),
-                    "estimated_energy": round(estimated_energy, 2),
-                    "energy_generation_hours": round(energy_generation_hours_mean, 2),
-                    "solar_window_hours": round(solar_window_hours_mean, 2),
-                    "power_outage": round(power_outage_hours, 2),
-                    "adjusted_expected": round(adjusted_expected, 2),
-                    "loss_of_power_outage": round(loss_of_power_outage, 2),
-                    "loss_of_power_outage_percentage": round(loss_of_power_outage_percentage, 2),
-                    "efficiency_estimated_actual_percentage": round(efficiency, 2),
-                    "loss_dust_soil_percentage": round(dust_loss_percentage, 2),
-                    "total_loss": round(dust_loss_percentage + loss_of_power_outage_percentage, 2),
-                    "grid_availability_percentage": round(grid_availability_percentage, 2)
-                })
+                insights.append(
+                    {
+                        "sap_id": sap_id,
+                        "LocationName": location,
+                        "actual_energy": round(actual_energy, 2),
+                        "estimated_energy": round(estimated_energy, 2),
+                        "energy_generation_hours": round(
+                            energy_generation_hours_mean, 2
+                        ),
+                        "solar_window_hours": round(solar_window_hours_mean, 2),
+                        "power_outage": round(power_outage_hours, 2),
+                        "adjusted_expected": round(adjusted_expected, 2),
+                        "loss_of_power_outage": round(loss_of_power_outage, 2),
+                        "loss_of_power_outage_percentage": round(
+                            loss_of_power_outage_percentage, 2
+                        ),
+                        "efficiency_estimated_actual_percentage": round(efficiency, 2),
+                        "loss_dust_soil_percentage": round(dust_loss_percentage, 2),
+                        "total_loss": round(
+                            dust_loss_percentage + loss_of_power_outage_percentage, 2
+                        ),
+                        "grid_availability_percentage": round(
+                            grid_availability_percentage, 2
+                        ),
+                    }
+                )
 
-            return {
-                "status": "success",
-                "data": insights
-            }
+            return {"status": "success", "data": insights}
 
         except Exception as e:
             traceback.print_exc()
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}
 
     @classmethod
     async def get_overall_insights(cls, data):
         try:
             raw_filters = getattr(data, "filters", None) or {}
 
-            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(raw_filters)
+            num_days, include_today, is_yesterday_only = cls.get_days_from_filter(
+                raw_filters
+            )
 
             if is_yesterday_only:
                 include_today = False
@@ -1870,11 +1954,15 @@ class SolarCapacity:
             """
 
             if raw_filters:
-                outage_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    outage_query, raw_filters, getattr(data, "drill_state", None)
+                outage_query = (
+                    await widget_actions.WidgetActions.apply_filter_drilldown(
+                        outage_query, raw_filters, getattr(data, "drill_state", None)
+                    )
                 )
 
-            outage_res = await urdhva_base.BasePostgresModel.get_aggr_data(outage_query, limit=0)
+            outage_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                outage_query, limit=0
+            )
             total_outage_hours = float(outage_res["data"][0].get("total_outage") or 0)
 
             # ================= SOLAR WINDOW =================
@@ -1891,13 +1979,20 @@ class SolarCapacity:
                                     FROM avg_data;
                              """
             if raw_filters:
-                solar_window_query = await widget_actions.WidgetActions.apply_filter_drilldown(
-                    solar_window_query, raw_filters, getattr(data, "drill_state", None)
+                solar_window_query = (
+                    await widget_actions.WidgetActions.apply_filter_drilldown(
+                        solar_window_query,
+                        raw_filters,
+                        getattr(data, "drill_state", None),
+                    )
                 )
 
-            solar_window_res = await urdhva_base.BasePostgresModel.get_aggr_data(solar_window_query, limit=0)
-            total_solar_window_hours = float(solar_window_res["data"][0].get("avg_window_hrs") or 0)
-
+            solar_window_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                solar_window_query, limit=0
+            )
+            total_solar_window_hours = float(
+                solar_window_res["data"][0].get("avg_window_hrs") or 0
+            )
 
             solar_query = f"""
                 SELECT *
@@ -1910,31 +2005,44 @@ class SolarCapacity:
                     solar_query, raw_filters, getattr(data, "drill_state", None)
                 )
 
-            solar_res = await urdhva_base.BasePostgresModel.get_aggr_data(solar_query, limit=0)
+            solar_res = await urdhva_base.BasePostgresModel.get_aggr_data(
+                solar_query, limit=0
+            )
             df = pl.DataFrame(solar_res.get("data", []))
 
             if df.is_empty():
                 total_generation_hours = 0
             else:
                 total_generation_hours = (
-                        df.select(
-                            pl.when(pl.col("solar_generation_hrs").cast(pl.Utf8).str.strip_chars() == "")
-                            .then(None)
-                            .otherwise(pl.col("solar_generation_hrs"))
-                            .cast(pl.Float64)
-                            .sum()
-                        ).item() or 0
+                    df.select(
+                        pl.when(
+                            pl.col("solar_generation_hrs")
+                            .cast(pl.Utf8)
+                            .str.strip_chars()
+                            == ""
+                        )
+                        .then(None)
+                        .otherwise(pl.col("solar_generation_hrs"))
+                        .cast(pl.Float64)
+                        .sum()
+                    ).item()
+                    or 0
                 )
-
 
             # ================= FINAL CALCULATIONS =================
 
             export_available = max(0, total_solar_window_hours - total_outage_hours)
 
             if total_solar_window_hours > 0:
-                grid_availability_percentage = (export_available / total_solar_window_hours) * 100
-                loss_of_power_outage = total_estimated_energy * (total_outage_hours / total_solar_window_hours)
-                adjusted_expected = total_estimated_energy * (export_available / total_solar_window_hours)
+                grid_availability_percentage = (
+                    export_available / total_solar_window_hours
+                ) * 100
+                loss_of_power_outage = total_estimated_energy * (
+                    total_outage_hours / total_solar_window_hours
+                )
+                adjusted_expected = total_estimated_energy * (
+                    export_available / total_solar_window_hours
+                )
             else:
                 grid_availability_percentage = 0
                 loss_of_power_outage = 0
@@ -1942,19 +2050,20 @@ class SolarCapacity:
 
             loss_of_power_outage_percentage = (
                 (loss_of_power_outage / total_estimated_energy) * 100
-                if total_estimated_energy else 0
+                if total_estimated_energy
+                else 0
             )
 
             dust_loss = max(0, adjusted_expected - total_actual_energy)
 
             dust_loss_percentage = (
-                (dust_loss / adjusted_expected) * 100
-                if adjusted_expected else 0
+                (dust_loss / adjusted_expected) * 100 if adjusted_expected else 0
             )
 
             efficiency = (
                 (total_actual_energy / adjusted_expected) * 100
-                if adjusted_expected else 0
+                if adjusted_expected
+                else 0
             )
 
             return {
@@ -1962,26 +2071,25 @@ class SolarCapacity:
                 "data": {
                     "actual_energy": round(total_actual_energy, 2),
                     "estimated_energy": round(total_estimated_energy, 2),
-
                     "energy_generation_hours": round(total_generation_hours, 2),
                     "solar_window_hours": round(total_solar_window_hours, 2),
                     "total_outage_hours": round(total_outage_hours, 2),
-
                     "adjusted_expected": round(adjusted_expected, 2),
                     "loss_of_power_outage": round(loss_of_power_outage, 2),
-                    "loss_of_power_outage_percentage": round(loss_of_power_outage_percentage, 2),
-
+                    "loss_of_power_outage_percentage": round(
+                        loss_of_power_outage_percentage, 2
+                    ),
                     "loss_dust_soil_percentage": round(dust_loss_percentage, 2),
                     "efficiency_estimated_actual_percentage": round(efficiency, 2),
-
-                    "grid_availability_percentage": round(grid_availability_percentage, 2),
-                    "total_loss": round(dust_loss_percentage + loss_of_power_outage_percentage, 2)
-                }
+                    "grid_availability_percentage": round(
+                        grid_availability_percentage, 2
+                    ),
+                    "total_loss": round(
+                        dust_loss_percentage + loss_of_power_outage_percentage, 2
+                    ),
+                },
             }
 
         except Exception as e:
             traceback.print_exc()
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+            return {"status": "error", "message": str(e)}

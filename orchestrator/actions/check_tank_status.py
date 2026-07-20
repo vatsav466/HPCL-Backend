@@ -1,7 +1,7 @@
 import urdhva_base
 import traceback
+
 # import ThingsBoardApi
-import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -10,7 +10,7 @@ class CheckTankStatus:
     async def get_required_variables(self):
         """
         Returns a list of strings representing the required variables for the CheckRoTime action.
-        
+
         Returns:
             list: A list containing a single string, "alert_id".
         """
@@ -41,8 +41,8 @@ class CheckTankStatus:
         try:
             alertid = params.get("alert_id")
             print("CHECK TANK STATUS ALERTID:%s" % alertid)
-            deviceid = params.get('location_device_id')
-            sapId = params.get('sap_id')
+            params.get("location_device_id")
+            params.get("sap_id")
             # tb = ThingsBoardApi.TB('tas', sapId)
             # tankhstatus, pumpStatus = tb.checkTankHLevel(deviceid)
         except:

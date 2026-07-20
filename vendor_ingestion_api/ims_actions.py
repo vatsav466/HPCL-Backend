@@ -2,15 +2,14 @@ import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
-import json
-import requests
 
-router = fastapi.APIRouter(prefix='/ims')
+router = fastapi.APIRouter(prefix="/ims")
 
 logger = urdhva_base.logger.Logger.getInstance("ims_data_ingestion")
 
+
 # Action ingest_data
-@router.post('/ingest_data', tags=['IMS'])
+@router.post("/ingest_data", tags=["IMS"])
 async def ims_ingest_data(data: Ims_Ingest_DataParams):
     """
     API endpoint to ingest IMS data.
@@ -24,18 +23,20 @@ async def ims_ingest_data(data: Ims_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
-    logger.info(f"Received IMS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
+    logger.info(
+        f"Received IMS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}"
+    )
 
     # try:
     #     header = {"Content-Type": "application/json", "Accept": "application/json"}
 
     #     tagmap = dict()
     #     alertid = ""
-        
+
     #     for _data in data.data:
     #         if isinstance(_data, dict):
     #             _data = _data.__dict__
-        
+
     #         ims_interlock = {"businessKey": alertid,
     #                 "variables": {"vendor_id": {"value": data.vendor_id, "type": "String"},
     #                                 "location_id": {"value": data.location_id, "type": "String"},
@@ -52,8 +53,7 @@ async def ims_ingest_data(data: Ims_Ingest_DataParams):
     #     return {
     #         "status": True, "message": "Justification Submitted", "data": []
     #     }
-        
+
     # except Exception as e:
     #     logger.error(e)
     #     return {"status": False, "message": str(e), "data": []}
-

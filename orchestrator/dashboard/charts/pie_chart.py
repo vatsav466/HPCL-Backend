@@ -15,12 +15,12 @@ class PieChart:
         try:
             # table_name, table_schema = metrics_data["table"], metrics_data["schema"]
             table_name, table_schema = metrics_data.table, metrics_data.schema
-            viztype = 'pie'
+            viztype = "pie"
             resp = dict()
-            resp['viztype'] = viztype
+            resp["viztype"] = viztype
             column_labels = dict()
-            if metrics_data.type == 'Query':
-                resp['query'] = metrics_data.user_query
+            if metrics_data.type == "Query":
+                resp["query"] = metrics_data.user_query
             else:
                 queries = metrics_data.params.queries
                 # As there is only one queries, so taken the first element - to avoid looping
@@ -33,7 +33,9 @@ class PieChart:
 
                 # taking groupby columns and storing in list
 
-                grp_by_col = []  # groupby column details in dictionary {'name':'','label':''}
+                grp_by_col = (
+                    []
+                )  # groupby column details in dictionary {'name':'','label':''}
 
                 if metrics_data.params.form_data.groupby:
                     groupbyCol = metrics_data.params.form_data.groupby
@@ -51,27 +53,35 @@ class PieChart:
                             met.label = met.column.column_name
                         column_labels[met.column.column_name] = met.label
 
-                query_mode = 'aggregate'
+                query_mode = "aggregate"
                 if metrics_data.params.form_data.query_mode:
                     query_mode = metrics_data.params.form_data.query_mode
 
                 # taking orderby columns
-                orderbyColumn = {'data': [], "sortbydesc": False}
+                orderbyColumn = {"data": [], "sortbydesc": False}
                 if orderby:
-                    orderbyColumn['data'] = orderby
+                    orderbyColumn["data"] = orderby
                     if order_descending:
-                        orderbyColumn['sortbydesc'] = True
+                        orderbyColumn["sortbydesc"] = True
 
                 # getting the query
-                resp['query'] = await charts_functions.getQuery(
-                    viztype, table_name, table_schema, metrics, filters, grp_by_col, query_mode, orderbyColumn, rowlimit=row_limit
+                resp["query"] = await charts_functions.getQuery(
+                    viztype,
+                    table_name,
+                    table_schema,
+                    metrics,
+                    filters,
+                    grp_by_col,
+                    query_mode,
+                    orderbyColumn,
+                    rowlimit=row_limit,
                 )
 
             # keeping default status and data
-            resp['status'] = True
-            resp['data'] = []
+            resp["status"] = True
+            resp["data"] = []
 
-            query_ = resp['query']
+            query_ = resp["query"]
             print("query-> ", query_)
             print("column_labels: ", column_labels)
 
@@ -86,12 +96,16 @@ class PieChart:
             column_config = metrics_data.params.form_data.column_config
 
             # Number formatting
-            column_number_formatting = await charts_functions.list_column_configs(column_labels, column_config)
+            column_number_formatting = await charts_functions.list_column_configs(
+                column_labels, column_config
+            )
 
             # Symbol formatting
-            symbol_formatting = await charts_functions.list_symbol_formats(column_labels, column_config)
+            symbol_formatting = await charts_functions.list_symbol_formats(
+                column_labels, column_config
+            )
 
-            print("column_number_formatting: ",column_number_formatting)
+            print("column_number_formatting: ", column_number_formatting)
             print("symbol_formatting: ", symbol_formatting)
             # Variable to store formatted data
             final_list = []
@@ -102,20 +116,23 @@ class PieChart:
 
                 if column_number_formatting:
                     for column in column_number_formatting:
-                        row_dict[column['name']] = await charts_functions.number_formatting(
-                            row_dict[column['name']],
-                            column['type']
+                        row_dict[column["name"]] = (
+                            await charts_functions.number_formatting(
+                                row_dict[column["name"]], column["type"]
+                            )
                         )
                 if symbol_formatting:
                     for sym in symbol_formatting:
-                        row_dict[sym['name']] = await charts_functions.add_symbol_format(
-                            row_dict[sym['name']],
-                            sym['type'].symbol_position,
-                            sym['type'].symbol
+                        row_dict[sym["name"]] = (
+                            await charts_functions.add_symbol_format(
+                                row_dict[sym["name"]],
+                                sym["type"].symbol_position,
+                                sym["type"].symbol,
+                            )
                         )
                 final_list.append(row_dict)
 
-            resp['data'] = final_list
+            resp["data"] = final_list
             return resp
         except Exception as e:
             return {"status": False, "message": str(e), "data": []}

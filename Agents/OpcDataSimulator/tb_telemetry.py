@@ -10,6 +10,7 @@ SITE_ID = "1999"
 BASE_URL = "http://10.90.38.165:8080"
 last_known_values = {}
 
+
 def load_site_data(siteid):
     filename = f"/opt/ceg/algo/Agents/OpcDataSimulator/{siteid}.json"
     if not os.path.exists(filename):
@@ -22,6 +23,7 @@ def load_site_data(siteid):
         print(f"Error reading site data file {filename}: {str(e)}")
         return None
 
+
 def load_tag_values():
     if not os.path.exists(FILE_TO_WATCH):
         print(f"Tag values file not found: {FILE_TO_WATCH}")
@@ -33,18 +35,24 @@ def load_tag_values():
         print(f"Error reading tag values file {FILE_TO_WATCH}: {str(e)}")
         return {}
 
+
 def post_telemetry(device_key, sensor_type, value):
     headers = {"Content-Type": "application/json"}
-    payload = {sensor_type: value} #write data to json or file
+    payload = {sensor_type: value}  # write data to json or file
     telemetry_url = f"{BASE_URL}/api/v1/{device_key}/telemetry"
     try:
-        response = requests.post(telemetry_url, json=payload, headers=headers, verify=False)
+        response = requests.post(
+            telemetry_url, json=payload, headers=headers, verify=False
+        )
         if response.status_code == 200:
             print(f"Successfully posted telemetry for deviceKey: {device_key}")
         else:
-            print(f"Failed to post telemetry for deviceKey: {device_key}. Status code: {response.status_code}")
+            print(
+                f"Failed to post telemetry for deviceKey: {device_key}. Status code: {response.status_code}"
+            )
     except Exception as e:
         print(f"Error posting telemetry for deviceKey: {device_key}. Error: {str(e)}")
+
 
 def send_telemetry_for_all(tag_values):
     site_data = load_site_data(SITE_ID)
@@ -52,19 +60,20 @@ def send_telemetry_for_all(tag_values):
         print(f"No data found for siteid: {SITE_ID}")
         return
 
-    for component in site_data['data']:
-        #dict --> deviceKey , value
-        device_key = component['device_key']
+    for component in site_data["data"]:
+        # dict --> deviceKey , value
+        device_key = component["device_key"]
         print(f"Processing deviceKey: {device_key}")
-        for sensor in component['sensors']:
-            tag_path = sensor['sensor_tag']
+        for sensor in component["sensors"]:
+            tag_path = sensor["sensor_tag"]
             print(f"Processing TagPath: {tag_path}")
 
             if tag_path in tag_values:
                 value = tag_values[tag_path]
-                post_telemetry(device_key, sensor['sensor_name'], value)
+                post_telemetry(device_key, sensor["sensor_name"], value)
             else:
                 print(f"No value found for TagPath: {tag_path}")
+
 
 class TagValuesChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -78,6 +87,7 @@ class TagValuesChangeHandler(FileSystemEventHandler):
                 last_known_values = current_values
             else:
                 print("No changes in data.")
+
 
 if __name__ == "__main__":
     last_known_values = load_tag_values()

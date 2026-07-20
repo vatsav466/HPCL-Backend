@@ -1,7 +1,6 @@
 queries = {
-
-# QUERY TO TANK DETAILS 
-"tank_details" : """
+    # QUERY TO TANK DETAILS
+    "tank_details": """
     SELECT 
         live_data.sap_id,
         live_data.location_name,
@@ -39,9 +38,8 @@ queries = {
             substring(live_data.tank_name FROM '\d+')::int = substring(tank_details.tank_no FROM '\d+')::int
         )
 """,
-
-# QUERY TO GET PRODUCT DISPATCH
-"dispatch" : """
+    # QUERY TO GET PRODUCT DISPATCH
+    "dispatch": """
     WITH todays_readings AS (
         SELECT
             hltd.sap_id,
@@ -110,9 +108,8 @@ queries = {
     FROM t_dispatch
     GROUP BY sap_id, zone, product  
 """,
-
-#QUERY TO GET PRODUCT RECEIPT
-"receipt" : """
+    # QUERY TO GET PRODUCT RECEIPT
+    "receipt": """
     WITH todays_readings AS (
         SELECT
             hltd.sap_id,
@@ -181,18 +178,16 @@ queries = {
     FROM t_receipt
     GROUP BY sap_id, zone, product  
 """,
-
-#QUERY TO GET TOTAL BCU DISPATCH
-"bcu_total_dispatch" : """
+    # QUERY TO GET TOTAL BCU DISPATCH
+    "bcu_total_dispatch": """
     SELECT hltd.sap_id, lm.zone, hltd.stock as product, ROUND(SUM(hltd.bcu_net_totalizer)::numeric, 2) as sum
     FROM public.host_day_end_details hltd LEFT JOIN location_master lm
 	ON hltd.sap_id = lm.sap_id
     WHERE {condition}
     GROUP BY hltd.sap_id, lm.zone, hltd.stock;
 """,
-
-#QUERY TO GET PRODUCT WISE DISPATCH AVERAGE
-"dispatch_average_prodwise" : """
+    # QUERY TO GET PRODUCT WISE DISPATCH AVERAGE
+    "dispatch_average_prodwise": """
     WITH todays_readings AS (
     SELECT
         hltd.sap_id,
@@ -278,9 +273,8 @@ queries = {
     WHERE NOT (daily_totals IS NULL)
     GROUP BY product 
 """,
-
-# QUERY TO GET AVERAGE DISPATCH
-"dispatch_average" : """
+    # QUERY TO GET AVERAGE DISPATCH
+    "dispatch_average": """
     WITH todays_readings AS (
             SELECT
                 hltd.sap_id,
@@ -352,9 +346,8 @@ queries = {
             ROUND(AVG(day_total)::numeric, 2) AS seven_day_avg  -- ← average of 7 daily totals
         FROM daily_totals 
 """,
-
-#QUERY TO GET TANK ULLAGE
-"tank_ullage" : """
+    # QUERY TO GET TANK ULLAGE
+    "tank_ullage": """
     with ullage_data as (
         select
             tank_details.gross_capacity_kl as capacity,
@@ -379,9 +372,8 @@ queries = {
     select "product", SUM(capacity) as capacity, SUM("ullage") as ullage, SUM("dead_stock") as dead_stock
     FROM ullage_data GROUP BY "product"
 """,
-
-#QUERY TO GET DAYWISE TRENDS'
-"daywise_trends" : """
+    # QUERY TO GET DAYWISE TRENDS'
+    "daywise_trends": """
     WITH todays_readings AS (
         SELECT
             hltd.sap_id,
@@ -465,9 +457,8 @@ queries = {
         dis.sap_id = rec.sap_id AND dis.tank_name = rec.tank_name AND dis.product = rec.product AND dis.date_time = rec.date_time
     GROUP BY dis.date_time, dis.product
 """,
-
-#QUERY TO GET DAYWISE ULLAGE 
-"ullage_daywise_trends" : """
+    # QUERY TO GET DAYWISE ULLAGE
+    "ullage_daywise_trends": """
     with ullage_data as (
         select 
 	        live_data.date_time::DATE,
@@ -493,9 +484,8 @@ queries = {
         "product", date_time, SUM(available_stock) AS available_stock, SUM(dead_stock_kl) as dead_stock, SUM(capacity) AS capacity, SUM("ullage") as ullage
     FROM ullage_data GROUP BY date_time, "product"
 """,
-
-#QUERY TO GET STOCK SUSTAINABILITY TANK WISE
-"tankwise_stock_sustainability" : """
+    # QUERY TO GET STOCK SUSTAINABILITY TANK WISE
+    "tankwise_stock_sustainability": """
 
     with dispatch as (
 
@@ -783,9 +773,8 @@ FROM
         AND avs.tank_name = ad.tank_name
 
 """,
-
-#QUERY TO GET TANK STATUS
-"tank_status" : """
+    # QUERY TO GET TANK STATUS
+    "tank_status": """
     -- TANK USAGE
 with dispatch_data as (
 WITH todays_readings AS (
@@ -976,75 +965,70 @@ FROM tank_status
 GROUP BY sap_id, product
 ORDER BY sap_id, product;
 
-"""
-
+""",
 }
 
 
 product_mapping = {
-    "1856" : {
-        "host_day_end_details" : {
+    "1856": {
+        "host_day_end_details": {
             "ATF": "ATF",
             "BIO DIESEL": "BIODIESEL",
             "BS VI HSD": "HSD",
             "BS VI MS": "MS",
-            "ETHANOL": "ETHANOL"
+            "ETHANOL": "ETHANOL",
         }
     },
-    "1845" : {
-        "host_day_end_details" : {
+    "1845": {
+        "host_day_end_details": {
             "ETHANOL": "ETHANOL",
             "HEXANE": "HEXANE",
             "BS VI HSD": "HSD",
             "BS VI MS": "MS",
             "MTO": "MTO",
             "SKO": "SKO",
-            "SOLVENT": "SOLVENT"
+            "SOLVENT": "SOLVENT",
         }
     },
     "1146": {
-        "host_day_end_details" : {
+        "host_day_end_details": {
             "BS VI HSD": "HSD",
             "BIO DIESEL": "Biodiesel",
             "BS VI MS": "MS",
-            "ETHANOL": "Ethanol"
+            "ETHANOL": "Ethanol",
         }
     },
-    "1216": {
-        "host_day_end_details" : {
-            "BS VI HSD": "HSD"
-        }
-    }
+    "1216": {"host_day_end_details": {"BS VI HSD": "HSD"}},
 }
 
 product_name_mapping = {
-    'ATF': 'ATF',
-    'MS' : 'MS',
+    "ATF": "ATF",
+    "MS": "MS",
     "BS VI MS": "MS",
     "BS VI HSD": "HSD",
-    'HSD': 'HSD',
-    'ETHANOL': 'ETHANOL',
-    'Ethanol': 'ETHANOL',
-    'ETH': 'ETHANOL',
-    'BIODIESEL': 'BIODIESEL',
-    'Biodiesel' : 'BIODIESEL',
-    'BIO DIESEL': 'BIODIESEL',
-    'BIO-HSD' : 'BIODIESEL',
-    'SOLVENT': 'SOLVENT',
-    'HEXANE': 'HEXANE',
-    'SKO': 'SKO',
-    'MTO': 'MTO'
+    "HSD": "HSD",
+    "ETHANOL": "ETHANOL",
+    "Ethanol": "ETHANOL",
+    "ETH": "ETHANOL",
+    "BIODIESEL": "BIODIESEL",
+    "Biodiesel": "BIODIESEL",
+    "BIO DIESEL": "BIODIESEL",
+    "BIO-HSD": "BIODIESEL",
+    "SOLVENT": "SOLVENT",
+    "HEXANE": "HEXANE",
+    "SKO": "SKO",
+    "MTO": "MTO",
 }
 
 ACTION_MAP = {
-    "tank_details":  "tank_details",
+    "tank_details": "tank_details",
     "tank_dispatch": "dispatch",
-    "tank_receipt":  "receipt",
-    "bcu_dispacth":  "bcu_total_dispatch",
-    "total_dispatch":"dispatch",
+    "tank_receipt": "receipt",
+    "bcu_dispacth": "bcu_total_dispatch",
+    "total_dispatch": "dispatch",
     "total_receipt": "receipt",
     "total_product": "tank_details",
-    "tank_status": "tank_status"
+    "tank_status": "tank_status",
 }
 
 SUM_ACTIONS = {"total_dispatch": "sum", "total_receipt": "sum"}

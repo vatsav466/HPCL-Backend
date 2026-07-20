@@ -18,17 +18,24 @@ def callback(ch, method, properties, body):
 def main():
     ins = OPCDataSimulator("data.json", "config.json")
     config_data = ins.load_config()
-    location_id = config_data['location_id']
-    rabbitmq_host = config_data['conn_host']
-    rabbitmq_port = config_data['conn_port']
-    queue_name = config_data['conn_channel']
-    rabbitmq_exchange = config_data.get('conn_exchange', '')
-    rabbitmq_vhost = config_data['conn_vhost']
+    config_data["location_id"]
+    rabbitmq_host = config_data["conn_host"]
+    rabbitmq_port = config_data["conn_port"]
+    queue_name = config_data["conn_channel"]
+    config_data.get("conn_exchange", "")
+    rabbitmq_vhost = config_data["conn_vhost"]
 
-    credentials = pika.PlainCredentials(config_data['conn_user'], config_data['conn_secret'])
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, port=rabbitmq_port,
-                                                                   virtual_host=rabbitmq_vhost,
-                                                                   credentials=credentials))
+    credentials = pika.PlainCredentials(
+        config_data["conn_user"], config_data["conn_secret"]
+    )
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbitmq_host,
+            port=rabbitmq_port,
+            virtual_host=rabbitmq_vhost,
+            credentials=credentials,
+        )
+    )
 
     channel = connection.channel()
     channel.queue_declare(queue=queue_name, durable=True)

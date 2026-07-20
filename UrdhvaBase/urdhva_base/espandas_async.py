@@ -7,7 +7,7 @@ from elasticsearch.helpers import async_streaming_bulk, scan
 
 
 class EsPandas(object):
-    '''Read, write and update large scale pandas DataFrame with Elasticsearch'''
+    """Read, write and update large scale pandas DataFrame with Elasticsearch"""
 
     def __init__(self, es_client):
         self.es_version = None
@@ -18,20 +18,34 @@ class EsPandas(object):
         self.ic = self.es.indices
 
     async def initialize(self):
-        self.dtype_mapping = {'text': 'category', 'date': 'datetime64[ns]'}
-        self.id_col = '_id'
+        self.dtype_mapping = {"text": "category", "date": "datetime64[ns]"}
+        self.id_col = "_id"
         # es_info = await self.es.info()
         # self.es_version_str = es_info['version']['number']
         # hardcoded es_info version to 7.10
         self.es_version_str = "7.10"
         self.es_version = [int(x) for x in re.findall("[0-9]+", self.es_version_str)]
         if self.es_version[0] < 6:
-            warnings.warn('Supporting of ElasticSearch 5.x will by deprecated in future version, '
-                          'current es version: %s' % self.es_version_str, category=FutureWarning)
+            warnings.warn(
+                "Supporting of ElasticSearch 5.x will by deprecated in future version, "
+                "current es version: %s" % self.es_version_str,
+                category=FutureWarning,
+            )
 
-    async def to_es(self, df, index, doc_type=None, use_index=False, show_progress=True,
-                    success_threshold=0.9, _op_type='index', use_pandas_json=False, date_format='iso', **kwargs):
-        '''
+    async def to_es(
+        self,
+        df,
+        index,
+        doc_type=None,
+        use_index=False,
+        show_progress=True,
+        success_threshold=0.9,
+        _op_type="index",
+        use_pandas_json=False,
+        date_format="iso",
+        **kwargs
+    ):
+        """
         :param df: pandas DataFrame data
         :param index: full name of es indices
         :param doc_type: full name of es template
@@ -41,34 +55,43 @@ class EsPandas(object):
         :param use_pandas_json: default False, if True, use pandas.io.json serialize
         :param date_format: default iso, only works when use_pandas_json=True
         :return: num of the number of data written into es successfully
-        '''
+        """
         if self.es_version[0] > 6:
             doc_type = None
         elif self.es_version[0] > 5:
-            doc_type = '_doc'
+            doc_type = "_doc"
         elif not doc_type:
-            doc_type = index + '_type'
-        gen = async_streaming_bulk(self.es,
-                                           (self.rec_to_actions(df, index, doc_type=doc_type,
-                                                                show_progress=show_progress,
-                                                                use_index=use_index, _op_type=_op_type,
-                                                                use_pandas_json=use_pandas_json,
-                                                                date_format=date_format)),
-                                           **kwargs)
+            doc_type = index + "_type"
+        gen = async_streaming_bulk(
+            self.es,
+            (
+                self.rec_to_actions(
+                    df,
+                    index,
+                    doc_type=doc_type,
+                    show_progress=show_progress,
+                    use_index=use_index,
+                    _op_type=_op_type,
+                    use_pandas_json=use_pandas_json,
+                    date_format=date_format,
+                )
+            ),
+            **kwargs
+        )
 
         success_num = np.sum([res[0] async for res in gen])
         rec_num = len(df)
         fail_num = rec_num - success_num
 
         if (success_num / rec_num) < success_threshold:
-            raise Exception('%d records write failed' % fail_num)
+            raise Exception("%d records write failed" % fail_num)
 
         return success_num
 
     def get_source(self, anl, show_progress=False, count=0):
         if show_progress:
             for mes in anl:
-                yield {'_id': mes['_id'], **mes['_source']}
+                yield {"_id": mes["_id"], **mes["_source"]}
             # with progressbar.ProgressBar(max_value=count) as bar:
             #     for i in range(count):
             #         mes = next(anl)
@@ -76,7 +99,7 @@ class EsPandas(object):
             #         bar.update(i)
         else:
             for mes in anl:
-                yield {'_id': mes['_id'], **mes['_source']}
+                yield {"_id": mes["_id"], **mes["_source"]}
 
     def infer_dtype(self, index, heads):
         if self.es_version[0] > 6:
@@ -84,15 +107,35 @@ class EsPandas(object):
         else:
             # Fix es client unrecongnized parameter 'include_type_name' bug for es 6.x
             mapping = self.ic.get_mapping(index=index)
-            key = [k for k in mapping[index]['mappings'].keys() if k != '_default_']
-            if len(key) < 1: raise Exception('No templates exits: %s' % index)
-            mapping[index]['mappings']['properties'] = mapping[index]['mappings'][key[0]]['properties']
-        dtype = {k: v['type'] for k, v in mapping[index]['mappings']['properties'].items() if k in heads}
-        dtype = {k: self.dtype_mapping[v] for k, v in dtype.items() if v in self.dtype_mapping}
+            key = [k for k in mapping[index]["mappings"].keys() if k != "_default_"]
+            if len(key) < 1:
+                raise Exception("No templates exits: %s" % index)
+            mapping[index]["mappings"]["properties"] = mapping[index]["mappings"][
+                key[0]
+            ]["properties"]
+        dtype = {
+            k: v["type"]
+            for k, v in mapping[index]["mappings"]["properties"].items()
+            if k in heads
+        }
+        dtype = {
+            k: self.dtype_mapping[v]
+            for k, v in dtype.items()
+            if v in self.dtype_mapping
+        }
         return dtype
 
-    def to_pandas(self, index, query_rule=None, heads=[], dtype={}, infer_dtype=False, show_progress=True,
-                  query_sql=None, **kwargs):
+    def to_pandas(
+        self,
+        index,
+        query_rule=None,
+        heads=[],
+        dtype={},
+        infer_dtype=False,
+        show_progress=True,
+        query_sql=None,
+        **kwargs
+    ):
         """
         scroll datas from es, and convert to dataframe, the index of dataframe is from es index,
         about 2 million records/min
@@ -109,23 +152,27 @@ class EsPandas(object):
         """
         if query_sql:
             if isinstance(query_sql, str):
-                dsl_from_sql = self.es.sql.translate({'query': query_sql})
+                dsl_from_sql = self.es.sql.translate({"query": query_sql})
             elif isinstance(query_sql, dict):
                 dsl_from_sql = self.es.sql.translate(query_sql)
             else:
-                raise Exception('Parameter data type error, query_sql should be string or dict type')
+                raise Exception(
+                    "Parameter data type error, query_sql should be string or dict type"
+                )
             if query_rule:
-                raise Exception('Cannot use query_rule and query_sql at the same time')
+                raise Exception("Cannot use query_rule and query_sql at the same time")
             else:
-                query_rule = {'query': dsl_from_sql['query']}
+                query_rule = {"query": dsl_from_sql["query"]}
         elif not query_rule:
-            query_rule = {'query': {'match_all': {}}}
-        count = self.es.count(index=index, body=query_rule)['count']
+            query_rule = {"query": {"match_all": {}}}
+        count = self.es.count(index=index, body=query_rule)["count"]
         if count < 1:
-            raise Exception('Empty for %s' % index)
-        query_rule['_source'] = heads
+            raise Exception("Empty for %s" % index)
+        query_rule["_source"] = heads
         anl = scan(self.es, query=query_rule, index=index, **kwargs)
-        df = pd.DataFrame(self.get_source(anl, show_progress=show_progress, count=count)).set_index('_id')
+        df = pd.DataFrame(
+            self.get_source(anl, show_progress=show_progress, count=count)
+        ).set_index("_id")
         if infer_dtype:
             dtype = self.infer_dtype(index, df.columns.values)
         if len(dtype):
@@ -142,45 +189,69 @@ class EsPandas(object):
     def gen_action(**kwargs):
         return {k: v for k, v in kwargs.items() if v is not None}
 
-    def rec_to_actions(self, df, index, doc_type=None, use_index=False, _op_type='index', use_pandas_json=False,
-                       date_format='iso', show_progress=True):
+    def rec_to_actions(
+        self,
+        df,
+        index,
+        doc_type=None,
+        use_index=False,
+        _op_type="index",
+        use_pandas_json=False,
+        date_format="iso",
+        show_progress=True,
+    ):
         if show_progress:
             # bar = progressbar.ProgressBar(max_value=df.shape[0])
             bar = BarNothing()
         else:
             bar = BarNothing()
         columns = df.columns.tolist()
-        iso_dates = date_format == 'iso'
-        if use_index and (_op_type in ['create', 'index']):
+        iso_dates = date_format == "iso"
+        if use_index and (_op_type in ["create", "index"]):
             for i, row in enumerate(df.itertuples(name=None, index=use_index)):
                 bar.update(i)
                 _id = row[0]
                 record = self.serialize(row[1:], columns, use_pandas_json, iso_dates)
-                action = self.gen_action(_op_type=_op_type, _index=index, _type=doc_type, _id=_id, _source=record)
+                action = self.gen_action(
+                    _op_type=_op_type,
+                    _index=index,
+                    _type=doc_type,
+                    _id=_id,
+                    _source=record,
+                )
                 yield action
-        elif (not use_index) and (_op_type == 'index'):
+        elif (not use_index) and (_op_type == "index"):
             for i, row in enumerate(df.itertuples(name=None, index=use_index)):
                 bar.update(i)
                 record = self.serialize(row, columns, use_pandas_json, iso_dates)
-                action = self.gen_action(_op_type=_op_type, _index=index, _type=doc_type, _source=record)
+                action = self.gen_action(
+                    _op_type=_op_type, _index=index, _type=doc_type, _source=record
+                )
                 yield action
-        elif _op_type == 'update':
+        elif _op_type == "update":
             for i, row in enumerate(df.itertuples(name=None, index=True)):
                 bar.update(i)
                 _id = row[0]
                 record = self.serialize(row[1:], columns, False, iso_dates)
-                action = self.gen_action(_op_type=_op_type, _index=index, _type=doc_type, _id=_id, doc=record)
+                action = self.gen_action(
+                    _op_type=_op_type, _index=index, _type=doc_type, _id=_id, doc=record
+                )
                 yield action
-        elif _op_type == 'delete':
+        elif _op_type == "delete":
             for i, _id in enumerate(df.index.values.tolist()):
                 bar.update(i)
-                action = self.gen_action(_op_type=_op_type, _index=index, _type=doc_type, _id=_id)
+                action = self.gen_action(
+                    _op_type=_op_type, _index=index, _type=doc_type, _id=_id
+                )
                 yield action
         else:
-            raise Exception('[%s] action with %s using index not supported' % (_op_type, '' if use_index else 'not'))
+            raise Exception(
+                "[%s] action with %s using index not supported"
+                % (_op_type, "" if use_index else "not")
+            )
 
     def init_es_tmpl(self, df, doc_type, delete=False, index_patterns=None, **kwargs):
-        '''
+        """
 
         :param df: pd.DataFrame
         :param doc_type: str, name of doc_type
@@ -189,12 +260,12 @@ class EsPandas(object):
         :param kwargs: kwargs for template settings,
                example: number_of_shards, number_of_replicas, refresh_interval
         :return:
-        '''
+        """
         tmpl_exits = self.es.indices.exists_template(name=doc_type)
         if tmpl_exits and (not delete):
             return
         if index_patterns is None:
-            index_patterns = ['%s*' % doc_type]
+            index_patterns = ["%s*" % doc_type]
         columns_body = {}
 
         if isinstance(df, pd.DataFrame):
@@ -202,33 +273,32 @@ class EsPandas(object):
         elif isinstance(df, dict):
             iter_dict = df
         else:
-            raise Exception('init tmpl type is error, only accept DataFrame or dict of head with type mapping')
+            raise Exception(
+                "init tmpl type is error, only accept DataFrame or dict of head with type mapping"
+            )
         for key, data_type in iter_dict.items():
-            type_str = getattr(data_type, 'name', data_type).lower()
-            if 'int' in type_str:
-                columns_body[key] = {'type': 'long'}
-            elif 'datetime' in type_str:
-                columns_body[key] = {'type': 'date'}
-            elif 'float' in type_str:
-                columns_body[key] = {'type': 'float'}
+            type_str = getattr(data_type, "name", data_type).lower()
+            if "int" in type_str:
+                columns_body[key] = {"type": "long"}
+            elif "datetime" in type_str:
+                columns_body[key] = {"type": "date"}
+            elif "float" in type_str:
+                columns_body[key] = {"type": "float"}
             else:
-                columns_body[key] = {'type': 'keyword', 'ignore_above': '256'}
+                columns_body[key] = {"type": "keyword", "ignore_above": "256"}
 
-        tmpl = {
-            'index_patterns': index_patterns,
-            'settings': {**kwargs}
-        }
+        tmpl = {"index_patterns": index_patterns, "settings": {**kwargs}}
         if self.es_version[0] > 6:
-            tmpl['mappings'] = {'properties': columns_body}
+            tmpl["mappings"] = {"properties": columns_body}
         elif self.es_version[0] > 5:
-            tmpl['mappings'] = {'_doc': {'properties': columns_body}}
+            tmpl["mappings"] = {"_doc": {"properties": columns_body}}
         else:
-            tmpl['mappings'] = {'_default_': {'properties': columns_body}}
+            tmpl["mappings"] = {"_default_": {"properties": columns_body}}
         if tmpl_exits and delete:
             self.es.indices.delete_template(name=doc_type)
-            print('Delete and put template: %s' % doc_type)
+            print("Delete and put template: %s" % doc_type)
         self.es.indices.put_template(name=doc_type, body=tmpl)
-        print('New template %s added' % doc_type)
+        print("New template %s added" % doc_type)
 
 
 class BarNothing(object):

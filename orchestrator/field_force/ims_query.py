@@ -1,5 +1,5 @@
 ims_queries = {
-"location_wise_query" : f"""
+    "location_wise_query": f"""
                     WITH swipe_diff AS (
                     SELECT
                         "LOCN_CODE",
@@ -40,7 +40,7 @@ ims_queries = {
                     "LOCN_CODE",
                     month;  
             """,
-"location_wise_summary_query" : f"""
+    "location_wise_summary_query": f"""
             WITH monthly_data AS (
             WITH swipe_diff AS (
                 SELECT
@@ -115,7 +115,7 @@ ims_queries = {
         ORDER BY
             "LOCN_CODE";
             """,
-"monthly_query" : f"""
+    "monthly_query": f"""
                         WITH swipe_diff AS (
                     SELECT
                         "CARD_DATE",
@@ -145,7 +145,7 @@ ims_queries = {
                 ORDER BY
                     month;
             """,
-"monthly_summary_query" : f"""
+    "monthly_summary_query": f"""
                 WITH monthly_data AS (
                 WITH swipe_diff AS (
                 SELECT
@@ -194,7 +194,7 @@ ims_queries = {
 
             FROM ranked;
             """,
-"zone_wise_query" : f"""
+    "zone_wise_query": f"""
 
                 WITH swipe_diff AS (
                 SELECT
@@ -234,7 +234,7 @@ ims_queries = {
                 zone,
                 month;
             """,
-"zone_wise_summary_query" : f"""
+    "zone_wise_summary_query": f"""
 
                 WITH monthly_data AS (
             WITH swipe_diff AS (
@@ -293,7 +293,7 @@ ims_queries = {
         GROUP BY zone
         ORDER BY zone;
             """,
-"daywise_query" : """
+    "daywise_query": """
         WITH R3_DIFF_R1 AS (
             WITH base AS (
                 SELECT 
@@ -336,5 +336,5 @@ ims_queries = {
         FROM R3_DIFF_R1
         GROUP BY "CARD_DATE"
         ORDER BY "CARD_DATE"
-    """
+    """,
 }

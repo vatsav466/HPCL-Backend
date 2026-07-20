@@ -5,6 +5,7 @@ Uses :data:`orchestrator.field_force.utils.TERRITORY_COLUMN_BY_VENDOR` and
 :mod:`orchestrator.field_force.vendor_territory_mapping` for role-based perspective;
 logic lives here so analytics does not depend on field_force helper placement beyond the shared column map.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional

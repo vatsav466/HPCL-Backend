@@ -4,13 +4,13 @@ import socket
 import csv
 import asyncio
 import traceback
-import os
 import psycopg2
 import mysql.connector
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import orchestrator.notification_manager.notification_factory
 import sys
+
 sys.path.append("/opt/ceg/algo")
 import hpcl_ceg_model
 
@@ -39,9 +39,9 @@ def _normalize_mail_recipients(recipients):
         return []
     if isinstance(recipients, str):
         recipients = [recipients]
-    return list(dict.fromkeys(
-        str(r).strip() for r in recipients if r and str(r).strip()
-    ))
+    return list(
+        dict.fromkeys(str(r).strip() for r in recipients if r and str(r).strip())
+    )
 
 
 def _format_sync_elapsed(ts):
@@ -78,7 +78,9 @@ async def fill_not_connected_sync_info(plants):
               ON p.plant_name ILIKE '%' || usc.plant_name || '%'
             GROUP BY p.plant_name
         """
-        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(
+            query=query, limit=0
+        )
         print("last_synced query resp:", result, flush=True)
         sync_map = {
             str(r["plant_name"]).strip().upper(): r.get("last_synced")
@@ -86,10 +88,14 @@ async def fill_not_connected_sync_info(plants):
             if r.get("last_synced")
         }
         for plant in plants:
-            key = (plant.get("plant_name") or plant.get("short_name", "")).strip().upper()
+            key = (
+                (plant.get("plant_name") or plant.get("short_name", "")).strip().upper()
+            )
             ts = sync_map.get(key)
             if ts:
-                plant["last_synced_at"], plant["time_elapsed"] = _format_sync_elapsed(ts)
+                plant["last_synced_at"], plant["time_elapsed"] = _format_sync_elapsed(
+                    ts
+                )
             else:
                 plant["last_synced_at"] = ""
                 plant["time_elapsed"] = ""
@@ -106,7 +112,9 @@ async def load_plant_data():
             FROM lpg_plants_master
             ORDER BY id ASC
         """
-        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(query=query, limit=0)
+        result = await hpcl_ceg_model.LpgPlantsMaster.get_aggr_data(
+            query=query, limit=0
+        )
         rows = result.get("data", []) if result else []
         if not rows:
             print("No rows found in lpg_plants_master")
@@ -115,7 +123,7 @@ async def load_plant_data():
         for row in rows:
             if str(row["password"]).startswith("enc#_"):
                 row["password"] = urdhva_base.types.Secret(row["password"]).get_secret()
-                
+
         df = pd.DataFrame(rows)
         df["erp_id"] = df["sap_id"]
         df["short_name"] = df["plant_name"]
@@ -154,6 +162,7 @@ def test_telnet_connection(host_ip, port, timeout=CONNECTION_TIMEOUT):
     except Exception as e:
         return False, f"Connection error: {e}"
 
+
 def test_db_connection(host_ip, port, db_name, username, password, db_type):
     """To check database connectivity"""
     conn = None
@@ -166,7 +175,7 @@ def test_db_connection(host_ip, port, db_name, username, password, db_type):
                 database=db_name,
                 user=username,
                 password=password,
-                connect_timeout=CONNECTION_TIMEOUT
+                connect_timeout=CONNECTION_TIMEOUT,
             )
         elif db_type == "mysql":
             conn = mysql.connector.connect(
@@ -175,7 +184,7 @@ def test_db_connection(host_ip, port, db_name, username, password, db_type):
                 database=db_name,
                 user=username,
                 password=password,
-                connection_timeout=CONNECTION_TIMEOUT
+                connection_timeout=CONNECTION_TIMEOUT,
             )
         else:
             return False, f"Unsupported DB type: {db_type}"
@@ -192,6 +201,7 @@ def test_db_connection(host_ip, port, db_name, username, password, db_type):
         if conn:
             conn.close()
 
+
 def check_plant_connectivity(plant_df):
     """Check connectivity for all plants and collect failed ones"""
     global not_connected_plants
@@ -200,9 +210,9 @@ def check_plant_connectivity(plant_df):
     print(f"Testing connectivity for {len(plant_df)} plants...")
 
     for index, plant in plant_df.iterrows():
-        host_ip = str(plant['host_ip']).strip()
-        port = str(plant['port']).strip()
-        short_name = str(plant['short_name']).strip()
+        host_ip = str(plant["host_ip"]).strip()
+        port = str(plant["port"]).strip()
+        short_name = str(plant["short_name"]).strip()
 
         print(f"Testing {short_name} ({host_ip}:{port})...")
 
@@ -212,17 +222,12 @@ def check_plant_connectivity(plant_df):
         # If port connected then test DB connectivity
         if is_connected:
             try:
-                db_name = str(plant['db_database']).strip()
-                username = str(plant['db_user']).strip()
-                password = str(plant['db_password']).strip()
-                db_type = str(plant['db_type']).strip()
+                db_name = str(plant["db_database"]).strip()
+                username = str(plant["db_user"]).strip()
+                password = str(plant["db_password"]).strip()
+                db_type = str(plant["db_type"]).strip()
                 db_connected, db_message = test_db_connection(
-                    host_ip,
-                    port,
-                    db_name,
-                    username,
-                    password,
-                    db_type
+                    host_ip, port, db_name, username, password, db_type
                 )
 
                 if db_connected:
@@ -237,21 +242,30 @@ def check_plant_connectivity(plant_df):
                 status_message = f"DB connection error: {e}"
         if not is_connected:
             # Add to not connected list
-            failure_type = ("DB FAILURE" if "DB connection failed" in status_message or "DB connection error" in status_message else "PORT FAILURE")
-            not_connected_plants.append({
-                's_no': len(not_connected_plants) + 1,
-                'erp_id': str(plant['erp_id']).strip(),
-                'plant_name': str(plant['plant_name']).strip(),
-                'short_name': short_name,
-                'zone': str(plant['zone']).strip(),
-                'host_ip': host_ip,
-                'port': port,
-                'status': 'NOT CONNECTED',
-                'error_message': status_message,
-                'mail_recipients': _normalize_mail_recipients(plant.get('mail_recipients')),
-                'last_synced_at': '',
-                'time_elapsed': '',
-            })
+            (
+                "DB FAILURE"
+                if "DB connection failed" in status_message
+                or "DB connection error" in status_message
+                else "PORT FAILURE"
+            )
+            not_connected_plants.append(
+                {
+                    "s_no": len(not_connected_plants) + 1,
+                    "erp_id": str(plant["erp_id"]).strip(),
+                    "plant_name": str(plant["plant_name"]).strip(),
+                    "short_name": short_name,
+                    "zone": str(plant["zone"]).strip(),
+                    "host_ip": host_ip,
+                    "port": port,
+                    "status": "NOT CONNECTED",
+                    "error_message": status_message,
+                    "mail_recipients": _normalize_mail_recipients(
+                        plant.get("mail_recipients")
+                    ),
+                    "last_synced_at": "",
+                    "time_elapsed": "",
+                }
+            )
             print(f"{short_name}: {status_message}")
         else:
             print(f"{short_name}: Connected successfully")
@@ -275,24 +289,34 @@ def create_not_connected_plants_csv():
     csv_path = "/data/not_connected_plants.csv"
 
     try:
-        with open(csv_path, "w", newline='', encoding='utf-8') as csvfile:
+        with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
             fieldnames = [
-                's_no', 'erp_id', 'plant_name', 'short_name', 'zone', 'host_ip', 'port',
-                'last_synced_at', 'time_elapsed', 'status',
+                "s_no",
+                "erp_id",
+                "plant_name",
+                "short_name",
+                "zone",
+                "host_ip",
+                "port",
+                "last_synced_at",
+                "time_elapsed",
+                "status",
             ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
             # Write rows without error_message for CSV
             for plant in not_connected_plants:
-                csv_row = {k: v for k, v in plant.items() if k != 'error_message'}
-                if 'last_synced_at' not in csv_row:
-                    csv_row['last_synced_at'] = plant.get('last_synced_at', '')
-                if 'time_elapsed' not in csv_row:
-                    csv_row['time_elapsed'] = plant.get('time_elapsed', '')
-                writer.writerow({k: csv_row.get(k, '') for k in fieldnames})
+                csv_row = {k: v for k, v in plant.items() if k != "error_message"}
+                if "last_synced_at" not in csv_row:
+                    csv_row["last_synced_at"] = plant.get("last_synced_at", "")
+                if "time_elapsed" not in csv_row:
+                    csv_row["time_elapsed"] = plant.get("time_elapsed", "")
+                writer.writerow({k: csv_row.get(k, "") for k in fieldnames})
 
-        print(f"Created not connected plants CSV with {len(not_connected_plants)} entries: {csv_path}")
+        print(
+            f"Created not connected plants CSV with {len(not_connected_plants)} entries: {csv_path}"
+        )
         return csv_path
 
     except Exception as e:
@@ -307,27 +331,29 @@ async def send_connectivity_mail(csv_path):
         return
 
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
-    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+    formatted_time = now_ist.strftime("%d-%m-%Y %I:%M %p IST")
 
     total_not_connected = len(not_connected_plants)
 
     # Create zone summary for not connected plants
     zone_summary = {}
     for plant in not_connected_plants:
-        zone = plant['zone']
+        zone = plant["zone"]
         if zone in zone_summary:
             zone_summary[zone] += 1
         else:
             zone_summary[zone] = 1
 
     # Create zone summary text
-    zone_summary_text = ", ".join([f"{zone}: {count}" for zone, count in zone_summary.items()])
+    zone_summary_text = ", ".join(
+        [f"{zone}: {count}" for zone, count in zone_summary.items()]
+    )
 
     # Create HTML table for not connected plants
     table_rows = ""
     for plant in not_connected_plants:
-        last_synced = plant.get('last_synced_at', '')
-        time_elapsed = plant.get('time_elapsed', '')
+        last_synced = plant.get("last_synced_at", "")
+        time_elapsed = plant.get("time_elapsed", "")
         table_rows += f"""
         <tr>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{plant['s_no']}</td>
@@ -402,7 +428,9 @@ async def send_connectivity_mail(csv_path):
     for attempt in range(1, 4):
         try:
             print(f"Attempt {attempt} to send email with not connected plants...")
-            ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+            ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+                "email"
+            )
             await ins.publish_message(
                 subject=f"LPG - Not Connected Plants Report - {formatted_time}",
                 recipients=to_recipients,
@@ -411,7 +439,7 @@ async def send_connectivity_mail(csv_path):
                 html_content=True,
                 body=html_body,
                 attachments=[csv_path],
-                force_send=True
+                force_send=True,
             )
             print("Email sent successfully with not connected plants details.")
             break
@@ -424,19 +452,19 @@ async def send_connectivity_mail(csv_path):
 def _resolve_plant_connectivity_error(plant):
     """Pick the best available connectivity error/reason for a plant."""
     return (
-        plant.get('error_message')
-        or plant.get('connectivity_error')
-        or (plant.get('failure') or {}).get('error_message')
-        or 'Connection failed during sync'
+        plant.get("error_message")
+        or plant.get("connectivity_error")
+        or (plant.get("failure") or {}).get("error_message")
+        or "Connection failed during sync"
     )
 
 
 def _build_plant_recipient_email_html(plant, formatted_time):
     """Build simple HTML body for a single plant connectivity alert."""
-    plant_name = plant.get('plant_name') or plant.get('short_name', 'Unknown Plant')
+    plant_name = plant.get("plant_name") or plant.get("short_name", "Unknown Plant")
     error_message = _resolve_plant_connectivity_error(plant)
-    last_synced_at = plant.get('last_synced_at') or 'Not available'
-    time_elapsed = plant.get('time_elapsed') or 'Not available'
+    last_synced_at = plant.get("last_synced_at") or "Not available"
+    time_elapsed = plant.get("time_elapsed") or "Not available"
     return f"""
     <html>
         <body style="font-family: Arial, sans-serif;">
@@ -463,14 +491,16 @@ async def send_plant_recipient_connectivity_mails():
         return
 
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
-    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+    formatted_time = now_ist.strftime("%d-%m-%Y %I:%M %p IST")
 
-    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+        "email"
+    )
     sent_count = 0
     skipped_count = 0
 
     for plant in not_connected_plants:
-        to_recipients = _normalize_mail_recipients(plant.get('mail_recipients'))
+        to_recipients = _normalize_mail_recipients(plant.get("mail_recipients"))
         if not to_recipients:
             print(
                 f"Skipping plant-recipient email for {plant.get('short_name', plant.get('plant_name'))}: "
@@ -480,7 +510,9 @@ async def send_plant_recipient_connectivity_mails():
             continue
 
         html_body = _build_plant_recipient_email_html(plant, formatted_time)
-        plant_label = plant.get('short_name') or plant.get('plant_name', 'Unknown Plant')
+        plant_label = plant.get("short_name") or plant.get(
+            "plant_name", "Unknown Plant"
+        )
 
         for attempt in range(1, 4):
             try:
@@ -501,9 +533,13 @@ async def send_plant_recipient_connectivity_mails():
                 sent_count += 1
                 break
             except Exception as e:
-                print(f"Attempt {attempt} - Failed plant-recipient email for {plant_label}: {e}")
+                print(
+                    f"Attempt {attempt} - Failed plant-recipient email for {plant_label}: {e}"
+                )
                 if attempt == 3:
-                    print(f"All plant-recipient email attempts failed for {plant_label}.")
+                    print(
+                        f"All plant-recipient email attempts failed for {plant_label}."
+                    )
 
     print(
         f"Plant-recipient emails completed: sent={sent_count}, "
@@ -526,7 +562,7 @@ async def main():
             return
 
         # Check connectivity for all plants
-        not_connected_list = check_plant_connectivity(plant_df)
+        check_plant_connectivity(plant_df)
 
         await fill_not_connected_sync_info(not_connected_plants)
 
@@ -547,4 +583,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

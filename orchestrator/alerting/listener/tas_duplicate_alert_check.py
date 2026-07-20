@@ -1,6 +1,5 @@
 import urdhva_base
 from datetime import datetime
-import traceback
 import hpcl_ceg_model
 import aiohttp
 from orchestrator.alerting.alert_manager import close_alert
@@ -24,11 +23,11 @@ async def duplicate_check(alertdata):
     )
     logger.info("query --> %s", query)
     params = urdhva_base.queryparams.QueryParams(q=query)
-    resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
 
     if resp["data"]:
-        #check in Thingsboard if the alerts are in CLEARED_UNCAK state
-        #if they are in CLEARED_UNCAK state then close the alert in the DB'
+        # check in Thingsboard if the alerts are in CLEARED_UNCAK state
+        # if they are in CLEARED_UNCAK state then close the alert in the DB'
         jwt_token = await get_thingsboard_jwt()
 
         for alert in resp["data"]:
@@ -43,14 +42,14 @@ async def duplicate_check(alertdata):
                         "bu": alert.get("bu"),
                         "sap_id": alert.get("sap_id"),
                         "sop_id": alert.get("sop_id"),
-                        "alert_type": 'TAS',
+                        "alert_type": "TAS",
                         "interlock_name": alert.get("interlock_name", ""),
-                        "alert_id": external_id,  
-                        "device_name": alert.get("device_name", "")
-                    } 
+                        "alert_id": external_id,
+                        "device_name": alert.get("device_name", ""),
+                    }
 
                     await close_alert(alert_data)
-        #TDO: Check in the thingsboard using the device id where the
+        # TDO: Check in the thingsboard using the device id where the
         # already the respective alert is in CLEARED_UNCAK if it is CLEARED_UNCAK then close the alert in the DB also manually
         return True
     return False
@@ -64,7 +63,7 @@ async def check_tb_alert_status(external_id, jwt_token):
     url = f"{THINGSBOARD_URL}/api/alarm/{external_id}"
     headers = {
         "Content-Type": "application/json",
-        "X-Authorization": f"Bearer {jwt_token}"
+        "X-Authorization": f"Bearer {jwt_token}",
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
@@ -79,17 +78,17 @@ async def check_tb_alert_status(external_id, jwt_token):
 
 async def get_thingsboard_jwt():
     url = f"{THINGSBOARD_URL}/api/auth/login"
-    payload = {
-        "username": THINGSBOARD_USERNAME,
-        "password": THINGSBOARD_PASSWORD
-    }
+    payload = {"username": THINGSBOARD_USERNAME, "password": THINGSBOARD_PASSWORD}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=payload) as resp:
             if resp.status == 200:
                 data = await resp.json()
                 return data.get("token")
             else:
-                raise Exception(f"Failed to authenticate with ThingsBoard: {resp.status}")
+                raise Exception(
+                    f"Failed to authenticate with ThingsBoard: {resp.status}"
+                )
+
 
 async def alert_history_check(alertdata, month_check=None):
     date_check = datetime.now().strftime("%Y-%m-%d")
@@ -115,10 +114,11 @@ async def alert_history_check(alertdata, month_check=None):
             f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
         )
     params = urdhva_base.queryparams.QueryParams(q=query)
-    resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     if resp["data"]:
         return True
     return False
+
 
 async def duplicate_loss_of_comm_check(alertdata):
     query = (
@@ -131,7 +131,7 @@ async def duplicate_loss_of_comm_check(alertdata):
         f"""alert_status != 'Close'"""
     )
     params = urdhva_base.queryparams.QueryParams(q=query)
-    resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     if resp["data"]:
         return False
     return True

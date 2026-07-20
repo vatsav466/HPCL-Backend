@@ -1,5 +1,4 @@
 import urdhva_base
-import json
 import msgpack
 import urdhva_base.redispool
 import hpcl_ceg_model

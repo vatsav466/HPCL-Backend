@@ -1,6 +1,7 @@
 """
 Shared utilities for Field Force orchestrator (IMS, CRIS, Novex, etc.).
 """
+
 from typing import Any, Dict, List, Optional, Union
 
 import orchestrator.field_force.vendor_territory_mapping as vendor_territory_mapping
@@ -32,14 +33,14 @@ TERRITORY_COLUMN_BY_VENDOR: Dict[str, Dict[str, str]] = {
         "sales_area": "sales_area",
         "region": "region",
         "zone": "zone",
-        "bu": "bu"
+        "bu": "bu",
     },
     "TIBCO_SALES": {
         "sales_area": "SalesArea_Name",
         "region": "Region_Name",
         "zone": "Zone_Name",
-        "bu": "SBU_Name"
-    }
+        "bu": "SBU_Name",
+    },
 }
 
 
@@ -59,7 +60,7 @@ def format_in_condition(column: str, value: Any) -> str:
     if value is None or (isinstance(value, list) and len(value) == 0):
         return ""
     if isinstance(value, list):
-        quoted = tuple(f'{str(v)}' for v in value)
+        quoted = tuple(f"{str(v)}" for v in value)
         return f"{column} in {quoted}"
     return f"{column}='{str(value)}'"
 
@@ -266,7 +267,9 @@ def _sales_area_from_row(row: Dict[str, Any]) -> Optional[str]:
     return s if s else None
 
 
-async def _fetch_distinct_sales_areas_for_regions(bu: str, regions: List[str]) -> List[str]:
+async def _fetch_distinct_sales_areas_for_regions(
+    bu: str, regions: List[str]
+) -> List[str]:
     """
     Distinct ``sales_area`` from ``location_master`` for the given BU and region names.
 
@@ -282,7 +285,9 @@ async def _fetch_distinct_sales_areas_for_regions(bu: str, regions: List[str]) -
         region_lits = [_sql_literal(r) for r in regions if str(r).strip()]
         if not region_lits:
             return []
-        sales_area_key = "sales_area_code" if bu_lit == "LPG_CUSTOMERS" else "sales_area"
+        sales_area_key = (
+            "sales_area_code" if bu_lit == "LPG_CUSTOMERS" else "sales_area"
+        )
         in_clause = ", ".join(region_lits)
         sql = f"""
             SELECT DISTINCT {sales_area_key}
@@ -352,7 +357,9 @@ async def _expand_widget_regions_to_sales_area_filters(
     out: List[Dict[str, Any]] = []
     for raw in items:
         item = dict(raw)
-        if not _widget_filter_key_is_region(str(item.get("key") or "").strip(), column_map):
+        if not _widget_filter_key_is_region(
+            str(item.get("key") or "").strip(), column_map
+        ):
             out.append(item)
             continue
         tv = _territory_value_for_widget_item(item)
@@ -368,9 +375,7 @@ async def _expand_widget_regions_to_sales_area_filters(
                 continue
             sas = await _fetch_distinct_sales_areas_for_regions(eff_bu, regions)
             if sas:
-                out.append(
-                    {"key": sales_area_col, "cond": "in", "values": sas}
-                )
+                out.append({"key": sales_area_col, "cond": "in", "values": sas})
             else:
                 out.append(item)
         else:
@@ -444,7 +449,9 @@ async def session_dict_to_widget_filters(
             if len(mapped) == 1:
                 out.append({"key": col, "cond": "=", "value": str(mapped[0])})
             else:
-                out.append({"key": col, "cond": "in", "values": [str(v) for v in mapped]})
+                out.append(
+                    {"key": col, "cond": "in", "values": [str(v) for v in mapped]}
+                )
         else:
             out.append({"key": col, "cond": "=", "value": str(mapped)})
     return out

@@ -5,6 +5,7 @@ Maps normalized (e.g. lowercase) territory names to vendor-specific identifiers
 used by IMS, CRIS, and other systems. Used to translate user context (sales area,
 region, zone) into the correct filter values per data source.
 """
+
 from __future__ import annotations
 
 import urdhva_base
@@ -20,8 +21,11 @@ import orchestrator.field_force.territory_mapping.sales_area_mapping as sales_ar
 
 
 # Territory-type key for lookups; only "sales_area" has explicit mapping so far
-vendor_mapping = {"sales_area": sales_area_mapping.sales_area_mapping,
-                  "region": region_mapping.region_mapping, "zone": zone_mapping.zone_mapping}
+vendor_mapping = {
+    "sales_area": sales_area_mapping.sales_area_mapping,
+    "region": region_mapping.region_mapping,
+    "zone": zone_mapping.zone_mapping,
+}
 
 # Priority order for resolving user perspective from session (first match wins)
 _USER_TERRITORY_KEYS = (
@@ -129,7 +133,9 @@ def _get_region_vendor_value_single(raw: str, vendor: str) -> str:
 def get_region_vendor_value(territory_value, vendor: str):
     """Map region to the value used by ``vendor`` (empty mapping → original)."""
     if isinstance(territory_value, list):
-        return [_get_region_vendor_value_single(str(x), vendor) for x in territory_value]
+        return [
+            _get_region_vendor_value_single(str(x), vendor) for x in territory_value
+        ]
     return _get_region_vendor_value_single(str(territory_value), vendor)
 
 
@@ -167,9 +173,9 @@ def get_user_perspectives():
         return []
     rpt = urdhva_base.context.context.get("rpt", {})
     territory_mapping = []
-    territory, key = 'bu', 'bu'
+    territory, key = "bu", "bu"
     if key in rpt and rpt[key]:
-        territory_mapping.append({"territory": territory, "values": rpt[key]}) 
+        territory_mapping.append({"territory": territory, "values": rpt[key]})
     for territory, key in _USER_TERRITORY_KEYS:
         value = rpt.get(key)
         if value:

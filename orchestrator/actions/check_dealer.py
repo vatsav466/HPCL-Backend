@@ -14,7 +14,7 @@ class CheckDealer:
             list: A list of strings representing the required variables.
         """
         return ["alert_id"]
-    
+
     async def checkdealer(self, params):
         """
         Checks if the dealer status for a given alert has been set to true.
@@ -35,17 +35,19 @@ class CheckDealer:
             set to the value of atrSubmitted.
         """
         try:
-            logger.info("checkdealer in k-factor Status alert_id:%s" % params.get('alert_id'))
-            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            logger.info(
+                "checkdealer in k-factor Status alert_id:%s" % params.get("alert_id")
+            )
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get("alert_id"))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
             atrSubmitted = False
-            if alert_data['Dealer']== True:
+            if alert_data["Dealer"] == True:
                 atrSubmitted = True
             return True, {"atrStatus": atrSubmitted}
-        
+
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

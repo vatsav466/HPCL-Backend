@@ -22,115 +22,143 @@ from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.analytics.ro_analysis as ro_analysis
 from orchestrator.workflow.workflow_process import Camunda
-from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from orchestrator.dbconnector.widget_actions import widget_actions
 from api_manager.charts_actions import charts_connection_vault_routing
 import orchestrator.dbconnector.credential_loader as credential_loader
-from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category", "location_onboard"],
     "LPG": ["zone", "sap_id", "name", "category"],
-    "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"],
-    "DS": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "sap_id", "name"]
+    "RO": [
+        "zone",
+        "region",
+        "sales_area",
+        "terminal_plant_id",
+        "terminal_plant_name",
+        "category",
+        "sap_id",
+        "name",
+    ],
+    "DS": [
+        "zone",
+        "region",
+        "sales_area",
+        "terminal_plant_id",
+        "terminal_plant_name",
+        "sap_id",
+        "name",
+    ],
 }
 
+
 async def flatten_zone(rows):
-        out = []
+    out = []
 
-        for rec in rows:
-            val = rec['zone']
+    for rec in rows:
+        val = rec["zone"]
 
-            # CASE 1: value is a string that looks like a list
-            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
-                try:
-                    parsed = ast.literal_eval(val)  # convert string → actual list
-                    out.extend(parsed)
-                except:
-                    out.append(val)
+        # CASE 1: value is a string that looks like a list
+        if isinstance(val, str) and val.startswith("[") and val.endswith("]"):
+            try:
+                parsed = ast.literal_eval(val)  # convert string → actual list
+                out.extend(parsed)
+            except:
+                out.append(val)
 
-            # CASE 2: value is a real list
-            elif isinstance(val, list):
-                out.extend(val)
+        # CASE 2: value is a real list
+        elif isinstance(val, list):
+            out.extend(val)
 
-            # CASE 3: normal single string
-            else:
-                if val:  # skip empty strings
-                    out.append(val)
+        # CASE 3: normal single string
+        else:
+            if val:  # skip empty strings
+                out.append(val)
 
-        cleaned = list(set(out))
+    cleaned = list(set(out))
 
-        print('*' * 100)
-        print('Flattened zone:', cleaned)
-        print('*' * 100)
+    print("*" * 100)
+    print("Flattened zone:", cleaned)
+    print("*" * 100)
 
-        return cleaned
+    return cleaned
+
 
 async def flatten_region(rows):
-        out = []
+    out = []
 
-        for rec in rows:
-            val = rec['region']
+    for rec in rows:
+        val = rec["region"]
 
-            # CASE 1: value is a string that looks like a list
-            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
-                try:
-                    parsed = ast.literal_eval(val)  # convert string → actual list
-                    out.extend(parsed)
-                except:
-                    out.append(val)
+        # CASE 1: value is a string that looks like a list
+        if isinstance(val, str) and val.startswith("[") and val.endswith("]"):
+            try:
+                parsed = ast.literal_eval(val)  # convert string → actual list
+                out.extend(parsed)
+            except:
+                out.append(val)
 
-            # CASE 2: value is a real list
-            elif isinstance(val, list):
-                out.extend(val)
+        # CASE 2: value is a real list
+        elif isinstance(val, list):
+            out.extend(val)
 
-            # CASE 3: normal single string
-            else:
-                if val:  # skip empty strings
-                    out.append(val)
+        # CASE 3: normal single string
+        else:
+            if val:  # skip empty strings
+                out.append(val)
 
-        cleaned = list(set(out))
+    cleaned = list(set(out))
 
-        print('*' * 100)
-        print('Flattened region:', cleaned)
-        print('*' * 100)
+    print("*" * 100)
+    print("Flattened region:", cleaned)
+    print("*" * 100)
 
-        return cleaned
+    return cleaned
+
 
 async def flatten_sales_area(rows):
-        out = []
+    out = []
 
-        for rec in rows:
-            val = rec['sales_area']
+    for rec in rows:
+        val = rec["sales_area"]
 
-            # CASE 1: value is a string that looks like a list
-            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
-                try:
-                    parsed = ast.literal_eval(val)  # convert string → actual list
-                    out.extend(parsed)
-                except:
-                    out.append(val)
+        # CASE 1: value is a string that looks like a list
+        if isinstance(val, str) and val.startswith("[") and val.endswith("]"):
+            try:
+                parsed = ast.literal_eval(val)  # convert string → actual list
+                out.extend(parsed)
+            except:
+                out.append(val)
 
-            # CASE 2: value is a real list
-            elif isinstance(val, list):
-                out.extend(val)
+        # CASE 2: value is a real list
+        elif isinstance(val, list):
+            out.extend(val)
 
-            # CASE 3: normal single string
-            else:
-                if val:  # skip empty strings
-                    out.append(val)
+        # CASE 3: normal single string
+        else:
+            if val:  # skip empty strings
+                out.append(val)
 
-        cleaned = list(set(out))
+    cleaned = list(set(out))
 
-        print('*' * 100)
-        print('Flattened sales_area:', cleaned)
-        print('*' * 100)
+    print("*" * 100)
+    print("Flattened sales_area:", cleaned)
+    print("*" * 100)
 
-        return cleaned
+    return cleaned
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
+
+async def get_locations(
+    bu,
+    zone=[],
+    region=[],
+    sales_area=[],
+    plant=[],
+    cat_a_dealers=False,
+    dry_out_dealers=False,
+    location_onboard=False,
+):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -148,98 +176,106 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     cond = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
     dry_out_plants = []
     dry_out_customers = []
-    for rec in cond:        
-        if rec['key'] == 'zone':
+    for rec in cond:
+        if rec["key"] == "zone":
             if not zone:
                 zone = []
-            if isinstance(rec['value'], list):
-                zone.extend(rec['value'])
+            if isinstance(rec["value"], list):
+                zone.extend(rec["value"])
             else:
-                zone.append(rec['value'])
-        elif rec['key'] == 'region':
+                zone.append(rec["value"])
+        elif rec["key"] == "region":
             if not region:
                 region = []
-            if isinstance(rec['value'], list):
-                region.extend(rec['value'])
+            if isinstance(rec["value"], list):
+                region.extend(rec["value"])
             else:
-                region.append(rec['value'])
+                region.append(rec["value"])
             if region and not zone:
                 regions = "', '".join(region)
                 query = f"""select DISTINCT zone from location_master where region IN ('{regions}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    zone = await flatten_zone(resp['data'])
-        elif rec['key'] == 'sales_area':
+                if resp["data"]:
+                    zone = await flatten_zone(resp["data"])
+        elif rec["key"] == "sales_area":
             if not sales_area:
                 sales_area = []
-            if isinstance(rec['value'], list):
-                sales_area.extend(rec['value'])
+            if isinstance(rec["value"], list):
+                sales_area.extend(rec["value"])
             else:
-                sales_area.append(rec['value'])
+                sales_area.append(rec["value"])
             if sales_area and not zone:
                 sales_areas = "', '".join(sales_area)
                 query = f"""select DISTINCT zone from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    zone = await flatten_zone(resp['data'])
-            
+                if resp["data"]:
+                    zone = await flatten_zone(resp["data"])
+
             if sales_area and not region:
                 sales_areas = "', '".join(sales_area)
                 query = f"""select DISTINCT region from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    region = await flatten_region(resp['data'])
-        elif rec['key'] == 'sap_id':
+                if resp["data"]:
+                    region = await flatten_region(resp["data"])
+        elif rec["key"] == "sap_id":
             if not plant:
                 plant = []
-            if isinstance(rec['value'], list):
-                plant.extend(rec['value'])
+            if isinstance(rec["value"], list):
+                plant.extend(rec["value"])
             else:
-                if "," in rec['value']:
-                    plant.extend([x for x in rec['value'].split(",")])
+                if "," in rec["value"]:
+                    plant.extend([x for x in rec["value"].split(",")])
                 else:
-                    plant.append(rec['value'])
+                    plant.append(rec["value"])
             if plant and not zone:
                 plants = "', '".join(plant)
                 query = f"""select DISTINCT zone from location_master where sap_id IN ('{plants}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    zone = await flatten_zone(resp['data'])
-            
+                if resp["data"]:
+                    zone = await flatten_zone(resp["data"])
+
             if plant and not region:
                 plants = "', '".join(plant)
                 query = f"""select DISTINCT region from location_master where sap_id IN ('{plants}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    region = await flatten_region(resp['data'])
-            
+                if resp["data"]:
+                    region = await flatten_region(resp["data"])
+
             if plant and not sales_area:
                 plants = "', '".join(plant)
                 query = f"""select DISTINCT sales_area from location_master where sap_id IN ('{plants}') and bu='{bu}' """
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-                if resp['data']:
-                    sales_area = await flatten_sales_area(resp['data'])
+                if resp["data"]:
+                    sales_area = await flatten_sales_area(resp["data"])
 
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
 
-    bu_data = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
-               if helpers.normalize_string(key).startswith(f"{bu}_")]
+    bu_data = [
+        json.loads(helpers.normalize_string(rec))
+        for key, rec in location_data.items()
+        if helpers.normalize_string(key).startswith(f"{bu}_")
+    ]
     bu_data = pd.DataFrame(bu_data)
     for key in req_keys[bu]:
         if key not in bu_data:
             bu_data[key] = ""
     bu_data = bu_data[req_keys[bu]]
     bu_data.fillna("", inplace=True)
-    if bu.upper() in ["RO","DS"]:
+    if bu.upper() in ["RO", "DS"]:
         # Updating Plant Name in case if missing
-        tas_data = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
-                    if helpers.normalize_string(key).startswith(f"TAS_")]
-        terminal_name_mapping = {rec['sap_id']: rec['name'] for rec in tas_data}
-        bu_data['terminal_plant_name'] = bu_data['terminal_plant_id'].apply(lambda x: terminal_name_mapping.get(x, x))
-        bu_data = bu_data[bu_data['terminal_plant_name'].notna()]
+        tas_data = [
+            json.loads(helpers.normalize_string(rec))
+            for key, rec in location_data.items()
+            if helpers.normalize_string(key).startswith(f"TAS_")
+        ]
+        terminal_name_mapping = {rec["sap_id"]: rec["name"] for rec in tas_data}
+        bu_data["terminal_plant_name"] = bu_data["terminal_plant_id"].apply(
+            lambda x: terminal_name_mapping.get(x, x)
+        )
+        bu_data = bu_data[bu_data["terminal_plant_name"].notna()]
     final_data = {"zone": {}, "plant": {}, "customer": {}}
-    if bu.upper() in ["RO","DS"]:
+    if bu.upper() in ["RO", "DS"]:
         final_data.update({"region": {}, "sales_area": {}, "customer": {}})
 
     def check_category(category):
@@ -250,13 +286,13 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     key_mapping = {}
 
     # Filtering zone
-    for rec in bu_data.to_dict(orient='records'):
+    for rec in bu_data.to_dict(orient="records"):
         if rec["zone"]:
             # Shrihari commented
             # if cond and plant and rec['sap_id'] not in plant:
-            if cond and zone and rec['zone'] not in zone:
+            if cond and zone and rec["zone"] not in zone:
                 continue
-            elif cond and plant and rec['sap_id'] not in plant:
+            elif cond and plant and rec["sap_id"] not in plant:
                 continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if dry_out_dealers:
@@ -265,12 +301,12 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 alert_status in ('Open', 'InProgress') 
                 group by dealer_id, terminal_plant_id"""
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
-        dry_out_plants = list(set([rec['terminal_plant_id'] for rec in data['data']]))
-        dry_out_customers = list(set([rec['dealer_id'] for rec in data['data']]))
+        dry_out_plants = list(set([rec["terminal_plant_id"] for rec in data["data"]]))
+        dry_out_customers = list(set([rec["dealer_id"] for rec in data["data"]]))
     if zone:
         key_mapping["zone"] = zone
     if bu in ["TAS", "LPG"]:
-        for rec in bu_data.to_dict(orient='records'):
+        for rec in bu_data.to_dict(orient="records"):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
@@ -280,13 +316,19 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if skip_record or not rec["sap_id"]:
                 continue
             if rec["sap_id"]:
-                if plant and rec['sap_id'] not in plant:
+                if plant and rec["sap_id"] not in plant:
                     continue
                 if dry_out_dealers and rec["sap_id"] not in dry_out_plants:
                     continue
-                final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
-        bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
-                      if helpers.normalize_string(key).startswith(f"RO_")]
+                final_data["plant"][rec["sap_id"]] = {
+                    "name": rec["name"],
+                    "id": rec["sap_id"],
+                }
+        bu_data_ro = [
+            json.loads(helpers.normalize_string(rec))
+            for key, rec in location_data.items()
+            if helpers.normalize_string(key).startswith(f"RO_")
+        ]
         bu_data_ro = pd.DataFrame(bu_data_ro)
         for key in ["name", "category"]:
             if key not in bu_data_ro:
@@ -296,7 +338,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         # bu_data_ro['category'] = bu_data_ro['category'].fillna("")
         if plant:
             key_mapping["terminal_plant_id"] = plant
-        for rec in bu_data_ro.to_dict(orient='records'):
+        for rec in bu_data_ro.to_dict(orient="records"):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
@@ -308,16 +350,19 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if rec["sap_id"]:
                 if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
                     continue
-                if cat_a_dealers and check_category(rec['category']) != "A":
+                if cat_a_dealers and check_category(rec["category"]) != "A":
                     continue
-                final_data["customer"][rec["sap_id"]] = {"name": str(rec["sap_id"]) + " - " + rec["name"], "id": rec["sap_id"],
-                                                         "category": check_category(rec['category'])}
+                final_data["customer"][rec["sap_id"]] = {
+                    "name": str(rec["sap_id"]) + " - " + rec["name"],
+                    "id": rec["sap_id"],
+                    "category": check_category(rec["category"]),
+                }
     else:
         if region:
             key_mapping["region"] = region
 
         # Filtering region
-        for rec in bu_data.to_dict(orient='records'):
+        for rec in bu_data.to_dict(orient="records"):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
@@ -327,12 +372,15 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if skip_record or not rec.get("region"):
                 continue
             if rec.get("region"):
-                final_data["region"][rec["region"]] = {"name": rec["region"], "id": rec["region"]}
+                final_data["region"][rec["region"]] = {
+                    "name": rec["region"],
+                    "id": rec["region"],
+                }
 
         # Filtering Sales Area
         if sales_area:
             key_mapping["sales_area"] = sales_area
-        for rec in bu_data.to_dict(orient='records'):
+        for rec in bu_data.to_dict(orient="records"):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
@@ -342,10 +390,13 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if skip_record or not rec.get("sales_area"):
                 continue
             if rec.get("sales_area"):
-                final_data["sales_area"][rec["sales_area"]] = {"name": rec["sales_area"], "id": rec["sales_area"]}
+                final_data["sales_area"][rec["sales_area"]] = {
+                    "name": rec["sales_area"],
+                    "id": rec["sales_area"],
+                }
 
         # Filtering Plant
-        for rec in bu_data.to_dict(orient='records'):
+        for rec in bu_data.to_dict(orient="records"):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
@@ -357,18 +408,24 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if rec["sap_id"]:
                 if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
                     continue
-                if cat_a_dealers and check_category(rec['category']) != "A":
+                if cat_a_dealers and check_category(rec["category"]) != "A":
                     continue
-                final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
-                                                         "category": check_category(rec.get('category',None))}
+                final_data["customer"][rec["sap_id"]] = {
+                    "name": rec["name"],
+                    "id": rec["sap_id"],
+                    "category": check_category(rec.get("category", None)),
+                }
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())
 
     # adding products
-    final_data["products"] = [{"name": val, "id": key} for val, key in product_code_mapping.items()]
+    final_data["products"] = [
+        {"name": val, "id": key} for val, key in product_code_mapping.items()
+    ]
 
     return final_data
+
 
 async def get_filtered_location_data(bu, request_parameter, filters):
     """
@@ -415,7 +472,11 @@ async def get_filtered_location_data(bu, request_parameter, filters):
     for filter in filters:
         if filter.cond.lower() == "contains":
             # Filter rows where the value of the key contains any of the strings in filter.value
-            bu_data = bu_data[bu_data[filter.key].str.contains('|'.join(filter.value), case=False, na=False)]
+            bu_data = bu_data[
+                bu_data[filter.key].str.contains(
+                    "|".join(filter.value), case=False, na=False
+                )
+            ]
         else:
             # Filter rows where the value of the key matches exactly with filter.value
             bu_data = bu_data[bu_data[filter.key].isin(filter.value)]
@@ -435,23 +496,28 @@ async def get_filtered_location_data(bu, request_parameter, filters):
         bu_data = bu_data[bu_data.id.notna()]
 
         # Convert DataFrame to a list of dictionaries
-        return bu_data.to_dict(orient='records')
+        return bu_data.to_dict(orient="records")
 
     else:
         # Process the DataFrame to get unique values for the requested parameter
         bu_data = bu_data[[request_parameter]]
-        unique_keys_list = [key for key in list(bu_data[request_parameter].unique()) if key]
+        unique_keys_list = [
+            key for key in list(bu_data[request_parameter].unique()) if key
+        ]
 
         # Convert unique values into a list of dictionaries with "id" and "name"
-        resp = [{'id': key, "name": key} for key in unique_keys_list]
+        resp = [{"id": key, "name": key} for key in unique_keys_list]
         # Filtering dry out locations
         if dry_out_locations:
-            query = ("select DISTINCT(sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
-                     "and alert_status='Open'")
+            query = (
+                "select DISTINCT(sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+                "and alert_status='Open'"
+            )
             data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
-            dry_out_locations = [rec['sap_id'] for rec in data['data']]
-            resp = [rec for rec in resp if rec['id'] in dry_out_locations]
+            dry_out_locations = [rec["sap_id"] for rec in data["data"]]
+            resp = [rec for rec in resp if rec["id"] in dry_out_locations]
         return resp
+
 
 async def get_carry_fwd_indent(get_only_dry_out_ro: bool):
     query = f"""SELECT DISTINCT 
@@ -469,12 +535,18 @@ async def get_carry_fwd_indent(get_only_dry_out_ro: bool):
                 ORDER BY 
                     "LOCN_CODE" """
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("ims", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("ims", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     data = await function(query=query)
     data = pd.DataFrame(data)
-    data['DEALER_CODE'] = str(data['DEALER_CODE']) + '-' + str(data['INDENT_NO'])
+    data["DEALER_CODE"] = str(data["DEALER_CODE"]) + "-" + str(data["INDENT_NO"])
 
     if get_only_dry_out_ro:
         query = f"""SELECT DISTINCT 
@@ -495,7 +567,8 @@ async def get_carry_fwd_indent(get_only_dry_out_ro: bool):
                         AND ir."CANCEL_INDENT" IS NULL
                         AND ir."VALID_INDENT" IN ('Y', 'H')"""
 
-    return data['DEALER_CODE'].unique().tolist()
+    return data["DEALER_CODE"].unique().tolist()
+
 
 async def get_indent_pattern(is_cat_a: bool, dealer_code: str = None):
     if is_cat_a:
@@ -571,37 +644,52 @@ async def get_indent_pattern(is_cat_a: bool, dealer_code: str = None):
                     AND b."PROD" = f."PROD"
                 ORDER BY 
                     b."INDENT_DATE" DESC, b."PROD" """
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("ims", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("ims", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     data = await function(query=query)
     return data
 
-async def get_ro_with_no_indent_in_ims():
-    ...
+
+async def get_ro_with_no_indent_in_ims(): ...
+
 
 async def get_category_sync():
     query = f"""SELECT SUBSTR("DEALER_CODE", 1, 10) AS "DEALER_CODE", "CATEGORY1" FROM "IMS_SAP"."DEALER_DETAILS"
                 WHERE "CATEGORY1" = 'R01'"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("ims", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("ims", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     data = await function(query=query)
     data = pd.DataFrame(data)
-    data['DEALER_CODE'] = data['DEALER_CODE'].astype(str).str.lstrip('0')
+    data["DEALER_CODE"] = data["DEALER_CODE"].astype(str).str.lstrip("0")
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("hpcl_ceg", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "upsert_data"
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     return await function(
         schema_name="IMS_SAP",
         table_name="DEALER_DETAILS_CATA",
         records=data.to_dict(orient="records"),
-        conflict_columns=["DEALER_CODE"]
+        conflict_columns=["DEALER_CODE"],
     )
+
 
 async def generate_filters(data):
     filters = {}
@@ -653,20 +741,18 @@ async def generate_filters(data):
                 filters.setdefault("ZSALES_AREA", []).extend(sales_areas)
 
     # Remove duplicates
-    return [
-        {"key": k, "value": list(set(v))}
-        for k, v in filters.items()
-    ]
+    return [{"key": k, "value": list(set(v))} for k, v in filters.items()]
+
 
 async def sync_carry_fwd_indent(insert_to_db: bool, filters=None):
     conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
     where_clause = []
     for rec in conditions:
-        if rec['key'] == 'sap_id':
-            if isinstance(rec['value'], str):
+        if rec["key"] == "sap_id":
+            if isinstance(rec["value"], str):
                 where_clause.append(f"terminal_plant_id='{rec['value']}'")
             else:
-                if len(rec['value']) == 1:
+                if len(rec["value"]) == 1:
                     where_clause.append(f"terminal_plant_id='{rec['value'][0]}'")
                 else:
                     where_clause.append(f"terminal_plant_id in {tuple(rec['value'])}")
@@ -684,27 +770,27 @@ async def sync_carry_fwd_indent(insert_to_db: bool, filters=None):
     if filters:
         ims_conditions = await generate_filters(filters)
         for condition in ims_conditions:
-            condition_key = condition['key']
-            condition_value = condition['value']
-            if condition_key == 'DEALER_CODE':
+            condition_key = condition["key"]
+            condition_value = condition["value"]
+            if condition_key == "DEALER_CODE":
                 dealers = "', '".join(condition_value)
                 ims_clause.append(f"""SUBSTR(a."DEALER_CODE",3,8) IN ('{dealers}')""")
-            elif condition_key == 'SALES_AREA':
+            elif condition_key == "SALES_AREA":
                 sales_area = "', '".join(condition_value)
                 ims_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
-            elif condition_key == 'PROD':
+            elif condition_key == "PROD":
                 product_code = "', '".join(condition_value)
                 ims_clause.append(f"""b."PROD" IN ('{product_code}')""")
-            elif condition_key == 'RSALES_AREA':
+            elif condition_key == "RSALES_AREA":
                 rsales_area = "', '".join(condition_value)
                 ims_clause.append(f"""dd."SAREA_DESC" IN ('{rsales_area}')""")
-            elif condition_key == 'ZSALES_AREA':
+            elif condition_key == "ZSALES_AREA":
                 zsales_area = "', '".join(condition_value)
                 ims_clause.append(f"""dd."SAREA_DESC" IN ('{zsales_area}')""")
-    
+
     ims_query = ""
     if ims_clause:
-        ims_query +=  ' AND ' + ' AND '.join(ims_clause)
+        ims_query += " AND " + " AND ".join(ims_clause)
 
     query = f"""WITH INDENT_DATA AS (
                     SELECT DISTINCT 
@@ -788,17 +874,20 @@ async def sync_carry_fwd_indent(insert_to_db: bool, filters=None):
     data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     data = data.get("data", [])
     data = pd.DataFrame(data)
-    for key in ['dry_out_in_days', 'indent_no', 'category']:
+    for key in ["dry_out_in_days", "indent_no", "category"]:
         if key in data.columns:
             data[key] = data[key].fillna("").astype(str)
 
-    data['reported_date'] = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
+    data["reported_date"] = urdhva_base.utilities.get_present_time().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     if not insert_to_db:
         return data.to_dict(orient="records")
 
     for each_record in data.to_dict(orient="records"):
         await hpcl_ceg_model.CarryFwdIndentCreate(**each_record).create()
     return
+
 
 async def ro_not_in_ims():
     query = f"""SELECT DISTINCT a.rosapcode
@@ -816,53 +905,65 @@ async def ro_not_in_ims():
     data = data.get("data", [])
     data = pd.DataFrame(data)
     redis_cli = await urdhva_base.redispool.get_redis_connection()
-    locations = {key.decode(): json.loads(value.decode())
-                 for key, value in (await redis_cli.hgetall('location_master')).items()}
+    locations = {
+        key.decode(): json.loads(value.decode())
+        for key, value in (await redis_cli.hgetall("location_master")).items()
+    }
     conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
-    rosapcodes = data['rosapcode'].unique().tolist()
+    rosapcodes = data["rosapcode"].unique().tolist()
     plants = []
     for rec in conditions:
-        if rec['key'] == 'sap_id':
-            plants = [rec['value']] if isinstance(rec['value'], str) else rec['value']
+        if rec["key"] == "sap_id":
+            plants = [rec["value"]] if isinstance(rec["value"], str) else rec["value"]
             break
     if plants:
         allowed_dealers = []
         for dealer in rosapcodes:
-            if f'RO_{dealer}' in locations and locations[f'RO_{dealer}'].get('terminal_plant_id', '') in plants:
-                if f'RO_{dealer}' in locations.keys():
-                    allowed_dealers.append({dealer: locations[f'RO_{dealer}'].get("name", "")})
+            if (
+                f"RO_{dealer}" in locations
+                and locations[f"RO_{dealer}"].get("terminal_plant_id", "") in plants
+            ):
+                if f"RO_{dealer}" in locations.keys():
+                    allowed_dealers.append(
+                        {dealer: locations[f"RO_{dealer}"].get("name", "")}
+                    )
                 else:
                     allowed_dealers.append({dealer: ""})
         return allowed_dealers
     else:
         sap_code = []
         for dealer in rosapcodes:
-            if f'RO_{dealer}' in locations.keys():
-                sap_code.append({dealer: locations[f'RO_{dealer}'].get("name", "")})
+            if f"RO_{dealer}" in locations.keys():
+                sap_code.append({dealer: locations[f"RO_{dealer}"].get("name", "")})
             else:
                 sap_code.append({dealer: ""})
         return sap_code
 
+
 async def _generate_where_clause(where_clause):
     # where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
-    where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
-        extra_key_mapping={"sap_id": "terminal_plant_id"}))
+    where_clause.extend(
+        await hpcl_ceg_model.Alerts.get_clause_conditions(
+            extra_key_mapping={"sap_id": "terminal_plant_id"}
+        )
+    )
     for record in where_clause:
-        if record['key'] == "progress_rate":
-            if record['value']:
+        if record["key"] == "progress_rate":
+            if record["value"]:
                 where_clause.append(f"progress_rate={int(record['value'][0])}")
         else:
-            if record['value']:
-                if record['key'] == 'dry_out_in_days':
-                    dry_out_in_days_query = record['value'][0]
-                if record['key'] == "plant":
-                    record['key'] = "terminal_plant_id"
-                if len(record['value']) == 1:
+            if record["value"]:
+                if record["key"] == "dry_out_in_days":
+                    record["value"][0]
+                if record["key"] == "plant":
+                    record["key"] = "terminal_plant_id"
+                if len(record["value"]) == 1:
                     where_clause.append(f"{record['key']}='{record['value'][0]}'")
                 else:
                     where_clause.append(f"{record['key']} in {tuple(record['value'])}")
-    conditions = ' AND '.join(where_clause)
+    conditions = " AND ".join(where_clause)
     return conditions
+
 
 async def _get_ims_day_wise_report(report_date: str):
     query = f"""SELECT 
@@ -916,38 +1017,57 @@ async def _get_ims_day_wise_report(report_date: str):
                     AND ir.PROD_REQD_DT = TO_DATE('{report_date}', 'YYYY-MM-DD') 
                 ORDER BY 
                     ir.INDENT_NO"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "ims", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    stats_resp = await function(
-        query=query
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("ims", "1")
     )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+    stats_resp = await function(query=query)
     stats_resp = pd.DataFrame(stats_resp)
-    stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
-    return stats_resp.to_dict(orient='records')
+    stats_resp = stats_resp.drop_duplicates(
+        subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep="first"
+    )
+    return stats_resp.to_dict(orient="records")
 
 
 async def _get_dry_out_ims_report(
-        dry_out_in_days=['DRY_OUT'],
-        page=1,
-        page_size=100,
-        action=None):
+    dry_out_in_days=["DRY_OUT"], page=1, page_size=100, action=None
+):
 
     dry_out_in_days_str = "', '".join(x for x in dry_out_in_days)
 
     column_mapping = {
-        'zone': 'ZONE', 'region': 'REGION', 'sales_area': 'SALES_AREA', 'sap_id': 'SAP_ID', 'location_name': 'LOCATION_NAME',
-        'terminal_plant_id': 'TERMINAL_PLANT_ID', 'indent_no': 'INDENT_NO', 'product_code': 'PRODUCT_CODE',
-        'indent_status': 'INDENT_STATUS', 'dry_out_types': 'DRY_OUT_TYPES', 'assigned_to_locn': 'ASSIGNED_TO_LOCN',
-        'prod_reqd_dt': 'PROD_REQD_DT', 'truck_regno': 'TRUCK_REGNO', 'valid_indent': 'VALID_INDENT', 'sent_to_sap_time': 'SENT_TO_SAP_TIME', 
-        'delivery_date': 'DELIVERY_DATE', 'indent_hold_release_time': 'INDENT_HOLD_RELEASE_TIME',
-        'indent_executable_time': 'INDENT_EXECUTABLE_TIME', 'qty_kl': 'QTY (KL)', 'prod_allot_time': 'PROD_ALLOT_TIME',
-        'sales_orderno': 'SALES_ORDERNO', 'invoice_no': 'INVOICE_NO', 'loaded_on': 'LOADED_ON', 'avgsales_7days': 'AVGSALES_7DAYS'
+        "zone": "ZONE",
+        "region": "REGION",
+        "sales_area": "SALES_AREA",
+        "sap_id": "SAP_ID",
+        "location_name": "LOCATION_NAME",
+        "terminal_plant_id": "TERMINAL_PLANT_ID",
+        "indent_no": "INDENT_NO",
+        "product_code": "PRODUCT_CODE",
+        "indent_status": "INDENT_STATUS",
+        "dry_out_types": "DRY_OUT_TYPES",
+        "assigned_to_locn": "ASSIGNED_TO_LOCN",
+        "prod_reqd_dt": "PROD_REQD_DT",
+        "truck_regno": "TRUCK_REGNO",
+        "valid_indent": "VALID_INDENT",
+        "sent_to_sap_time": "SENT_TO_SAP_TIME",
+        "delivery_date": "DELIVERY_DATE",
+        "indent_hold_release_time": "INDENT_HOLD_RELEASE_TIME",
+        "indent_executable_time": "INDENT_EXECUTABLE_TIME",
+        "qty_kl": "QTY (KL)",
+        "prod_allot_time": "PROD_ALLOT_TIME",
+        "sales_orderno": "SALES_ORDERNO",
+        "invoice_no": "INVOICE_NO",
+        "loaded_on": "LOADED_ON",
+        "avgsales_7days": "AVGSALES_7DAYS",
     }
 
-    remove_cols = {'run_id', 'alert_id'}
+    remove_cols = {"run_id", "alert_id"}
 
     if action == "download":
         query = f"""
@@ -964,17 +1084,20 @@ async def _get_dry_out_ims_report(
 
         df = pd.DataFrame(data)
         df.rename(columns=column_mapping, inplace=True)
-        df = df.drop(columns=remove_cols, errors='ignore')
-        del data  
+        df = df.drop(columns=remove_cols, errors="ignore")
+        del data
 
         # ---- Write Excel in a thread so event loop doesn't block ----
         def build_excel(dataframe: pd.DataFrame) -> io.BytesIO:
             output = io.BytesIO()
-            workbook = xlsxwriter.Workbook(output, {
-                'in_memory': True,
-                'constant_memory': True,   # row-by-row write, low RAM
-                'strings_to_urls': False,  # skip URL detection (big speed gain)
-            })
+            workbook = xlsxwriter.Workbook(
+                output,
+                {
+                    "in_memory": True,
+                    "constant_memory": True,  # row-by-row write, low RAM
+                    "strings_to_urls": False,  # skip URL detection (big speed gain)
+                },
+            )
             worksheet = workbook.add_worksheet("Report")
 
             # Write header
@@ -1001,8 +1124,7 @@ async def _get_dry_out_ims_report(
             file_name = f"DRYOUT_&_INTRA_DAY_DRYOUT_REPORT{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         else:
             file_name = f"{dry_out_in_days_str}_REPORT{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        
-       
+
         # ---- Convert to base64 so middleware doesn't reject it ----
         excel_bytes = excel_buffer.read()
         excel_base64 = base64.b64encode(excel_bytes).decode("utf-8")
@@ -1013,9 +1135,9 @@ async def _get_dry_out_ims_report(
             "message": "File generated successfully",
             "file_name": file_name,
             "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "file_data": excel_base64  # base64 encoded excel
+            "file_data": excel_base64,  # base64 encoded excel
         }
-    
+
     offset = (page - 1) * page_size
 
     query = f"""
@@ -1035,27 +1157,25 @@ async def _get_dry_out_ims_report(
 
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
 
-    count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=count_query, limit=0)
+    count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=count_query, limit=0
+    )
 
     data = resp.get("data", [])
     total_count = count_resp.get("data", [{}])[0].get("total_count", 0)
 
     final_data = [
-        {
-            column_mapping.get(k, k): v
-            for k, v in row.items()
-            if k not in remove_cols
-        }
+        {column_mapping.get(k, k): v for k, v in row.items() if k not in remove_cols}
         for row in data
     ]
     return {"data": final_data, "total_count": total_count}
 
 
-async def _get_on_hold_data(dry_out_in_days='1'):
+async def _get_on_hold_data(dry_out_in_days="1"):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
         "a.progress_rate": ["2"],
-        "a.dry_out_in_days": [dry_out_in_days]
+        "a.dry_out_in_days": [dry_out_in_days],
     }
     conditions = _generate_where_clause(where_clause)
     stats_query = f"""SELECT 
@@ -1086,22 +1206,27 @@ async def _get_on_hold_data(dry_out_in_days='1'):
     # stats_resp = await function(
     #     query=stats_query
     # )
-    stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=stats_query, limit=0)
+    stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=stats_query, limit=0
+    )
     stats_resp = stats_resp.get("data", [])
     stats_resp = pd.DataFrame(stats_resp)
-    return stats_resp.to_dict(orient='records')
+    return stats_resp.to_dict(orient="records")
 
-async def _get_pending_indents(dry_out_in_days='1'):
+
+async def _get_pending_indents(dry_out_in_days="1"):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
         "a.progress_rate": ["3"],
-        "a.dry_out_in_days": [dry_out_in_days]
+        "a.dry_out_in_days": [dry_out_in_days],
     }
+
 
 async def constant_dryout_ros(days=7):
     now = datetime.datetime.now(datetime.timezone.utc)
     run_id = [
-        (now - datetime.timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
+        (now - datetime.timedelta(days=i)).strftime("%y%m%d-2300")
+        for i in range(1, days + 1)
     ]
     run_ids = tuple(run_id)
     # print(run_ids)
@@ -1155,32 +1280,40 @@ async def constant_dryout_ros(days=7):
         pl.col("run_id_date").n_unique().alias("unique_days_count")
     )
 
-    filtered_df = aggregated_df.filter(
-        pl.col("unique_days_count") == days
-    )
+    filtered_df = aggregated_df.filter(pl.col("unique_days_count") == days)
     data = df.join(filtered_df.select("rosapcode"), on="rosapcode", how="inner")
     redis_cli = await urdhva_base.redispool.get_redis_connection()
-    locations = {key.decode(): json.loads(value.decode())
-                 for key, value in (await redis_cli.hgetall('location_master')).items()}
+    locations = {
+        key.decode(): json.loads(value.decode())
+        for key, value in (await redis_cli.hgetall("location_master")).items()
+    }
     loc_data = [value for key, value in locations.items()]
     locations_data = pl.DataFrame(loc_data)
-    result = data.join(locations_data.select(["sap_id", "name"]).unique(subset="sap_id", keep='first'), left_on = "rosapcode", right_on = "sap_id", how = "left")
+    result = data.join(
+        locations_data.select(["sap_id", "name"]).unique(subset="sap_id", keep="first"),
+        left_on="rosapcode",
+        right_on="sap_id",
+        how="left",
+    )
     # print('printing columns')
     # print(result.columns)
     return result.select(["rosapcode", "name"]).to_dicts()
 
+
 async def current_month_frequent_dryout_ros(data):
     datetime_condition = ""
     if data.start_date and data.end_date:
-        datetime_condition = f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+        datetime_condition = (
+            f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+        )
 
-    where_condition = ''' interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    where_condition = """ interlock_name = 'Dry Out Each Indent Wise MainFlow'
                                 AND location_name != '' AND  indent_status != 'Cancelled' 
                                 AND (workflow_datetime >= DATE_TRUNC('month', CURRENT_DATE)
                                     AND workflow_datetime < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
-                            ) ''' + datetime_condition
+                            ) """ + datetime_condition
 
-    dry_out_query = f'''WITH unique_sap_ids AS (
+    dry_out_query = f"""WITH unique_sap_ids AS (
                               SELECT location_name, sap_id, DATE(workflow_datetime) AS workflow_date
                               FROM alerts
                               WHERE {where_condition}
@@ -1195,7 +1328,7 @@ async def current_month_frequent_dryout_ros(data):
                             FROM monthly_sap_count
                             WHERE total_count > 1
                             GROUP BY location_name, sap_id
-                            ORDER BY "Total_Count" DESC '''
+                            ORDER BY "Total_Count" DESC """
 
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
@@ -1205,24 +1338,29 @@ async def current_month_frequent_dryout_ros(data):
     # dryout_resp = await function(
     #     query=dry_out_query
     # )
-    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dry_out_query, limit=0)
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=dry_out_query, limit=0
+    )
     dryout_resp = dryout_resp.get("data", [])
 
     return dryout_resp
 
+
 async def current_month_frequent_drout_terminals(data):
     datetime_condition = ""
     if data.start_date and data.end_date:
-        datetime_condition = f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+        datetime_condition = (
+            f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+        )
 
-    where_condition = ''' interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    where_condition = """ interlock_name = 'Dry Out Each Indent Wise MainFlow'
                                     AND location_name != '' AND  indent_status != 'Cancelled' 
                                     AND (workflow_datetime >= DATE_TRUNC('month', CURRENT_DATE)
                                         AND workflow_datetime < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
                                     AND category != ''
-                                ) ''' + datetime_condition
+                                ) """ + datetime_condition
 
-    dry_out_query = f'''WITH unique_terminal_plant_ids AS (
+    dry_out_query = f"""WITH unique_terminal_plant_ids AS (
                           SELECT location_name, terminal_plant_id, category, DATE(workflow_datetime) AS workflow_date
                           FROM alerts
                           WHERE {where_condition}
@@ -1237,7 +1375,7 @@ async def current_month_frequent_drout_terminals(data):
                         FROM monthly_sap_count
                         WHERE total_count > 1
                         GROUP BY location_name, terminal_plant_id, category
-                        ORDER BY "Total_Count" DESC '''
+                        ORDER BY "Total_Count" DESC """
 
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
@@ -1247,9 +1385,12 @@ async def current_month_frequent_drout_terminals(data):
     # dryout_resp = await function(
     #     query=dry_out_query
     # )
-    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dry_out_query, limit=0)
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=dry_out_query, limit=0
+    )
     dryout_resp = dryout_resp.get("data", [])
     return dryout_resp
+
 
 # async def get_atg_ack(sap_id: str, product_code: str):
 #     to_day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
@@ -1258,16 +1399,16 @@ async def current_month_frequent_drout_terminals(data):
 #             f"""and sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
 #             f"""and Recptentrydate::DATE = '{to_day}'"""
 #     query = f"""
-#         SELECT trd.Site_id, 
-#                ms.erp_code AS sap_ro_code, 
-#                trd.Tank_no, 
-#                trd.Product_no, 
+#         SELECT trd.Site_id,
+#                ms.erp_code AS sap_ro_code,
+#                trd.Tank_no,
+#                trd.Product_no,
 #                trd.Product_no as item_name,
 #                trd.Recptentrydate
 #         FROM "HPCL_HOS".tr_delivery_data trd
-#         JOIN "HPCL_HOS".ms_site ms 
+#         JOIN "HPCL_HOS".ms_site ms
 #             ON trd.site_id = ms.site_id
-#         WHERE trd.enable = true 
+#         WHERE trd.enable = true
 #             AND trd.net_volume > 0
 #             AND ms.erp_code = '{sap_id}'
 # --             AND trd.Product_no = '{product_code}'
@@ -1309,6 +1450,7 @@ async def current_month_frequent_drout_terminals(data):
 #     # print("atg_resp: ", atg_resp)
 #     return atg_resp.to_dict(orient='records')
 
+
 async def get_atg_ack(sap_id: str, product_code: str):
     """
     Fetches today's ATG acknowledgment records for a given SAP RO code
@@ -1331,18 +1473,23 @@ async def get_atg_ack(sap_id: str, product_code: str):
             AND item_name = '{product_code}'
             AND recptentrydate::DATE = '{to_day}'
         """
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("hpcl_ceg", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+
     atg_resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     atg_resp = pd.DataFrame(atg_resp)
 
     if atg_resp.empty:
         return []
-    return atg_resp.to_dict(orient='records')
+    return atg_resp.to_dict(orient="records")
+
 
 async def update_dry_out_from_cris(records):
     records = pd.DataFrame(records)
@@ -1358,27 +1505,32 @@ async def update_dry_out_from_cris(records):
     # dryout_resp = await function(
     #     query=query
     # )
-    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=query, limit=0
+    )
     dryout_resp = dryout_resp.get("data", [])
     dryout_resp = pd.DataFrame(dryout_resp)
     dryout_resp = dryout_resp.astype(str)
     dryout_resp = dryout_resp.drop_duplicates(subset=["rosapcode", "product_code"])
 
     final_resp = pd.merge(
-        records, dryout_resp,
+        records,
+        dryout_resp,
         left_on=["rosapcode", "product_code"],
         right_on=["rosapcode", "product_code"],
-        how='outer', indicator=True
+        how="outer",
+        indicator=True,
     )
-    right_df = final_resp[final_resp['_merge'] == 'right_only']
+    right_df = final_resp[final_resp["_merge"] == "right_only"]
     # print(right_df)
-    for right in right_df.to_dict(orient='records'):
+    for right in right_df.to_dict(orient="records"):
         query = f"""update alerts set mark_as_false=false where alert_status != 'Close' and sap_id = '{right["rosapcode"]}' and product_code = '{right["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
         await hpcl_ceg_model.Alerts.update_by_query(query)
 
-    for both in final_resp[final_resp['_merge'] == 'both'].to_dict(orient='records'):
+    for both in final_resp[final_resp["_merge"] == "both"].to_dict(orient="records"):
         query = f"""update alerts set mark_as_false=true where alert_status != 'Close' and sap_id = '{both["rosapcode"]}' and product_code = '{both["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
         await hpcl_ceg_model.Alerts.update_by_query(query)
+
 
 async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
     # print(f"alert_id: {alert_id} sap_id: {sap_id} product_code: {product_code}")
@@ -1394,16 +1546,20 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
             # print(f"update query for atg: {query}")
             await hpcl_ceg_model.Alerts.update_by_query(query)
 
-async def get_atg_ack_count(dry_out_in_days='1'):
+
+async def get_atg_ack_count(dry_out_in_days="1"):
     to_day = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
-    query = (f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
-             f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'")
+    query = (
+        f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+        f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'"
+    )
     data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
     # print("Data: ", data)
     if data.get("data", []):
         data = data.get("data", [])
         return data[0].get("count", 0)
     return 0
+
 
 async def cris_product_mapping():
     product_mapping = {
@@ -1423,12 +1579,13 @@ async def cris_product_mapping():
         "2682000": "POWER 99",
         "2811000": "MS",
         "3912000": "TURBO",
-        "2816000": "POWER 99"
+        "2816000": "POWER 99",
     }
     return product_mapping
 
+
 async def dry_out_diff():
-    cris_query = f'''select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
+    cris_query = f"""select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
                         from (
                                 select site_id, fcc_code,product_grp item_name,count(distinct tank_no) tank_cnt, 
                                 rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no,
@@ -1448,20 +1605,29 @@ async def dry_out_diff():
                                 order by site_id, fcc_code, product_grp
                             ) result1
                             where result1.status in ('1', '2')
-            '''
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "cris", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            """
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("cris", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     # cris_resp = await function(
     #     query=cris_query
     # )
-    cris_resp = await helpers.retry_async(function, retries=3, delay=10, query=cris_query)
-    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days, "
-                   f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
+    cris_resp = await helpers.retry_async(
+        function, retries=3, delay=10, query=cris_query
+    )
+    novex_query = (
+        f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days, "
+        f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'"
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("hpcl_ceg", "1")
+    )
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     # function = await charts_actions.charts_connection_vault_routing(
     #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -1477,21 +1643,25 @@ async def dry_out_diff():
 
     cris_resp = cris_resp.astype(str)
     novex_resp = novex_resp.astype(str)
-    cris_resp = cris_resp.drop_duplicates(subset=['item_name', 'rosapcode', 'status'])
-    novex_resp = novex_resp.drop_duplicates(subset=['product_code', 'sap_id', 'dry_out_in_days'])
+    cris_resp = cris_resp.drop_duplicates(subset=["item_name", "rosapcode", "status"])
+    novex_resp = novex_resp.drop_duplicates(
+        subset=["product_code", "sap_id", "dry_out_in_days"]
+    )
 
     resp = pd.merge(
-        cris_resp, novex_resp,
-        left_on=['item_name', 'rosapcode', 'status'],
-        right_on=['product_code', 'sap_id', 'dry_out_in_days'],
-        how='outer',
-        indicator=True
+        cris_resp,
+        novex_resp,
+        left_on=["item_name", "rosapcode", "status"],
+        right_on=["product_code", "sap_id", "dry_out_in_days"],
+        how="outer",
+        indicator=True,
     )
-    resp = resp[resp['_merge'] != 'both']
+    resp = resp[resp["_merge"] != "both"]
     resp.to_csv("/tmp/dryout_difference.csv", index=False)
     return resp
 
-async def dry_out_report(dry_out_in_days='1'):
+
+async def dry_out_report(dry_out_in_days="1"):
     alerts_query = f"""
             SELECT sap_id, indent_no, product_code, zone, region, sales_area, 
                    location_name, terminal_plant_id, indent_status, dry_out_in_days
@@ -1537,7 +1707,9 @@ async def dry_out_report(dry_out_in_days='1'):
     # combined_resp = await function(
     #     query=query_combined
     # )
-    combined_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query_combined, limit=0)
+    combined_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=query_combined, limit=0
+    )
     combined_resp = combined_resp.get("data", [])
     combined_resp = pd.DataFrame(combined_resp)
 
@@ -1564,24 +1736,32 @@ async def dry_out_report(dry_out_in_days='1'):
     # sales_resp = await function(
     #     query=query_sales
     # )
-    sales_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query_sales, limit=0)
+    sales_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=query_sales, limit=0
+    )
     sales_resp = sales_resp.get("data", [])
     sales_resp = pd.DataFrame(sales_resp)
 
     final_df = alerts_resp.merge(
         combined_resp,
-        left_on=['sap_id', 'indent_no', 'product_code'],
-        right_on=['DEALER_CODE', 'INDENT_NO', 'PRODUCT_CODE'],
-        how='left'
+        left_on=["sap_id", "indent_no", "product_code"],
+        right_on=["DEALER_CODE", "INDENT_NO", "PRODUCT_CODE"],
+        how="left",
     ).merge(
         sales_resp,
-        left_on=['sap_id', 'product_code'],
-        right_on=['rosapcode', 'item_name_code'],
-        how='left'
+        left_on=["sap_id", "product_code"],
+        right_on=["rosapcode", "item_name_code"],
+        how="left",
     )
-    final_df = final_df.sort_values(by="LOADED_ON", ascending=True).groupby("INDENT_NO").first().reset_index()
+    final_df = (
+        final_df.sort_values(by="LOADED_ON", ascending=True)
+        .groupby("INDENT_NO")
+        .first()
+        .reset_index()
+    )
     # print(final_df)
     return final_df.to_dict(orient="records")
+
 
 async def get_dryout_aging(conditions):
     query = f"""WITH distinct_alerts AS (
@@ -1608,21 +1788,24 @@ async def get_dryout_aging(conditions):
     resp = resp.get("data", [])
     return resp[0] if resp else {}
 
+
 async def get_ro_count_less_50(condition):
-    query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight "
-             f"FROM PS.EDW_PRIMARY_SALES_FACT "
-             f"WHERE "
-             f"INVOICE_DT >= CURDATE() - INTERVAL 30 DAY "
-             f"GROUP BY CUST_CD "
-             f"HAVING Total_Net_Weight < 50;")
-    creds = credential_loader.get_credentials('TIBCO')
+    query = (
+        f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight "
+        f"FROM PS.EDW_PRIMARY_SALES_FACT "
+        f"WHERE "
+        f"INVOICE_DT >= CURDATE() - INTERVAL 30 DAY "
+        f"GROUP BY CUST_CD "
+        f"HAVING Total_Net_Weight < 50;"
+    )
+    creds = credential_loader.get_credentials("TIBCO")
     params = {
-        "host": creds['host'],
-        "database": creds['database'],
-        "user": creds['user'],
-        "password": creds['password'],
-        "port": creds['port'],
-        "connection_type": "mssql"
+        "host": creds["host"],
+        "database": creds["database"],
+        "user": creds["user"],
+        "password": creds["password"],
+        "port": creds["port"],
+        "connection_type": "mssql",
     }
     try:
         conn = get_db_connection(params)
@@ -1632,15 +1815,19 @@ async def get_ro_count_less_50(condition):
         columns = [column[0] for column in cursor.description]
         data = pd.DataFrame.from_records(data, columns=columns)
         if data.empty:
-            data = pd.DataFrame(columns=['CUST_CD'])
+            data = pd.DataFrame(columns=["CUST_CD"])
     except Exception as ex:
-        print(f"Exception while fetching data from TIBCO: {ex}\nTraceback: {traceback.format_exc()}")
-        data = pd.DataFrame(columns=['CUST_CD'])
-    data['CUST_CD'] = data['CUST_CD'].astype(str)
+        print(
+            f"Exception while fetching data from TIBCO: {ex}\nTraceback: {traceback.format_exc()}"
+        )
+        data = pd.DataFrame(columns=["CUST_CD"])
+    data["CUST_CD"] = data["CUST_CD"].astype(str)
 
-    query = (f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} "
-             f"and progress_rate = '1' and alert_status != 'Close' "
-             f"order by sap_id, created_at asc")
+    query = (
+        f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} "
+        f"and progress_rate = '1' and alert_status != 'Close' "
+        f"order by sap_id, created_at asc"
+    )
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1654,15 +1841,18 @@ async def get_ro_count_less_50(condition):
     resp = pd.DataFrame(resp)
     if resp.empty:
         resp = pd.DataFrame({"sap_id": [], "created_at": []})
-    resp['sap_id'] = resp['sap_id'].astype(str)
+    resp["sap_id"] = resp["sap_id"].astype(str)
 
     resp = pd.merge(
-        data.drop_duplicates(subset=['CUST_CD']),
-        resp.drop_duplicates(subset=['sap_id']),
-        left_on=['CUST_CD'], right_on=['sap_id'],
-        how='left', indicator=True
+        data.drop_duplicates(subset=["CUST_CD"]),
+        resp.drop_duplicates(subset=["sap_id"]),
+        left_on=["CUST_CD"],
+        right_on=["sap_id"],
+        how="left",
+        indicator=True,
     )
-    return len(resp[resp['_merge'] == 'both'])
+    return len(resp[resp["_merge"] == "both"])
+
 
 def get_db_connection(params):
     """
@@ -1673,36 +1863,43 @@ def get_db_connection(params):
         pyodbc connection
     """
     connection = mysql.connector.connect(
-        host=params['host'],
-        user=params['user'],
+        host=params["host"],
+        user=params["user"],
         passwd=params["password"],
-        port=params["port"]
-        #database=database
+        port=params["port"],
+        # database=database
     )
     return connection
 
+
 async def get_tar_analysis(condition):
-    query = (f"SELECT DISTINCT ON (rosapcode) "
-             f"rosapcode, "
-             f"exposure, "
-             f"CASE "
-             f"WHEN exposure >= 0 AND exposure <= 2500000 THEN 1 "
-             f"WHEN exposure > 2500000 AND exposure <= 5000000 THEN 2 "
-             f"WHEN exposure > 5000000 AND exposure <= 7500000 THEN 3 "
-             f"ELSE 4 "
-             f"END AS category "
-             f"""FROM "HPCL_HOS".customer_balance;""")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "cris", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    query = (
+        f"SELECT DISTINCT ON (rosapcode) "
+        f"rosapcode, "
+        f"exposure, "
+        f"CASE "
+        f"WHEN exposure >= 0 AND exposure <= 2500000 THEN 1 "
+        f"WHEN exposure > 2500000 AND exposure <= 5000000 THEN 2 "
+        f"WHEN exposure > 5000000 AND exposure <= 7500000 THEN 3 "
+        f"ELSE 4 "
+        f"END AS category "
+        f"""FROM "HPCL_HOS".customer_balance;"""
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("cris", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     # cust_resp = await function(
     #     query=query
     # )
     cust_resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     cust_resp = pd.DataFrame(cust_resp)
-    cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
+    cust_resp["rosapcode"] = cust_resp["rosapcode"].astype(str)
 
     query = f"""select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' 
                 and indent_status not in ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') 
@@ -1720,22 +1917,25 @@ async def get_tar_analysis(condition):
     resp = pd.DataFrame(resp)
     if resp.empty:
         resp = pd.DataFrame({"sap_id": [], "created_at": []})
-    resp['sap_id'] = resp['sap_id'].astype(str)
+    resp["sap_id"] = resp["sap_id"].astype(str)
 
     resp = pd.merge(
-        cust_resp.drop_duplicates(subset=['rosapcode']),
-        resp.drop_duplicates(subset=['sap_id']),
-        left_on=['rosapcode'], right_on=['sap_id'],
-        how='left', indicator=True
+        cust_resp.drop_duplicates(subset=["rosapcode"]),
+        resp.drop_duplicates(subset=["sap_id"]),
+        left_on=["rosapcode"],
+        right_on=["sap_id"],
+        how="left",
+        indicator=True,
     )
 
     _dict = {
-        "less_1_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 1)]),
-        "less_2_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 2)]),
-        "less_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 3)]),
-        "greater_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 4)])
+        "less_1_cr": len(resp[(resp["_merge"] == "both") & (resp["category"] == 1)]),
+        "less_2_cr": len(resp[(resp["_merge"] == "both") & (resp["category"] == 2)]),
+        "less_5_cr": len(resp[(resp["_merge"] == "both") & (resp["category"] == 3)]),
+        "greater_5_cr": len(resp[(resp["_merge"] == "both") & (resp["category"] == 4)]),
     }
     return _dict
+
 
 async def get_tt_counts(condition):
     query = f"""select truck_regnno, substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" """
@@ -1747,11 +1947,13 @@ async def get_tt_counts(condition):
     # dealer_tt_resp = await function(
     #     query=query
     # )
-    dealer_tt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    dealer_tt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=query, limit=0
+    )
     dealer_tt_resp = dealer_tt_resp.get("data", [])
     dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
-    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].fillna("")
-    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
+    dealer_tt_resp["dealer_code"] = dealer_tt_resp["dealer_code"].fillna("")
+    dealer_tt_resp["dealer_code"] = dealer_tt_resp["dealer_code"].astype(str)
 
     # query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
@@ -1778,7 +1980,7 @@ async def get_tt_counts(condition):
         if len(locn_code) == 1:
             locn_code = f"AND \"LOCN_CODE\" in ('{locn_code[0]}')"
         else:
-            locn_code = f"AND \"LOCN_CODE\" in {tuple(locn_code)}"
+            locn_code = f'AND "LOCN_CODE" in {tuple(locn_code)}'
     else:
         locn_code = ""
     query = f"""WITH LatestR3 AS (
@@ -1843,79 +2045,109 @@ async def get_tt_counts(condition):
         dealer_tt_resp = pd.DataFrame({"truck_regnno": [], "dealer_code": []})
 
     resp = pd.merge(
-        dealer_tt_resp.drop_duplicates(subset=['truck_regnno']),
-        resp.drop_duplicates(subset=['TRUCK_REGNO']),
-        left_on=['truck_regnno'], right_on=['TRUCK_REGNO'],
-        how='left', indicator=True
+        dealer_tt_resp.drop_duplicates(subset=["truck_regnno"]),
+        resp.drop_duplicates(subset=["TRUCK_REGNO"]),
+        left_on=["truck_regnno"],
+        right_on=["TRUCK_REGNO"],
+        how="left",
+        indicator=True,
     )
     _dict = {
-        "dealer_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] != '')]),
-        "transport_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] == '')])
+        "dealer_tt": len(
+            resp[(resp["_merge"] == "both") & (resp["dealer_code"] != "")]
+        ),
+        "transport_tt": len(
+            resp[(resp["_merge"] == "both") & (resp["dealer_code"] == "")]
+        ),
     }
 
     return _dict
 
-async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+
+async def retail_tar(
+    filters, cross_filters, drill_state="", time_grain="", resp_format=""
+):
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
-    base_path = os.path.join(os.path.dirname(helpers.__file__), '..', 'orchestrator', 'masterdata')
-    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
-                                                                            and cross_filter.get("value") and
-                                                                            cross_filter["value"].lower() in ['*',
-                                                                                                              '_empty',
-                                                                                                              'all'])]
+    base_path = os.path.join(
+        os.path.dirname(helpers.__file__), "..", "orchestrator", "masterdata"
+    )
+    cross_filters = [
+        cross_filter
+        for cross_filter in cross_filters
+        if not (
+            cross_filter.get("cond") in ["=", "equals"]
+            and cross_filter.get("value")
+            and cross_filter["value"].lower() in ["*", "_empty", "all"]
+        )
+    ]
     # Filtering filters
-    filters = [filter_cond for filter_cond in filters
-               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
-                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+    filters = [
+        filter_cond
+        for filter_cond in filters
+        if not (
+            filter_cond.get("cond") in ["=", "equals"]
+            and filter_cond.get("value")
+            and filter_cond["value"].lower() in ["*", "_empty", "all"]
+        )
+    ]
     sales_area_df = pd.read_csv(f"{base_path}/Retail_SalesArea_mapping.csv").astype(str)
     region_df = pd.read_csv(f"{base_path}/Retail_Region_mapping.csv").astype(str)
-    region_df['JDE_RO_CD'] = region_df['JDE_RO_CD'].apply(lambda x: x[0]+'0'+x[1:])
+    region_df["JDE_RO_CD"] = region_df["JDE_RO_CD"].apply(lambda x: x[0] + "0" + x[1:])
     drill_order = ["zone", "region", "salesarea", "site_name"]
 
     cross_filters = cross_filters + filters
     for cond in cross_filters:
-        cond['key'] = cond['key'].strip('"')
-        if cond['key'] == 'region':
-            df = region_df[region_df['JDE_RO_NM'] == cond['value']]
-            cond['value'] = list(df['JDE_RO_CD'].values)
-            cond['cond'] = 'one-off'
-        elif cond['key'] == 'salesarea':
-            df = sales_area_df[sales_area_df['ORG_RO_NM'] == cond['value']]
-            cond['value'] = list(df['ORG_SA_CD'].values)
-            cond['cond'] = 'one-off'
+        cond["key"] = cond["key"].strip('"')
+        if cond["key"] == "region":
+            df = region_df[region_df["JDE_RO_NM"] == cond["value"]]
+            cond["value"] = list(df["JDE_RO_CD"].values)
+            cond["cond"] = "one-off"
+        elif cond["key"] == "salesarea":
+            df = sales_area_df[sales_area_df["ORG_RO_NM"] == cond["value"]]
+            cond["value"] = list(df["ORG_SA_CD"].values)
+            cond["cond"] = "one-off"
 
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
-    group_by_key = "zone" if not drill_state else drill_order[drill_order.index(drill_state)+1]
-    query = f''' select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance '''
+    group_by_key = (
+        "zone" if not drill_state else drill_order[drill_order.index(drill_state) + 1]
+    )
+    query = f""" select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance """
     if clause:
         if isinstance(clause, str):
             clause = [clause]
         query += f' where {" AND ".join(clause)}'
     if group_by_key:
         query += f" GROUP BY {group_by_key}"
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("cris", "2")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "2"
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     # resp = await function(query=query)
     resp = await helpers.retry_async(function, retries=3, delay=10, query=query)
     if not resp:
         return []
     df = pd.DataFrame(resp)
-    df = df[df['amount'] != 0]
-    if 'region' in df.columns:
-        df = df.merge(region_df, how='left', left_on='region', right_on='JDE_RO_CD')
-        df = df[['amount', 'JDE_RO_NM']]
-        df = df.rename(columns={'JDE_RO_NM': 'region'})
+    df = df[df["amount"] != 0]
+    if "region" in df.columns:
+        df = df.merge(region_df, how="left", left_on="region", right_on="JDE_RO_CD")
+        df = df[["amount", "JDE_RO_NM"]]
+        df = df.rename(columns={"JDE_RO_NM": "region"})
         df = df.groupby("region", as_index=False).sum()
-    if 'salesarea' in df.columns:
-        df = df.merge(sales_area_df, how='left', left_on='salesarea', right_on='ORG_SA_CD')
-        df = df[['amount', 'ORG_RO_NM']]
-        df = df.rename(columns={'ORG_RO_NM': 'salesarea'})
+    if "salesarea" in df.columns:
+        df = df.merge(
+            sales_area_df, how="left", left_on="salesarea", right_on="ORG_SA_CD"
+        )
+        df = df[["amount", "ORG_RO_NM"]]
+        df = df.rename(columns={"ORG_RO_NM": "salesarea"})
         df = df.groupby("salesarea", as_index=False).sum()
     if not df.empty:
-        df['amount'] = df['amount'].astype(int)
-    return df.to_dict(orient='records')
+        df["amount"] = df["amount"].astype(int)
+    return df.to_dict(orient="records")
+
 
 async def get_dryout_aging_data():
     query = f"""WITH distinct_alerts AS (
@@ -1938,14 +2170,24 @@ async def get_dryout_aging_data():
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
-    resp.rename(columns={
-        "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE", "region": "REGION",
-        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE", "age_category": "AGE_CATEGORY",
-        "terminal_plant_id": "SUPPLY_PLANT_ID", "terminal_plant_name": "SUPPLY_PLANT_NAME",
-        "dry_out_in_days": "DRY_OUT_IN_DAYS"
-    }, inplace=True)
-    del resp['created_at']
-    return resp.to_dict(orient='records')
+    resp.rename(
+        columns={
+            "sap_id": "DEALER_CODE",
+            "location_name": "LOCATION_NAME",
+            "zone": "ZONE",
+            "region": "REGION",
+            "indent_status": "INDENT_STATUS",
+            "product_code": "PRODUCT_CODE",
+            "age_category": "AGE_CATEGORY",
+            "terminal_plant_id": "SUPPLY_PLANT_ID",
+            "terminal_plant_name": "SUPPLY_PLANT_NAME",
+            "dry_out_in_days": "DRY_OUT_IN_DAYS",
+        },
+        inplace=True,
+    )
+    del resp["created_at"]
+    return resp.to_dict(orient="records")
+
 
 async def generate_dry_out_report(records):
     records = pd.DataFrame(records)
@@ -1958,81 +2200,142 @@ async def generate_dry_out_report(records):
     # location_data = await function(
     #     query=query
     # )
-    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(
+        query=query, limit=0
+    )
     location_data = location_data.get("data", [])
     location_data = pd.DataFrame(location_data)
-    records['rosapcode'] = records['rosapcode'].astype(str)
-    records['status'] = records['status'].astype(str)
-    location_data['sap_id'] = location_data['sap_id'].astype(str)
+    records["rosapcode"] = records["rosapcode"].astype(str)
+    records["status"] = records["status"].astype(str)
+    location_data["sap_id"] = location_data["sap_id"].astype(str)
 
     records = pd.merge(
         records,
-        location_data.drop_duplicates(subset=['sap_id'])[['sap_id', 'zone', 'region', 'sales_area', 'name', 'terminal_plant_id', 'category']],
-        left_on='rosapcode', right_on='sap_id', how='left'
+        location_data.drop_duplicates(subset=["sap_id"])[
+            [
+                "sap_id",
+                "zone",
+                "region",
+                "sales_area",
+                "name",
+                "terminal_plant_id",
+                "category",
+            ]
+        ],
+        left_on="rosapcode",
+        right_on="sap_id",
+        how="left",
     )
     records.rename(
-        columns={"name": "location_name", "status": "dry_out_in_days", "product_no": "product_code"},
-        inplace=True)
-    records = records[[
-        'zone', 'region', 'sales_area', 'sap_id', 'location_name', 'terminal_plant_id',
-        'tank_no', 'capacity', 'product_code', 'dry_out_in_days', 'avgsales_7days',
-        'avgsales_daily', 'category', 'tank_capacity'
-    ]]
-    records['dryout_start_datetime'] = urdhva_base.utilities.get_present_time()
-    records['dryout_end_datetime'] = None
-    records['dryout_date'] = urdhva_base.utilities.get_present_time().replace(hour=0, minute=0, second=0, microsecond=0)
-    records['alert_status'] = 'Open'
-    await hpcl_ceg_model.DryOutAlertReport.bulk_update(records.to_dict(orient='records'), upsert=True)
+        columns={
+            "name": "location_name",
+            "status": "dry_out_in_days",
+            "product_no": "product_code",
+        },
+        inplace=True,
+    )
+    records = records[
+        [
+            "zone",
+            "region",
+            "sales_area",
+            "sap_id",
+            "location_name",
+            "terminal_plant_id",
+            "tank_no",
+            "capacity",
+            "product_code",
+            "dry_out_in_days",
+            "avgsales_7days",
+            "avgsales_daily",
+            "category",
+            "tank_capacity",
+        ]
+    ]
+    records["dryout_start_datetime"] = urdhva_base.utilities.get_present_time()
+    records["dryout_end_datetime"] = None
+    records["dryout_date"] = urdhva_base.utilities.get_present_time().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    records["alert_status"] = "Open"
+    await hpcl_ceg_model.DryOutAlertReport.bulk_update(
+        records.to_dict(orient="records"), upsert=True
+    )
 
     query = f"SELECT id, sap_id, product_code from dry_out_alert_report where alert_status='Open'"
-    dry_out_history = await hpcl_ceg_model.DryOutAlertReport.get_aggr_data(query, limit=0)
-    dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in dry_out_history['data']}
-    dry_out_alert = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in records.to_dict(orient='records')}
-    closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
-    closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
+    dry_out_history = await hpcl_ceg_model.DryOutAlertReport.get_aggr_data(
+        query, limit=0
+    )
+    dry_out_hist_data = {
+        f"{rec['sap_id']}_{rec['product_code']}": rec for rec in dry_out_history["data"]
+    }
+    dry_out_alert = {
+        f"{rec['sap_id']}_{rec['product_code']}": rec
+        for rec in records.to_dict(orient="records")
+    }
+    closed_alerts = list(
+        set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys()))
+    )
+    closed_ids = list({dry_out_hist_data[key]["id"] for key in closed_alerts})
     for index in range(0, len(closed_ids), 1000):
-        ids = [f"{key}" for key in closed_ids[index:index + 1000]]
+        ids = [f"{key}" for key in closed_ids[index : index + 1000]]
         conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
-        query = (f"Update dry_out_alert_report set "
-                 f"alert_status='Close',dryout_end_datetime='{urdhva_base.utilities.get_present_time()}' "
-                 f"where {' AND '.join(conditions)}")
+        query = (
+            f"Update dry_out_alert_report set "
+            f"alert_status='Close',dryout_end_datetime='{urdhva_base.utilities.get_present_time()}' "
+            f"where {' AND '.join(conditions)}"
+        )
         await hpcl_ceg_model.DryOutAlertReport.update_by_query(query)
 
-async def get_previous_day_carry_fwd_indent(today=None, data='count'):
-    if not today:
-        today = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    if data == 'count':
-        query = (f"SELECT COUNT(*) AS cf_indents, "
-                 f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
-                 f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
-                 f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' ")
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-        return data.get('data', [])[0] if data.get('data', []) else {}
-    else:
-        query = (f"""select sap_id as "SAP ID", terminal_plant_id as "Terminal Plant Id", indent_no as "Indent No", """
-                 f"""prod_reqd_dt as "Prod Req Date", dry_out_in_days as "DryOut Days", category as "Category" """ 
-                 f"""from carry_fwd_indent where created_at::DATE = '{today}' """)
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-        return data.get('data', [])
 
-async def get_closed_outlet(conditions=None, dry_out_in_days='1'):
+async def get_previous_day_carry_fwd_indent(today=None, data="count"):
+    if not today:
+        today = (
+            datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
+        ).strftime("%Y-%m-%d")
+    if data == "count":
+        query = (
+            f"SELECT COUNT(*) AS cf_indents, "
+            f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
+            f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+            f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' "
+        )
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        return data.get("data", [])[0] if data.get("data", []) else {}
+    else:
+        query = (
+            f"""select sap_id as "SAP ID", terminal_plant_id as "Terminal Plant Id", indent_no as "Indent No", """
+            f"""prod_reqd_dt as "Prod Req Date", dry_out_in_days as "DryOut Days", category as "Category" """
+            f"""from carry_fwd_indent where created_at::DATE = '{today}' """
+        )
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        return data.get("data", [])
+
+
+async def get_closed_outlet(conditions=None, dry_out_in_days="1"):
     query = f"""select erp_code from "HPCL_HOS"."ms_site" where tempclose = true"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "cris", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("cris", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     # site_data = await function(
     #     query=query
     # )
     site_data = await helpers.retry_async(function, retries=3, delay=10, query=query)
     site_data = pd.DataFrame(site_data)
 
-    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
-    
+    query = (
+        f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+        f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"
+    )
+
     if conditions:
-        query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and {conditions} and alert_status!='Close'")
+        query = f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and {conditions} and alert_status!='Close'"
 
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
@@ -2040,71 +2343,131 @@ async def get_closed_outlet(conditions=None, dry_out_in_days='1'):
     close_outlet = pd.merge(
         site_data.drop_duplicates(),
         alert_data.drop_duplicates(),
-        left_on='erp_code', right_on='sap_id',
-        how='inner'
+        left_on="erp_code",
+        right_on="sap_id",
+        how="inner",
     )
     return len(close_outlet)
+
 
 async def trigger_camunda_workflow(alert_data):
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
-    camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                alert_section="RO")
-    alert_level = await ro_analysis.get_ro_levels(
-        bu=alert_data['bu'], violation_type=alert_data.get('violation_type', ''),
-        sap_id=str(alert_data['sap_id'])
+    camunda_url = await helpers.get_camunda_url(
+        bu=alert_data["bu"], sap_id=alert_data["sap_id"], alert_section="RO"
     )
-    payload = {"businessKey": alert_data['unique_id'],
-               "variables": {"alert_id": {"value": alert_data['id'], "type": "String"},
-                             "interlock_name": {"value": alert_data['interlock_name'], "type": "String"},
-                             "interlock_id": {"value": "", "type": "String"},
-                             "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
-                             "location_type": {"value": alert_data['bu'], "type": "String"},
-                             "sap_id": {"value": alert_data['sap_id'], "type": "String"},
-                             "sop_id": {"value": alert_data['sop_id'], "type": "String"},
-                             "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
-                             "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
-                             "workflow_datetime": {"value": datetime.datetime.now(datetime.UTC)
-                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"},
-                             "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
-                             "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''),
-                                                    "type": "String"},
-                             "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''),
-                                                     "type": "String"},
-                             "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
-                             "va_level": {"value": alert_level, "type": "String"},
-                             "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"},
-                             "cause_effect": {"value": alert_data.get('Cause_Effect', ''), "type": "String"},
-                             # Added for TAS use
-                             "alert_section": {"value": alert_data.get('alert_section', ''), "type": "String"},
-                             # Added for TAS use
-                             "cause_sop_id": {"value": alert_data.get('cause_sop_id', ''), "type": "String"},
-                             # Added for TAS use
-                             "effect_sop_id": {"value": alert_data.get('effect_sop_id', ''), "type": "String"},
-                             # Added for TAS use
-                             "device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
-                             # Added for TAS use
-                             "device_name": {"value": alert_data.get('device_name', ''), "type": "String"},
-                             # Added for TAS use
-                             "device_type": {"value": alert_data.get('device_type', ''), "type": "String"}
-                             # Added for TAS use
-                             }}
+    alert_level = await ro_analysis.get_ro_levels(
+        bu=alert_data["bu"],
+        violation_type=alert_data.get("violation_type", ""),
+        sap_id=str(alert_data["sap_id"]),
+    )
+    payload = {
+        "businessKey": alert_data["unique_id"],
+        "variables": {
+            "alert_id": {"value": alert_data["id"], "type": "String"},
+            "interlock_name": {"value": alert_data["interlock_name"], "type": "String"},
+            "interlock_id": {"value": "", "type": "String"},
+            "location_device_id": {
+                "value": alert_data.get("device_id", ""),
+                "type": "String",
+            },
+            "location_type": {"value": alert_data["bu"], "type": "String"},
+            "sap_id": {"value": alert_data["sap_id"], "type": "String"},
+            "sop_id": {"value": alert_data["sop_id"], "type": "String"},
+            "dealer_id": {"value": alert_data.get("dealer_id", ""), "type": "String"},
+            "product_code": {
+                "value": str(alert_data.get("product_code", "")),
+                "type": "String",
+            },
+            "workflow_datetime": {
+                "value": datetime.datetime.now(datetime.UTC).strftime(
+                    "%Y-%m-%dT%H:%M:%S.%f"
+                )[:-3]
+                + "Z",
+                "type": "String",
+            },
+            "indent_no": {"value": alert_data.get("indent_no", ""), "type": "String"},
+            "indent_raised_date": {
+                "value": alert_data.get("indent_raised_date", ""),
+                "type": "String",
+            },
+            "terminal_plant_name": {
+                "value": alert_data.get("terminal_plant_name", ""),
+                "type": "String",
+            },
+            "prod_reqd_dt": {
+                "value": alert_data.get("prod_reqd_dt", ""),
+                "type": "String",
+            },
+            "va_level": {"value": alert_level, "type": "String"},
+            "terminal_plant_id": {
+                "value": alert_data.get("terminal_plant_id", ""),
+                "type": "String",
+            },
+            "cause_effect": {
+                "value": alert_data.get("Cause_Effect", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+            "alert_section": {
+                "value": alert_data.get("alert_section", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+            "cause_sop_id": {
+                "value": alert_data.get("cause_sop_id", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+            "effect_sop_id": {
+                "value": alert_data.get("effect_sop_id", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+            "device_id": {"value": alert_data.get("device_id", ""), "type": "String"},
+            # Added for TAS use
+            "device_name": {
+                "value": alert_data.get("device_name", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+            "device_type": {
+                "value": alert_data.get("device_type", ""),
+                "type": "String",
+            },
+            # Added for TAS use
+        },
+    }
     interlock_name = interlock_mapping.get_interlock_name(
-        bu=alert_data['bu'], interlock_name=alert_data['interlock_name'], sop_id=alert_data['sop_id'])
-    workflowid = interlock_name.get("workflow_name") or interlock_name.get("interlock_name") or None
+        bu=alert_data["bu"],
+        interlock_name=alert_data["interlock_name"],
+        sop_id=alert_data["sop_id"],
+    )
+    workflowid = (
+        interlock_name.get("workflow_name")
+        or interlock_name.get("interlock_name")
+        or None
+    )
     workflow_id = interlock_mapping.fmt_il_name(workflowid)
-    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+    await Camunda().start_workflow(
+        payload=payload, workflowId=workflow_id, camunda_url=camunda_url
+    )
     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    await redis_ins.hset("alert_camunda_url", str(alert_data['id']), camunda_url)
+    await redis_ins.hset("alert_camunda_url", str(alert_data["id"]), camunda_url)
 
-async def get_nozzle_sales(conditions=None, dry_out_in_days='1'):
-    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
-    
+
+async def get_nozzle_sales(conditions=None, dry_out_in_days="1"):
+    query = (
+        f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+        f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"
+    )
+
     if conditions:
-        query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-                 f"alert_status != 'Close' and {conditions}")
-        
+        query = (
+            f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+            f"alert_status != 'Close' and {conditions}"
+        )
+
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
     # print(alert_data)
@@ -2125,59 +2488,80 @@ async def get_nozzle_sales(conditions=None, dry_out_in_days='1'):
             )
             AND n.enable = true"""
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "cris", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.get("cris", "1")
+    )
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
     function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
     # site_data = await function(
     #     query=query
     # )
     site_data = await helpers.retry_async(function, retries=3, delay=10, query=query)
     site_data = pd.DataFrame(site_data)
     # print(site_data['erp_code'].unique().tolist())
-    return len(site_data['erp_code'].unique().tolist()) if 'erp_code' in site_data.columns else 0
+    return (
+        len(site_data["erp_code"].unique().tolist())
+        if "erp_code" in site_data.columns
+        else 0
+    )
+
 
 async def _get_distinct_plants(bu, zone):
     query = f"""select distinct sap_id from location_master where zone in {zone} and bu = '{bu}'"""
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     resp = pd.DataFrame(resp.get("data", []))
-    return resp['sap_id'].unique().tolist() if 'sap_id' in resp.columns else []
+    return resp["sap_id"].unique().tolist() if "sap_id" in resp.columns else []
+
 
 async def mark_as_false_for_potential_records(potential_records):
-    query = ("select id, sap_id, product_code from alerts where "
-             "interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
-             "mark_as_false = true and alert_status != 'Close' ")
+    query = (
+        "select id, sap_id, product_code from alerts where "
+        "interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+        "mark_as_false = true and alert_status != 'Close' "
+    )
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     resp = pd.DataFrame(resp.get("data", []))
     potential_records = potential_records.to_pandas()
     records = pd.merge(
-        left=resp.drop_duplicates(subset=['sap_id', 'product_code'], keep='first'),
-        right=potential_records, left_on=['sap_id', 'product_code'],
-        right_on=['rosapcode', 'product_no'], how='left', indicator=True
+        left=resp.drop_duplicates(subset=["sap_id", "product_code"], keep="first"),
+        right=potential_records,
+        left_on=["sap_id", "product_code"],
+        right_on=["rosapcode", "product_no"],
+        how="left",
+        indicator=True,
     )
-    records = records[records['_merge'] == 'both']
+    records = records[records["_merge"] == "both"]
     print("records: ", records)
-    del records['_merge']
-    for record in records.to_dict(orient='records'):
+    del records["_merge"]
+    for record in records.to_dict(orient="records"):
         # update_query = f"""update alerts set mark_as_false=false and dry_out_in_days = '{int(record["status"])}' where id = '{record["id"]}' """
-        update_query = f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        update_query = (
+            f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        )
         print("update_query: ", update_query)
         await hpcl_ceg_model.Alerts.update_by_query(update_query)
 
-async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
+
+async def remove_ro_not_available_in_cris(dry_out_in_days="1"):
     records = await dry_out_diff()
     records = records[
-        (records['_merge'] == 'right_only') &
-        (records['mark_as_false'].isin(["True", "TRUE", True])) &
-        (records['dry_out_in_days'] == str(dry_out_in_days))
+        (records["_merge"] == "right_only")
+        & (records["mark_as_false"].isin(["True", "TRUE", True]))
+        & (records["dry_out_in_days"] == str(dry_out_in_days))
     ]
     print("records: ", records)
-    for record in records.to_dict(orient='records'):
+    for record in records.to_dict(orient="records"):
         # update_query = f"""update alerts set mark_as_false=false and dry_out_in_days = '{int(record["status"])}' where id = '{record["id"]}' """
-        update_query = f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        update_query = (
+            f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        )
         print("update_query: ", update_query)
         await hpcl_ceg_model.Alerts.update_by_query(update_query)
+
 
 async def delete_with_retry(url, max_retries=3, backoff=3):
     for attempt in range(max_retries):
@@ -2186,21 +2570,28 @@ async def delete_with_retry(url, max_retries=3, backoff=3):
             if response.status_code in [200, 204, 404]:
                 return response
             else:
-                print(f"Attempt {attempt+1}: Unexpected response {response.status_code}: {response.text}")
+                print(
+                    f"Attempt {attempt+1}: Unexpected response {response.status_code}: {response.text}"
+                )
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             print(f"Attempt {attempt+1}: Timeout or connection error: {str(e)}")
         except Exception as e:
             print(f"Attempt {attempt+1}: Unknown error: {str(e)}")
         if attempt < max_retries - 1:
-            time.sleep(backoff * (attempt+1))  # Exponential backoff
+            time.sleep(backoff * (attempt + 1))  # Exponential backoff
     print(f"Failed to delete after {max_retries} attempts: {url}")
     return None
+
 
 async def is_ro_temporary_closed():
     try:
         query = """SELECT sap_id, tempclose FROM "HPCL_HOS".ms_site_temp_closed WHERE tempclose='true'"""
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+            connection_mapping.get("hpcl_ceg", "1")
+        )
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
 
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams
@@ -2221,21 +2612,22 @@ async def is_ro_temporary_closed():
                     f"AND temporary_close!='true'"
                 )
                 temp_ro_close_data = await hpcl_ceg_model.Alerts.get_all(
-                    urdhva_base.queryparams.QueryParams(q=q),
-                    resp_type='plain'
+                    urdhva_base.queryparams.QueryParams(q=q), resp_type="plain"
                 )
 
-                for data in temp_ro_close_data.get('data', []):
+                for data in temp_ro_close_data.get("data", []):
                     try:
-                        camunda_url = data['workflow_url']
-                        process_instance_id = data['workflow_instance_id']
+                        camunda_url = data["workflow_url"]
+                        process_instance_id = data["workflow_instance_id"]
                         instance_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
 
                         # Check if the instance exists
                         try:
                             resp = requests.get(instance_url, timeout=10)
                         except Exception as e_check:
-                            print(f"[{record['sap_id']}] Error checking instance: {str(e_check)}")
+                            print(
+                                f"[{record['sap_id']}] Error checking instance: {str(e_check)}"
+                            )
                             continue
 
                         instance_exists = resp.status_code == 200
@@ -2243,41 +2635,58 @@ async def is_ro_temporary_closed():
                         # If instance exists, try delete with retry
                         if instance_exists:
                             delete_response = await delete_with_retry(instance_url)
-                            if delete_response is None or delete_response.status_code not in [200, 204, 404]:
-                                print(f"[{record['sap_id']}] Camunda delete failed. Skipping alert update.")
+                            if (
+                                delete_response is None
+                                or delete_response.status_code not in [200, 204, 404]
+                            ):
+                                print(
+                                    f"[{record['sap_id']}] Camunda delete failed. Skipping alert update."
+                                )
                                 continue
-                            print(f"[{record['sap_id']}] Workflow deleted → {delete_response.status_code}: {delete_response.text}")
+                            print(
+                                f"[{record['sap_id']}] Workflow deleted → {delete_response.status_code}: {delete_response.text}"
+                            )
 
                         elif resp.status_code == 404:
                             print(f"[{record['sap_id']}] Instance already deleted.")
 
                         else:
-                            print(f"[{record['sap_id']}] Camunda API error: {resp.status_code}")
+                            print(
+                                f"[{record['sap_id']}] Camunda API error: {resp.status_code}"
+                            )
                             continue  # Do not update alert if unsure
 
                         # Now update the alert
                         await hpcl_ceg_model.Alerts(
                             **{
-                                "id": data['id'],
+                                "id": data["id"],
                                 "temporary_close": True,
-                                "closed_at": datetime.datetime.now(tz=datetime.timezone.utc),
+                                "closed_at": datetime.datetime.now(
+                                    tz=datetime.timezone.utc
+                                ),
                                 "alert_status": "Close",
                                 "alert_state": "Resolved",
                                 "indent_status": IndentStatus.TempClosed,
                             }
                         ).modify()
-                        print(f"[{record['sap_id']}] Alert {data['id']} marked as temporarily closed.")
+                        print(
+                            f"[{record['sap_id']}] Alert {data['id']} marked as temporarily closed."
+                        )
 
                     except Exception as e_inner:
-                        print(f"Error processing alert for sap_id={record['sap_id']}: {str(e_inner)}")
+                        print(
+                            f"Error processing alert for sap_id={record['sap_id']}: {str(e_inner)}"
+                        )
             except Exception as e_mid:
-                print(f"Error querying alerts for sap_id={record.get('sap_id')}: {str(e_mid)}")
+                print(
+                    f"Error querying alerts for sap_id={record.get('sap_id')}: {str(e_mid)}"
+                )
 
         # Batch process alerts
         batch_size = 50  # Control concurrency to avoid overload
         to_handle = [record for _, record in temporary_close_data.iterrows()]
         for i in range(0, len(to_handle), batch_size):
-            batch = [handle_single_alert(rec) for rec in to_handle[i:i+batch_size]]
+            batch = [handle_single_alert(rec) for rec in to_handle[i : i + batch_size]]
             await asyncio.gather(*batch)
 
     except Exception as e_outer:

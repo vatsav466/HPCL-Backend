@@ -1,6 +1,7 @@
 """
 Location master metadata for field-force filters (id/value pairs from ``location_master``).
 """
+
 from __future__ import annotations
 
 import asyncio

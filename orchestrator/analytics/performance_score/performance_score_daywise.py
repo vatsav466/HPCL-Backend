@@ -1,9 +1,6 @@
 import urdhva_base
 import json
-from datetime import datetime
 from decimal import Decimal
-from hpcl_ceg_model import PerformanceScoreHistory
-
 
 TAS_CATEGORIES = {
     "Safety_Interlocks",
@@ -29,10 +26,7 @@ def resolve_tas_with_categories(categories):
     if not tas or not tas.get("results"):
         return {"categories": []}
 
-    tas_categories = [
-        c for c in tas["results"]
-        if c.get("name") in TAS_CATEGORIES
-    ]
+    tas_categories = [c for c in tas["results"] if c.get("name") in TAS_CATEGORIES]
 
     return {
         "categories": [
@@ -124,10 +118,7 @@ async def performance_score_daywise_action(data):
             category = json.loads(category)
 
         # Extract ONLY TAS score
-        tas_entry = next(
-            (c for c in category if c.get("name") == "TAS"),
-            None
-        )
+        tas_entry = next((c for c in category if c.get("name") == "TAS"), None)
 
         if not tas_entry:
             continue
@@ -145,7 +136,7 @@ async def performance_score_daywise_action(data):
             "date": score_date,
             "name": "TAS",
             "score": score_val,
-            "categories": resolve_tas_with_categories(category).get("categories", [])
+            "categories": resolve_tas_with_categories(category).get("categories", []),
         }
 
         zones_map.setdefault(zone, {}).setdefault(plant, []).append(score_data)
@@ -167,45 +158,37 @@ async def performance_score_daywise_action(data):
         plant_scores.setdefault((zone, plant), []).append(valid_score)
 
         # ---------- day-wise ----------
-        date_zone_scores.setdefault(score_date, {}).setdefault(zone, []).append(valid_score)
-        date_plant_scores.setdefault(score_date, {}).setdefault(plant, []).append(valid_score)
+        date_zone_scores.setdefault(score_date, {}).setdefault(zone, []).append(
+            valid_score
+        )
+        date_plant_scores.setdefault(score_date, {}).setdefault(plant, []).append(
+            valid_score
+        )
 
     # ================= SAFE AVERAGE FUNCTION =================
     def safe_avg(values):
         return round(sum(values) / len(values), 2) if values else 0
 
     # ================= OVERALL AVERAGES =================
-    zone_avg = safe_avg([
-        safe_avg(v) for v in zone_scores.values() if v
-    ])
+    zone_avg = safe_avg([safe_avg(v) for v in zone_scores.values() if v])
 
-    plant_avg = safe_avg([
-        safe_avg(v) for v in plant_scores.values() if v
-    ])
+    plant_avg = safe_avg([safe_avg(v) for v in plant_scores.values() if v])
 
     # ================= DAY-WISE ZONE AVG =================
     zone_avg_daywise = []
 
     for date, zones in sorted(date_zone_scores.items()):
-        zone_level_avgs = [
-            safe_avg(scores) for scores in zones.values() if scores
-        ]
-        zone_avg_daywise.append({
-            "date": date,
-            "avg_score": safe_avg(zone_level_avgs)
-        })
+        zone_level_avgs = [safe_avg(scores) for scores in zones.values() if scores]
+        zone_avg_daywise.append({"date": date, "avg_score": safe_avg(zone_level_avgs)})
 
     # ================= DAY-WISE PLANT AVG =================
     plant_avg_daywise = []
 
     for date, plants in sorted(date_plant_scores.items()):
-        plant_level_avgs = [
-            safe_avg(scores) for scores in plants.values() if scores
-        ]
-        plant_avg_daywise.append({
-            "date": date,
-            "avg_score": safe_avg(plant_level_avgs)
-        })
+        plant_level_avgs = [safe_avg(scores) for scores in plants.values() if scores]
+        plant_avg_daywise.append(
+            {"date": date, "avg_score": safe_avg(plant_level_avgs)}
+        )
 
     # ================= RESPONSE =================
     return {
@@ -221,11 +204,11 @@ async def performance_score_daywise_action(data):
                 "plants": [
                     {
                         "name": plant,
-                        "daywise_scores": sorted(scores, key=lambda x: x["date"])
+                        "daywise_scores": sorted(scores, key=lambda x: x["date"]),
                     }
                     for plant, scores in plants.items()
-                ]
+                ],
             }
             for zone, plants in zones_map.items()
-        ]
+        ],
     }

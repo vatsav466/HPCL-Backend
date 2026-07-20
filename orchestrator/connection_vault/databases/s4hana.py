@@ -1,4 +1,3 @@
-import urdhva_base
 import sys
 import typing
 import traceback
@@ -16,7 +15,7 @@ dtype_map = {
     "float64": "float",
     "object": "nvarchar(255)",
     "datetime64[ns]": "datetime2",
-    "bool": "bit"
+    "bool": "bit",
 }
 
 
@@ -30,19 +29,21 @@ class S4Hana(BaseAction):
         super().__init__(params)
 
     async def get_connection(self):
-        if 'connection_name' in self.params.keys():
-            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if "connection_name" in self.params.keys():
+            self.params = await hpcl_ceg_model.CredsModel.get(
+                self.params["connection_name"]
+            )
         if not isinstance(self.params, dict):
             self.params = self.params.__dict__
-        if 'credentials' in self.params.keys():
-            self.params = self.params['credentials']
+        if "credentials" in self.params.keys():
+            self.params = self.params["credentials"]
         connection = ConnectionContext(
             self.params["host"],
             self.params["port"],
             self.params["user_name"],
             self.params["password"],
-            databasename=self.params['database_name'],
-            sslValidateCertificate=False
+            databasename=self.params["database_name"],
+            sslValidateCertificate=False,
         )
         return connection
 
@@ -53,18 +54,16 @@ class S4Hana(BaseAction):
         try:
             connection = self.get_connection()
             connection.close()
-            return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": []
-            }
+            return {"status": True, "message": "Connected to S4 Hana", "data": []}
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
-        
+
     async def get_databases(self, debug=False, **kwargs):
         """
         @description:
@@ -77,15 +76,17 @@ class S4Hana(BaseAction):
             df = current_batch.collect()
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": df['DATABASE_NAME'].unique().tolist()
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": df["DATABASE_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
 
     async def get_schema(self, debug=False, **kwargs):
@@ -100,15 +101,17 @@ class S4Hana(BaseAction):
             df = current_batch.collect()
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": df['SCHEMA_NAME'].unique().tolist()
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": df["SCHEMA_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
 
     async def table_name(self, schema_name=None, debug=False, **kwargs):
@@ -121,22 +124,27 @@ class S4Hana(BaseAction):
         try:
             connection = await self.get_connection()
             if schema_name:
-                current_batch = connection.sql(f"SELECT TABLE_NAME FROM tables WHERE SCHEMA_NAME = '{schema_name}'")
+                current_batch = connection.sql(
+                    f"SELECT TABLE_NAME FROM tables WHERE SCHEMA_NAME = '{schema_name}'"
+                )
             else:
                 current_batch = connection.sql(f"SELECT TABLE_NAME FROM tables")
             df = current_batch.collect()
             df = df.head(10)
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": ['SAP_VENDOR_EXTRACTED', 'VENDOR_MAPPING_TABLE'] + df['TABLE_NAME'].unique().tolist()
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": ["SAP_VENDOR_EXTRACTED", "VENDOR_MAPPING_TABLE"]
+                + df["TABLE_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
 
     async def primary_key(self, schema_name, table_name, debug=False, **kwargs):
@@ -150,19 +158,22 @@ class S4Hana(BaseAction):
         try:
             connection = await self.get_connection()
             current_batch = connection.sql(
-                f"""SELECT COLUMN_NAME FROM CONSTRAINTS WHERE SCHEMA_NAME = '{schema_name}' AND TABLE_NAME = '{table_name}'""")
+                f"""SELECT COLUMN_NAME FROM CONSTRAINTS WHERE SCHEMA_NAME = '{schema_name}' AND TABLE_NAME = '{table_name}'"""
+            )
             df = current_batch.collect()
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": df['COLUMN_NAME'].unique().tolist()
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": df["COLUMN_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
 
     async def column_names(self, schema_name, table_name, debug=False, **kwargs):
@@ -175,22 +186,28 @@ class S4Hana(BaseAction):
         """
         try:
             connection = await self.get_connection()
-            current_batch = connection.sql(f"""SELECT COLUMN_NAME FROM SYS.TABLE_COLUMNS WHERE SCHEMA_NAME = '{schema_name}' AND TABLE_NAME = '{table_name}'""")
+            current_batch = connection.sql(
+                f"""SELECT COLUMN_NAME FROM SYS.TABLE_COLUMNS WHERE SCHEMA_NAME = '{schema_name}' AND TABLE_NAME = '{table_name}'"""
+            )
             df = current_batch.collect()
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": df['COLUMN_NAME'].unique().tolist()
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": df["COLUMN_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": "Unable to connect to S4 Hana",
-                "data": []
+                "status": False,
+                "message": "Unable to connect to S4 Hana",
+                "data": [],
             }
 
-    async def create_table(self, schema_name, table_name, table_schema, debug=False, **kwargs):
+    async def create_table(
+        self, schema_name, table_name, table_schema, debug=False, **kwargs
+    ):
         """
         @description:
         :param schema_name:
@@ -204,16 +221,16 @@ class S4Hana(BaseAction):
             list_table_name = await self.table_name(schema_name)
             if table_name not in list_table_name.get("data", []):
                 connection.create_table(
-                    table=table_name,
-                    table_structure=table_schema,
-                    schema=schema_name
+                    table=table_name, table_structure=table_schema, schema=schema_name
                 )
             connection.close()
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def write_data(self, *records, schema_name, create_table_name, debug=False, **kwargs):
+    async def write_data(
+        self, *records, schema_name, create_table_name, debug=False, **kwargs
+    ):
         """
         @description:
         :param records:
@@ -240,7 +257,7 @@ class S4Hana(BaseAction):
                 records,
                 create_table_name,
                 schema=schema_name,
-                drop_exist_tab=False
+                drop_exist_tab=False,
             )
             hana_df.save((schema_name, create_table_name))
             connection.close()
@@ -249,15 +266,15 @@ class S4Hana(BaseAction):
             traceback.print_exc(file=sys.stdout)
 
     async def get_data(
-            self,
-            *args,
-            schema_name,
-            table_name,
-            query=None,
-            columns=None,
-            limit=None,
-            debug=False,
-            **kwargs
+        self,
+        *args,
+        schema_name,
+        table_name,
+        query=None,
+        columns=None,
+        limit=None,
+        debug=False,
+        **kwargs,
     ):
         """
         @description:
@@ -279,7 +296,6 @@ class S4Hana(BaseAction):
             count = 1
             offset = 0
             final_df = pd.DataFrame()
-            LIMIT = 1000
             while True:
                 query_with_limit = f"{query} LIMIT {batch_size} OFFSET {offset}"
                 current_batch = connection.sql(query_with_limit)
@@ -293,11 +309,13 @@ class S4Hana(BaseAction):
             connection.close()
             final_df = pl.from_pandas(final_df)
             print(final_df)
-            if 'VARNUMH' in final_df.columns:
-                final_df = final_df.drop('VARNUMH')
+            if "VARNUMH" in final_df.columns:
+                final_df = final_df.drop("VARNUMH")
             if debug:
                 return {
-                    "status": True, "message": "Success", "data": final_df.to_dicts()
+                    "status": True,
+                    "message": "Success",
+                    "data": final_df.to_dicts(),
                 }
 
             return final_df
@@ -305,7 +323,15 @@ class S4Hana(BaseAction):
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def get_distinct_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
+    async def get_distinct_values(
+        self,
+        schema_name,
+        table_name,
+        column_name,
+        where_clause=None,
+        debug=False,
+        **kwargs,
+    ):
         """
         @description:
         :param schema_name:
@@ -321,24 +347,27 @@ class S4Hana(BaseAction):
             for column in column_name:
                 query = f'''SELECT DISTINCT "{column_name}" FROM {schema_name}."{table_name}"'''
                 if where_clause:
-                    where_query = ''
+                    where_query = ""
                     for key, value in where_clause.items():
-                        where_query += f'"{key}" = \'{value}\' AND '
+                        where_query += f"\"{key}\" = '{value}' AND "
                     where_query = where_query[:-5]
                     if where_query:
-                        query = f'''SELECT DISTINCT "{column_name}" FROM {schema_name}."{table_name}" WHERE {where_query}'''
+                        query = f"""SELECT DISTINCT "{column_name}" FROM {schema_name}."{table_name}" WHERE {where_query}"""
                 current_batch = connection.sql(query)
                 df = current_batch.collect()
                 columns_mapping[column] = df[column].unique().tolist()
             connection.close()
             return {
-                "status": True, "message": "Connected to S4 Hana",
-                "data": columns_mapping
+                "status": True,
+                "message": "Connected to S4 Hana",
+                "data": columns_mapping,
             }
         except Exception as err:
             print(err)
             return {
-                "status": False, "message": f"Not able to fetch data {err}", "data": []
+                "status": False,
+                "message": f"Not able to fetch data {err}",
+                "data": [],
             }
 
     async def execute_query(self, query, debug=False, **kwargs):
@@ -357,7 +386,7 @@ class S4Hana(BaseAction):
             current_batch = connection.sql(query)
             df = current_batch.collect()
             connection.close()
-            return df.to_dict(orient='records')
+            return df.to_dict(orient="records")
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)

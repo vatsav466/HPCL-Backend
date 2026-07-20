@@ -40,7 +40,7 @@ class AlertCloserListener:
                     continue
 
                 except asyncio.CancelledError:
-                    #KEY FIX
+                    # KEY FIX
                     print("CancelledError caught — continuing listener")
                     await asyncio.sleep(1)
                     continue
@@ -75,7 +75,7 @@ class AlertCloserListener:
             params = urdhva_base.queryparams.QueryParams(q=linked_data, limit=10000)
             params.fields = ["id", "alert_status"]
 
-            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
             alerts = resp.get("data", [])
 
             if not alerts:
@@ -92,17 +92,19 @@ class AlertCloserListener:
             # Close ticket
             history = ticket.get("ticket_history") or []
 
-            history.append({
-                "processed_time": datetime.now().isoformat(),
-                "action_msg": "Ticket is auto-closed when all linked alerts are closed.",
-                "action_type": "AUTO_CLOSE"
-            })
+            history.append(
+                {
+                    "processed_time": datetime.now().isoformat(),
+                    "action_msg": "Ticket is auto-closed when all linked alerts are closed.",
+                    "action_type": "AUTO_CLOSE",
+                }
+            )
 
             await hpcl_ceg_ticketing_model.Ticketing(
                 id=db_id,
                 ticket_state="Reviewed By Occ",
                 ticket_status="Close",
-                ticket_history=history
+                ticket_history=history,
             ).modify()
 
             print(f"Auto-closed ticket: {ticket_id}")
@@ -114,7 +116,6 @@ class AlertCloserListener:
         except Exception:
             print(f"Error processing ticket {ticket.get('ticket_id')}")
             traceback.print_exc()
-
 
 
 if __name__ == "__main__":

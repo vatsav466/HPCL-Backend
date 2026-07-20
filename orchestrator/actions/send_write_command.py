@@ -1,16 +1,8 @@
 import sys
-import traceback
 
 import urdhva_base
-import hpcl_ceg_enum
-import hpcl_ceg_model
 
 sys.path.append("/opt/ceg/algo/orchestrator")
-
-import utilities.helpers as helpers
-import tas_operations.send_rabbitmq as send_rabbitmq
-import orchestrator.alerting.alert_factory as alert_create
-import tas_operations.find_matching_csv as find_matching_csv
 
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -19,7 +11,14 @@ logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 class SendWriteCommand:
     async def get_required_variables(self):
         # Remove empty string at the end of the list
-        return ["alert_id", "interrupt", "interlock_name", "equipment_name", "sap_id", "BU"]
+        return [
+            "alert_id",
+            "interrupt",
+            "interlock_name",
+            "equipment_name",
+            "sap_id",
+            "BU",
+        ]
 
     async def check_and_create_gantry_alert(self, bu, sap_id, location_name):
         """
@@ -30,88 +29,90 @@ class SendWriteCommand:
         3. BCU Permissive Off_Fail is present and open
         4. Gantry Permissive Off_DNC alert is not already present
         """
-        return True, {"message": "This action is deprecated and will be removed in future versions."}
+        return True, {
+            "message": "This action is deprecated and will be removed in future versions."
+        }
         # try:
-            # Check for SOP028 alerts in open state
-            # params = urdhva_base.queryparams.QueryParams(
-            #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and sop_id = 'SOP028' and alert_status = 'Open'"""
-            # )
-            # sop028_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+        # Check for SOP028 alerts in open state
+        # params = urdhva_base.queryparams.QueryParams(
+        #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and sop_id = 'SOP028' and alert_status = 'Open'"""
+        # )
+        # sop028_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
-            # # Check for BCU Permissive Off alerts
-            # params = urdhva_base.queryparams.QueryParams(
-            #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'BCU Permissive Off'"""
-            # )
-            # bcu_permissive_off_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+        # # Check for BCU Permissive Off alerts
+        # params = urdhva_base.queryparams.QueryParams(
+        #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'BCU Permissive Off'"""
+        # )
+        # bcu_permissive_off_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
-            # # Check for BCU Permissive Off_Fail alerts
-            # params = urdhva_base.queryparams.QueryParams(
-            #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'BCU Permissive Off_Fail'"""
-            # )
-            # bcu_permissive_off_fail_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+        # # Check for BCU Permissive Off_Fail alerts
+        # params = urdhva_base.queryparams.QueryParams(
+        #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'BCU Permissive Off_Fail'"""
+        # )
+        # bcu_permissive_off_fail_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
-            # # Check for existing Gantry Permissive Off_DNC alerts - THIS IS THE NEW CHECK
-            # params = urdhva_base.queryparams.QueryParams(
-            #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'Gantry Permissive Off_DNC'"""
-            # )
-            # existing_gantry_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+        # # Check for existing Gantry Permissive Off_DNC alerts - THIS IS THE NEW CHECK
+        # params = urdhva_base.queryparams.QueryParams(
+        #     q=f"""bu = '{bu}' and sap_id = '{sap_id}' and alert_status = 'Open' and interlock_name = 'Gantry Permissive Off_DNC'"""
+        # )
+        # existing_gantry_alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
-            # has_sop028_open = sop028_alerts.get('data') and len(sop028_alerts.get('data', [])) > 0
-            # has_bcu_permissive_off = bcu_permissive_off_alerts.get('data') and len(bcu_permissive_off_alerts.get('data', [])) > 0
-            # has_bcu_permissive_off_fail = bcu_permissive_off_fail_alerts.get('data') and len(bcu_permissive_off_fail_alerts.get('data', [])) > 0
-            # has_existing_gantry_alert = existing_gantry_alerts.get('data') and len(existing_gantry_alerts.get('data', [])) > 0
+        # has_sop028_open = sop028_alerts.get('data') and len(sop028_alerts.get('data', [])) > 0
+        # has_bcu_permissive_off = bcu_permissive_off_alerts.get('data') and len(bcu_permissive_off_alerts.get('data', [])) > 0
+        # has_bcu_permissive_off_fail = bcu_permissive_off_fail_alerts.get('data') and len(bcu_permissive_off_fail_alerts.get('data', [])) > 0
+        # has_existing_gantry_alert = existing_gantry_alerts.get('data') and len(existing_gantry_alerts.get('data', [])) > 0
 
-            # # Only create new alert if all conditions are met AND there's no existing Gantry alert
-            # if has_sop028_open and not has_bcu_permissive_off and has_bcu_permissive_off_fail and not has_existing_gantry_alert:
-            #     logger.info(f"Creating new Gantry Permissive Off_DNC alert for {bu}, {sap_id}")
-                
-            #     alert_message = "Gantry Permissive Off_DNC"
-            #     alert_data = {
-            #         "bu": bu,
-            #         "sap_id": sap_id,
-            #         "location_name": location_name,
-            #         "sop_id": "SOP028A",
-            #         "interlock_name": alert_message,
-            #         "alert_status": "Open",
-            #         "alert_state": "InProgress",
-            #         "severity": "CRITICAL",
-            #         "alert_section": "TAS",
-            #         "device_name": "",
-            #         "return_data": True
-            #     }
+        # # Only create new alert if all conditions are met AND there's no existing Gantry alert
+        # if has_sop028_open and not has_bcu_permissive_off and has_bcu_permissive_off_fail and not has_existing_gantry_alert:
+        #     logger.info(f"Creating new Gantry Permissive Off_DNC alert for {bu}, {sap_id}")
 
-            #     camunda_url = await helpers.get_camunda_url(bu=bu, sap_id=sap_id, alert_section="TAS")
-            #     status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
+        #     alert_message = "Gantry Permissive Off_DNC"
+        #     alert_data = {
+        #         "bu": bu,
+        #         "sap_id": sap_id,
+        #         "location_name": location_name,
+        #         "sop_id": "SOP028A",
+        #         "interlock_name": alert_message,
+        #         "alert_status": "Open",
+        #         "alert_state": "InProgress",
+        #         "severity": "CRITICAL",
+        #         "alert_section": "TAS",
+        #         "device_name": "",
+        #         "return_data": True
+        #     }
 
-            #     if not status or not created_alert:
-            #         logger.error("Failed to create alert")
-            #         return None
+        #     camunda_url = await helpers.get_camunda_url(bu=bu, sap_id=sap_id, alert_section="TAS")
+        #     status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
 
-            #     if isinstance(created_alert, dict):
-            #         alert_id = created_alert.get("id")
-            #         if not alert_id:
-            #             logger.error("Alert ID missing in created alert")
-            #             return None
+        #     if not status or not created_alert:
+        #         logger.error("Failed to create alert")
+        #         return None
 
-            #         new_alert = await hpcl_ceg_model.Alerts.get(alert_id)
-            #         if not isinstance(new_alert, dict):
-            #             new_alert = new_alert.__dict__
+        #     if isinstance(created_alert, dict):
+        #         alert_id = created_alert.get("id")
+        #         if not alert_id:
+        #             logger.error("Alert ID missing in created alert")
+        #             return None
 
-            #         if 'alert_history' not in new_alert:
-            #             new_alert['alert_history'] = []
+        #         new_alert = await hpcl_ceg_model.Alerts.get(alert_id)
+        #         if not isinstance(new_alert, dict):
+        #             new_alert = new_alert.__dict__
 
-            #         action_entry = {
-            #             'action_type': hpcl_ceg_enum.AlertActionType.Message.value,
-            #             'action_msg': "System Generated alert"
-            #         }
-            #         new_alert['alert_history'].append(action_entry)
+        #         if 'alert_history' not in new_alert:
+        #             new_alert['alert_history'] = []
 
-            #         await hpcl_ceg_model.Alerts(id=alert_id, alert_history=new_alert['alert_history']).modify()
-            #         logger.info(f"Successfully created new Gantry Permissive Off_DNC alert with ID: {alert_id}")
-            #         return True, {"Status": "Success", "alert_id": alert_id}
+        #         action_entry = {
+        #             'action_type': hpcl_ceg_enum.AlertActionType.Message.value,
+        #             'action_msg': "System Generated alert"
+        #         }
+        #         new_alert['alert_history'].append(action_entry)
 
-            #     logger.error("Created alert is not a dictionary")
-            # return True, {"error": "Created alert is not a dictionary"}
+        #         await hpcl_ceg_model.Alerts(id=alert_id, alert_history=new_alert['alert_history']).modify()
+        #         logger.info(f"Successfully created new Gantry Permissive Off_DNC alert with ID: {alert_id}")
+        #         return True, {"Status": "Success", "alert_id": alert_id}
+
+        #     logger.error("Created alert is not a dictionary")
+        # return True, {"error": "Created alert is not a dictionary"}
 
         #     else:
         #         reason = ""
@@ -119,7 +120,7 @@ class SendWriteCommand:
         #             reason = "An open Gantry Permissive Off_DNC alert already exists"
         #         else:
         #             reason = "Alert creation conditions not met"
-                    
+
         #         logger.info(f"No need to create new alert - {reason}")
         #         return False, {"Status": "Success", "reason": reason}
 
@@ -132,7 +133,9 @@ class SendWriteCommand:
         """
         Handle write command for alerts.
         """
-        return True, {"message": "This action is deprecated and will be removed in future versions."}
+        return True, {
+            "message": "This action is deprecated and will be removed in future versions."
+        }
         # csv_file_path = "/opt/ceg/algo/orchestrator/tas_operations/write_tag.csv"
         # try:
         #     alert_id = params.get('alert_id')

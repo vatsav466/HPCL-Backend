@@ -11,6 +11,7 @@ For ``table_data=True``, Oracle pagination uses ``OFFSET … ROWS FETCH NEXT …
 ``page`` is **0-based** (default ``0``). Success responses use ``{"data": [...], "total": ..., "count": ...}``.
 Request fields: ``page``, ``page_size``, ``include_total`` on ``Indentmanagement_Get_Indent_DetailsParams``.
 """
+
 from __future__ import annotations
 
 import re
@@ -51,7 +52,7 @@ async def _filters(
         vendor="IMS_LPG",
         merge_session=True,
         model="IMS_LPG",
-        bu="LPG_CUSTOMERS"
+        bu="LPG_CUSTOMERS",
     )
     return field_force_utils.widget_filters_to_condition_strings(effective)
 
@@ -98,8 +99,7 @@ _LPG_JOIN_INDENT_PRODUCTS_B = """
 async def execute_ims_query(query):
     connection_id = connection_mapping.connection_mapping.get("ims", "3")
     charts_ins = charts_actions.Charts_Connection_Vault_RoutingParams(
-        connection_id=connection_id,
-        action='execute_query'
+        connection_id=connection_id, action="execute_query"
     )
     function = await charts_actions.charts_connection_vault_routing(charts_ins)
     resp = await function(query=query)
@@ -205,14 +205,14 @@ OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY"""
 
 # --- Individual KPIs (Supply Chain — LPG funnel) ---
 async def get_total_indents_raised(
-        widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]] = None,
-        level_filter: Optional[field_force_model.LevelFilterCreate] = None,
-        drill_filter: Optional[field_force_model.DrillFilterCreate] = None,
-        *,
-        table_data: bool = False,
-        page: int = 0,
-        page_size: int = 20,
-        include_total: bool = True,
+    widget_filters: Optional[List[field_force_model.WidgetFiltersCreate]] = None,
+    level_filter: Optional[field_force_model.LevelFilterCreate] = None,
+    drill_filter: Optional[field_force_model.DrillFilterCreate] = None,
+    *,
+    table_data: bool = False,
+    page: int = 0,
+    page_size: int = 20,
+    include_total: bool = True,
 ):
     """Total indents raised (all states) in period — SOP: Total Indents Raised."""
     filter_sql_fragments = await _filters(widget_filters)
@@ -968,30 +968,35 @@ async def get_indent_order_delivery_summary(
                 if filter.value:
                     dates = filter.value.split(",")
                 elif filter.values:
-                    dates = filter.values if isinstance(filter.values, list) else [filter.values]
+                    dates = (
+                        filter.values
+                        if isinstance(filter.values, list)
+                        else [filter.values]
+                    )
                 else:
                     continue
                 start_date = dates[0]
                 end_date = dates[-1]
                 continue
             if filter.values:
-                vals = filter.values if isinstance(filter.values, list) else [filter.values]
+                vals = (
+                    filter.values
+                    if isinstance(filter.values, list)
+                    else [filter.values]
+                )
             elif filter.value:
                 vals = filter.value.split(",")
             else:
                 continue
 
-            field_map = {
-                "LOCN_CODE": 'r."LOCN_CODE"',
-                "CYLINDER_TYPE": 'p."PROD"'
-            }
+            field_map = {"LOCN_CODE": 'r."LOCN_CODE"', "CYLINDER_TYPE": 'p."PROD"'}
 
             column = field_map.get(filter.key.upper(), f'r."{filter.key}"')
             if filter.key.upper() == "CYLINDER_TYPE":
                 cylinder_map = {
                     "14.2 KG": ["0949036"],
                     "19 KG": ["0948064"],
-                    "ALL": ["0949036", "0948064"]
+                    "ALL": ["0949036", "0948064"],
                 }
                 vals = cylinder_map.get(vals[0], cylinder_map["ALL"])
 
@@ -1001,9 +1006,9 @@ async def get_indent_order_delivery_summary(
                 all_conditions.append(f"{column} IN {tuple(vals)}")
 
     if start_date:
-        all_conditions.append(f'r."PROD_REQD_DT">=DATE \'{start_date}\'')
+        all_conditions.append(f"r.\"PROD_REQD_DT\">=DATE '{start_date}'")
     if end_date:
-        all_conditions.append(f'r."PROD_REQD_DT"<DATE \'{end_date}\'')
+        all_conditions.append(f"r.\"PROD_REQD_DT\"<DATE '{end_date}'")
 
     conditions = " AND " + " AND ".join(all_conditions) if all_conditions else ""
     query = f"""
@@ -1048,11 +1053,7 @@ async def get_indent_order_delivery_summary(
     rows = resp.get("data", []) if isinstance(resp, dict) else resp
     if table_data:
 
-        return {
-            "data": rows,
-            "total": len(rows),
-            "count": len(rows)
-        }
+        return {"data": rows, "total": len(rows), "count": len(rows)}
 
     summary = {}
     for row in rows:
@@ -1070,7 +1071,7 @@ async def get_indent_order_delivery_summary(
                 "DELIVERED_QTY_19": 0,
                 "TOTAL_ORDERED_INDENTS": 0,
                 "TOTAL_ORDERED_QTY": 0,
-                "TOTAL_DELIVERED_QTY": 0
+                "TOTAL_DELIVERED_QTY": 0,
             }
         item = summary[key]
         if row["ORDERED_QTY_14_2"] > 0:
@@ -1091,9 +1092,4 @@ async def get_indent_order_delivery_summary(
 
     result = list(summary.values())
 
-    return {
-        "data": result,
-        "total": len(result),
-        "count": 0
-    }
-
+    return {"data": result, "total": len(result), "count": 0}

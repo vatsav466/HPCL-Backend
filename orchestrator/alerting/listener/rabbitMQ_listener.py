@@ -8,6 +8,8 @@ import tas_listener
 logger = urdhva_base.logger.Logger.getInstance("rabbitmq_processing_log")
 
 semaphore = asyncio.Semaphore(1)
+
+
 async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
     """
     Callback for processing received messages.
@@ -23,6 +25,7 @@ async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
                 print(traceback.format_exc())
                 print(f"Error processing message: {e}")
             # Manual acknowledgment is not needed if auto_ack=True.
+
 
 async def consume_from_queue(queue_name: str, channel) -> None:
     """
@@ -41,6 +44,7 @@ async def consume_from_queue(queue_name: str, channel) -> None:
 
     except Exception as e:
         print(f"Error while consuming from queue {queue_name}: {e}")
+
 
 async def consume_message():
     """
@@ -63,7 +67,7 @@ async def consume_message():
 
             # List of queues to consume
             rabbitmq_queues = urdhva_base.settings.rabbitmq_queue
-            cleaned_queues = rabbitmq_queues.strip("[]").replace("'", "").split(',')
+            cleaned_queues = rabbitmq_queues.strip("[]").replace("'", "").split(",")
 
             # Strip any extra spaces from each queue name
             rabbitmq_queues_list = [queue.strip() for queue in cleaned_queues]
@@ -81,6 +85,7 @@ async def consume_message():
         print(f"Connection error: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(consume_message())

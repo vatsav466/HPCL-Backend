@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy import MetaData, Table, inspect, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+
 # from orchestrator.dashboard.chart_factory import charts_functions
 
 DATABASE_URL = str(urdhva_base.settings.db_urls["postgres_async"][0])
@@ -35,12 +36,12 @@ async def get_table_columns(table_name: str):
     try:
         async with async_engine.connect() as connection:
             metadata = MetaData()
-            table = await connection.run_sync(lambda conn: Table(table_name, metadata, autoload_with=conn))
+            table = await connection.run_sync(
+                lambda conn: Table(table_name, metadata, autoload_with=conn)
+            )
             column_details = {
-                column.name: {
-                    'type': str(column.type),
-                    'nullable': column.nullable
-                } for column in table.columns
+                column.name: {"type": str(column.type), "nullable": column.nullable}
+                for column in table.columns
             }
             return column_details
     except Exception as e:
@@ -63,9 +64,11 @@ async def get_model_columns(schema_class):
 
     for column in inspector.columns:
         column_info = {
-            'type': str(column.type),
-            'nullable': column.nullable,
-            'sub_type': column.type.item_type if hasattr(column.type, 'item_type') else ''
+            "type": str(column.type),
+            "nullable": column.nullable,
+            "sub_type": (
+                column.type.item_type if hasattr(column.type, "item_type") else ""
+            ),
         }
         columns[column.name] = column_info
 
@@ -76,17 +79,21 @@ async def add_column_to_table(table_name, column_name, column_schema):
     """
     Adds a new column to the table.
     """
-    column_type = column_type_mapping.get(column_schema['type'], column_schema['type'])
-    if column_schema.get('sub_type'):
+    column_type = column_type_mapping.get(column_schema["type"], column_schema["type"])
+    if column_schema.get("sub_type"):
         if column_type == "ARRAY":
-            column_type = column_type_mapping.get(f"{column_schema['type']} {column_schema['sub_type']}",
-                                                  column_schema['type'])
-    nullable = 'NULL' if column_schema['nullable'] else 'NOT NULL'
-    if column_type == 'BOOLEAN' and not column_schema['nullable']:
-        nullable = 'NOT NULL DEFAULT FALSE'
-    elif column_type == 'VARCHAR' and not column_schema['nullable']:
+            column_type = column_type_mapping.get(
+                f"{column_schema['type']} {column_schema['sub_type']}",
+                column_schema["type"],
+            )
+    nullable = "NULL" if column_schema["nullable"] else "NOT NULL"
+    if column_type == "BOOLEAN" and not column_schema["nullable"]:
+        nullable = "NOT NULL DEFAULT FALSE"
+    elif column_type == "VARCHAR" and not column_schema["nullable"]:
         nullable = "NOT NULL DEFAULT ''"
-    alter_query = f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type} {nullable};'
+    alter_query = (
+        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type} {nullable};"
+    )
 
     async with async_session() as connection:
         async with connection.begin():
@@ -103,7 +110,7 @@ async def drop_column_from_table(table_name, column_name):
     """
     Drops a column from the table.
     """
-    drop_query = f'ALTER TABLE {table_name} DROP COLUMN {column_name};'
+    drop_query = f"ALTER TABLE {table_name} DROP COLUMN {column_name};"
 
     async with async_session() as session:
         async with session.begin():
@@ -120,14 +127,18 @@ async def alter_column_type(table_name, column_name, column_type):
     """
     Alters the data type of an existing column.
     """
-    alter_query = f'ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE {column_type};'
+    alter_query = (
+        f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE {column_type};"
+    )
 
     async with async_session() as session:
         async with session.begin():
             try:
                 await session.execute(text(alter_query))
                 await session.commit()
-                print(f"Altered column {column_name} type to {column_type} in {table_name}")
+                print(
+                    f"Altered column {column_name} type to {column_type} in {table_name}"
+                )
             except SQLAlchemyError as e:
                 await session.rollback()
                 print(f"Error altering column {column_name}: {str(e)}")
@@ -153,7 +164,7 @@ async def sync_check_table_columns(table_name, schema_name, module_path):
     # Find columns not in the model (extra columns in the table)
     actual_column_names = set(columns.keys())
     expected_column_names = set(expected_columns.keys())
-    columns_not_in_model = actual_column_names - expected_column_names
+    actual_column_names - expected_column_names
     columns_not_in_table = expected_column_names - actual_column_names
 
     # Handle extra columns in the database that are not in the model
@@ -166,7 +177,8 @@ async def sync_check_table_columns(table_name, schema_name, module_path):
     if columns_not_in_table:
         for col_name in columns_not_in_table:
             print(
-                f"Column {col_name} is missing in the table {table_name}, consider adding it...")
+                f"Column {col_name} is missing in the table {table_name}, consider adding it..."
+            )
             await add_column_to_table(table_name, col_name, expected_columns[col_name])
 
     # Check data type mismatches for columns that exist in both the table and the model
@@ -187,13 +199,22 @@ async def sync_db_model():
     for module_path in modules:
         print(f"Running db schema updater for {module_path}")
         module = importlib.import_module(module_path)
-        tables = [{"schema": eval(f"module.{mod}.__name__"), "table_name": eval(f"module.{mod}.__tablename__")}
-                  for mod in dir(module) if mod.endswith('Schema')]
+        tables = [
+            {
+                "schema": eval(f"module.{mod}.__name__"),
+                "table_name": eval(f"module.{mod}.__tablename__"),
+            }
+            for mod in dir(module)
+            if mod.endswith("Schema")
+        ]
         for rec in tables:
-            await sync_check_table_columns(table_name=rec['table_name'], schema_name=rec['schema'],
-                                           module_path=module_path)
+            await sync_check_table_columns(
+                table_name=rec["table_name"],
+                schema_name=rec["schema"],
+                module_path=module_path,
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running db schema updater")
     asyncio.run(sync_db_model())

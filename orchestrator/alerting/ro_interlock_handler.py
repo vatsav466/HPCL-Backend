@@ -1,5 +1,4 @@
 import urdhva_base
-import json
 import base64
 import requests
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -36,7 +35,7 @@ class RoInterlockHandler:
         headers = {
             "Authorization": f"{auth_encoded}",
             "Content-Type": "application/json",
-            "Vendor": "Novex"
+            "Vendor": "Novex",
         }
 
         return base_url, headers
@@ -58,22 +57,17 @@ class RoInterlockHandler:
         url = f"{base_url}{endpoint}"
 
         try:
-            response = requests.post(
-                url,
-                json=payload,
-                headers=headers,
-                timeout=30
-            )
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
 
             if int(response.status_code // 100) != 2:
                 logger.error(
                     "CRIS Interlock API failed. Status=%s Response=%s",
                     response.status_code,
-                    response.text
+                    response.text,
                 )
                 return False, (
                     f"Request failed with status {response.status_code}",
-                    response.text
+                    response.text,
                 )
             resp = response.json()
             if not isinstance(resp, list):
@@ -99,9 +93,9 @@ class RoInterlockHandler:
             if rec.get("Result") in ("1", 1):
                 success_list.append({rec.get("RoCode"): "Success"})
             else:
-                failed_list.append({
-                    rec.get("RoCode"): rec.get("Message", "Unknown error")
-                })
+                failed_list.append(
+                    {rec.get("RoCode"): rec.get("Message", "Unknown error")}
+                )
 
         return success_list, failed_list
 

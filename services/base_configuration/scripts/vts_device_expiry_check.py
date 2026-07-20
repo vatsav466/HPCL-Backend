@@ -7,7 +7,6 @@ import utilities.helpers as helpers
 import datetime
 import dateutil.relativedelta
 
-
 logger = urdhva_base.logger.Logger.getInstance("vts_truck_device_expiry_check")
 
 
@@ -35,7 +34,9 @@ class CheckVTSDeviceExpiry:
                 ORDER BY created_at DESC;
             """
 
-            result = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            result = await urdhva_base.BasePostgresModel.get_aggr_data(
+                query=query, limit=0
+            )
 
             return result.get("data", [])
 
@@ -56,13 +57,19 @@ class CheckVTSDeviceExpiry:
                     sap_id = record.get("sap_id")
 
                     if not bu or not sap_id:
-                        logger.warning(f"Skipping record due to missing bu/sap_id: {record}")
+                        logger.warning(
+                            f"Skipping record due to missing bu/sap_id: {record}"
+                        )
                         continue
 
                     expiry_str = record.get("tibco_expiry_date")
-                    expiry_date = datetime.datetime.strptime(expiry_str, "%d-%m-%Y").date()
+                    expiry_date = datetime.datetime.strptime(
+                        expiry_str, "%d-%m-%Y"
+                    ).date()
 
-                    days_remaining = (expiry_date - today).days + 1 # Adding 1 to include the expiry day itself
+                    days_remaining = (
+                        expiry_date - today
+                    ).days + 1  # Adding 1 to include the expiry day itself
 
                     if days_remaining == 30:
                         before30days = True
@@ -70,7 +77,7 @@ class CheckVTSDeviceExpiry:
 
                     elif 1 <= days_remaining < 30:
                         before30days = False
-                        total_wait_time_days = days_remaining 
+                        total_wait_time_days = days_remaining
                     else:
                         # today or already expired
                         before30days = False
@@ -80,7 +87,9 @@ class CheckVTSDeviceExpiry:
 
                     # Vehicle block dates
                     vehicle_blocked_start_date = expiry_date
-                    vehicle_blocked_end_date = (expiry_date + dateutil.relativedelta.relativedelta(years=5))
+                    vehicle_blocked_end_date = (
+                        expiry_date + dateutil.relativedelta.relativedelta(years=5)
+                    )
 
                     alert_data = {
                         "vehicle_number": record.get("vehicle_number"),
@@ -99,10 +108,12 @@ class CheckVTSDeviceExpiry:
                         "zone": record.get("zone"),
                         "before30days": before30days,
                         "waitTime": totalWaitTime,
-                        "days_remaining": days_remaining
+                        "days_remaining": days_remaining,
                     }
 
-                    camunda_url = await helpers.get_camunda_url(bu, sap_id, alert_section="VTS")
+                    camunda_url = await helpers.get_camunda_url(
+                        bu, sap_id, alert_section="VTS"
+                    )
 
                     cls = alert_factory.AlertFactory()
                     status, msg = await cls.create_alert(alert_data, camunda_url)
@@ -116,7 +127,10 @@ class CheckVTSDeviceExpiry:
                         ).modify()
 
                 except Exception as alert_err:
-                    logger.error(f"Alert creation failed for record {record}: {alert_err}", exc_info=True)
+                    logger.error(
+                        f"Alert creation failed for record {record}: {alert_err}",
+                        exc_info=True,
+                    )
                     continue
 
             return {"status": True, "message": "Expiry alert job completed"}
@@ -124,6 +138,7 @@ class CheckVTSDeviceExpiry:
         except Exception as e:
             logger.error(f"Fatal error in expiry alert job: {e}", exc_info=True)
             return {"status": False, "message": "Job failed"}
+
 
 if __name__ == "__main__":
     asyncio.run(CheckVTSDeviceExpiry().create_alert_for_expiring_device())

@@ -6,10 +6,17 @@ import orchestrator.connection_vault.database.mssql as mssql
 
 def get_tibco_connection_details():
     params = {}
-    if not urdhva_base.settings.db_urls.get('tibco'):
+    if not urdhva_base.settings.db_urls.get("tibco"):
         return params
-    url = urdhva_base.settings.db_urls['tibco'][0]
-    params.update({"user_name": url.username, "password": url.password, "host": url.host, "port": url.port})
+    url = urdhva_base.settings.db_urls["tibco"][0]
+    params.update(
+        {
+            "user_name": url.username,
+            "password": url.password,
+            "host": url.host,
+            "port": url.port,
+        }
+    )
     return params
 
 
@@ -21,7 +28,7 @@ async def get_db_connection():
 
 
 async def fetch_locations():
-    locations_data = []
+    pass
 
 
 async def get_sod_locations():
@@ -34,23 +41,47 @@ async def get_sod_locations():
         await conn.get_data(schema_name=None, table_name=None, query=query, limit=1000)
 
 
-async def get_ret_locations():
-    ...
+async def get_ret_locations(): ...
 
 
-async def get_lpg_locations():
-    ...
+async def get_lpg_locations(): ...
 
 
 async def sync_ro_master(file_path):
-    keys_rename = {"Zone": "", "Region": "", "Sales Area": "", "RO Code": "bu_id",
-                   " RO SAP Code": "LOCATION_ID",
-                   "RO Name": "", "Project Phase": "", "Vendor": "", "RO Type": "", "RO Category": "",
-                   "Head Office": "", "Address": "", "City": "", "District": "", "State": "", "Pin Code": "",
-                   "Location Type": "", "Dealer Name": "", "Dealer Phone No": "", "Dealer Mobile No": "",
-                   "HPCL Email": "", "Explosive Reg": "", "Tin No.": "", "VSAT ID": "", "IP": "", "VSAT": "",
-                   "VSAT IP": "", "Updated By": "", "Updated Date": "", "Last RO Communicated Date": "",
-                   "RO Status": "", "FZD Status": ""}
+    keys_rename = {
+        "Zone": "",
+        "Region": "",
+        "Sales Area": "",
+        "RO Code": "bu_id",
+        " RO SAP Code": "LOCATION_ID",
+        "RO Name": "",
+        "Project Phase": "",
+        "Vendor": "",
+        "RO Type": "",
+        "RO Category": "",
+        "Head Office": "",
+        "Address": "",
+        "City": "",
+        "District": "",
+        "State": "",
+        "Pin Code": "",
+        "Location Type": "",
+        "Dealer Name": "",
+        "Dealer Phone No": "",
+        "Dealer Mobile No": "",
+        "HPCL Email": "",
+        "Explosive Reg": "",
+        "Tin No.": "",
+        "VSAT ID": "",
+        "IP": "",
+        "VSAT": "",
+        "VSAT IP": "",
+        "Updated By": "",
+        "Updated Date": "",
+        "Last RO Communicated Date": "",
+        "RO Status": "",
+        "FZD Status": "",
+    }
     df = pandas.read_csv(file_path)
     initial_rename = {}
     for column in list(df.columns):
@@ -58,7 +89,3 @@ async def sync_ro_master(file_path):
             initial_rename[column] = column.strip()
     if initial_rename:
         df = df.rename(columns=initial_rename)
-
-
-
-

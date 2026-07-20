@@ -1,4 +1,3 @@
-import typing
 import traceback
 import aiofiles
 import urdhva_base
@@ -7,6 +6,7 @@ import orchestrator.notification_manager.notification_factory as notification_fa
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("vendor_notification-log")
+
 
 class VendorEmailNotification:
 
@@ -20,40 +20,70 @@ class VendorEmailNotification:
 
     async def get_required_variables(self):
         return [
-            "sap_id", "vendor_name", "device_type", "device_name",
-            "zone", "bu", "remarks", "status", "messagetype", "location_name",
-            "escalationlevel", "tas_faulty_unique_id", "resolved", "faulty_date"
+            "sap_id",
+            "vendor_name",
+            "device_type",
+            "device_name",
+            "zone",
+            "bu",
+            "remarks",
+            "status",
+            "messagetype",
+            "location_name",
+            "escalationlevel",
+            "tas_faulty_unique_id",
+            "resolved",
+            "faulty_date",
         ]
 
     async def get_vendor_emails(self, sap_id, vendor_name, zone, bu, escalationlevel):
         try:
             records = await hpcl_ceg_model.TasHelpDeskVendorMails.get_all(
-                 urdhva_base.queryparams.QueryParams(q=f"sap_id='{sap_id}' and vendor_name='{vendor_name}'", limit=0),
-                 resp_type="plain"
+                urdhva_base.queryparams.QueryParams(
+                    q=f"sap_id='{sap_id}' and vendor_name='{vendor_name}'", limit=0
+                ),
+                resp_type="plain",
             )
             record_list = records.get("data") if isinstance(records, dict) else records
             if not record_list:
                 return [], []
 
             # Determine fields based on level
-            level_fields = ["level1", "level2", "level3"] if int(escalationlevel) == 0 else [f"level{escalationlevel}"]
-            
+            level_fields = (
+                ["level1", "level2", "level3"]
+                if int(escalationlevel) == 0
+                else [f"level{escalationlevel}"]
+            )
+
             emails = []
             for record in record_list:
                 for field in level_fields:
                     val = record.get(field)
-                    if val: emails.extend(addr.strip() for addr in val.split(",") if addr.strip())
+                    if val:
+                        emails.extend(
+                            addr.strip() for addr in val.split(",") if addr.strip()
+                        )
 
             unique_emails = list(set(emails))
 
             # CC Logic (Users with SOD Roles)
-            cc_roles = ["Location In-Charge SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", "Planning Officer SOD", "Safety Officer SOD"]
+            cc_roles = [
+                "Location In-Charge SOD",
+                "Maintenance Officer SOD",
+                "Plant In-Charge SOD",
+                "Planning Officer SOD",
+                "Safety Officer SOD",
+            ]
             roles_array = "{" + ",".join(cc_roles) + "}"
-            
+
             cc_query = f"SELECT email FROM users WHERE '{sap_id}' = ANY(sap_id) AND novex_role && '{roles_array}'::varchar[] AND email IS NOT NULL"
             cc_data = await hpcl_ceg_model.Users.get_aggr_data(cc_query, limit=0)
 
-            cc_emails = [u["email"] for u in cc_data.get("data", []) if u.get("email")] if cc_data else []
+            cc_emails = (
+                [u["email"] for u in cc_data.get("data", []) if u.get("email")]
+                if cc_data
+                else []
+            )
             return unique_emails, list(set(cc_emails))
         except Exception as e:
             logger.exception(f"Error fetching emails: {e}")
@@ -61,7 +91,9 @@ class VendorEmailNotification:
 
     async def read_template(self) -> str:
         try:
-            filepath = f"{urdhva_base.settings.template_path}/vendor_notification_notify.html"
+            filepath = (
+                f"{urdhva_base.settings.template_path}/vendor_notification_notify.html"
+            )
             async with aiofiles.open(filepath, "r") as f:
                 return await f.read()
         except Exception:
@@ -83,7 +115,7 @@ class VendorEmailNotification:
             tas_id = get_val("tas_faulty_unique_id")
             remarks = get_val("remarks", "")
             logged_date = get_val("faulty_date", "N/A")
-            
+
             # Resolution logic
             resolved = get_val("resolved", False)
             is_resolved = True if str(resolved).lower() == "true" else False
@@ -103,7 +135,8 @@ class VendorEmailNotification:
 
             # 4. Render Template
             template_content = await self.read_template()
-            if not template_content: return False, "Template not found"
+            if not template_content:
+                return False, "Template not found"
 
             self.body = jinja2.Template(template_content).render(
                 is_resolved=is_resolved,
@@ -113,7 +146,7 @@ class VendorEmailNotification:
                 description=remarks,
                 logged_date=logged_date,
                 assigned_to=", ".join(self.mail_recipients),
-                subject=self.subject
+                subject=self.subject,
             )
 
             # 5. Dispatch
@@ -125,7 +158,9 @@ class VendorEmailNotification:
             return False, str(e)
 
     async def _send_notification(self):
-        notification_module = await notification_factory.get_notification_module(module_type="email")
+        notification_module = await notification_factory.get_notification_module(
+            module_type="email"
+        )
         await notification_module.publish_message(
             recipients=self.mail_recipients,
             cc_recipients=self.cc_recipients,

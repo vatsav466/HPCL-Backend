@@ -1,6 +1,7 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
+
 # from constants import *
 # import send_tas_rq_message
 from utilities.bu_key_mapping import tasSopcommands
@@ -13,10 +14,10 @@ class SendcommandTasSop1222:
     async def get_required_variables(self):
         """
         Returns a list of strings representing the required variables for the SendcommandTasSop1222 action.
-        
-        This asynchronous function specifies the variables needed to perform the action, 
+
+        This asynchronous function specifies the variables needed to perform the action,
         which in this case, are the alert_id and interrupt variables.
-        
+
         Returns:
             list: A list containing two strings, "alert_id" and "interrupt".
         """
@@ -37,16 +38,18 @@ class SendcommandTasSop1222:
             interuptName = params.get("interrupt")
 
             if not alert_id or not interuptName:
-                raise ValueError("Required parameters 'alert_id' and 'interrupt' are missing.")
+                raise ValueError(
+                    "Required parameters 'alert_id' and 'interrupt' are missing."
+                )
 
-            logger.info('SENDING COMMAND TO TAS FOR alert_id:%s' % alert_id)
+            logger.info("SENDING COMMAND TO TAS FOR alert_id:%s" % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            deviceName = alert_data['device_name'].replace(" ", "")
+            sap_id = alert_data["sap_id"]
+            sop_id = alert_data["sop_id"]
+            deviceName = alert_data["device_name"].replace(" ", "")
             loadingPointId = (deviceName.split("@")[0]).split("LP")[1]
             if len(loadingPointId) == 1:
                 loadingPointId = "0" + loadingPointId
@@ -54,26 +57,40 @@ class SendcommandTasSop1222:
             alert_data["event_tags"] = {}
             interuptName = interuptName.lower()
             if interuptName == "terminateloading":
-                messageBody = {"tagsData": {tasSopcommands[sop_id].replace("ID", loadingPointId): 1}}
+                messageBody = {
+                    "tagsData": {
+                        tasSopcommands[sop_id].replace("ID", loadingPointId): 1
+                    }
+                }
                 # await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
                 print("Recieved input for tripping the loading point %s" % str(sap_id))
-                alert_data['alert_id'] = alert_id
-                alert_data["event_tags"]['is_tripped'] = True
+                alert_data["alert_id"] = alert_id
+                alert_data["event_tags"]["is_tripped"] = True
                 alert_data["action_msg"] = "Tripped"
                 alert_data["action_type"] = "Tripped"
-                await alert_manager.AlertAction().update_alert_data(input_data=alert_data)
+                await alert_manager.AlertAction().update_alert_data(
+                    input_data=alert_data
+                )
                 # data_object = hpcl_ceg_model.Alerts(**alert_data)
                 # await data_object.modify()
 
             elif interuptName == "unterminateloading":
-                print("Recieved input for untripping the loading point %s" % str(sap_id))
-                messageBody = {"tagsData": {tasSopcommands[sop_id].replace("ID", loadingPointId): 0}}
+                print(
+                    "Recieved input for untripping the loading point %s" % str(sap_id)
+                )
+                messageBody = {
+                    "tagsData": {
+                        tasSopcommands[sop_id].replace("ID", loadingPointId): 0
+                    }
+                }
                 # await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
-                alert_data['alert_id'] = alert_id
-                alert_data["event_tags"]['is_tripped'] = True
+                alert_data["alert_id"] = alert_id
+                alert_data["event_tags"]["is_tripped"] = True
                 alert_data["action_msg"] = "Tripped"
                 alert_data["action_type"] = "Tripped"
-                await alert_manager.AlertAction().update_alert_data(input_data=alert_data)
+                await alert_manager.AlertAction().update_alert_data(
+                    input_data=alert_data
+                )
                 # alert_data['isTripped'] = False
                 # data_object = hpcl_ceg_model.Alerts(**alert_data)
                 # await data_object.modify()
@@ -82,7 +99,9 @@ class SendcommandTasSop1222:
 
             return True, {"sendcommand": True}
 
-        except Exception as e:
+        except Exception:
             print("Traceback %s" % traceback.format_exc())
-            logger.error("Exception Occured While Sending Command for alert %s ", alert_id)
+            logger.error(
+                "Exception Occured While Sending Command for alert %s ", alert_id
+            )
             return False, {"sendcommand": False}

@@ -1,4 +1,3 @@
-
 import urdhva_base
 import polars as pl
 import numpy as np
@@ -9,8 +8,9 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import matplotlib.pyplot as plt
 
 
-
-async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle_trend_chart.png"):
+async def plot_ms_sales_trend(
+    trend_data: pl.DataFrame, output_path="/tmp/nozzle_trend_chart.png"
+):
 
     if trend_data is None or trend_data.is_empty():
         raise ValueError("trend_data cannot be empty")
@@ -19,37 +19,43 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # PREP DATA
     # -----------------------------
 
-    df = trend_data.with_columns([
-        pl.col("transaction_date").dt.strftime("%d-%b").alias("day"),
-        ((pl.col("ms_power").cast(pl.Float64) /
-         pl.col("ms_total").cast(pl.Float64))
-        * 100
-        ).alias("conversion")
-        ])
+    df = trend_data.with_columns(
+        [
+            pl.col("transaction_date").dt.strftime("%d-%b").alias("day"),
+            (
+                (
+                    pl.col("ms_power").cast(pl.Float64)
+                    / pl.col("ms_total").cast(pl.Float64)
+                )
+                * 100
+            ).alias("conversion"),
+        ]
+    )
     print("data ---->\n", df)
 
     # Remove nulls
-    df = df.filter(
-        pl.col("ms_total").is_not_null() &
-        pl.col("ms_power").is_not_null()
-    )
+    df = df.filter(pl.col("ms_total").is_not_null() & pl.col("ms_power").is_not_null())
     print("remove nulls data ---->\n", df)
 
     # Convert Decimal → Float
-    df = df.with_columns([
-        pl.col("ms_total").cast(pl.Float64),
-        pl.col("ms_power").cast(pl.Float64),
-        pl.col("conversion").cast(pl.Float64)
-    ])
+    df = df.with_columns(
+        [
+            pl.col("ms_total").cast(pl.Float64),
+            pl.col("ms_power").cast(pl.Float64),
+            pl.col("conversion").cast(pl.Float64),
+        ]
+    )
     print("convert to float ---->\n", df)
 
     # Clamp conversion to avoid extreme values
-    df = df.with_columns([
-        pl.when(pl.col("conversion") > 100)
-        .then(100)
-        .otherwise(pl.col("conversion"))
-        .alias("conversion")
-    ])
+    df = df.with_columns(
+        [
+            pl.when(pl.col("conversion") > 100)
+            .then(100)
+            .otherwise(pl.col("conversion"))
+            .alias("conversion")
+        ]
+    )
     print("conversion to avoid extreme values ----->\n", df)
 
     # -----------------------------
@@ -59,7 +65,9 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
 
     ms_total = np.nan_to_num(df["ms_total"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
     ms_power = np.nan_to_num(df["ms_power"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
-    conversion = np.nan_to_num(df["conversion"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0)
+    conversion = np.nan_to_num(
+        df["conversion"].to_numpy(), nan=0.0, posinf=0.0, neginf=0.0
+    )
 
     x = np.arange(len(days))
 
@@ -84,13 +92,15 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # LINE
     # -----------------------------
     ax2 = ax1.twinx()
-    ax2.plot(x, conversion, marker='o',color="#d4aa00", linewidth=2, label="MS % Conversion")
+    ax2.plot(
+        x, conversion, marker="o", color="#d4aa00", linewidth=2, label="MS % Conversion"
+    )
 
     # -----------------------------
     # AXES
     # -----------------------------
     ax1.set_xticks(x)
-    #ax1.set_xticklabels(days)
+    # ax1.set_xticklabels(days)
     ax1.set_xticklabels(days, rotation=45)
 
     ax2.set_ylim(0, 25)
@@ -111,19 +121,19 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     offset = max(ms_total) * 0.02 if len(ms_total) > 0 else 1
 
     for i, v in enumerate(ms_total):
-        ax1.text(i - 0.2, v + offset, f"{int(v)}", fontsize=7, ha='center')
+        ax1.text(i - 0.2, v + offset, f"{int(v)}", fontsize=7, ha="center")
 
     for i, v in enumerate(ms_power):
-        ax1.text(i + 0.2, v + offset, f"{int(v)}", fontsize=7, ha='center')
+        ax1.text(i + 0.2, v + offset, f"{int(v)}", fontsize=7, ha="center")
 
     for i, v in enumerate(conversion):
-        #if i % 2 == 0:
-        ax2.text(i, float(v) + 0.3, f"{float(v):.1f}%", fontsize=8, ha='center')
+        # if i % 2 == 0:
+        ax2.text(i, float(v) + 0.3, f"{float(v):.1f}%", fontsize=8, ha="center")
 
     # -----------------------------
     # STYLE
     # -----------------------------
-    ax1.grid(axis='y', linestyle='--', alpha=0.3)
+    ax1.grid(axis="y", linestyle="--", alpha=0.3)
 
     for spine in ["top", "right"]:
         ax1.spines[spine].set_visible(False)
@@ -143,7 +153,7 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
     # SAVE
     # -----------------------------
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
 
     print(f"Graph saved at: {output_path}")
@@ -152,7 +162,7 @@ async def plot_ms_sales_trend(trend_data: pl.DataFrame, output_path="/tmp/nozzle
 
 async def fetch_data():
 
-    nozzle_sales_query_avg =f"""
+    nozzle_sales_query_avg = f"""
                         WITH base AS (
                         SELECT
                             "transaction_date",
@@ -234,7 +244,7 @@ async def fetch_data():
 
                     FROM mar, apr, yday;
                     """
-    
+
     nozzle_trend_query = """
                 SELECT
                     transaction_date,
@@ -252,27 +262,35 @@ async def fetch_data():
                 GROUP BY transaction_date
 
             """
-    nozzle_sync_time_query = """ SELECT MAX(created_at::timestamp) as sync_time FROM nozzle_sales """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-
+    nozzle_sync_time_query = (
+        """ SELECT MAX(created_at::timestamp) as sync_time FROM nozzle_sales """
+    )
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
 
     nozzle_sales_avg = await function(query=nozzle_sales_query_avg)
-    #nozzle_sales_avg_df = pl.DataFrame(nozzle_sales_avg)
-    nozzle_sales_avg_df = pl.DataFrame(nozzle_sales_avg).with_columns([
-        pl.all().cast(pl.Float64)
-    ])
-    print("nozzle_sales_avg_df = pd.DataFrame(nozzle_sales_avg) ---->\n", nozzle_sales_avg_df)
+    # nozzle_sales_avg_df = pl.DataFrame(nozzle_sales_avg)
+    nozzle_sales_avg_df = pl.DataFrame(nozzle_sales_avg).with_columns(
+        [pl.all().cast(pl.Float64)]
+    )
+    print(
+        "nozzle_sales_avg_df = pd.DataFrame(nozzle_sales_avg) ---->\n",
+        nozzle_sales_avg_df,
+    )
     print("nozzle ---->\n", nozzle_sales_avg_df.to_dicts()[0])
-    nozzle_trend = await function(query= nozzle_trend_query)
+    nozzle_trend = await function(query=nozzle_trend_query)
     nozzle_trend_df = pl.DataFrame(nozzle_trend)
     print("nozzle trend data----> \n", nozzle_trend_df)
 
     nozzle_trend_chart = await plot_ms_sales_trend(nozzle_trend_df)
     print("nozzle trend chart --->\n", nozzle_trend_chart)
 
-    nozzle_sync_time = await function(query= nozzle_sync_time_query)
+    nozzle_sync_time = await function(query=nozzle_sync_time_query)
     nozzle_sync_time = pl.DataFrame(nozzle_sync_time)
     nozzle_sync_time = nozzle_sync_time.with_columns(
         pl.col("sync_time")
@@ -283,9 +301,11 @@ async def fetch_data():
     )
     print("nozzle_sync_time -------------->\n", nozzle_sync_time.to_dicts())
 
-    return {"nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0], "nozzle_trend_chart": nozzle_trend_chart,
-            "nozzle_sales_sync_time": nozzle_sync_time["nozzle_sales_sync"][0]
-        }
+    return {
+        "nozzle_sales_avg_df": nozzle_sales_avg_df.to_dicts()[0],
+        "nozzle_trend_chart": nozzle_trend_chart,
+        "nozzle_sales_sync_time": nozzle_sync_time["nozzle_sales_sync"][0],
+    }
 
 
 async def nozzles_sales_top_performance():
@@ -396,133 +416,170 @@ async def nozzles_sales_top_performance():
                                     sap_id,
                                     location_name;
                         """
-    
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     nozzle_sales = await function(query=nozzle_sales_top_query)
     nozzle_sales_df = pl.DataFrame(nozzle_sales)
-    print("nozzle_sales_top_df = pd.DataFrame(nozzle_sales_top_bottom) ---->\n", nozzle_sales_df.head(5))
+    print(
+        "nozzle_sales_top_df = pd.DataFrame(nozzle_sales_top_bottom) ---->\n",
+        nozzle_sales_df.head(5),
+    )
     print("count of records in nozzle_sales_top_df ---->\n", nozzle_sales_df.shape[0])
 
     location_details_query = f"""SELECT DISTINCT sap_id, zone, region, sales_area, name FROM location_master where bu = 'RO' """
-    location_data  = await urdhva_base.BasePostgresModel.get_aggr_data(location_details_query, limit=0)
-    loc_df = pl.DataFrame(location_data['data'])
+    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(
+        location_details_query, limit=0
+    )
+    loc_df = pl.DataFrame(location_data["data"])
 
-    nozzle_sales_df = nozzle_sales_df.join(loc_df, on = 'sap_id', how = "left")
+    nozzle_sales_df = nozzle_sales_df.join(loc_df, on="sap_id", how="left")
     print("completed the joining with lm")
 
     # nozzle_sales_top_df = nozzle_sales_df.filter(
-    #     (pl.col("current_ms_kl").is_not_null()) & 
+    #     (pl.col("current_ms_kl").is_not_null()) &
     #     (pl.col("current_ms_kl") != 0)
     # )
 
-    labels = nozzle_sales_df.select([
-        "current_date_label",
-        "financial_year_label"
-    ]).unique().to_dicts()[0]
+    labels = (
+        nozzle_sales_df.select(["current_date_label", "financial_year_label"])
+        .unique()
+        .to_dicts()[0]
+    )
     print("labels ---->\n", labels)
 
     nozzle_sales_top_df = nozzle_sales_df.filter(pl.col("zone").is_not_null())
 
-    nozzle_sales_top_df = (
-        nozzle_sales_top_df
-        .group_by(["zone", "region", "sales_area", "location_name", "sap_id"])
-        .agg([
+    nozzle_sales_top_df = nozzle_sales_top_df.group_by(
+        ["zone", "region", "sales_area", "location_name", "sap_id"]
+    ).agg(
+        [
             pl.sum("current_ms_kl").alias("current_ms_kl"),
             pl.sum("current_power_kl").alias("current_power_kl"),
-            (pl.sum("current_ms_kl") + pl.sum("current_power_kl")).alias("current_ms_total_kl"),
-            pl.sum("ytd_power_kl").alias("ytd_power_kl"), 
+            (pl.sum("current_ms_kl") + pl.sum("current_power_kl")).alias(
+                "current_ms_total_kl"
+            ),
+            pl.sum("ytd_power_kl").alias("ytd_power_kl"),
             pl.sum("ytd_ms_kl").alias("ytd_ms_kl"),
-            (pl.sum("ytd_power_kl")+ pl.sum("ytd_ms_kl")).alias("ytd_ms_total_kl")
-        ])
+            (pl.sum("ytd_power_kl") + pl.sum("ytd_ms_kl")).alias("ytd_ms_total_kl"),
+        ]
     )
 
-    nozzle_sales_top_df = (
-        nozzle_sales_top_df
-        .group_by(["zone", "region", "sales_area", "location_name", "sap_id"])
-        .agg(
-            current_power_kl = pl.col("current_power_kl").sum(),
-            current_ms_total_kl = pl.col("current_ms_total_kl").sum(),
-            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
-            ytd_power_kl = pl.col("ytd_power_kl").sum(),
-            ytd_ms_total_kl = pl.col("ytd_ms_total_kl").sum(),
-            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+    nozzle_sales_top_df = nozzle_sales_top_df.group_by(
+        ["zone", "region", "sales_area", "location_name", "sap_id"]
+    ).agg(
+        current_power_kl=pl.col("current_power_kl").sum(),
+        current_ms_total_kl=pl.col("current_ms_total_kl").sum(),
+        current_conversion_pct=(
+            pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()
         )
-    )    
-    
+        * 100,
+        ytd_power_kl=pl.col("ytd_power_kl").sum(),
+        ytd_ms_total_kl=pl.col("ytd_ms_total_kl").sum(),
+        ytd_conversion_pct=(
+            pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()
+        )
+        * 100,
+    )
+
     top_3_retail_outlets = (
-        nozzle_sales_top_df
-        .filter(pl.col("current_conversion_pct").is_not_null())
+        nozzle_sales_top_df.filter(pl.col("current_conversion_pct").is_not_null())
         .sort("current_conversion_pct", descending=True)
         .head(3)
     )
     print("top_3_retail_outlets ---->\n", top_3_retail_outlets.to_dicts())
 
-    top_3_sales_areas = (nozzle_sales_top_df
-        .group_by(["zone", "region", "sales_area"]).agg(
-            current_power_kl_sum = pl.col("current_power_kl").sum(),
-            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
-            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
-            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
-            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
-            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+    top_3_sales_areas = nozzle_sales_top_df.group_by(
+        ["zone", "region", "sales_area"]
+    ).agg(
+        current_power_kl_sum=pl.col("current_power_kl").sum(),
+        current_ms_total_kl_sum=pl.col("current_ms_total_kl").sum(),
+        current_conversion_pct=(
+            pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()
         )
+        * 100,
+        ytd_power_kl_sum=pl.col("ytd_power_kl").sum(),
+        ytd_ms_total_kl_sum=pl.col("ytd_ms_total_kl").sum(),
+        ytd_conversion_pct=(
+            pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()
+        )
+        * 100,
     )
-    print("count of records in top_3_sales_areas before filtering nulls ---->\n", top_3_sales_areas.shape[0])
+    print(
+        "count of records in top_3_sales_areas before filtering nulls ---->\n",
+        top_3_sales_areas.shape[0],
+    )
     top_3_sales_areas = (
-        top_3_sales_areas
-        .filter(pl.col("current_conversion_pct").is_not_null())
+        top_3_sales_areas.filter(pl.col("current_conversion_pct").is_not_null())
         .sort("current_conversion_pct", descending=True)
         .head(3)
     )
     print("top_3_sales_areas ---->\n", top_3_sales_areas.to_dicts())
 
-
-    top_3_regions = (nozzle_sales_top_df
-        .group_by(["zone", "region"]).agg(
-            current_power_kl_sum = pl.col("current_power_kl").sum(),
-            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
-            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
-            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
-            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
-            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+    top_3_regions = nozzle_sales_top_df.group_by(["zone", "region"]).agg(
+        current_power_kl_sum=pl.col("current_power_kl").sum(),
+        current_ms_total_kl_sum=pl.col("current_ms_total_kl").sum(),
+        current_conversion_pct=(
+            pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()
         )
+        * 100,
+        ytd_power_kl_sum=pl.col("ytd_power_kl").sum(),
+        ytd_ms_total_kl_sum=pl.col("ytd_ms_total_kl").sum(),
+        ytd_conversion_pct=(
+            pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()
+        )
+        * 100,
     )
-    print("count of records in top_3_regions before filtering nulls ---->\n", top_3_regions.shape[0])
+    print(
+        "count of records in top_3_regions before filtering nulls ---->\n",
+        top_3_regions.shape[0],
+    )
     top_3_regions = (
-        top_3_regions
-        .filter(pl.col("current_conversion_pct").is_not_null())
+        top_3_regions.filter(pl.col("current_conversion_pct").is_not_null())
         .sort("current_conversion_pct", descending=True)
         .head(3)
     )
     print("top_3_regions ---->\n", top_3_regions.to_dicts())
 
-    top_3_zones = (nozzle_sales_top_df
-        .filter(pl.col("zone").is_not_null())
-        .group_by(["zone"]).agg(
-            current_power_kl_sum = pl.col("current_power_kl").sum(),
-            current_ms_total_kl_sum = pl.col("current_ms_total_kl").sum(),
-            current_conversion_pct = (pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()) * 100,
-            ytd_power_kl_sum = pl.col("ytd_power_kl").sum(),
-            ytd_ms_total_kl_sum = pl.col("ytd_ms_total_kl").sum(),
-            ytd_conversion_pct = (pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()) * 100
+    top_3_zones = (
+        nozzle_sales_top_df.filter(pl.col("zone").is_not_null())
+        .group_by(["zone"])
+        .agg(
+            current_power_kl_sum=pl.col("current_power_kl").sum(),
+            current_ms_total_kl_sum=pl.col("current_ms_total_kl").sum(),
+            current_conversion_pct=(
+                pl.col("current_power_kl").sum() / pl.col("current_ms_total_kl").sum()
+            )
+            * 100,
+            ytd_power_kl_sum=pl.col("ytd_power_kl").sum(),
+            ytd_ms_total_kl_sum=pl.col("ytd_ms_total_kl").sum(),
+            ytd_conversion_pct=(
+                pl.col("ytd_power_kl").sum() / pl.col("ytd_ms_total_kl").sum()
+            )
+            * 100,
         )
     )
-    print("count of records in top_3_zones before filtering nulls ---->\n", top_3_zones.shape[0])
+    print(
+        "count of records in top_3_zones before filtering nulls ---->\n",
+        top_3_zones.shape[0],
+    )
     top_3_zones = (
-        top_3_zones
-        .filter(pl.col("current_conversion_pct").is_not_null())
+        top_3_zones.filter(pl.col("current_conversion_pct").is_not_null())
         .sort("current_conversion_pct", descending=True)
         .head(3)
     )
-    print("top_3_zones ---->\n", top_3_zones.to_dicts())      
-    
+    print("top_3_zones ---->\n", top_3_zones.to_dicts())
+
     return {
         "top_3_retail_outlets": top_3_retail_outlets.to_dicts(),
         "top_3_sales_areas": top_3_sales_areas.to_dicts(),
         "top_3_regions": top_3_regions.to_dicts(),
         "top_3_zones": top_3_zones.to_dicts(),
         "nozzle_present_month": labels["current_date_label"],
-        "nozzle_previous_month": labels["financial_year_label"]
+        "nozzle_previous_month": labels["financial_year_label"],
     }

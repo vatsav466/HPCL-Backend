@@ -1,7 +1,5 @@
 import urdhva_base
 import json
-import time
-import httpx
 import asyncio
 import hpcl_ceg_model
 import urdhva_base.redispool
@@ -43,7 +41,9 @@ async def get_location_details_old(bu, sap_id):
         redis_ins = await urdhva_base.redispool.get_redis_connection()
         try:
             if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
-                location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
+                location_data = json.loads(
+                    await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}")
+                )
                 return True, location_data
         except Exception as e:
             print("Redis Exception: ", e)
@@ -60,14 +60,18 @@ async def get_location_details_old(bu, sap_id):
     params.q = query
     params.sort = None
     # Fetching data from database
-    locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
     print(locdata)
-    if locdata.get('data', []):
-        location_data = locdata.get('data')[0]
+    if locdata.get("data", []):
+        location_data = locdata.get("data")[0]
         print("location_data: ", location_data)
         if not isinstance(location_data, dict):
             location_data = location_data.__dict__
-        await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data, default=utils.datetime_serializer))
+        await redis_ins.hset(
+            "location_master",
+            f"{bu.upper()}_{sap_id}",
+            json.dumps(location_data, default=utils.datetime_serializer),
+        )
         return True, location_data
     elif bu == "RO":
         query = f"bu = '{bu.upper()}' AND ro_id = '{sap_id}'"
@@ -77,15 +81,18 @@ async def get_location_details_old(bu, sap_id):
         params.q = query
         params.sort = None
         # Fetching data from database
-        locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+        locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
         print(locdata)
-        if locdata.get('data', []):
-            location_data = locdata.get('data')[0]
+        if locdata.get("data", []):
+            location_data = locdata.get("data")[0]
             print("location_data: ", location_data)
             if not isinstance(location_data, dict):
                 location_data = location_data.__dict__
-            await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}",
-                                 json.dumps(location_data, default=utils.datetime_serializer))
+            await redis_ins.hset(
+                "location_master",
+                f"{bu.upper()}_{sap_id}",
+                json.dumps(location_data, default=utils.datetime_serializer),
+            )
             return True, location_data
     return False, {"msg": "Data not available"}
 
@@ -112,7 +119,9 @@ async def set_location_details(bu, sap_id, location_data, redis_client=None):
         return False
     if not redis_client:
         redis_client = await urdhva_base.redispool.get_redis_connection()
-    await redis_client.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data))
+    await redis_client.hset(
+        "location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data)
+    )
     return True
 
 
@@ -147,13 +156,22 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     MAX_RETRIES = 5
     RETRY_DELAY = 2
 
-    redis_ins = await urdhva_base.redispool.get_redis_connection()  # Use a persistent Redis connection
+    redis_ins = (
+        await urdhva_base.redispool.get_redis_connection()
+    )  # Use a persistent Redis connection
 
     for attempt in range(MAX_RETRIES):
         try:
             date = urdhva_base.utilities.get_present_time().strftime("%d%m%y")
-            redis_key = [key for key in [f"{bu.upper()}" if bu else "",  f"{sap_id.upper()}" if sap_id else "", 
-            f"{sop_id.upper()}" if sop_id else ""] if key.strip()]
+            redis_key = [
+                key
+                for key in [
+                    f"{bu.upper()}" if bu else "",
+                    f"{sap_id.upper()}" if sap_id else "",
+                    f"{sop_id.upper()}" if sop_id else "",
+                ]
+                if key.strip()
+            ]
             if device_id:
                 redis_key.append(f"_{str(device_id).upper()}")
 
@@ -163,7 +181,7 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
         except Exception as e:
             print(f"Error in getting unique ID (Attempt {attempt + 1}): {e}")
             if attempt < MAX_RETRIES - 1:
-                await asyncio.sleep(RETRY_DELAY * (2 ** attempt))  # Exponential backoff
+                await asyncio.sleep(RETRY_DELAY * (2**attempt))  # Exponential backoff
             else:
                 return ""
     return ""

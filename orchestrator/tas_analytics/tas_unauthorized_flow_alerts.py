@@ -4,15 +4,14 @@ import urdhva_base
 import polars as pl
 from datetime import datetime, timedelta
 import orchestrator.alerting.alert_factory as alert_factory
-import hpcl_ceg_model 
-
+import hpcl_ceg_model
 
 # ==========================================================
 # CONFIG
 # ==========================================================
 RAW_INTERLOCK_NAME = "Unauthorized Flow Alarm_BCU"
 WEEKLY_INTERLOCK_NAME = "Morethan 2 Unauthorized_flow a week"
-WEEK_DAYS = 7   
+WEEK_DAYS = 7
 
 
 # ==========================================================
@@ -27,7 +26,6 @@ def sanitize_alert_data(alert_data):
     alert_data["sales_area"] = None
     alert_data["category"] = None
     return alert_data
-
 
 
 # ==========================================================
@@ -58,20 +56,11 @@ async def fetch_raw_unauthorized_flow(location_name=None):
     print("\n RAW DATA QUERY >>>")
     print(query)
 
-    fields = json.dumps([
-        "sap_id",
-        "location_name",
-        "zone",
-        "device_name",
-        "created_at",
-        "bu"
-    ])
-
-    params = urdhva_base.queryparams.QueryParams(
-        q=query,
-        limit=0,
-        fields=fields
+    fields = json.dumps(
+        ["sap_id", "location_name", "zone", "device_name", "created_at", "bu"]
     )
+
+    params = urdhva_base.queryparams.QueryParams(q=query, limit=0, fields=fields)
 
     resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     data = resp.get("data", [])
@@ -109,15 +98,9 @@ async def append_skip_history(existing_alert, reason):
 
     history = existing_alert.get("alert_history") or []
 
-    history.append({
-        "action_type": "Message",
-        "action_msg": reason
-    })
+    history.append({"action_type": "Message", "action_msg": reason})
 
-    await Alerts(
-        id=existing_alert["id"],
-        alert_history=history
-    ).modify()
+    await Alerts(id=existing_alert["id"], alert_history=history).modify()
 
 
 # ==========================================================
@@ -143,9 +126,8 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
     # ======================================================
     weekly_device_df = (
         df.group_by(["sap_id", "device_name", "location_name", "zone", "bu"])
-          .agg(pl.count().alias("cnt"))
-          .filter(pl.col("cnt") > 2)   # 🔒 PRODUCTION RULE
-          
+        .agg(pl.count().alias("cnt"))
+        .filter(pl.col("cnt") > 2)  # 🔒 PRODUCTION RULE
     )
 
     print("\n DEVICES CROSSING WEEKLY THRESHOLD:")
@@ -160,10 +142,7 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
     # ======================================================
     existing_alerts = await fetch_existing_weekly_alerts()
 
-    existing_map = {
-        (a.get("sap_id"), a.get("device_name")): a
-        for a in existing_alerts
-    }
+    existing_map = {(a.get("sap_id"), a.get("device_name")): a for a in existing_alerts}
 
     # ======================================================
     # CREATE / SKIP LOGIC (REFERENCE MATCH)
@@ -178,7 +157,7 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
 
             await append_skip_history(
                 existing_map[key],
-                "Skipped: Unauthorized Flow crossed threshold again in same week"
+                "Skipped: Unauthorized Flow crossed threshold again in same week",
             )
             continue
 
@@ -198,17 +177,15 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
             "alert_history": [
                 {
                     "action_type": "Created",
-                    "action_msg": "Unauthorized Flow > 2 times in one week"
+                    "action_msg": "Unauthorized Flow > 2 times in one week",
                 }
-            ]
+            ],
         }
 
         print("\n CREATING WEEKLY UNAUTHORIZED FLOW ALERT >>>")
         print(alert_data)
 
-        await alert_factory.AlertFactory.create_alert(
-            sanitize_alert_data(alert_data)
-        )
+        await alert_factory.AlertFactory.create_alert(sanitize_alert_data(alert_data))
 
     print("\n==============================================")
     print("WEEKLY UNAUTHORIZED FLOW ALERT JOB COMPLETED")
@@ -219,7 +196,4 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
 # ENTRY POINT
 # ==========================================================
 if __name__ == "__main__":
-    asyncio.run(
-        process_weekly_unauthorized_flow_alerts()
-    )
-
+    asyncio.run(process_weekly_unauthorized_flow_alerts())

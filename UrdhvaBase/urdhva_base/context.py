@@ -3,8 +3,9 @@ import contextvars
 import typing
 import copy
 
-_request_scope_context_storage: contextvars.ContextVar[typing.Dict[typing.Any, typing.Any]] = \
-    contextvars.ContextVar('urdhva_base-request-scope')
+_request_scope_context_storage: contextvars.ContextVar[
+    typing.Dict[typing.Any, typing.Any]
+] = contextvars.ContextVar("urdhva_base-request-scope")
 
 
 class Context(collections.UserDict):

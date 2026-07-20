@@ -9,7 +9,6 @@ import hpcl_ceg_model
 import hpcl_ceg_enum
 import api_manager.alerts_actions
 
-
 logger = urdhva_base.Logger.getInstance("ticket_block_trucks_listener")
 
 
@@ -28,7 +27,9 @@ class TicketBlockTrucksListener:
             try:
                 restart_triggered_time = int(await redis_ins.get(restart_trigger_key))
             except Exception as e:
-                logger.error(f"Exception while converting restart triggered time to integer, {e}")
+                logger.error(
+                    f"Exception while converting restart triggered time to integer, {e}"
+                )
         await redis_ins.connection_pool.disconnect()
         return restart_triggered_time
 
@@ -52,8 +53,10 @@ class TicketBlockTrucksListener:
                 if task:
                     await self.process_task(json.loads(task))
             except Exception as e:
-                if 'Timeout reading' not in str(e):
-                    logger.error(f"Exception in ticket block trucks task process {e}, {traceback.format_exc()}")
+                if "Timeout reading" not in str(e):
+                    logger.error(
+                        f"Exception in ticket block trucks task process {e}, {traceback.format_exc()}"
+                    )
             if (int(time.time()) - base_time) > 300:
                 if await self.validate_restart(self.worker_start_time):
                     logger.info(f"Restart message received for {self.queue_name}")
@@ -70,7 +73,11 @@ class TicketBlockTrucksListener:
             return
 
         try:
-            bu = hpcl_ceg_enum.BusinessUnit(bu_str) if isinstance(bu_str, str) else bu_str
+            bu = (
+                hpcl_ceg_enum.BusinessUnit(bu_str)
+                if isinstance(bu_str, str)
+                else bu_str
+            )
         except (ValueError, TypeError):
             logger.error(f"Invalid BU value: {bu_str}")
             return
@@ -80,7 +87,9 @@ class TicketBlockTrucksListener:
             "rpt": rpt,
             "entity_id": task.get("entity_id", "Novex"),
             "domain": None,
-            "entity_obj": urdhva_base.entity.Entity() if hasattr(urdhva_base, "entity") else None,
+            "entity_obj": (
+                urdhva_base.entity.Entity() if hasattr(urdhva_base, "entity") else None
+            ),
         }
         token = None
         try:
@@ -92,15 +101,19 @@ class TicketBlockTrucksListener:
                 reason=task.get("reason", "") or "",
                 bu=bu,
                 location_name=task.get("location_name", "") or "",
-                zone=task.get("zone", "") or "",   
-                region=task.get("region", "") or "", 
-                sap_id=task.get("sap_id", "") or "", 
+                zone=task.get("zone", "") or "",
+                region=task.get("region", "") or "",
+                sap_id=task.get("sap_id", "") or "",
                 check_ticket_close=task.get("check_ticket_close", False),
             )
-            block_resp = await api_manager.alerts_actions.alerts_block_vts_truck(block_params)
+            block_resp = await api_manager.alerts_actions.alerts_block_vts_truck(
+                block_params
+            )
 
             if not block_resp.get("status"):
-                logger.error(f"Block failed for truck {truck_number}: {block_resp.get('message')}")
+                logger.error(
+                    f"Block failed for truck {truck_number}: {block_resp.get('message')}"
+                )
                 return
 
             query = (
@@ -109,12 +122,11 @@ class TicketBlockTrucksListener:
                 f"and interlock_name='Itdg Admin Blocked'"
                 f"and vehicle_unblocked_date is null"
             )
-            params = urdhva_base.queryparams.QueryParams(q=query, limit=1, sort=json.dumps({"created_at": "desc"}))
-
-            alert_resp = await hpcl_ceg_model.Alerts.get_all(
-                params,
-                resp_type="plain"
+            params = urdhva_base.queryparams.QueryParams(
+                q=query, limit=1, sort=json.dumps({"created_at": "desc"})
             )
+
+            alert_resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
 
             if not alert_resp or not alert_resp.get("data"):
                 logger.error(f"Alert created but not found for truck {truck_number}")
@@ -122,15 +134,16 @@ class TicketBlockTrucksListener:
 
             alert_id = alert_resp["data"][0]["id"]
 
-            await hpcl_ceg_model.Alerts(
-                id=alert_id,
-                ticket_id=ticket_id
-            ).modify()
+            await hpcl_ceg_model.Alerts(id=alert_id, ticket_id=ticket_id).modify()
 
-            logger.info(f"Truck {truck_number} blocked and linked to ticket {ticket_id}, alert_id={alert_id}")
+            logger.info(
+                f"Truck {truck_number} blocked and linked to ticket {ticket_id}, alert_id={alert_id}"
+            )
 
         except Exception as e:
-            logger.exception(f"Error processing block for truck {truck_number}: {str(e)}")
+            logger.exception(
+                f"Error processing block for truck {truck_number}: {str(e)}"
+            )
         finally:
             if token is not None:
                 urdhva_base.context._request_scope_context_storage.reset(token)
@@ -144,4 +157,3 @@ if __name__ == "__main__":
     asyncio.run(
         TicketBlockTrucksListener(sys.argv[1], "ticket_block_trucks_queue").listener()
     )
-

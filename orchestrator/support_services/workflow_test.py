@@ -6,9 +6,10 @@ import pandas as pd
 import charts_actions
 import dashboard_studio_model
 
+
 class Workflows_Deletion:
 
-    async def get_camunda_urls(self,alert_section):
+    async def get_camunda_urls(self, alert_section):
         """
         Retrieves a list of Camunda URLs based on the provided alert section.
 
@@ -25,8 +26,8 @@ class Workflows_Deletion:
                 url = f"http://{services['host']}:{services['port']}"
                 urls.append(url)
         return urls
-    
-    async def get_running_instances_in_urls(self,camunda_urls):
+
+    async def get_running_instances_in_urls(self, camunda_urls):
         """
         Fetches running instances from multiple Camunda URLs.
 
@@ -53,7 +54,7 @@ class Workflows_Deletion:
                         variables_response.raise_for_status()
                         variables = variables_response.json()
                         alert_id = variables.get("alert_id", {}).get("value", None)
-                        #print("variablees--->",variables)
+                        # print("variablees--->",variables)
                         instance_map.append(int(alert_id))
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching running instances: {e}")
@@ -72,19 +73,21 @@ class Workflows_Deletion:
         the instances in Camunda that do not exist in the database.
         """
         business_keys = []
-        camunda_urls=[]
-        present_keys=[]
+        camunda_urls = []
+        present_keys = []
         camunda_urls = await self.get_camunda_urls(alert_section)
         camunda_urls = list(set(camunda_urls))
-        print("camuda_urls--->",camunda_urls)
-        runnig_instances_in_urls = await self.get_running_instances_in_urls(camunda_urls)
+        print("camuda_urls--->", camunda_urls)
+        runnig_instances_in_urls = await self.get_running_instances_in_urls(
+            camunda_urls
+        )
         for alert_id in present_alert_ids_in_db:
             if alert_id not in runnig_instances_in_urls:
                 business_keys.append(alert_id)
             else:
                 present_keys.append(alert_id)
-        print("length of business_keys--->",len(business_keys))
-        print("length of present_keys--->",len(present_keys))
+        print("length of business_keys--->", len(business_keys))
+        print("length of present_keys--->", len(present_keys))
         business_keys = ", ".join(f"'{id}'" for id in business_keys)
         if business_keys:
             query = f"""UPDATE alerts
@@ -99,12 +102,12 @@ class Workflows_Deletion:
                                 AND alert_status != 'Close'
                                 AND interlock_name = 'Dry Out Each Indent Wise MainFlow'
                                 AND created_at::DATE!=CURRENT_DATE"""
-            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            #function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            #resp = await function(query=query)
-            #resp = pd.DataFrame(resp)
-            #resp.to_csv("/opt/ceg/algo/running_instance.csv", index=False)
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            # resp = await function(query=query)
+            # resp = pd.DataFrame(resp)
+            # resp.to_csv("/opt/ceg/algo/running_instance.csv", index=False)
 
     async def process_workflow_resp(self, workflow_resp):
         """
@@ -117,16 +120,24 @@ class Workflows_Deletion:
         fetches the list of workflow IDs currently present in the database.
         It then deletes the running instances in Camunda that do not exist in the database.
         """
-        for idx,record in workflow_resp.iterrows():
+        for idx, record in workflow_resp.iterrows():
             if record["alert_section"] in ["RO"]:
-                query = (f"select * from alerts where alert_section='RO' and alert_status!='Close' and interlock_name='Dry Out Each Indent Wise MainFlow'")
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                query = f"select * from alerts where alert_section='RO' and alert_status!='Close' and interlock_name='Dry Out Each Indent Wise MainFlow'"
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+                    1
+                )
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                    "execute_query"
+                )
+                function = await charts_actions.charts_connection_vault_routing(
+                    dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+                )
                 resp = await function(query=query)
                 data_resp = pd.DataFrame(resp)
                 present_alert_ids_in_db = data_resp["id"].tolist()
-                await self.delete_running_instances(present_alert_ids_in_db, record["alert_section"])
+                await self.delete_running_instances(
+                    present_alert_ids_in_db, record["alert_section"]
+                )
 
     async def instance_removal(self):
         """
@@ -141,9 +152,15 @@ class Workflows_Deletion:
 
         try:
             query = "SELECT DISTINCT(alert_section) FROM alerts"
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = (
+                1
+            )
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+                "execute_query"
+            )
+            function = await charts_actions.charts_connection_vault_routing(
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+            )
             resp = await function(query=query)
 
             workflow_resp = pd.DataFrame(resp)
@@ -157,6 +174,7 @@ class Workflows_Deletion:
             print("Exception Occurred While Removing Instances")
             print(e)
             print("Traceback:", traceback.format_exc())
+
 
 if __name__ == "__main__":
     Workflow = Workflows_Deletion()

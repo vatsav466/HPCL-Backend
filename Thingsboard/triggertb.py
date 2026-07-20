@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import requests
 
+
 def load_site_data(site_id):
     """
     Loads site data from a JSON file.
@@ -22,17 +23,19 @@ def post_telemetry(device_key, sensor_type, tag_value):
     """
     Sends telemetry data to ThingsBoard for a specific device.
     """
-    telemetry_data = {
-        sensor_type:tag_value
-    }
+    telemetry_data = {sensor_type: tag_value}
     url = f"{urdhva_base.settings.things_board_url}/api/v1/{device_key}/telemetry"  # Using deviceKey as the token
-    
+
     try:
         response = requests.post(url, json=telemetry_data)
         if response.status_code == 200:
-            print(f"Telemetry sent successfully for DeviceKey: {device_key}, SensorType: {sensor_type}")
+            print(
+                f"Telemetry sent successfully for DeviceKey: {device_key}, SensorType: {sensor_type}"
+            )
         else:
-            print(f"Failed to send telemetry for DeviceKey: {device_key}, SensorType: {sensor_type}")
+            print(
+                f"Failed to send telemetry for DeviceKey: {device_key}, SensorType: {sensor_type}"
+            )
             print(f"Response: {response.status_code} - {response.text}")
     except requests.RequestException as e:
         print(f"Error sending telemetry: {e}")
@@ -61,7 +64,7 @@ def send_telemetry_for_all(site_id, tag_value):
             if not tag_path:
                 print(f"TagPath missing in sensor: {sensor}")
                 continue
-            
+
             print(f"Processing TagPath: {tag_path}")
             post_telemetry(device_key, sensor.get("sensor_name"), tag_value)
 

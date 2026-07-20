@@ -1,6 +1,6 @@
 class NotificationManager:
     def __init__(self):
-        self.notification_type = ''
+        self.notification_type = ""
 
     @classmethod
     def load_credentials(cls):
@@ -8,7 +8,6 @@ class NotificationManager:
         Function to load credentials, can be implemented by subclasses
         :return:
         """
-        pass
 
     async def publish_message(self, **kwargs):
         """
@@ -16,4 +15,3 @@ class NotificationManager:
         :param kwargs:
         :return:
         """
-        pass

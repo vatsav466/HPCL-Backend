@@ -3,14 +3,12 @@ import os
 import sys
 import typing
 import pyodbc
-import datetime
 import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
 import urdhva_base.types
 from sshtunnel import SSHTunnelForwarder
-
 
 dtype_map = {
     "int64": "bigint",
@@ -34,34 +32,46 @@ class Mssql(BaseAction):
         super().__init__(params)
 
     async def get_connection(self):
-        if 'connection_name' in self.params.keys():
-            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if "connection_name" in self.params.keys():
+            self.params = await hpcl_ceg_model.CredsModel.get(
+                self.params["connection_name"]
+            )
         if not isinstance(self.params, dict):
             self.params = self.params.__dict__
-        if 'credentials' in self.params.keys():
-            self.params = self.params['credentials']
-            self.params["password"] = urdhva_base.types.Secret(self.params['password']).get_secret()
-        if self.params.get('is_ssh_tunnel', False):
+        if "credentials" in self.params.keys():
+            self.params = self.params["credentials"]
+            self.params["password"] = urdhva_base.types.Secret(
+                self.params["password"]
+            ).get_secret()
+        if self.params.get("is_ssh_tunnel", False):
             tunnel = SSHTunnelForwarder(
-                (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
-                ssh_username=self.params['ssh_tunnel']['user_name'],
-                ssh_pkey=urdhva_base.types.Secret(self.params['ssh_tunnel']['private_key'] if 'private_key' in self.params['ssh_tunnel'].keys() else None).get_secret(),
-                ssh_password=urdhva_base.types.Secret(self.params['ssh_tunnel']['password'] if 'password' in self.params['ssh_tunnel'].keys() else None).get_secret(),
-                remote_bind_address=(self.params['host'], self.params['port']),
+                (self.params["ssh_tunnel"]["host"], self.params["ssh_tunnel"]["port"]),
+                ssh_username=self.params["ssh_tunnel"]["user_name"],
+                ssh_pkey=urdhva_base.types.Secret(
+                    self.params["ssh_tunnel"]["private_key"]
+                    if "private_key" in self.params["ssh_tunnel"].keys()
+                    else None
+                ).get_secret(),
+                ssh_password=urdhva_base.types.Secret(
+                    self.params["ssh_tunnel"]["password"]
+                    if "password" in self.params["ssh_tunnel"].keys()
+                    else None
+                ).get_secret(),
+                remote_bind_address=(self.params["host"], self.params["port"]),
             )
             tunnel.start()
-            self.params['host'] = tunnel.local_bind_host
-            self.params['port'] = tunnel.local_bind_port
-            self.params['tunnel'] = tunnel
+            self.params["host"] = tunnel.local_bind_host
+            self.params["port"] = tunnel.local_bind_port
+            self.params["tunnel"] = tunnel
 
         connection = pyodbc.connect(
-            'DRIVER={ODBC Driver 18 for SQL Server};'
+            "DRIVER={ODBC Driver 18 for SQL Server};"
             f'Server={self.params["host"]},{self.params["port"]};'
             f'Database={self.params["database_name"]};'
             # f'Port={port};'
             f'UID={self.params["user_name"]};'
             f'PWD={self.params["password"]};'
-            'TrustServerCertificate=yes;MARS_Connection=yes;',
+            "TrustServerCertificate=yes;MARS_Connection=yes;",
         )
         return connection
 
@@ -71,8 +81,8 @@ class Mssql(BaseAction):
     async def close_connection(self, connection):
         if connection:
             connection.close()
-        if 'tunnel' in self.params.keys():
-            self.params['tunnel'].stop()
+        if "tunnel" in self.params.keys():
+            self.params["tunnel"].stop()
 
     async def test_connection(self):
         try:
@@ -80,13 +90,17 @@ class Mssql(BaseAction):
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Successfully Connected MsSQL Server", "data": []
+                "status": True,
+                "message": "Successfully Connected MsSQL Server",
+                "data": [],
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def get_databases(self, debug=False, **kwargs):
@@ -102,20 +116,29 @@ class Mssql(BaseAction):
             cursor.execute(query)
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
 
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Success", "data": df['name'].unique().tolist()
+                "status": True,
+                "message": "Success",
+                "data": df["name"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
-        
+
     async def get_schema(self, debug=False, **kwargs):
         """
         @description:
@@ -129,18 +152,27 @@ class Mssql(BaseAction):
             cursor.execute(query)
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
 
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Success", "data": df['schema_name'].unique().tolist()
+                "status": True,
+                "message": "Success",
+                "data": df["schema_name"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def table_name(self, schema_name, debug=False, **kwargs):
@@ -157,30 +189,39 @@ class Mssql(BaseAction):
             cursor.execute(query)
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
 
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Success", "data": df['TABLE_NAME'].unique().tolist()
+                "status": True,
+                "message": "Success",
+                "data": df["TABLE_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def get_data(
-            self,
-            *args,
-            schema_name,
-            table_name,
-            query=None,
-            columns=None,
-            limit=None,
-            debug=False,
-            **kwargs
+        self,
+        *args,
+        schema_name,
+        table_name,
+        query=None,
+        columns=None,
+        limit=None,
+        debug=False,
+        **kwargs,
     ):
         """
         @description:
@@ -198,7 +239,7 @@ class Mssql(BaseAction):
             cursor = connection.cursor()
             if not query:
                 query = f'SELECT * FROM {schema_name}."{table_name}"'
-                if not schema_name and schema_name == 'None':
+                if not schema_name and schema_name == "None":
                     query = f'SELECT * FROM "{table_name}"'
             cursor.execute(query)
             batch_size = 1000000
@@ -211,20 +252,28 @@ class Mssql(BaseAction):
                     break
 
                 column_names = [desc[0] for desc in cursor.description]
-                df = pd.DataFrame({column: [row[i] for row in rows] for i, column in enumerate(column_names)})
+                df = pd.DataFrame(
+                    {
+                        column: [row[i] for row in rows]
+                        for i, column in enumerate(column_names)
+                    }
+                )
                 final_df = pd.concat([df, final_df])
                 count += 1
             if debug:
                 return {
-                    "status": True, "message": "Success",
-                    "data": final_df.to_dict(orient='records')
+                    "status": True,
+                    "message": "Success",
+                    "data": final_df.to_dict(orient="records"),
                 }
             return pl.from_pandas(final_df)
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def primary_key(self, schema_name, table_name, debug=False, **kwargs):
@@ -238,25 +287,36 @@ class Mssql(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            query = f"""select C.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T """\
-                    f"""JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C """\
-                    f"""ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME='{table_name}' """\
-                    f"""and T.CONSTRAINT_TYPE='PRIMARY KEY';"""
+            query = (
+                f"""select C.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T """
+                f"""JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C """
+                f"""ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME='{table_name}' """
+                f"""and T.CONSTRAINT_TYPE='PRIMARY KEY';"""
+            )
             cursor.execute(query)
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
 
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Success", "data": df['COLUMN_NAME'].unique().tolist()
+                "status": True,
+                "message": "Success",
+                "data": df["COLUMN_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def column_names(self, schema_name, table_name, debug=False, **kwargs):
@@ -274,21 +334,32 @@ class Mssql(BaseAction):
             cursor.execute(query)
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
 
             # connection.close()
             await self.close_connection(connection)
             return {
-                "status": True, "message": "Success", "data": df['COLUMN_NAME'].unique().tolist()
+                "status": True,
+                "message": "Success",
+                "data": df["COLUMN_NAME"].unique().tolist(),
             }
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
-    async def create_table(self, schema_name, table_name, table_schema, debug=False, **kwargs):
+    async def create_table(
+        self, schema_name, table_name, table_schema, debug=False, **kwargs
+    ):
         """
         @description:
         :param schema_name:
@@ -300,12 +371,16 @@ class Mssql(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            table_create_sql = ''
+            table_create_sql = ""
             for col, dty in table_schema.items():
                 table_create_sql += f'"{col}" {dty}, '
             table_create_sql = table_create_sql[:-1]
-            table_create_sql = f"CREATE TABLE {schema_name}.{table_name} ({table_create_sql});"
-            cursor.execute(f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{table_name}'")
+            table_create_sql = (
+                f"CREATE TABLE {schema_name}.{table_name} ({table_create_sql});"
+            )
+            cursor.execute(
+                f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{table_name}'"
+            )
             if not cursor.fetchone():
                 cursor.execute(table_create_sql)
                 connection.commit()
@@ -315,7 +390,9 @@ class Mssql(BaseAction):
             traceback.print_exc(file=sys.stdout)
             return False
 
-    async def write_data_from_csv(self, *records, schema_name, table_name, debug=False, **kwargs):
+    async def write_data_from_csv(
+        self, *records, schema_name, table_name, debug=False, **kwargs
+    ):
         """
         @description:
         :param records:
@@ -373,7 +450,9 @@ class Mssql(BaseAction):
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def write_data(self, *records, schema_name, table_name, debug=False, **kwargs):
+    async def write_data(
+        self, *records, schema_name, table_name, debug=False, **kwargs
+    ):
         """
         @description:
         :param records:
@@ -398,9 +477,13 @@ class Mssql(BaseAction):
                     table_schema[c] = dtype_map[dtype]
             await self.create_table(schema_name, table_name, table_schema)
             values_stmt = f"({','.join(['?' for _ in table_schema])})"
-            insert_sql = f"insert into [{schema_name}].[{table_name}] values {values_stmt}"
+            insert_sql = (
+                f"insert into [{schema_name}].[{table_name}] values {values_stmt}"
+            )
             insert_cols = records.values.tolist()
-            insert_cols = [[None if pd.isna(cell) else cell for cell in row] for row in insert_cols]
+            insert_cols = [
+                [None if pd.isna(cell) else cell for cell in row] for row in insert_cols
+            ]
             cursor.executemany(insert_sql, insert_cols)
             connection.commit()
             cursor.close()
@@ -410,7 +493,15 @@ class Mssql(BaseAction):
             traceback.print_exc(file=sys.stdout)
             raise pyodbc.Error
 
-    async def get_distinct_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
+    async def get_distinct_values(
+        self,
+        schema_name,
+        table_name,
+        column_name,
+        where_clause=None,
+        debug=False,
+        **kwargs,
+    ):
         """
         @description:
         :param schema_name:
@@ -425,28 +516,32 @@ class Mssql(BaseAction):
             connection = await self.get_connection()
             cursor = connection.cursor()
             for column in column_name:
-                sql = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}";"""
+                sql = (
+                    f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}";"""
+                )
                 if where_clause:
-                    where_query = ''
+                    where_query = ""
                     for key, value in where_clause.items():
-                        where_query += f'"{key}" = \'{value}\' AND '
+                        where_query += f"\"{key}\" = '{value}' AND "
                     where_query = where_query[:-5]
                     if where_query:
                         sql = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
                 cursor.execute(sql)
                 row = cursor.fetchall()
                 list_columns = [desc[0] for desc in cursor.description]
-                df = pd.DataFrame({col: [row[i] for row in row] for i, col in enumerate(list_columns)})
+                df = pd.DataFrame(
+                    {col: [row[i] for row in row] for i, col in enumerate(list_columns)}
+                )
                 columns_mapping[column] = df[column].unique().tolist()
             await self.close_connection(connection)
-            return {
-                "status": True, "message": "Success", "data": columns_mapping
-            }
+            return {"status": True, "message": "Success", "data": columns_mapping}
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             return {
-                "status": False, "message": f"Not able to connect {err}", "data": None
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
             }
 
     async def execute_query(self, query, debug=False, **kwargs):
@@ -462,7 +557,10 @@ class Mssql(BaseAction):
             cursor.execute(query)
             records = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
+            records = {
+                column: [record[i] for record in records]
+                for i, column in enumerate(column_names)
+            }
             await self.close_connection(connection)
             return records
         except Exception as err:

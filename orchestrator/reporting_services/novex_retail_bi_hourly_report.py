@@ -5,6 +5,7 @@ Uses a single Redis record per day (key: novex_bi_hourly_report:{date}). Each ru
 fetches latest intra-dryout and indent data, merges the current slot into that
 record, sends the email from the updated record, then saves the record back to Redis.
 """
+
 import urdhva_base
 import os
 import json
@@ -16,7 +17,7 @@ import urdhva_base.utilities
 import urdhva_base.redispool
 from types import SimpleNamespace
 import orchestrator.notification_manager.notification_factory as notification_factory
-from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness
+from orchestrator.reporting_services.reporting_helpers import retail_data
 
 # Single Redis key per day: one record per day, updated with latest bi-hourly slot and used for email
 REDIS_BI_HOURLY_REPORT_KEY = "dry_out_bi_hourly_report"
@@ -42,7 +43,20 @@ async def publish_bi_hourly_report():
       4. Build summary and zone_summary from the updated record and send email.
       5. Save the updated record back to Redis for the next run.
     """
-    zone_order = ['CEN', 'ECZ', 'EZ', 'NCZ', 'NFZ', 'NWFZ', 'NWZ', 'NZ', 'SCZ', 'SWZ', 'SZ', 'WZ']
+    zone_order = [
+        "CEN",
+        "ECZ",
+        "EZ",
+        "NCZ",
+        "NFZ",
+        "NWFZ",
+        "NWZ",
+        "NZ",
+        "SCZ",
+        "SWZ",
+        "SZ",
+        "WZ",
+    ]
     today_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
     hour = urdhva_base.utilities.get_present_time().strftime("%H:00")
 
@@ -54,8 +68,11 @@ async def publish_bi_hourly_report():
         "AND product_code in ('2811000', '2812000', '2822000') AND dry_out_in_days='1'"
     )
     indent_data = await api_helpers.get_initial_dryout_counts(
-        bu='SOD', conditions=dry_out_cond, dry_out_in_days_query="1",
-        by_zone=True, by_location=False
+        bu="SOD",
+        conditions=dry_out_cond,
+        dry_out_in_days_query="1",
+        by_zone=True,
+        by_location=False,
     )
 
     # Map API section names to template keys and build zone-wise indent summary
@@ -73,19 +90,26 @@ async def publish_bi_hourly_report():
         indent_summary[zone] = {"zone": zone}
         for indent_status in details:
             if indent_status.get("section") in indent_key_mapping:
-                indent_summary[zone][indent_key_mapping[indent_status["section"]]] = indent_status["value"]
-        indent_summary[zone]["dry_out"] = (
-            indent_summary[zone].get("indents_not_raised", 0) + indent_summary[zone].get("indents_raised", 0)
-        )
+                indent_summary[zone][indent_key_mapping[indent_status["section"]]] = (
+                    indent_status["value"]
+                )
+        indent_summary[zone]["dry_out"] = indent_summary[zone].get(
+            "indents_not_raised", 0
+        ) + indent_summary[zone].get("indents_raised", 0)
 
     for zone in zone_order:
         if zone not in indent_summary:
-            indent_summary[zone] = {"zone": zone, **{v: 0 for v in indent_key_mapping.values()}}
-        indent_summary[zone]["dry_out"] = (
-            indent_summary[zone].get("indents_not_raised", 0) + indent_summary[zone].get("indents_raised", 0)
-        )
+            indent_summary[zone] = {
+                "zone": zone,
+                **{v: 0 for v in indent_key_mapping.values()},
+            }
+        indent_summary[zone]["dry_out"] = indent_summary[zone].get(
+            "indents_not_raised", 0
+        ) + indent_summary[zone].get("indents_raised", 0)
 
-    intra_dryout_status['partial_dryout'] = sum(rec.get('dry_out', 0) for rec in indent_summary.values())
+    intra_dryout_status["partial_dryout"] = sum(
+        rec.get("dry_out", 0) for rec in indent_summary.values()
+    )
 
     # Single Redis record per day: key = dry_out_bi_hourly_report:{date}
     redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -106,10 +130,12 @@ async def publish_bi_hourly_report():
     summary = []
     for t in sorted(existing_data.keys()):
         slot = existing_data[t]
-        summary.append({
-            "time": t,
-            "data": slot.get("intra_dryout", {}),
-        })
+        summary.append(
+            {
+                "time": t,
+                "data": slot.get("intra_dryout", {}),
+            }
+        )
 
     # Build notification_data with summary, time, report_date, zone_summary for template
     notification_data = {
@@ -122,21 +148,25 @@ async def publish_bi_hourly_report():
     total = {"zone": "TOTAL"}
 
     for key in list(indent_summary[zone_order[0]].keys()):
-        if key == 'zone':
+        if key == "zone":
             continue
         total[key] = sum(v.get(key, 0) for v in indent_summary.values())
 
-    notification_data['zone_summary'].append(total)
+    notification_data["zone_summary"].append(total)
 
     await send_notification(
         template_name="retail_bi_hourly.html",
         to_recipients=["adityapandey@hpcl.in", "venu@algofusiontech.com"],
         subject="Novex Dryout Summary Report",
         cc_recipients=[
-            "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com",
-            "gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com",
-            "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com",
-            "moufikali@algofusiontech.com", "aditya@algofusiontech.com",
+            "yesu.p@algofusiontech.com",
+            "manohar.v@algofusiontech.com",
+            "gayathri.m@algofusiontech.com",
+            "jayaprakash.v@algofusiontech.com",
+            "poojitha.gumma@algofusiontech.com",
+            "vamsi.c@algofusiontech.com",
+            "moufikali@algofusiontech.com",
+            "aditya@algofusiontech.com",
         ],
         bcc_recipients=[],
         notification_data=notification_data,
@@ -145,16 +175,30 @@ async def publish_bi_hourly_report():
     )
 
     # Persist the updated record back to Redis for next run
-    await redis_ins.hset(REDIS_BI_HOURLY_REPORT_KEY, today_date, json.dumps(existing_data))
+    await redis_ins.hset(
+        REDIS_BI_HOURLY_REPORT_KEY, today_date, json.dumps(existing_data)
+    )
 
 
-async def send_notification(template_name, to_recipients, subject, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None, attachments=None):
+async def send_notification(
+    template_name,
+    to_recipients,
+    subject,
+    cc_recipients=None,
+    bcc_recipients=None,
+    notification_data=None,
+    inline_images=None,
+    attachments=None,
+):
     template_path = os.path.join(
         os.path.dirname(hpcl_ceg_model.__file__),
-        '..', 'orchestrator', 'reporting_services',
-        'templates', template_name
-        )
-    with open(template_path, 'r') as f:
+        "..",
+        "orchestrator",
+        "reporting_services",
+        "templates",
+        template_name,
+    )
+    with open(template_path, "r") as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
@@ -169,7 +213,7 @@ async def send_notification(template_name, to_recipients, subject, cc_recipients
         body=final_data,
         force_send=True,
         inline_images=inline_images or {},
-        attachments=attachments or []
+        attachments=attachments or [],
     )
 
 

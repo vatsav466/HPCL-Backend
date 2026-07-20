@@ -6,7 +6,9 @@ import utilities.helpers as helpers
 import dateutil.parser as dateutil_parser
 
 
-async def get_lpg_day_wise_trends(by_plant=False, by_day=True, by_month=False, time_range=None):
+async def get_lpg_day_wise_trends(
+    by_plant=False, by_day=True, by_month=False, time_range=None
+):
     """
     Generates LPG Day wise Trends based on user selection
     :param by_plant:
@@ -18,23 +20,25 @@ async def get_lpg_day_wise_trends(by_plant=False, by_day=True, by_month=False, t
     end_time = ""
     if time_range is None:
         end_time = helpers.get_time_stamp_by_delta(days=1, with_month_start_day=False)
-        start_time = helpers.get_time_stamp_by_delta(dateutil_parser.parse(end_time), with_month_start_day=True)
+        start_time = helpers.get_time_stamp_by_delta(
+            dateutil_parser.parse(end_time), with_month_start_day=True
+        )
     else:
         start_time = time_range.split(",")[0]
         end_time = time_range.split(",")[1]
     required_keys = []
     group_by_keys = []
     if by_plant:
-        required_keys.append('name')
-        group_by_keys.append('name')
+        required_keys.append("name")
+        group_by_keys.append("name")
     if by_month:
         required_keys.append("DATE_TRUNC('month', timestamp)::DATE As month")
-        group_by_keys.append('month')
+        group_by_keys.append("month")
     elif by_day:
-        required_keys.append('timestamp::DATE')
-        group_by_keys.append('timestamp::DATE')
+        required_keys.append("timestamp::DATE")
+        group_by_keys.append("timestamp::DATE")
     group_by = "" if not required_keys else f""" Group by {','.join(group_by_keys)}"""
-    required_keys.append('ROUND(AVG(score), 2) as score')
+    required_keys.append("ROUND(AVG(score), 2) as score")
     order_by = ""
     if by_month:
         order_by = "order by month desc"
@@ -45,10 +49,12 @@ async def get_lpg_day_wise_trends(by_plant=False, by_day=True, by_month=False, t
     query = f"""SELECT {','.join(required_keys)} from performance_score_history where timestamp >= '{start_time}' AND bu='LPG' AND timestamp <= '{end_time}' {group_by} {order_by}"""
     print(query)
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-    resp = resp['data']
+    resp = resp["data"]
     for rec in resp:
         for key in rec:
-            if isinstance(rec[key], datetime.datetime) or isinstance(rec[key], datetime.date):
+            if isinstance(rec[key], datetime.datetime) or isinstance(
+                rec[key], datetime.date
+            ):
                 rec[key] = rec[key].strftime("%Y-%m-%d")
             elif isinstance(rec[key], decimal.Decimal):
                 rec[key] = float(rec[key])
@@ -97,10 +103,12 @@ async def get_zone_wise_cylinder_backlog():
             ORDER BY sort_order, "ZOName"
         """
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-    resp = resp['data']
+    resp = resp["data"]
     for rec in resp:
         for key in rec:
-            if isinstance(rec[key], datetime.datetime) or isinstance(rec[key], datetime.date):
+            if isinstance(rec[key], datetime.datetime) or isinstance(
+                rec[key], datetime.date
+            ):
                 rec[key] = rec[key].strftime("%Y-%m-%d")
             elif isinstance(rec[key], decimal.Decimal):
                 rec[key] = int(rec[key])
@@ -109,11 +117,13 @@ async def get_zone_wise_cylinder_backlog():
 
 async def data_test():
     # By Month
-    
-    resp1 = await get_lpg_day_wise_trends(by_day=False, by_month=True, time_range='2025-06-01,2025-12-01')
-    print("*"*200)
-    print('resp1',resp1)
-    print("*"*200)
+
+    resp1 = await get_lpg_day_wise_trends(
+        by_day=False, by_month=True, time_range="2025-06-01,2025-12-01"
+    )
+    print("*" * 200)
+    print("resp1", resp1)
+    print("*" * 200)
     # SAMPLE Output
     """ [{'month': '2025-12-01', 'score': 89.89}, {'month': '2025-11-01', 'score': 89.68}, 
     {'month': '2025-10-01', 'score': 85.91}, {'month': '2025-09-01', 'score': 74.39}, 
@@ -121,9 +131,9 @@ async def data_test():
     {'month': '2025-06-01', 'score': 59.81}] """
     # By Day in the present month
     resp2 = await get_lpg_day_wise_trends(by_day=True)
-    print("*"*200)
-    print('resp2',resp2)
-    print("*"*200)
+    print("*" * 200)
+    print("resp2", resp2)
+    print("*" * 200)
     # SAMPLE Output
     """
     [{'timestamp': '2025-12-17', 'score': 82.33}, {'timestamp': '2025-12-16', 'score': 80.85}, 
@@ -138,24 +148,24 @@ async def data_test():
     """
     # By Day and per plant in the present month
     resp3 = await get_lpg_day_wise_trends(by_day=True, by_plant=True)
-    print("*"*200)
-    print('resp3',resp3)
-    print("*"*200)
+    print("*" * 200)
+    print("resp3", resp3)
+    print("*" * 200)
     # SAMPLE Output
     """[{'sap_id': '3833', 'timestamp': '2025-12-01', 'score': 82.0}]"""
     # By Plant in the present month in descending order
     resp4 = await get_lpg_day_wise_trends(by_day=False, by_plant=True)
-    print("*"*200)
-    print('resp4',resp4)
-    print("*"*200)
+    print("*" * 200)
+    print("resp4", resp4)
+    print("*" * 200)
     # SAMPLE Output
     """[{'sap_id': '2262', 'score': 56.94}]"""
 
     resp5 = await get_zone_wise_cylinder_backlog()
-    print("*"*200)
-    print('resp5',resp5)
-    print("*"*200)
+    print("*" * 200)
+    print("resp5", resp5)
+    print("*" * 200)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(data_test())

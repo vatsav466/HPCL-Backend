@@ -2,6 +2,7 @@ import urdhva_base
 import os
 import json
 import sys
+
 sys.path.append("/opt/ceg/algo/api_manager")
 import requests
 import pandas as pd
@@ -35,12 +36,13 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
     devices_data = []
 
     for sheet_name, df in sheets.items():
-        device_type = sheet_name.replace(" Master", "").strip() 
+        device_type = sheet_name.replace(" Master", "").strip()
         print(f"\nProcessing sheet: {sheet_name} (Device Type: {device_type})")
 
         # Find indices of columns containing "Normal Value"
-        normal_value_indices = [i for i, col in enumerate(df.columns)
-                                if 'normal value' in str(col).lower()]
+        normal_value_indices = [
+            i for i, col in enumerate(df.columns) if "normal value" in str(col).lower()
+        ]
 
         # Process each normal value column to find associated sensor_id and sensor_type
         sensor_columns = []
@@ -54,18 +56,20 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
                 valid_sensor_id = False
                 if sensor_id_idx is not None:
                     col_name = str(df.columns[sensor_id_idx]).lower()
-                    valid_sensor_id = 'sensor_id' in col_name
-                
+                    valid_sensor_id = "sensor_id" in col_name
+
                 # Check if sensor_type column exists and has correct name
                 valid_sensor_type = False
                 if sensor_type_idx is not None:
                     col_name = str(df.columns[sensor_type_idx]).lower()
-                    valid_sensor_type = 'sensor_type' in col_name
+                    valid_sensor_type = "sensor_type" in col_name
 
                 # Append indices only if columns are correctly named
                 sensor_id_idx_final = sensor_id_idx if valid_sensor_id else None
                 sensor_type_idx_final = sensor_type_idx if valid_sensor_type else None
-                sensor_columns.append((sensor_tag_idx, nv_idx, sensor_id_idx_final, sensor_type_idx_final))
+                sensor_columns.append(
+                    (sensor_tag_idx, nv_idx, sensor_id_idx_final, sensor_type_idx_final)
+                )
 
         def normalize_value(value):
             def is_float(string):
@@ -74,6 +78,7 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
                     return True
                 except ValueError:
                     return False
+
             if value.isnumeric():
                 return str(int(value))
             elif is_float(value):
@@ -84,7 +89,10 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
         # Process each row
         for _, row in df.iterrows():
             # Extract values safely
-            values = [str(row.iloc[2]).strip(), str(row.iloc[1]).strip()]  # iloc[2] (location2), iloc[1] (location1)
+            values = [
+                str(row.iloc[2]).strip(),
+                str(row.iloc[1]).strip(),
+            ]  # iloc[2] (location2), iloc[1] (location1)
 
             # Join non-empty values with '@'
             device_name = "@".join(filter(None, values))
@@ -94,42 +102,59 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
                 continue
 
             sensors = []
-            for sensor_tag_idx, nv_idx, sensor_id_idx, sensor_type_idx in sensor_columns:
+            for (
+                sensor_tag_idx,
+                nv_idx,
+                sensor_id_idx,
+                sensor_type_idx,
+            ) in sensor_columns:
                 sensor_name = str(df.columns[sensor_tag_idx]).strip()
                 sensor_tag = str(row.iloc[sensor_tag_idx]).strip()
                 normal_value = normalize_value(str(row.iloc[nv_idx]).strip())
 
                 sensor_entry = {
                     "sensor_name": sensor_name,
-                    "sensor_tag": sensor_tag if sensor_tag.lower() != 'nan' else "",
-                    "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+                    "sensor_tag": sensor_tag if sensor_tag.lower() != "nan" else "",
+                    "normal_value": (
+                        normal_value if normal_value.lower() != "nan" else "0"
+                    ),
                 }
 
                 # Add sensor_id if column exists
                 if sensor_id_idx is not None:
                     sensor_id = str(row.iloc[sensor_id_idx]).strip()
-                    sensor_entry["sensor_id"] = sensor_id if sensor_id.lower() != 'nan' else ""
+                    sensor_entry["sensor_id"] = (
+                        sensor_id if sensor_id.lower() != "nan" else ""
+                    )
 
                 # Add sensor_type if column exists
                 if sensor_type_idx is not None:
                     sensor_type = str(row.iloc[sensor_type_idx]).strip()
-                    sensor_entry["sensor_type"] = sensor_type if sensor_type.lower() != 'nan' else ""
+                    sensor_entry["sensor_type"] = (
+                        sensor_type if sensor_type.lower() != "nan" else ""
+                    )
 
                 # Include sensor entry even if tag is empty (to capture normal values)
                 sensors.append(sensor_entry)
 
             if sensors:
-                devices_data.append({
-                    "device_name": device_name,
-                    "device_id": "",
-                    "device_type": device_type,
-                    "device_key": "",
-                    "entity_id": "",
-                    "sensors": sensors
-                })
+                devices_data.append(
+                    {
+                        "device_name": device_name,
+                        "device_id": "",
+                        "device_type": device_type,
+                        "device_key": "",
+                        "entity_id": "",
+                        "sensors": sensors,
+                    }
+                )
 
-    return {"data": devices_data, "location_id": location_id, "bu": bu, "location_name": location_name}
-
+    return {
+        "data": devices_data,
+        "location_id": location_id,
+        "bu": bu,
+        "location_name": location_name,
+    }
 
 
 class ThingsBoardInterface:
@@ -140,9 +165,9 @@ class ThingsBoardInterface:
         # determine the environment
         environment = urdhva_base.settings.environment
 
-        if environment == 'prod':
+        if environment == "prod":
             self.data_path = "/opt/ceg/algo/prod/"
-        elif environment == 'uat':
+        elif environment == "uat":
             self.data_path = "/opt/ceg/algo/uat/"
         else:
             self.data_path = "/opt/ceg/algo/things_board/device_data"
@@ -158,9 +183,8 @@ class ThingsBoardInterface:
         headers = {"Content-Type": "application/json"}
         payload = {
             "username": urdhva_base.settings.things_board_username,
-            "password": urdhva_base.settings.things_board_password
+            "password": urdhva_base.settings.things_board_password,
         }
-
 
         try:
             response = requests.post(url, headers=headers, json=payload)
@@ -189,7 +213,12 @@ class ThingsBoardInterface:
 
         if not headers:
             headers = {}
-        headers.update({"Content-Type": "application/json", "X-Authorization": f"Bearer {self._auth_token}"})
+        headers.update(
+            {
+                "Content-Type": "application/json",
+                "X-Authorization": f"Bearer {self._auth_token}",
+            }
+        )
 
         data = {"headers": headers}
         if method == "GET":
@@ -197,9 +226,13 @@ class ThingsBoardInterface:
         else:
             data["json"] = payload
 
-        response = requests.request(method, f"{urdhva_base.settings.things_board_url}{url}", **data)
+        response = requests.request(
+            method, f"{urdhva_base.settings.things_board_url}{url}", **data
+        )
         if response.status_code // 100 != 2:
-            print(f"API {url}, status_code {response.status_code}, response {response.text}")
+            print(
+                f"API {url}, status_code {response.status_code}, response {response.text}"
+            )
             print(f"{response.url}")
             return None
 
@@ -215,10 +248,12 @@ class ThingsBoardInterface:
         Returns:
             str or None: ID of the business unit if found or created; otherwise, None.
         """
-        resp = self.api_handler("GET", "/api/customers", {}, {'pageSize': 100, 'page': 0})
+        resp = self.api_handler(
+            "GET", "/api/customers", {}, {"pageSize": 100, "page": 0}
+        )
         if resp:
-            for rec in resp['data']:
-                if rec['title'].lower() == bu.lower():
+            for rec in resp["data"]:
+                if rec["title"].lower() == bu.lower():
                     self.bu_id = rec["id"]["id"]
                     return self.bu_id
 
@@ -226,10 +261,10 @@ class ThingsBoardInterface:
             "additionalInfo": {
                 "description": f"BU: {bu}",
                 "homeDashboardHideToolbar": True,
-                "homeDashboardId": None
+                "homeDashboardId": None,
             },
             "country": "India",
-            "title": bu.upper()
+            "title": bu.upper(),
         }
         response = self.api_handler("POST", "/api/customer", {}, payload)
         if response and response.get("id"):
@@ -253,12 +288,18 @@ class ThingsBoardInterface:
         bu_id = self.get_bu(bu)
         page_size = 100
         page = 0
-        headers = {"Content-Type": "application/json", "X-Authorization": f"Bearer {self._auth_token}"}
+        headers = {
+            "Content-Type": "application/json",
+            "X-Authorization": f"Bearer {self._auth_token}",
+        }
 
         while True:
-            response = self.api_handler("GET", "/api/tenant/assets", headers, {
-                'pageSize': page_size, 'page': page, "type": "Location"
-            })
+            response = self.api_handler(
+                "GET",
+                "/api/tenant/assets",
+                headers,
+                {"pageSize": page_size, "page": page, "type": "Location"},
+            )
             if response:
                 for asset in response["data"]:
                     if asset["name"].lower() == location_name.lower():
@@ -272,25 +313,31 @@ class ThingsBoardInterface:
         additional_info = {
             "description": f"Asset for {bu}",
             "homeDashboardHideToolbar": True,
-            "homeDashboardId": None
+            "homeDashboardId": None,
         }
         data = {
             "additionalInfo": additional_info,
             "customerId": {"id": bu_id, "entityType": "CUSTOMER"},
             "label": f"{bu.upper()}",
             "name": location_name,
-            "type": "Location"
+            "type": "Location",
         }
 
         print(data)
         response = self.api_handler("POST", "/api/asset", {}, data)
 
-        self.api_handler("POST", f"/api/plugins/telemetry/ASSET/{response['id']['id']}/SERVER_SCOPE", {},
-                         additional_info)
+        self.api_handler(
+            "POST",
+            f"/api/plugins/telemetry/ASSET/{response['id']['id']}/SERVER_SCOPE",
+            {},
+            additional_info,
+        )
         self.location = response
-        return response['id']['id']
+        return response["id"]["id"]
 
-    def create_device(self, bu, location_id, location_name, device_name, device_type="", device=""):
+    def create_device(
+        self, bu, location_id, location_name, device_name, device_type="", device=""
+    ):
         """
         Creates or updates a device in ThingsBoard under a specified business unit (BU) and location.
 
@@ -305,7 +352,7 @@ class ThingsBoardInterface:
             str: The ID of the created or updated device.
             None: If device creation or association fails.
         """
-        #device_name_with_location = f"{device_name}"  
+        # device_name_with_location = f"{device_name}"
         bu_id = self.get_bu(bu)
         print(f"Creating device for {device_name}")
 
@@ -317,66 +364,89 @@ class ThingsBoardInterface:
             "bu_id": f"{bu_id}",
             "SAPID": f"{location_id}",
             "BU": bu,
-            device_name: 1
+            device_name: 1,
         }
 
         if "sensors" in device:
-            for sensor in device['sensors']:
-                sensor_name = sensor.get('sensor_name')
-                normal_value = sensor.get('normal_value', '0')
-                sensor_id = sensor.get('sensor_id')
-                sensor_type = sensor.get('sensor_type')
+            for sensor in device["sensors"]:
+                sensor_name = sensor.get("sensor_name")
+                normal_value = sensor.get("normal_value", "0")
+                sensor.get("sensor_id")
+                sensor.get("sensor_type")
                 device_scope[sensor_name] = normal_value
 
-        device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},
-                                       {"textSearch": device_name, "pageSize": 100, "page": 0,
-                                        "sortProperty": "createdTime", "sortOrder": "DESC"})
+        device_data = self.api_handler(
+            "GET",
+            "/api/tenant/deviceInfos",
+            {},
+            {
+                "textSearch": device_name,
+                "pageSize": 100,
+                "page": 0,
+                "sortProperty": "createdTime",
+                "sortOrder": "DESC",
+            },
+        )
 
         if device_data and device_data.get("data"):
             for record in device_data["data"]:
                 if record["name"] == device_name:
-                    self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
-                                     {}, device_scope)
-                    return record['id']['id']
+                    self.api_handler(
+                        "POST",
+                        f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
+                        {},
+                        device_scope,
+                    )
+                    return record["id"]["id"]
 
         data = {
-            "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
-                               'sap_id': location_id},
+            "additionalInfo": {
+                **device_scope,
+                "deviceType": device_type,
+                "deviceName": device_name,
+                "sap_id": location_id,
+            },
             "name": device_name,
             "label": device_name,
             "type": device_type,
-            "customerId": {"entityType": "CUSTOMER", "id": bu_id}
+            "customerId": {"entityType": "CUSTOMER", "id": bu_id},
         }
         device = self.api_handler("POST", "/api/device", {}, data)
 
         if device:
-            tele_device = self.api_handler("POST",
-                                           f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/SERVER_SCOPE", {},
-                                           {**device_scope, "deviceType": device_type})
+            tele_device = self.api_handler(
+                "POST",
+                f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/SERVER_SCOPE",
+                {},
+                {**device_scope, "deviceType": device_type},
+            )
             if tele_device:
                 data = {
-                    "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
-                                       'sap_id': location_id},
-                    "customerId": {
-                        "entityType": "CUSTOMER",
-                        "id": bu_id
+                    "additionalInfo": {
+                        **device_scope,
+                        "deviceType": device_type,
+                        "deviceName": device_name,
+                        "sap_id": location_id,
                     },
-                    "id": {
-                        "entityType": "DEVICE",
-                        "id": device["id"]["id"]
-                    }
+                    "customerId": {"entityType": "CUSTOMER", "id": bu_id},
+                    "id": {"entityType": "DEVICE", "id": device["id"]["id"]},
                 }
-                resp = self.api_handler("POST", f"/api/customer/{bu_id}/device/{device['id']['id']}", {}, data)
+                resp = self.api_handler(
+                    "POST",
+                    f"/api/customer/{bu_id}/device/{device['id']['id']}",
+                    {},
+                    data,
+                )
                 if resp:
-                    return resp['id']['id']
+                    return resp["id"]["id"]
 
         return None
 
     def get_device_cred_key(self, device_id):
         resp = self.api_handler("GET", f"/api/device/{device_id}/credentials", {}, {})
         if resp:
-            return resp['credentialsId']
-        return ''
+            return resp["credentialsId"]
+        return ""
 
     def create_bu_devices(self, bu, location_id, location_name, file_path):
         """
@@ -394,7 +464,9 @@ class ThingsBoardInterface:
         print(f"Create Asset Master For Location {location_name} with file {file_path}")
         bu_device_data = load_bu_asset_master(file_path, bu, location_id, location_name)
 
-        entity_id = self.get_location(bu_device_data['bu'], bu_device_data['location_name'])
+        entity_id = self.get_location(
+            bu_device_data["bu"], bu_device_data["location_name"]
+        )
 
         for device in bu_device_data["data"]:
             # Append @location_id to the device name
@@ -406,36 +478,34 @@ class ThingsBoardInterface:
 
             # Create the device using the updated name
             device_id = self.create_device(
-                bu_device_data['bu'],
-                bu_device_data['location_id'],
-                bu_device_data['location_name'],
+                bu_device_data["bu"],
+                bu_device_data["location_id"],
+                bu_device_data["location_name"],
                 device_name,  # Use the updated name here
                 device["device_type"],
-                device
+                device,
             )
 
             if device_id:
-                device['device_id'] = device_id
-                device['device_key'] = self.get_device_cred_key(device_id)
-            device['entity_id'] = entity_id
+                device["device_id"] = device_id
+                device["device_key"] = self.get_device_cred_key(device_id)
+            device["entity_id"] = entity_id
 
         # Save the updated data to the JSON file with the correct names
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         file_path_write = f"{self.data_path}/{location_id}"
-        
+
         with open(f"{file_path_write}.json", "w+") as f:
             f.write(json.dumps(bu_device_data, indent=4))
-        
+
         # Save the Excel file
-        with open(f"{file_path}", 'rb') as f:
+        with open(f"{file_path}", "rb") as f:
             data = f.read()
-            with open(f"{file_path_write}.xlsx", 'wb+') as fw:
+            with open(f"{file_path_write}.xlsx", "wb+") as fw:
                 fw.write(data)
 
 
 if __name__ == "__main__":
     file_path = "path to your excel"
     ThingsBoardInterface().create_bu_devices("TAS", "11128", "Mathura", file_path)
-
-

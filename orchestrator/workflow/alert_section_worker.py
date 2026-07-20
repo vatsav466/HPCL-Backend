@@ -3,16 +3,13 @@ import sys
 import asyncio
 import importlib
 import traceback
-import orchestrator
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
-import utilities.connection_mapping as connection_mapping
-from orchestrator.alerting.listener.dry_out_listener import *
 from camunda.external_task.external_task import ExternalTask, TaskResult
 from camunda.external_task.external_task_worker import ExternalTaskWorker
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
-CAMUNDA_URL = ''
+CAMUNDA_URL = ""
 
 
 async def get_alert_section_wise_camunda_url(alert_section):
@@ -28,8 +25,8 @@ async def get_alert_section_wise_camunda_url(alert_section):
     camunda_url_list = []
     for bu, alert_section_url in camunda_url_dict.items():
         for dict_url in alert_section_url:
-            if dict_url.get('alert_section') == alert_section:
-                camunda_url_list.append(dict_url['url'])
+            if dict_url.get("alert_section") == alert_section:
+                camunda_url_list.append(dict_url["url"])
     return list(set(camunda_url_list))
 
 
@@ -44,9 +41,9 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     global CAMUNDA_URL
     variables = task.get_variables()
     # print("variables --> ", variables)
-    module_name = variables.pop('module_name', None)
-    class_name = variables.pop('class_name', None)
-    function_name = variables.pop('function_name', None)
+    module_name = variables.pop("module_name", None)
+    class_name = variables.pop("class_name", None)
+    function_name = variables.pop("function_name", None)
     try:
         module = importlib.import_module(f"orchestrator.actions.{module_name}")
         class_instance = getattr(module, class_name)()
@@ -55,7 +52,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         # print("req_variables --> ", req_variables)
         # print("variables --> ", variables)
         params = {key: variables.get(key, None) for key in req_variables}
-        params['CAMUNDA_URL'] = CAMUNDA_URL
+        params["CAMUNDA_URL"] = CAMUNDA_URL
         status, data = await function(**{"params": params})
         # print("status: ", status)
         # print("data: ", data)
@@ -67,13 +64,21 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         if not status:
             logger.error(f"Task failed: {data}")
             return task.failure(
-                error_message="task failed", error_details=data, max_retries=3, retry_timeout=5000
+                error_message="task failed",
+                error_details=data,
+                max_retries=3,
+                retry_timeout=5000,
             )
 
     except Exception as e:
         logger.error(f"Task failed: {e}")
         logger.error(traceback.format_exc())
-        return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
+        return task.failure(
+            error_message=str(e),
+            error_details=str(e),
+            max_retries=3,
+            retry_timeout=5000,
+        )
 
 
 # Wrapper function to run async functions synchronously
@@ -110,7 +115,9 @@ async def process_topic(alert_section, topic, worker_id):
 
         # Subscribe to the topic
         print(f"Worker {worker_id} subscribing to topic: {topic}")
-        await etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task))
+        await etw.subscribe(
+            topic, lambda task: run_async_function(algo_external_task, task)
+        )
 
 
 async def main(alert_section):
@@ -123,7 +130,9 @@ async def main(alert_section):
     # engine_local_base_url = f"{urdhva_base.settings.camunda_url}/engine-rest"
     global CAMUNDA_URL
     loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(max_workers=200)  # Adjust the number of workers as needed
+    executor = ThreadPoolExecutor(
+        max_workers=200
+    )  # Adjust the number of workers as needed
     tasks = []
 
     # conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
@@ -132,18 +141,28 @@ async def main(alert_section):
         task_id = 1
         engine_local_base_url = f"{conn}/engine-rest"
         CAMUNDA_URL = f"{conn}"
-        topics = [f'workflow_consumer'] + [f'{alert_section}_workflow_consumer_{t_id}' for t_id in range(1, 21)]
+        topics = [f"workflow_consumer"] + [
+            f"{alert_section}_workflow_consumer_{t_id}" for t_id in range(1, 21)
+        ]
         for topic in topics:
             for i in range(0, 1):
                 # Creating Unique WorkerId based on Topic and incremental task id
-                etw = ExternalTaskWorker(f"{task_id}-{topic}", base_url=engine_local_base_url,
-                                         config=urdhva_base.settings.camunda_default_config)
+                etw = ExternalTaskWorker(
+                    f"{task_id}-{topic}",
+                    base_url=engine_local_base_url,
+                    config=urdhva_base.settings.camunda_default_config,
+                )
                 # tasks.append(loop.run_in_executor(
                 #         executor, partial(lambda: etw.subscribe(topic,
                 #                                                 lambda task: run_async_function(algo_external_task, task))))
                 # )
                 subscribe_task = loop.run_in_executor(
-                    executor, partial(etw.subscribe, topic, lambda task: run_async_function(algo_external_task, task))
+                    executor,
+                    partial(
+                        etw.subscribe,
+                        topic,
+                        lambda task: run_async_function(algo_external_task, task),
+                    ),
                 )
                 tasks.append(subscribe_task)
                 task_id += 1
@@ -160,5 +179,3 @@ if __name__ == "__main__":
         usage()
         sys.exit(-1)
     asyncio.run(main(sys.argv[1]))
-
-

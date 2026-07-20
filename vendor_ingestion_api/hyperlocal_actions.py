@@ -5,13 +5,13 @@ from ingestion_api_model import *
 import fastapi
 import traceback
 
-router = fastapi.APIRouter(prefix='/hyperlocal')
+router = fastapi.APIRouter(prefix="/hyperlocal")
 
 logger = urdhva_base.logger.Logger.getInstance("hyper_local_ingestion")
 
 
 # Action ingest_data
-@router.post('/ingest_data', tags=['HyperLocal'])
+@router.post("/ingest_data", tags=["HyperLocal"])
 async def hyperlocal_ingest_data(data: Hyperlocal_Ingest_DataParams):
     try:
         logger.info(f"Received Hyper Local data ingestion from vendor {data.dict()}")

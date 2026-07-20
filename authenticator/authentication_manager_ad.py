@@ -34,24 +34,28 @@ class AuthenticationManager:
         """
         try:
             # build a client
-            ldap_client = ldap.initialize(f"ldap://{urdhva_base.settings.ldap_host}:{urdhva_base.settings.ldap_port}")
+            ldap_client = ldap.initialize(
+                f"ldap://{urdhva_base.settings.ldap_host}:{urdhva_base.settings.ldap_port}"
+            )
             # perform a synchronous bind
             ldap_client.set_option(ldap.OPT_REFERRALS, 0)
-            ldap_client.simple_bind_s(f"{username}@{urdhva_base.settings.ldap_domain}", f"{password}")
+            ldap_client.simple_bind_s(
+                f"{username}@{urdhva_base.settings.ldap_domain}", f"{password}"
+            )
             print("User Successfully Valid...")
             return True
         except ldap.INVALID_CREDENTIALS as e:
             ldap_client.unbind()
             print(f"User Validation Failed {e}")
             return False
-    
+
     @classmethod
     async def cleanup_internal_jwt(cls, token: str):
         redis_ins = await urdhva_base.redispool.get_redis_connection()
         payload = jwt.decode(
             token,
             urdhva_base.settings.jwt_secret_key,
-            algorithms=[urdhva_base.settings.jwt_algorithm]
+            algorithms=[urdhva_base.settings.jwt_algorithm],
         )
         rkey = payload["sec_key"]
         if redis_ins.exists(rkey):
@@ -66,31 +70,35 @@ class AuthenticationManager:
             payload = jwt.decode(
                 token,
                 urdhva_base.settings.jwt_secret_key,
-                algorithms=[urdhva_base.settings.jwt_algorithm]
+                algorithms=[urdhva_base.settings.jwt_algorithm],
             )
 
             # Check token expiration
             if datetime.now(timezone.utc).timestamp() > payload.get("exp", 0):
-                raise HTTPException(status_code=resp_status.HTTP_401_UNAUTHORIZED,
-                                    detail="Token has expired")
+                raise HTTPException(
+                    status_code=resp_status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has expired",
+                )
 
             # Validating redis key information
             rkey = payload["sec_key"]
             user_info = redis_ins.get(rkey)
             if not user_info:
                 # Missing user information in redis, marking as invalid login headers
-                raise HTTPException(status_code=resp_status.HTTP_401_UNAUTHORIZED,
-                                     detail="Invalid authentication token")
+                raise HTTPException(
+                    status_code=resp_status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication token",
+                )
             user_info = json.loads(base64.b64decode(user_info))
             return user_info
         except JWTError as e:
             raise HTTPException(
                 status_code=resp_status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid token: {str(e)}"
+                detail=f"Invalid token: {str(e)}",
             )
         finally:
             redis_ins.close()
-    
+
     @classmethod
     async def create_internal_jwt(cls, user_data: Dict[str, Any]) -> str:
         """Create internal JWT token after successful Keycloak authentication"""
@@ -103,21 +111,30 @@ class AuthenticationManager:
                 del user_data[key]
         payload = {
             "iat": datetime.now(timezone.utc),
-            "exp": datetime.now(timezone.utc) + timedelta(hours=urdhva_base.settings.jwt_expiration_hours),
-            "sec_key": rkey
+            "exp": datetime.now(timezone.utc)
+            + timedelta(hours=urdhva_base.settings.jwt_expiration_hours),
+            "sec_key": rkey,
         }
         payload.update(user_data)
         redis_client = await urdhva_base.redispool.get_redis_connection()
-        timeout = int(timedelta(hours=urdhva_base.settings.jwt_expiration_hours).total_seconds())
-        await redis_client.setex(rkey, 
-                                 timeout,
-                                 base64.urlsafe_b64encode(json.dumps(user_data, default=str).encode()).decode())
+        timeout = int(
+            timedelta(hours=urdhva_base.settings.jwt_expiration_hours).total_seconds()
+        )
+        await redis_client.setex(
+            rkey,
+            timeout,
+            base64.urlsafe_b64encode(
+                json.dumps(user_data, default=str).encode()
+            ).decode(),
+        )
         return {
-            "jwt_token": jwt.encode(payload, 
-                                    urdhva_base.settings.jwt_secret_key, 
-                                    algorithm=urdhva_base.settings.jwt_algorithm),
-            "user_data": user_data
-            }
+            "jwt_token": jwt.encode(
+                payload,
+                urdhva_base.settings.jwt_secret_key,
+                algorithm=urdhva_base.settings.jwt_algorithm,
+            ),
+            "user_data": user_data,
+        }
 
     @classmethod
     def get_access_token(cls):
@@ -132,24 +149,23 @@ class AuthenticationManager:
             client_username = urdhva_base.settings.openldap_client_username
             client_password = urdhva_base.settings.openldap_client_password
 
-            credentials = base64.b64encode(f"{client_username}:{client_password}".encode()).decode()
+            credentials = base64.b64encode(
+                f"{client_username}:{client_password}".encode()
+            ).decode()
             headers = {
-                'Authorization': f'Basic {credentials}',
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json'
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
             }
-            token_data = {'grant_type': 'client_credentials'}
+            token_data = {"grant_type": "client_credentials"}
             response = requests.post(
-                token_url,
-                data=token_data,
-                headers=headers,
-                timeout=30
+                token_url, data=token_data, headers=headers, timeout=30
             )
             response.raise_for_status()
             token_response = response.json()
-            access_token = token_response.get('access_token')           
+            access_token = token_response.get("access_token")
             return access_token
-        
+
         except Exception as e:
             print(f"Error getting token: {e}")
             return False
@@ -171,32 +187,25 @@ class AuthenticationManager:
             return False
         try:
             headers = {
-                'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
             }
-            auth_data = {
-                'user_id': username,
-                'password': password
-            }
+            auth_data = {"user_id": username, "password": password}
 
             response = requests.post(
-                auth_url,
-                headers=headers,
-                json=auth_data,
-                timeout=30
+                auth_url, headers=headers, json=auth_data, timeout=30
             )
             response.raise_for_status()
             result = response.json()
 
             if isinstance(result, dict):
-                if result.get('success') in ('true', True):
+                if result.get("success") in ("true", True):
                     return True
             return False
         except Exception as e:
             print(f"Error checking authentication: {e}")
             return False
-        
 
     @classmethod
     async def login(cls, username, password, login_type, jwt_auth=False):
@@ -213,29 +222,31 @@ class AuthenticationManager:
         """
 
         # Checking whether user exists in ceg local database or not, If not return Invalid else proceed further
-        user_data = await hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
-                                                             f"lower(username)='{username.lower()}'", skip_total=True)
+        user_data = await hpcl_ceg_model.Users.get_aggr_data(
+            f"select * from users where " f"lower(username)='{username.lower()}'",
+            skip_total=True,
+        )
         if not user_data["data"]:
             await cls.update_login_failure_attempts(username)
             return False, "Invalid Login Credentials", {}
-        user_info = user_data['data'][0]
+        user_info = user_data["data"][0]
         # If lock enabled, then sending user locked out status. This one moved here as per VAPT
-        if await cls.verify_locked_check(f'{username.lower()}'):
+        if await cls.verify_locked_check(f"{username.lower()}"):
             print(f"User {username} locked out")
             return False, "User locked out", {}
-        
+
         # Is Active User
-        if not user_info.get('status'):
+        if not user_info.get("status"):
             print(f"User {username} status not set")
             return False, "User was disabled, Please contact administrator", {}
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
-        if user_info.get('is_ad_user'):  # urdhva_base.settings.ldap_auth_enabled:
-            if login_type == 'dealer':
+        if user_info.get("is_ad_user"):  # urdhva_base.settings.ldap_auth_enabled:
+            if login_type == "dealer":
                 # Validating user in with Open LDAP.
                 try:
                     status = await cls.validate_open_ldap_auth(username, password)
-                except Exception as e:
+                except Exception:
                     print(f"Exception while validating ldap auth for user {username}")
                     status = False
                 if not status:
@@ -245,7 +256,7 @@ class AuthenticationManager:
                 # Validating user in with LDAP.
                 try:
                     status = await cls.validate_ldap_auth(username, password)
-                except Exception as e:
+                except Exception:
                     print(f"Exception while validating ldap auth for user {username}")
                     status = False
                 if not status:
@@ -261,9 +272,11 @@ class AuthenticationManager:
     @classmethod
     async def generate_auth_info(cls, user_info, jwt_auth=False):
 
-        role_names = ", ".join(f"'{val}'" for val in user_info['novex_role'])
-        role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name in ({role_names})")
-        if not role['data']:
+        role_names = ", ".join(f"'{val}'" for val in user_info["novex_role"])
+        role = await hpcl_ceg_model.Roles.get_aggr_data(
+            f"select * from roles where name in ({role_names})"
+        )
+        if not role["data"]:
             print("-- Roles not found in database --")
             return False, "Access Restricted", {}
 
@@ -287,17 +300,21 @@ class AuthenticationManager:
             else:
                 return value
 
-
         if role["data"]:
             allowed_roles = {}
             for role_data in role["data"]:
-                for menu in role_data['allowed_pages']:
-                    if menu['menu_name'] not in allowed_roles:
-                        allowed_roles[menu['menu_name']] = menu
+                for menu in role_data["allowed_pages"]:
+                    if menu["menu_name"] not in allowed_roles:
+                        allowed_roles[menu["menu_name"]] = menu
                     else:
-                        allowed_roles[menu['menu_name']]["allowed_sub_menus"].extend(menu['allowed_sub_menus'])
-                        allowed_roles[menu['menu_name']]["allowed_sub_menus"] = (
-                            unique_dicts(allowed_roles[menu['menu_name']]["allowed_sub_menus"]))
+                        allowed_roles[menu["menu_name"]]["allowed_sub_menus"].extend(
+                            menu["allowed_sub_menus"]
+                        )
+                        allowed_roles[menu["menu_name"]]["allowed_sub_menus"] = (
+                            unique_dicts(
+                                allowed_roles[menu["menu_name"]]["allowed_sub_menus"]
+                            )
+                        )
 
             user_info["allowed_roles"] = list(allowed_roles.values())
         # Adding session data
@@ -321,7 +338,11 @@ class AuthenticationManager:
         failed_count = 0
         if await redis_ins.exists(f"login_failure_{username.lower()}"):
             failed_count = int(await redis_ins.get(f"login_failure_{username.lower()}"))
-        await redis_ins.setex(f"login_failure_{username.lower()}", urdhva_base.settings.lockout_time, failed_count+1)
+        await redis_ins.setex(
+            f"login_failure_{username.lower()}",
+            urdhva_base.settings.lockout_time,
+            failed_count + 1,
+        )
 
     @classmethod
     async def generate_cookie(cls, cookie_data):
@@ -334,13 +355,20 @@ class AuthenticationManager:
         d = {"entity_id": "Novex", "cookie_id": cookie_id}
         cookie_key = f.encrypt(json.dumps(d).encode()).decode()
         time = 24 * 60 * 60
-        await redis_client.setex(rkey, time,
-                                 base64.urlsafe_b64encode(json.dumps(cookie_data, default=str).encode()).decode())
+        await redis_client.setex(
+            rkey,
+            time,
+            base64.urlsafe_b64encode(
+                json.dumps(cookie_data, default=str).encode()
+            ).decode(),
+        )
         return cookie_key
 
     @classmethod
     async def logout(cls, request: fastapi.Request):
-        response = fastapi.responses.JSONResponse({'url': f"{request.base_url}/login"}, 401)
+        response = fastapi.responses.JSONResponse(
+            {"url": f"{request.base_url}/login"}, 401
+        )
         cookie_id = request.cookies.get(urdhva_base.settings.cookie_name, None)
         if cookie_id:
             try:
@@ -357,7 +385,9 @@ class AuthenticationManager:
         return response
 
     @classmethod
-    async def create_user(cls, username, password, role, first_name, last_name, employee_id, status=True):
+    async def create_user(
+        cls, username, password, role, first_name, last_name, employee_id, status=True
+    ):
         """
         Creates a new user with the specified username, password, and status.
 
@@ -373,15 +403,26 @@ class AuthenticationManager:
         Returns:
             None
         """
-        data = await hpcl_ceg_model.Users.get_aggr_data(f"select username from users where "
-                                                  f"lower(username)='{username.lower()}'", skip_total=True)
+        data = await hpcl_ceg_model.Users.get_aggr_data(
+            f"select username from users where "
+            f"lower(username)='{username.lower()}'",
+            skip_total=True,
+        )
         if data["data"]:
             for user in data["data"]:
                 if user["username"].lower() == username.lower():
                     return False, "user exists"
-        await hpcl_ceg_model.UsersCreate(**{"username": username.lower(), "password": password, "role": role,
-                                      "first_name": first_name, "last_name": last_name, "employee_id": employee_id,
-                                      "status": True}).create()
+        await hpcl_ceg_model.UsersCreate(
+            **{
+                "username": username.lower(),
+                "password": password,
+                "role": role,
+                "first_name": first_name,
+                "last_name": last_name,
+                "employee_id": employee_id,
+                "status": True,
+            }
+        ).create()
         return True, "User created successfully"
 
     @classmethod

@@ -36,10 +36,12 @@ class VTSAlertsListener:
             try:
                 restart_triggered_time = int(await redis_ins.get(restart_trigger_key))
             except Exception as e:
-                logger.error(f"Exception while converting restart triggered time to integer, {e}")
+                logger.error(
+                    f"Exception while converting restart triggered time to integer, {e}"
+                )
         await redis_ins.connection_pool.disconnect()
         return restart_triggered_time
-    
+
     @classmethod
     async def validate_restart(cls, start_time):
         """
@@ -56,15 +58,21 @@ class VTSAlertsListener:
                 return True
             if await cls.restart_validator() > start_time:
                 return True
-        except Exception as _:
+        except Exception:
             pass
         return False
-    
-    async def send_no_data_mail(self,tt_type):
+
+    async def send_no_data_mail(self, tt_type):
         ins = await notification_factory.get_notification_module("email")
         if tt_type == "bulk":
-            recipients = ["mberde@aryaomnitalk.com","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com", "Randhir.Kumar2@hpcl.in", "Rishikesh.patil@hpcl.in"]
-            body=f"""
+            recipients = [
+                "mberde@aryaomnitalk.com",
+                "adeshingkar@aryaomnitalk.com",
+                "kshah@aryaomnitalk.com",
+                "Randhir.Kumar2@hpcl.in",
+                "Rishikesh.patil@hpcl.in",
+            ]
+            body = f"""
             <p>Hi Sir,</p>
 
             <p>
@@ -78,8 +86,14 @@ class VTSAlertsListener:
             Novex System</p>
             """
         elif tt_type == "packed":
-            recipients = ["roshaiah.b@enmovil.in","aditya.lokhande@enmovil.in", "renumeena@hpcl.in", "Randhir.Kumar2@hpcl.in", "Rishikesh.patil@hpcl.in"]
-            body=f"""
+            recipients = [
+                "roshaiah.b@enmovil.in",
+                "aditya.lokhande@enmovil.in",
+                "renumeena@hpcl.in",
+                "Randhir.Kumar2@hpcl.in",
+                "Rishikesh.patil@hpcl.in",
+            ]
+            body = f"""
             <p>Hi Sir,</p>
 
             <p>
@@ -94,24 +108,31 @@ class VTSAlertsListener:
             """
         await ins.publish_message(
             subject=f"VTS Issue: No Data Received - {tt_type.upper()}",
-            recipients= recipients,
-            cc_recipients= ["arpitaKanak.Bara@hpcl.in", "vgupta@hpcl.in", "avinashgaurav@hpcl.in",
-                            "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
-            bcc_recipients= [],
+            recipients=recipients,
+            cc_recipients=[
+                "arpitaKanak.Bara@hpcl.in",
+                "vgupta@hpcl.in",
+                "avinashgaurav@hpcl.in",
+                "sreedhar.maddipati@algofusiontech.com",
+                "venu@algofusiontech.com",
+                "moufikali@algofusiontech.com",
+                "yesu.p@algofusiontech.com",
+            ],
+            bcc_recipients=[],
             html_content=True,
             body=body,
             force_send=True,
-            inline_images= {},
-            attachments= []
+            inline_images={},
+            attachments=[],
         )
 
     async def listener(self):
         queue_ins = urdhva_base.redispool.RedisQueue(self.queue_name)
         base_time = int(time.time())
-        #last_event_received_time = int(time.time())
+        # last_event_received_time = int(time.time())
         last_bulk_received_time = int(time.time())
         last_packed_received_time = int(time.time())
-        #last_reported_time = 0
+        # last_reported_time = 0
         last_bulk_reported_time = 0
         last_packed_reported_time = 0
         while True:
@@ -125,12 +146,16 @@ class VTSAlertsListener:
                             last_bulk_received_time = int(time.time())
                         elif tt_type == "packed":
                             last_packed_received_time = int(time.time())
-                    #last_event_received_time = int(time.time())
+                    # last_event_received_time = int(time.time())
                     await self.process_task(data)
             except Exception as e:
-                if 'Timeout reading' not in str(e):
-                    print(f"Exception in VTS task process {e}, {traceback.format_exc()}")
-                    logger.error(f"Exception in VTS task process {e}, {traceback.format_exc()}")
+                if "Timeout reading" not in str(e):
+                    print(
+                        f"Exception in VTS task process {e}, {traceback.format_exc()}"
+                    )
+                    logger.error(
+                        f"Exception in VTS task process {e}, {traceback.format_exc()}"
+                    )
             if (int(time.time()) - base_time) > 300:
                 if await self.validate_restart(self.worker_start_time):
                     logger.info(f"Restart message received for {self.queue_name}")
@@ -139,22 +164,37 @@ class VTSAlertsListener:
             if int(time.time()) - last_bulk_received_time >= self.idle_time:
                 if int(time.time()) - last_bulk_reported_time <= self.idle_time:
                     continue
-                print(f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_bulk_received_time}")
-                if urdhva_base.settings.environment not in ["development", "dev", "uat", "staging"]:
-                    await self.send_no_data_mail('bulk')
+                print(
+                    f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_bulk_received_time}"
+                )
+                if urdhva_base.settings.environment not in [
+                    "development",
+                    "dev",
+                    "uat",
+                    "staging",
+                ]:
+                    await self.send_no_data_mail("bulk")
                 last_bulk_reported_time = int(time.time())
-            
+
             if int(time.time()) - last_packed_received_time >= self.idle_time:
                 if int(time.time()) - last_packed_reported_time <= self.idle_time:
                     continue
-                print(f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_packed_received_time}")
-                if urdhva_base.settings.environment not in ["development", "dev", "uat", "staging"]:
-                    await self.send_no_data_mail('packed')
+                print(
+                    f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_packed_received_time}"
+                )
+                if urdhva_base.settings.environment not in [
+                    "development",
+                    "dev",
+                    "uat",
+                    "staging",
+                ]:
+                    await self.send_no_data_mail("packed")
                 last_packed_reported_time = int(time.time())
 
     async def process_task(self, task):
         await vts_analysis.create_vts_alerts(task)
-        #await vts_analysis.create_vts_violation_alerts(task)
+        # await vts_analysis.create_vts_violation_alerts(task)
+
 
 def usage():
     print(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")

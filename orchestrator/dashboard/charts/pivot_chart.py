@@ -10,12 +10,12 @@ class PivotChart:
         session = async_session()
         try:
             table_name, table_schema = metrics_data.table, metrics_data.schema
-            viztype = 'pivot'
+            viztype = "pivot"
             resp = {}
-            resp['viztype'] = viztype
+            resp["viztype"] = viztype
             column_labels = dict()
-            if metrics_data.type == 'Query':
-                resp['query'] = metrics_data.user_query
+            if metrics_data.type == "Query":
+                resp["query"] = metrics_data.user_query
             else:
                 queries = metrics_data.params.queries
                 # As there is only one queries, so taken the first element - to avoid looping
@@ -27,7 +27,9 @@ class PivotChart:
                 row_limit = q.row_limit
 
                 # taking groupby columns and storing in list
-                grp_by_col = []  # groupby column details in dictionary {'name':'','label':''}
+                grp_by_col = (
+                    []
+                )  # groupby column details in dictionary {'name':'','label':''}
 
                 if metrics_data.params.form_data.groupby:
                     groupbyCol = metrics_data.params.form_data.groupby
@@ -45,27 +47,35 @@ class PivotChart:
                             met.label = met.column.column_name
                         column_labels[met.column.column_name] = met.label
 
-                query_mode = 'aggregate'
+                query_mode = "aggregate"
                 if metrics_data.params.form_data.query_mode:
                     query_mode = metrics_data.params.form_data.query_mode
 
                 # taking orderby columns
-                orderbyColumn = {'data': [], "sortbydesc": False}
+                orderbyColumn = {"data": [], "sortbydesc": False}
                 if orderby:
-                    orderbyColumn['data'] = orderby
+                    orderbyColumn["data"] = orderby
                     if order_descending:
-                        orderbyColumn['sortbydesc'] = True
+                        orderbyColumn["sortbydesc"] = True
 
                 # getting the query
-                resp['query'] = await charts_functions.getQuery(
-                    viztype, table_name, table_schema, metrics, filters, grp_by_col, query_mode, orderbyColumn, rowlimit=row_limit
+                resp["query"] = await charts_functions.getQuery(
+                    viztype,
+                    table_name,
+                    table_schema,
+                    metrics,
+                    filters,
+                    grp_by_col,
+                    query_mode,
+                    orderbyColumn,
+                    rowlimit=row_limit,
                 )
 
             # keeping default status and data
-            resp['status'] = True
-            resp['data'] = []
+            resp["status"] = True
+            resp["data"] = []
 
-            query_ = resp['query']
+            query_ = resp["query"]
             query_results = await session.execute(text(query_))
 
             # Get columns from the query
@@ -75,10 +85,14 @@ class PivotChart:
             column_config = metrics_data.params.form_data.column_config
 
             # Number formatting
-            column_number_formatting = await charts_functions.list_column_configs(column_labels, column_config)
+            column_number_formatting = await charts_functions.list_column_configs(
+                column_labels, column_config
+            )
 
             # Symbol formatting
-            symbol_formatting = await charts_functions.list_symbol_formats(column_labels, column_config)
+            symbol_formatting = await charts_functions.list_symbol_formats(
+                column_labels, column_config
+            )
 
             # Variable to store formatted data
             final_list = []
@@ -88,39 +102,41 @@ class PivotChart:
                 row_dict = dict(zip(column_names, row))
                 if column_number_formatting:
                     for column in column_number_formatting:
-                        row_dict[column['name']] = await charts_functions.number_formatting(
-                            row_dict[column['name']],
-                            column['type']
+                        row_dict[column["name"]] = (
+                            await charts_functions.number_formatting(
+                                row_dict[column["name"]], column["type"]
+                            )
                         )
                 if symbol_formatting:
                     for sym in symbol_formatting:
-                        row_dict[sym['name']] = await charts_functions.add_symbol_format(
-                            row_dict[sym['name']],
-                            sym['type'].symbol_position,
-                            sym['type'].symbol
+                        row_dict[sym["name"]] = (
+                            await charts_functions.add_symbol_format(
+                                row_dict[sym["name"]],
+                                sym["type"].symbol_position,
+                                sym["type"].symbol,
+                            )
                         )
                 final_list.append(row_dict)
 
-        
             # Detailed view of the above comprehension
-            '''
+            """
             final_list=[]
             for each_tup in results:
                 tup_dict={k:each_tup[v] for k,v in resultant_dict.items()}
                 final_list.append(tup_dict)
-            '''
-            
+            """
+
             # why commented? - in pivot it automatically ignored the null values of groupby columns. This function won't ignore. But this is the front end process so commented
-            '''
+            """
             final_list = [
                 {k: each_tup[resultant_dict[k]] for k in resultant_dict
                 if (k in groupbyCol and each_tup[resultant_dict[k]]) or (k not in groupbyCol)}
                 for each_tup in results
                 if len({k for k in resultant_dict if k in groupbyCol and each_tup[resultant_dict[k]] is not None}) == len(groupbyCol)
             ]
-            '''
+            """
             # Detailed view of the above comprehension
-            '''
+            """
             final_list=[]
             for each_tup in results:
                 final_dict={}
@@ -131,9 +147,9 @@ class PivotChart:
                         final_dict[k]= each_tup[resultant_dict[k]]
                 if len(final_dict) == len(resultant_list):
                     final_list.append(final_dict)
-            '''
+            """
 
-            resp['data'] = final_list
+            resp["data"] = final_list
             return resp
         except Exception as e:
             return {"status": False, "message": str(e), "data": []}

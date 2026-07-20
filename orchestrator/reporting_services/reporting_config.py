@@ -43,12 +43,31 @@ zone_map = {
     "SOUTH ZONE": "SZ",
     "BENGALURU ZONE": "Bengaluru Zone",
     "BHOPAL ZONE": "Bhopal Zone",
-    "NORTH ZONE": "NZ"
+    "NORTH ZONE": "NZ",
 }
 
-novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
-                       "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
-                       "state", "zone", "sales_area", "is_ad_user", "status", "manual_user", "contact_number", "mfa"]
+novex_model_col = [
+    "username",
+    "email",
+    "first_name",
+    "last_name",
+    "password",
+    "employee_id",
+    "employee_number",
+    "bu",
+    "sap_id",
+    "system_role",
+    "novex_role",
+    "region",
+    "state",
+    "zone",
+    "sales_area",
+    "is_ad_user",
+    "status",
+    "manual_user",
+    "contact_number",
+    "mfa",
+]
 
 # Add required roles in novex_role_master.csv
 lpg_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, EPL.ZLOC_TYPE,
@@ -69,13 +88,13 @@ additional_lpg_query = [
             LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
         WHERE 
             ZE.PLANT_CODE like '2%' and ZR.ROLE_NAME IN ('IL_DGM_LPGOPNNFP', 'IL_CHMNGR_LPGHSEZONE', 'IL_MANAGER_LPG')""",
-        # Contract Employess
+    # Contract Employess
     """ SELECT distinct(ZR.USER_NAME) as EMPLOYEE_NUMBER, ZR.USER_NAME as EMPLOYEE_NAME,
             EPL.PLANT as PLANT_CODE, EPL.PLANT_DESC,ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as Zone,EPL.ZLOC_TYPE
         FROM ZGRCCV_ROLE_STG ZR
             LEFT JOIN ZMMCV_PLANT_STG EPL on ZR.LOCATION = EPL.PLANT
-        WHERE ZR.LOCATION like '2%' AND ZR.ROLE_NAME IN ('IL_LPGCONT_OFFCER')"""
-        ]
+        WHERE ZR.LOCATION like '2%' AND ZR.ROLE_NAME IN ('IL_LPGCONT_OFFCER')""",
+]
 
 # Add required roles in novex_role_master.csv
 tas_query = """ SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL,
@@ -110,28 +129,88 @@ WHERE ZE.PLANT_CODE like '3%' """
 # Zonal
 # query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL,
 #                 ZE.EMP_BU_CODE,ZE.PLANT_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as Zone
-#             FROM ZHRCV_EMP_NONHCM_STG ZE left JOIN ZGRCCV_ROLE_STG ZR on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
+#             FROM ZHRCV_EMP_NONHCM_STG ZE left JOIN ZGRCCV_ROLE_STG ZR on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER
 #                 LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
 #                 LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
 #             WHERE ZR.ROLE_NAME IN ('SD_LZONAL_HEAD') """
 
-required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress", "pincode", "terminal_plant_id", "dealer_phone","dealer_email"]
+required_field = [
+    "bu",
+    "sap_id",
+    "name",
+    "city",
+    "district",
+    "region",
+    "sales_area",
+    "state",
+    "zone",
+    "adress",
+    "pincode",
+    "terminal_plant_id",
+    "dealer_phone",
+    "dealer_email",
+]
 
 location_master_schema = {
-    "bu": "VARCHAR", "sap_id": "VARCHAR", "bu_id": "VARCHAR", "name": "VARCHAR", "is_active": "BOOLEAN", "activation_date": "TIMESTAMP",
-    "activation_notes": "VARCHAR","activated_by": "VARCHAR","deactivated_by": "VARCHAR","deactivation_notes": "VARCHAR","health_status": "VARCHAR",
-    "health_notes": "VARCHAR", "scada_vendor": "VARCHAR", "scada_version": "VARCHAR", "scada_conn_status": "BOOLEAN", "scada_conn_notes": "VARCHAR",
-    "city": "VARCHAR", "district": "VARCHAR", "region": "VARCHAR", "state": "VARCHAR", "zone": "VARCHAR", "address": "VARCHAR", "pincode": "VARCHAR",
-    "local_automation_vendor": "VARCHAR", "latitude": "VARCHAR", "longitude": "VARCHAR", "entity_id": "VARCHAR", "ro_id": "VARCHAR", "dealer_name": "VARCHAR",
-    "dealer_phone": "VARCHAR", "dealer_email": "VARCHAR", "sales_area": "VARCHAR", "terminal_plant_id": "VARCHAR","terminal_plant_name": "VARCHAR",
-    "category": "VARCHAR", "distributor_code": "VARCHAR", "distributor_name": "VARCHAR","round_trip_distance": "INTEGER","location_onboard": "BOOLEAN",
-    "sales_area_code": "VARCHAR", "region_code": "VARCHAR"
-    }
+    "bu": "VARCHAR",
+    "sap_id": "VARCHAR",
+    "bu_id": "VARCHAR",
+    "name": "VARCHAR",
+    "is_active": "BOOLEAN",
+    "activation_date": "TIMESTAMP",
+    "activation_notes": "VARCHAR",
+    "activated_by": "VARCHAR",
+    "deactivated_by": "VARCHAR",
+    "deactivation_notes": "VARCHAR",
+    "health_status": "VARCHAR",
+    "health_notes": "VARCHAR",
+    "scada_vendor": "VARCHAR",
+    "scada_version": "VARCHAR",
+    "scada_conn_status": "BOOLEAN",
+    "scada_conn_notes": "VARCHAR",
+    "city": "VARCHAR",
+    "district": "VARCHAR",
+    "region": "VARCHAR",
+    "state": "VARCHAR",
+    "zone": "VARCHAR",
+    "address": "VARCHAR",
+    "pincode": "VARCHAR",
+    "local_automation_vendor": "VARCHAR",
+    "latitude": "VARCHAR",
+    "longitude": "VARCHAR",
+    "entity_id": "VARCHAR",
+    "ro_id": "VARCHAR",
+    "dealer_name": "VARCHAR",
+    "dealer_phone": "VARCHAR",
+    "dealer_email": "VARCHAR",
+    "sales_area": "VARCHAR",
+    "terminal_plant_id": "VARCHAR",
+    "terminal_plant_name": "VARCHAR",
+    "category": "VARCHAR",
+    "distributor_code": "VARCHAR",
+    "distributor_name": "VARCHAR",
+    "round_trip_distance": "INTEGER",
+    "location_onboard": "BOOLEAN",
+    "sales_area_code": "VARCHAR",
+    "region_code": "VARCHAR",
+}
 
-_rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
-           "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city",
-           "sales_grp": "sales_area_code", "sales_off": "region_code", "DISTRICT_NAME": "district",
-           "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location", "dealer_email": "email"}
+_rename = {
+    "PLANT": "sap_id",
+    "PLANT_DESC": "name",
+    "ZZONE": "zone",
+    "STATE_NAME": "state",
+    "SALES_OFFICE_DESC": "region",
+    "SALES_GROUP_DESC": "sales_area",
+    "CITY1": "city",
+    "sales_grp": "sales_area_code",
+    "sales_off": "region_code",
+    "DISTRICT_NAME": "district",
+    "POST_CODE1": "pincode",
+    "STREET": "land_mark",
+    "STR_SUPPL1": "location",
+    "dealer_email": "email",
+}
 
 location_configs = [
     {
@@ -146,7 +225,7 @@ location_configs = [
                     ZCA.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND ZCA.INVOICE_DATE <= NOW();
                 """,
         # '12', '17', '25', '32', '33','68'
-        "reporting_office_query":"""
+        "reporting_office_query": """
                     SELECT
                         PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
                     FROM
@@ -154,7 +233,7 @@ location_configs = [
                         LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                     WHERE
                         ZLOC_TYPE IN ('68');
-                """
+                """,
     },
     {
         "bu": "lpg_customers",
@@ -177,7 +256,7 @@ location_configs = [
                     AND zca.INACTIVE=''
                     AND zca.customer BETWEEN 4000000 AND 49999999 
                     AND zca.DIST_CHANNEL=11 
-                 """
+                 """,
     },
     {
         "bu": "tas",
@@ -199,7 +278,7 @@ location_configs = [
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                 WHERE
                     ZLOC_TYPE IN ('38');
-                """
+                """,
     },
     {
         "bu": "ro",
@@ -227,7 +306,7 @@ location_configs = [
                 WHERE
                     zca.deliv_plant <> '' AND zca.sales_org='7000' AND zca.DIST_CHANNEL=11
                     AND zca.division in (11,12) AND zca.customer BETWEEN 4000000 AND 49999999
-                 """
+                 """,
     },
     {
         "bu": "ds",
@@ -248,8 +327,8 @@ location_configs = [
                 WHERE 
                     zca.deliv_plant <> '' AND zca.sales_org='3000' AND zca.DIST_CHANNEL=12
                     AND zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
-                 """
-    }
+                 """,
+    },
 ]
 
 # BKPS RETAIL OUTLET
@@ -259,12 +338,12 @@ location_configs = [
 #     zcs.ADDRESS3, zcs.ADDRESS4, zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
 #     zcs.second_tel_no, zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.mrn, zcs.OUTLET_TYPE, zcs.gstin,
 #     zcs.mrn, zcs.permanent_Account_number, zca.sales_grp
-# FROM ZSDCV_CUST_SA_STG zca 
-#     INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
+# FROM ZSDCV_CUST_SA_STG zca
+#     INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer
 #     INNER join ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
 #     zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off AND zso.sales_group=zca.sales_grp
 #     INNER join EDW_DC_PLANT plt on zso.PLANT=plt.PLANT
-# WHERE 
+# WHERE
 #     zca.deliv_plant <> '' AND zca.sales_org='7000' AND zca.DIST_CHANNEL=11 AND zca.division in (11,12) AND
 #     zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
 # ORDER BY zca.deliv_plant,zso.plant_desc,zca.sales_off,zso.sales_office_desc,zca.sales_grp,zso.sales_group_desc

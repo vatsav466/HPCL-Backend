@@ -1,5 +1,6 @@
 from orchestrator.notification_manager.notification_manager import NotificationManager
 
+
 class NotifySMS(NotificationManager):
     def __init__(self):
         super().__init__()
@@ -22,4 +23,3 @@ class NotifySMS(NotificationManager):
         :return:
         """
         # Implement SMS sending logic here, e.g., with Twilio or another SMS service
-        pass

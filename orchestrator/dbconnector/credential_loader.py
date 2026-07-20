@@ -1,11 +1,15 @@
-import urdhva_base
 import os
 import dotenv
 import utilities.helpers
 
 # ENV File path to fetch data from
-file_path = os.path.join(os.path.dirname(utilities.helpers.__file__), "..",
-                         "orchestrator", "dbconnector", ".db_creds_env")
+file_path = os.path.join(
+    os.path.dirname(utilities.helpers.__file__),
+    "..",
+    "orchestrator",
+    "dbconnector",
+    ".db_creds_env",
+)
 dotenv.load_dotenv(dotenv_path=file_path)
 
 
@@ -35,6 +39,7 @@ def get_credentials(db_name: str) -> dict:
 
     return credentials
 
+
 def get_va_creds(db_name: str) -> dict:
     """
 
@@ -51,7 +56,7 @@ def get_va_creds(db_name: str) -> dict:
         "cust_id": os.getenv(f"{db_name}_CUST_ID"),
         "application_id": os.getenv(f"{db_name}_APPLICATION_ID"),
         "session_token": os.getenv(f"{db_name}_SESSION_TOKEN"),
-        "cookie": os.getenv(f"{db_name}_COOKIE")
+        "cookie": os.getenv(f"{db_name}_COOKIE"),
     }
 
     # Check if any credential is missing

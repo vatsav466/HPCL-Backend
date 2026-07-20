@@ -16,7 +16,7 @@ class UpdateStatusRevocation:
         """
         return ["alert_id"]
 
-    async def updatestatusrevocation(self, params):  
+    async def updatestatusrevocation(self, params):
         """
         Updates the status of the alert with the given alert_id to "Revocation Approved",
         clears the role and rolelist, and sets final approval to True in the database.
@@ -29,26 +29,28 @@ class UpdateStatusRevocation:
             and None.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get("alert_id"))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
-            
+
             if "_sa_instance_state" in alert_data.keys():
                 del alert_data["_sa_instance_state"]
-            
-            alert_data['role'] = ''
-            alert_data['rolelist'] = []
-            alert_data['finalapproval'] = True
-            alert_data['alert_id'] = params.get('alert_id')
+
+            alert_data["role"] = ""
+            alert_data["rolelist"] = []
+            alert_data["finalapproval"] = True
+            alert_data["alert_id"] = params.get("alert_id")
             alert_data["action_msg"] = "Revocation Approved"
             alert_data["action_type"] = "RevocationApproved"
-            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+            await alert_manager.AlertAction().update_alert_history(
+                input_data=alert_data, alert_data=alert_data
+            )
 
             # data_object = hpcl_ceg_model.Alerts(**alert_data)
             # await data_object.modify()
             return True, None
-        
+
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

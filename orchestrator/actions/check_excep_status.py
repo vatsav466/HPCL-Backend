@@ -19,34 +19,36 @@ class CheckExcepStatus:
         """
         Checks if an exception has been taken for a given alert ID.
 
-        Retrieves the alert data associated with the alert_id using hpcl_ceg_model.Alerts.get(alert_id), 
-        and then checks if the alert history contains the string "Exception". 
-        If it does, the function sets exceptaken to True and returns a tuple containing True and a 
+        Retrieves the alert data associated with the alert_id using hpcl_ceg_model.Alerts.get(alert_id),
+        and then checks if the alert history contains the string "Exception".
+        If it does, the function sets exceptaken to True and returns a tuple containing True and a
         dictionary with the key "excepStatus" set to the value of exceptaken.
 
         Args:
             alert_id (str): The ID of the alert to check.
 
         Returns:
-            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "excepStatus" 
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "excepStatus"
             set to the value of exceptaken.
         """
         exceptaken = False
         try:
-            print("Check Exception request raised alert_id:%s" % params.get('alert_id'))
-            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            print("Check Exception request raised alert_id:%s" % params.get("alert_id"))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get("alert_id"))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            alerthistory = alert_data.get('alertHistory', [])
+            alerthistory = alert_data.get("alertHistory", [])
             for item in alerthistory:
                 if "no_exception" in item:
                     exceptaken = True
-                    alert_data['alert_id'] = params.get('alert_id')
+                    alert_data["alert_id"] = params.get("alert_id")
                     alert_data["action_msg"] = ""
                     alert_data["action_type"] = ""
-                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    await alert_manager.AlertAction().update_alert_history(
+                        input_data=alert_data, alert_data=alert_data
+                    )
                     break
             return True, {"excepStatus": exceptaken}
 

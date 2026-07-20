@@ -38,16 +38,18 @@ ITEM_NAME_MAP = {
     "0949109": "5 KG FILLED LPG CYLINDER-DOM",
     "0949000": "BULK LPG",
     "0948064": "19 KG FILLED LPG CYLINDER",
-    "0949036": "14.2 KG FILLED LPG CYLINDER"
+    "0949036": "14.2 KG FILLED LPG CYLINDER",
 }
+
 
 # ---------- CONNECTION HELPERS ----------
 def get_mysql_connection():
-    return mysql.connector.connect(**credential_loader.get_credentials('TIBCO'))
+    return mysql.connector.connect(**credential_loader.get_credentials("TIBCO"))
 
 
 def get_postgres_connection():
-    return psycopg2.connect(**credential_loader.get_credentials('APP_DB'))
+    return psycopg2.connect(**credential_loader.get_credentials("APP_DB"))
+
 
 # ============================================================
 # MYSQL FETCH (ONLY QUERY CHANGED)
@@ -104,8 +106,9 @@ def fetch_mysql_data(conn, table, key_column, last_key, user_wheres=None):
             val = row.get(key)
             columns_data[key].append(str(val) if val is not None else None)
 
-    return pl.DataFrame({k: pl.Series(v, dtype=pl.Utf8) for k, v in columns_data.items()})
-
+    return pl.DataFrame(
+        {k: pl.Series(v, dtype=pl.Utf8) for k, v in columns_data.items()}
+    )
 
 
 # ---------- LOCATION MASTER ----------
@@ -130,9 +133,13 @@ def sync_location_master(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
         return df
 
     if "supply_loc" in df.columns:
-        df = df.with_columns(pl.col("supply_loc").cast(pl.Utf8).str.replace_all(r"^00+", ""))
+        df = df.with_columns(
+            pl.col("supply_loc").cast(pl.Utf8).str.replace_all(r"^00+", "")
+        )
     if "sap_id" in lm_df.columns:
-        lm_df = lm_df.with_columns(pl.col("sap_id").cast(pl.Utf8).str.replace_all(r"^00+", ""))
+        lm_df = lm_df.with_columns(
+            pl.col("sap_id").cast(pl.Utf8).str.replace_all(r"^00+", "")
+        )
 
     if "supply_loc" in df.columns:
         df = df.join(lm_df, left_on="supply_loc", right_on="sap_id", how="left")
@@ -155,12 +162,16 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
     # Clean sold_to_party (remove starting 'P')
     if "sold_to_party" in df.columns:
         df = df.with_columns(
-            pl.when(pl.col("sold_to_party").cast(pl.Utf8).str.to_uppercase().str.starts_with("P"))
+            pl.when(
+                pl.col("sold_to_party")
+                .cast(pl.Utf8)
+                .str.to_uppercase()
+                .str.starts_with("P")
+            )
             .then(pl.col("sold_to_party").str.slice(1))
             .otherwise(pl.col("sold_to_party"))
             .alias("sold_to_party")
         )
-
 
     if "material" in df.columns:
         df = df.drop("item_no") if "item_no" in df.columns else df
@@ -196,20 +207,22 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
-
 # ---------- POSTGRES SCHEMA ----------
 def ensure_postgres_columns(pg_conn, df: pl.DataFrame, table: str):
     with pg_conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = %s
-        """, (table,))
+        """,
+            (table,),
+        )
         existing = {r[0] for r in cur.fetchall()}
 
         if not existing:
             cols = ", ".join(f'"{c}" TEXT' for c in df.columns)
-            cur.execute(f'CREATE TABLE {table} ({cols});')
+            cur.execute(f"CREATE TABLE {table} ({cols});")
             pg_conn.commit()
             return
 
@@ -218,7 +231,8 @@ def ensure_postgres_columns(pg_conn, df: pl.DataFrame, table: str):
                 cur.execute(f'ALTER TABLE {table} ADD COLUMN "{c}" TEXT;')
 
     pg_conn.commit()
-    
+
+
 def map_polars_dtype_to_pg(dtype) -> str:
     """Convert Polars dtype to Postgres"""
     if dtype in (pl.Int8, pl.Int16, pl.Int32, pl.Int64):
@@ -241,18 +255,24 @@ def ensure_unique_constraint(pg_conn, table: str):
     joined_cols = ", ".join(f'"{c}"' for c in CONFLICT_COLUMNS)
 
     with pg_conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT constraint_name
             FROM information_schema.table_constraints
             WHERE table_name = %s
               AND constraint_type = 'UNIQUE'
-        """, (table,))
+        """,
+            (table,),
+        )
         existing = [r[0] for r in cur.fetchall()]
 
         if constraint_name not in existing:
-            cur.execute(f'ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({joined_cols});')
+            cur.execute(
+                f"ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({joined_cols});"
+            )
             pg_conn.commit()
-            
+
+
 def log_conflicts(df, pg_conn, table, conflict_columns):
     """
     Identify rows in df that already exist in Postgres based on conflict columns.
@@ -282,7 +302,7 @@ def log_conflicts(df, pg_conn, table, conflict_columns):
         df_norm = df_norm.with_columns(pl.col(col.lower()).cast(pl.Utf8))
         existing_norm = existing_norm.with_columns(
             pl.col(col.lower()).cast(pl.Utf8).fill_null("")
-    )
+        )
 
     join_cols = [c.lower() for c in conflict_columns]
 
@@ -330,6 +350,7 @@ def upsert_postgres(pg_conn, df: pl.DataFrame, table: str):
     pg_conn.commit()
     print(f"Upserted {df.height} rows into {table}.")
 
+
 def get_last_sync_key(pg_conn, table, key_column):
     try:
         with pg_conn.cursor() as cur:
@@ -340,6 +361,8 @@ def get_last_sync_key(pg_conn, table, key_column):
         pg_conn.rollback()
         print(f"Table '{table}' does not exist yet. Skipping incremental check.")
         return None
+
+
 # ============================================================
 # MAIN
 # ============================================================
@@ -352,10 +375,10 @@ def sync_data():
 
         df = fetch_mysql_data(
             mysql_conn,
-            "CONN_ENT.ZSDCV_AY_INV3_STG",   # table not used but keep structure
+            "CONN_ENT.ZSDCV_AY_INV3_STG",  # table not used but keep structure
             "syncdt",
             last_key,
-            user_wheres=None
+            user_wheres=None,
         )
 
         if df.is_empty():

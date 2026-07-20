@@ -3,20 +3,23 @@ import urdhva_base
 import hpcl_ceg_ticketing_model
 from datetime import datetime
 
-router = fastapi.APIRouter(prefix='/alertcategorymaster')
+router = fastapi.APIRouter(prefix="/alertcategorymaster")
+
 
 def get_login_user():
-    rpt = urdhva_base.context.context.get('rpt') or {}
-    return rpt.get('username') or "Novex"
+    rpt = urdhva_base.context.context.get("rpt") or {}
+    return rpt.get("username") or "Novex"
+
 
 # Action add_category
-@router.post('/add_category', tags=['AlertCategoryMaster'])
-async def alertcategorymaster_add_category(data: hpcl_ceg_ticketing_model.Alertcategorymaster_Add_CategoryParams):
-
+@router.post("/add_category", tags=["AlertCategoryMaster"])
+async def alertcategorymaster_add_category(
+    data: hpcl_ceg_ticketing_model.Alertcategorymaster_Add_CategoryParams,
+):
 
     user_name = get_login_user()
     print("LOGIN USER →", user_name)
-    
+
     res = await hpcl_ceg_ticketing_model.AlertCategoryMaster.get_all(resp_type="plain")
     rows = res.get("data", [])
 
@@ -33,26 +36,30 @@ async def alertcategorymaster_add_category(data: hpcl_ceg_ticketing_model.Alertc
 
     history = row.get("created_history") or []
 
-    history.append({
-        "updated_by": user_name,
-        "updated_time": datetime.now().isoformat(),
-        "action":"Added_Category",
-        "category": data.category,
-        "sub_category": None
-    })
+    history.append(
+        {
+            "updated_by": user_name,
+            "updated_time": datetime.now().isoformat(),
+            "action": "Added_Category",
+            "category": data.category,
+            "sub_category": None,
+        }
+    )
     await hpcl_ceg_ticketing_model.AlertCategoryMaster(
         id=row["id"],
         created_by=user_name,
         category=updated_categories,
-        created_history=history
+        created_history=history,
     ).modify()
 
     return {"message": "Category added successfully"}
 
 
 # Action add_sub_category
-@router.post('/add_sub_category', tags=['AlertCategoryMaster'])
-async def alertcategorymaster_add_sub_category(data: hpcl_ceg_ticketing_model.Alertcategorymaster_Add_Sub_CategoryParams):
+@router.post("/add_sub_category", tags=["AlertCategoryMaster"])
+async def alertcategorymaster_add_sub_category(
+    data: hpcl_ceg_ticketing_model.Alertcategorymaster_Add_Sub_CategoryParams,
+):
 
     user_name = get_login_user()
 
@@ -72,27 +79,31 @@ async def alertcategorymaster_add_sub_category(data: hpcl_ceg_ticketing_model.Al
 
     history = row.get("created_history") or []
 
-    history.append({
-        "updated_by": user_name,
-        "updated_time": datetime.now().isoformat(),
-        "action":"Added_SubCategory",
-        "category": None,
-        "sub_category": data.sub_category
-    })
+    history.append(
+        {
+            "updated_by": user_name,
+            "updated_time": datetime.now().isoformat(),
+            "action": "Added_SubCategory",
+            "category": None,
+            "sub_category": data.sub_category,
+        }
+    )
 
     await hpcl_ceg_ticketing_model.AlertCategoryMaster(
         id=row["id"],
         created_by=user_name,
         sub_category=updated,
-        created_history=history
+        created_history=history,
     ).modify()
 
     return {"message": "Sub Category added successfully"}
 
 
 # Action delete_category
-@router.post('/delete_category', tags=['AlertCategoryMaster'])
-async def alertcategorymaster_delete_category(data: hpcl_ceg_ticketing_model.Alertcategorymaster_Delete_CategoryParams):
+@router.post("/delete_category", tags=["AlertCategoryMaster"])
+async def alertcategorymaster_delete_category(
+    data: hpcl_ceg_ticketing_model.Alertcategorymaster_Delete_CategoryParams,
+):
 
     user_name = get_login_user()
 
@@ -112,27 +123,28 @@ async def alertcategorymaster_delete_category(data: hpcl_ceg_ticketing_model.Ale
 
     history = row.get("created_history") or []
 
-    history.append({
-        "updated_by": user_name,
-        "updated_time": datetime.now().isoformat(),
-        "action":"Deleted_Category",
-        "category": data.category,
-        "sub_category": None
-    })
+    history.append(
+        {
+            "updated_by": user_name,
+            "updated_time": datetime.now().isoformat(),
+            "action": "Deleted_Category",
+            "category": data.category,
+            "sub_category": None,
+        }
+    )
 
     await hpcl_ceg_ticketing_model.AlertCategoryMaster(
-        id=row["id"],
-        created_by=user_name,
-        category=updated,
-        created_history=history
+        id=row["id"], created_by=user_name, category=updated, created_history=history
     ).modify()
 
     return {"message": "Category deleted successfully"}
 
 
 # Action delete_sub_category
-@router.post('/delete_sub_category', tags=['AlertCategoryMaster'])
-async def alertcategorymaster_delete_sub_category(data: hpcl_ceg_ticketing_model.Alertcategorymaster_Delete_Sub_CategoryParams):
+@router.post("/delete_sub_category", tags=["AlertCategoryMaster"])
+async def alertcategorymaster_delete_sub_category(
+    data: hpcl_ceg_ticketing_model.Alertcategorymaster_Delete_Sub_CategoryParams,
+):
 
     user_name = get_login_user()
 
@@ -152,18 +164,20 @@ async def alertcategorymaster_delete_sub_category(data: hpcl_ceg_ticketing_model
 
     history = row.get("created_history") or []
 
-    history.append({
-        "updated_by": user_name,
-        "updated_time": datetime.now().isoformat(),
-        "action":"Deleted_SubCategory",
-        "category": None,
-        "sub_category": data.sub_category
-    })
+    history.append(
+        {
+            "updated_by": user_name,
+            "updated_time": datetime.now().isoformat(),
+            "action": "Deleted_SubCategory",
+            "category": None,
+            "sub_category": data.sub_category,
+        }
+    )
     await hpcl_ceg_ticketing_model.AlertCategoryMaster(
         id=row["id"],
         created_by=user_name,
         sub_category=updated,
-        created_history=history
+        created_history=history,
     ).modify()
 
     return {"message": "Sub Category deleted successfully"}

@@ -5,20 +5,21 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 import sys
+
 sys.path.append("/opt/ceg/algo")
 
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Get credentials
-tibco_creds = credential_loader.get_credentials('TIBCO')
-app_db_creds = credential_loader.get_credentials('APP_DB')
+tibco_creds = credential_loader.get_credentials("TIBCO")
+app_db_creds = credential_loader.get_credentials("APP_DB")
 
 
 def convert_date_format(date_str: str) -> Optional[str]:
     """
     Convert TIBCO date format YYYYMMDD to DD-MM-YYYY
-    
-    
+
+
     Returns:
         Date in DD-MM-YYYY format (e.g., '16-11-2026') or None if invalid
     """
@@ -33,24 +34,25 @@ def convert_date_format(date_str: str) -> Optional[str]:
         print(f"Date conversion error for '{date_str}': {str(e)}")
         return None
 
+
 async def fetch_from_tibco(query: str) -> List[Dict]:
     """
     Fetch data from TIBCO using MySQL interface
-        
-    Returns: 
-        List of dictionaries containing query results 
-    """  
-    try:  
+
+    Returns:
+        List of dictionaries containing query results
+    """
+    try:
         connection = mysql.connector.connect(
-            host=tibco_creds['host'],
-            user=tibco_creds['user'],
-            passwd=tibco_creds['password'],
-            port=tibco_creds['port']
+            host=tibco_creds["host"],
+            user=tibco_creds["user"],
+            passwd=tibco_creds["password"],
+            port=tibco_creds["port"],
         )
         cursor = connection.cursor()
-        cursor.execute(query)  
+        cursor.execute(query)
         data = cursor.fetchall()
-        
+
         # Convert to list of dictionaries
         columns = [col[0] for col in cursor.description]
         result = [dict(zip(columns, row)) for row in data]
@@ -72,7 +74,7 @@ async def fetch_from_tibco(query: str) -> List[Dict]:
 async def sync_aot_expiry_dates():
     """
     Sync AOT expiry dates from TIBCO to device_installation table
-    
+
     Process:
     1. Fetch transporter contract data from TIBCO
     2. Batch update device_installation table
@@ -105,14 +107,14 @@ async def sync_aot_expiry_dates():
 
         # Connect to APP DB
         conn = await asyncpg.connect(
-            user=app_db_creds['user'],
-            password=app_db_creds['password'],
-            host=app_db_creds['host'],
-            port=app_db_creds['port'],
-            database=app_db_creds['database']
+            user=app_db_creds["user"],
+            password=app_db_creds["password"],
+            host=app_db_creds["host"],
+            port=app_db_creds["port"],
+            database=app_db_creds["database"],
         )
         print("Connected to APP DB")
-        
+
         synced_count = 0
         failed_count = 0
         update_records = []
@@ -152,20 +154,20 @@ async def sync_aot_expiry_dates():
                 SET tibco_expiry_date = $2
                 WHERE sap_tt_no = $1
                 """,
-                update_records
+                update_records,
             )
 
             synced_count = len(update_records)
             print(f"Batch update completed: {result}")
 
         print(f"Sync completed. Synced: {synced_count}, Failed: {failed_count}")
-        
+
         return {
             "status": True,
             "message": "AOT Expiry Date Sync completed successfully",
             "synced_count": synced_count,
             "failed_count": failed_count,
-            "total_records": len(tibco_data)
+            "total_records": len(tibco_data),
         }
 
     except Exception as e:
@@ -174,7 +176,7 @@ async def sync_aot_expiry_dates():
             "status": False,
             "message": f"Sync failed: {str(e)}",
             "synced_count": 0,
-            "failed_count": 0
+            "failed_count": 0,
         }
 
     finally:
@@ -187,4 +189,3 @@ if __name__ == "__main__":
     print("AOT Expiry Date Sync Service Started")
     result = asyncio.run(sync_aot_expiry_dates())
     print(f"Sync Result: {result}")
-

@@ -2,7 +2,6 @@ import urdhva_base
 import asyncio
 import traceback
 import pandas as pd
-import polars as pl
 import datetime
 import pytz
 import charts_actions
@@ -24,7 +23,8 @@ async def get_custom_timestamp():
 
     return timestamp
 
-async def _get_dry_out_ims_report(dry_out_in_days=['1', '2']):
+
+async def _get_dry_out_ims_report(dry_out_in_days=["1", "2"]):
     dry_out_in_days = "', '".join(x for x in dry_out_in_days)
     date_time = await get_custom_timestamp()
     query = f"""WITH FilteredAlerts AS (
@@ -150,7 +150,6 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1', '2']):
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
                     a.indent_no desc;"""
-    
 
     stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     stats_resp = stats_resp.get("data", [])
@@ -159,22 +158,45 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1', '2']):
     if stats_resp.empty:
         return []
 
-    stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
-    stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
-    stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
+    stats_resp["DRY_OUT_IN_DAYS"] = stats_resp["DRY_OUT_IN_DAYS"].fillna("").astype(str)
+    stats_resp.replace(
+        {"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True
+    )
+    stats_resp.replace(
+        {
+            "VALID_INDENT": {
+                "H": "ON_HOLD_RELEASED",
+                "Y": "VALID_INDENT",
+                "N": "ON_HOLD",
+            }
+        },
+        inplace=True,
+    )
 
-    for column in ["SEND_TO_JDE_TIME", "DELIVERY_DATE", "INDENT_HOLD_RELEASE_TIME",
-                   "INDENT_EXECUTABLE_TIME", "PROD_ALLOT_TIME", "LOADED_ON"]:
+    for column in [
+        "SEND_TO_JDE_TIME",
+        "DELIVERY_DATE",
+        "INDENT_HOLD_RELEASE_TIME",
+        "INDENT_EXECUTABLE_TIME",
+        "PROD_ALLOT_TIME",
+        "LOADED_ON",
+    ]:
         if pd.api.types.is_datetime64_any_dtype(stats_resp[column]):
             stats_resp[column] = stats_resp[column].dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    if pd.api.types.is_datetime64_any_dtype(stats_resp['PROD_REQD_DT']):
-        stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d")
+    if pd.api.types.is_datetime64_any_dtype(stats_resp["PROD_REQD_DT"]):
+        stats_resp["PROD_REQD_DT"] = stats_resp["PROD_REQD_DT"].dt.strftime("%Y-%m-%d")
 
-    stats_resp['AVGSALES_7DAYS'] = stats_resp['AVGSALES_7DAYS'].fillna(0.00)
+    stats_resp["AVGSALES_7DAYS"] = stats_resp["AVGSALES_7DAYS"].fillna(0.00)
     stats_resp["QTY"] = stats_resp["QTY"].fillna(0.00)
     stats_resp = stats_resp.fillna("")
-    stats_resp = stats_resp.rename(columns={"SEND_TO_JDE_TIME": "SENT_TO_SAP_TIME", "QTY": "QTY (KL)", "DRY_OUT_IN_DAYS": "DRY_OUT_TYPES"})
+    stats_resp = stats_resp.rename(
+        columns={
+            "SEND_TO_JDE_TIME": "SENT_TO_SAP_TIME",
+            "QTY": "QTY (KL)",
+            "DRY_OUT_IN_DAYS": "DRY_OUT_TYPES",
+        }
+    )
     print("Total height:", len(stats_resp))
 
     return stats_resp
@@ -189,20 +211,22 @@ async def sync_dry_out_indent_report():
         # ----------------------------
         # STEP 1: FETCH DATA
         # ----------------------------
-        df = await _get_dry_out_ims_report(dry_out_in_days=['1', '2'])
+        df = await _get_dry_out_ims_report(dry_out_in_days=["1", "2"])
 
         # ----------------------------
         # STEP 2: FIX COLUMN NAMES
         # ----------------------------
-        df = df.rename(columns={
-            "QTY (KL)": "QTY_KL",
-        })
+        df = df.rename(
+            columns={
+                "QTY (KL)": "QTY_KL",
+            }
+        )
         df.columns = [col.lower() for col in df.columns]
 
         # ----------------------------
         # STEP 3: ADD RUN_ID
         # ----------------------------
-        ist = pytz.timezone('Asia/Kolkata')
+        ist = pytz.timezone("Asia/Kolkata")
         run_id = datetime.datetime.now(ist).strftime("%y%m%d-%H%M")
 
         df["run_id"] = run_id
@@ -216,7 +240,9 @@ async def sync_dry_out_indent_report():
         # ----------------------------
         # STEP 5: DROP TABLE
         # ----------------------------
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
 
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams
@@ -268,7 +294,9 @@ async def sync_dry_out_indent_report():
         # ----------------------------
         # STEP 7: INSERT DATA
         # ----------------------------
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "upsert_data"
+        )
 
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams
@@ -280,18 +308,18 @@ async def sync_dry_out_indent_report():
 
         print(f"Total Records: {total_records}")
 
-        BATCH_SIZE = 10000  
+        BATCH_SIZE = 10000
 
         for i in range(0, total_records, BATCH_SIZE):
-            batch = records[i:i + BATCH_SIZE]
+            batch = records[i : i + BATCH_SIZE]
 
             print(f"Inserting batch {i} to {i + len(batch)}")
 
             await function(
                 schema_name="public",
                 table_name="dry_out_indent_report",
-                records=batch, 
-                conflict_columns = ["alert_id"]
+                records=batch,
+                conflict_columns=["alert_id"],
             )
 
         print("All batches inserted successfully")
@@ -299,9 +327,8 @@ async def sync_dry_out_indent_report():
         return {
             "status": True,
             "message": "Dry Out Report Synced Successfully",
-            "rows": total_records
+            "rows": total_records,
         }
-
 
     except Exception as e:
         tb = traceback.format_exc()
@@ -311,7 +338,7 @@ async def sync_dry_out_indent_report():
             "status": False,
             "message": "Sync Failed",
             "error": repr(e),
-            "traceback": tb
+            "traceback": tb,
         }
 
 

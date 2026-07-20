@@ -1,20 +1,12 @@
 import urdhva_base
-import time
 import asyncio
 import datetime
 import urdhva_base.redispool
 from woker_base import Worker
 from apscheduler.triggers.cron import CronTrigger
 import apscheduler.triggers.interval as apinterval
-import hpcl_ceg_model
-from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
-from scheduled_actions import (
-                                location_master,
-                                location_device
-                              )
 
 # Schedule Constants
 ThreadPoolSize = 1000
@@ -49,16 +41,28 @@ class Scheduler(Worker):
         Schedule initializer
         :return: No return
         """
-        self.scheduler_ins = AsyncIOScheduler(job_defaults={
-            'misfire_grace_time': MisFire_Time, 'max_instances': Concurrent_Workers,
-            'processpool': ProcessPoolSize})
+        self.scheduler_ins = AsyncIOScheduler(
+            job_defaults={
+                "misfire_grace_time": MisFire_Time,
+                "max_instances": Concurrent_Workers,
+                "processpool": ProcessPoolSize,
+            }
+        )
         # self.scheduler_ins.add_executor(ThreadPoolExecutor(ThreadPoolSize))
         self.scheduler_ins.add_executor(AsyncIOExecutor())
         self.scheduler_ins.start()
         # todo:- need to configure database for storing schedule info
 
-    async def add_scheduler(self, unique_id, action, trigger_interval=None,
-                            cron_data=None, replace_scheduler=False, trigger_args=None, args=None):
+    async def add_scheduler(
+        self,
+        unique_id,
+        action,
+        trigger_interval=None,
+        cron_data=None,
+        replace_scheduler=False,
+        trigger_args=None,
+        args=None,
+    ):
         """
         Adding scheduler trigger point to ApScheduler
         :param unique_id: Scheduler Unique ID for managing scheduler uniqueness
@@ -74,13 +78,25 @@ class Scheduler(Worker):
         """
         if replace_scheduler and self.verify_scheduler(unique_id):
             return False, "Scheduler already exists, Discarding action"
-        base_data = dict(id=unique_id, replace_existing=True, max_instances=Concurrent_Workers, coalesce=True,
-                         misfire_grace_time=MisFire_Time, args=args, jitter=120,
-                         kwargs=trigger_args)
+        base_data = dict(
+            id=unique_id,
+            replace_existing=True,
+            max_instances=Concurrent_Workers,
+            coalesce=True,
+            misfire_grace_time=MisFire_Time,
+            args=args,
+            jitter=120,
+            kwargs=trigger_args,
+        )
         if trigger_interval:
             interval_keys = ["hours", "minutes", "seconds"]
-            interval = apinterval.IntervalTrigger(**{key: trigger_interval[key]
-                                                     for key in interval_keys if key in trigger_interval})
+            interval = apinterval.IntervalTrigger(
+                **{
+                    key: trigger_interval[key]
+                    for key in interval_keys
+                    if key in trigger_interval
+                }
+            )
             return True, self.scheduler_ins.add_job(action, interval, **base_data)
         else:
             cron_trigger = CronTrigger(**cron_data)
@@ -128,9 +144,15 @@ class Scheduler(Worker):
             cron_data = sch_data.get("cron", {})
             sch_id = sch_data["sch_id"]
             if sch_data["task"] == "add":
-                status, resp = await self.add_scheduler(sch_id, "worker_action", trigger_interval=interval,
-                                                        cron_data=cron_data, replace_scheduler=False,
-                                                        trigger_args=trigger_args, args=sch_args)
+                status, resp = await self.add_scheduler(
+                    sch_id,
+                    "worker_action",
+                    trigger_interval=interval,
+                    cron_data=cron_data,
+                    replace_scheduler=False,
+                    trigger_args=trigger_args,
+                    args=sch_args,
+                )
                 print(f"Scheduler Add with status {status}, Response Msg {resp}")
             elif sch_data["task"] == "remove":
                 status, resp = await self.delete_scheduler(sch_id)
@@ -140,22 +162,43 @@ class Scheduler(Worker):
 async def scheduler_configuration():
     ins = Scheduler()
     await ins.initialize_scheduler()
-    status, resp = await ins.add_scheduler("location_master", worker_action, cron_data={"hour": "*/6"},
-                                           args=["a", "b"], trigger_args={"action": "location_master"})
+    status, resp = await ins.add_scheduler(
+        "location_master",
+        worker_action,
+        cron_data={"hour": "*/6"},
+        args=["a", "b"],
+        trigger_args={"action": "location_master"},
+    )
     print(status, resp)
 
-    status, resp2 = await ins.add_scheduler("location_device", worker_action, cron_data={"hour": "*/6"},
-                                            args=["a", "b"], trigger_args={"action": "location_device"})
+    status, resp2 = await ins.add_scheduler(
+        "location_device",
+        worker_action,
+        cron_data={"hour": "*/6"},
+        args=["a", "b"],
+        trigger_args={"action": "location_device"},
+    )
     print(status, resp2)
 
-    status, resp3 = await ins.add_scheduler("role_master", worker_action, cron_data={"hour": "*/6"},
-                                            args=["a", "b"], trigger_args={"action": "role_master"})
+    status, resp3 = await ins.add_scheduler(
+        "role_master",
+        worker_action,
+        cron_data={"hour": "*/6"},
+        args=["a", "b"],
+        trigger_args={"action": "role_master"},
+    )
     print(status, resp3)
 
-    status, resp4 = await ins.add_scheduler("asset_master", worker_action, cron_data={"hour": "*/6"},
-                                            args=["a", "b"], trigger_args={"action": "asset_master"})
+    status, resp4 = await ins.add_scheduler(
+        "asset_master",
+        worker_action,
+        cron_data={"hour": "*/6"},
+        args=["a", "b"],
+        trigger_args={"action": "asset_master"},
+    )
     print(status, resp4)
     await ins.schedule_runner()
+
 
 if __name__ == "__main__":
     asyncio.run(scheduler_configuration())

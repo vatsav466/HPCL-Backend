@@ -1,19 +1,8 @@
 import typing
-import datetime
-import ipaddress
-import fastapi
 import pydantic
-import shutil
-import os
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
-import field_force_enum
-
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
 class WidgetFiltersCreate(pydantic.BaseModel):
@@ -24,11 +13,15 @@ class WidgetFiltersCreate(pydantic.BaseModel):
 
 
 class LevelFilterCreate(pydantic.BaseModel):
-    level: typing.Optional[str] = pydantic.Field("", **{'pattern': '^(sales_area|region|zone|plant|dealer)$'})
+    level: typing.Optional[str] = pydantic.Field(
+        "", **{"pattern": "^(sales_area|region|zone|plant|dealer)$"}
+    )
 
 
 class DrillFilterCreate(pydantic.BaseModel):
-    drill_to: typing.Optional[str] = pydantic.Field("", **{'pattern': '^(locations|dealers|outlets|dealer_tank)$'})
+    drill_to: typing.Optional[str] = pydantic.Field(
+        "", **{"pattern": "^(locations|dealers|outlets|dealer_tank)$"}
+    )
 
 
 class Indentmanagement_Get_Indents_By_Product_VolumeParams(pydantic.BaseModel):
@@ -132,7 +125,9 @@ class Indentmanagement_Get_R3_R1_DetailsParams(pydantic.BaseModel):
 
 class Indentmanagement_Get_Indent_DetailsParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
-    table_data: typing.Optional[bool] = pydantic.Field(False, )
+    table_data: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
     action: str
     filters: typing.List[WidgetFiltersCreate]
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
@@ -146,7 +141,9 @@ class Indentmanagement_Get_Indent_DetailsParams(pydantic.BaseModel):
 
 class Dryoutmanagement_Get_Dry_Out_LocationsParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
-    by_product: typing.Optional[bool] = pydantic.Field(False, )
+    by_product: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
     drill_filter: typing.Optional[DrillFilterCreate] | None = None
 
     class Config:
@@ -179,9 +176,13 @@ class Dryoutmanagement_Get_Retail_Outlet_StockoutsParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
-    resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
+    resp_format: typing.Optional[str] = pydantic.Field(
+        "", **{"pattern": "^([a-zA-Z0-9_. ]+|)$"}
+    )
     resp_level: typing.Optional[str] = pydantic.Field("", **{})
-    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    payload: typing.Optional[dict] = pydantic.Field(
+        pydantic.Field(default_factory=dict),
+    )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -195,9 +196,13 @@ class Dryoutmanagement_Get_Loss_Of_Sales_VolumeParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
-    resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
+    resp_format: typing.Optional[str] = pydantic.Field(
+        "", **{"pattern": "^([a-zA-Z0-9_. ]+|)$"}
+    )
     resp_level: typing.Optional[str] = pydantic.Field("", **{})
-    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    payload: typing.Optional[dict] = pydantic.Field(
+        pydantic.Field(default_factory=dict),
+    )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -313,7 +318,9 @@ class Nozzlesales_Get_Degrading_OutletsParams(pydantic.BaseModel):
 class Nozzlesales_Get_Top_Degrading_DealersParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     top_count: typing.Optional[int] = pydantic.Field(10, **{})
-    by_product: typing.Optional[bool] = pydantic.Field(False, )
+    by_product: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -330,7 +337,9 @@ class Nozzlesales_Get_High_Risk_OutletsParams(pydantic.BaseModel):
 
 class Nozzlesales_Get_Zero_Sales_OutletsParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
-    period: typing.Optional[str] = pydantic.Field("", **{'pattern': '^(1_week|15_days|1_month)$'})
+    period: typing.Optional[str] = pydantic.Field(
+        "", **{"pattern": "^(1_week|15_days|1_month)$"}
+    )
     drill_filter: typing.Optional[DrillFilterCreate] | None = None
 
     class Config:
@@ -414,7 +423,9 @@ class Retailsales_Get_Lube_Sales_ComparisonParams(pydantic.BaseModel):
 
 class Retailsales_Get_Sales_ComparisonParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
-    comparison_type: str = pydantic.Field(**{'pattern': '^(yesterday|mtd|ytd|historical)$'})
+    comparison_type: str = pydantic.Field(
+        **{"pattern": "^(yesterday|mtd|ytd|historical)$"}
+    )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -432,7 +443,9 @@ class Retailsales_Get_Volume_TrackingParams(pydantic.BaseModel):
 class Dealermanagement_Get_Last_TransactionsParams(pydantic.BaseModel):
     data: WidgetFiltersCreate
     transaction_count: typing.Optional[int] = pydantic.Field(20, **{})
-    dealer_specific: typing.Optional[bool] = pydantic.Field(False, )
+    dealer_specific: typing.Optional[bool] = pydantic.Field(
+        False,
+    )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

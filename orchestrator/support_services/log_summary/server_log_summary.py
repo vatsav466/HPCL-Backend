@@ -1,17 +1,14 @@
 import urdhva_base
 import re
-import os
 import asyncio
-import traceback
 import paramiko
 import csv
 import psycopg2
-from psycopg2 import Error
 from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import PatternFill
 import orchestrator.notification_manager.notification_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 
@@ -19,26 +16,22 @@ creds = credential_loader.get_credentials("HPCL_DEV")
 
 LOG_DIR = "/var/log/ceg_logs"
 
-SLOTS = [
-    (time(8,0),"8AM"),
-    (time(12,0),"12PM"),
-    (time(17,0),"5PM")
-]
+SLOTS = [(time(8, 0), "8AM"), (time(12, 0), "12PM"), (time(17, 0), "5PM")]
 
-DATETIME_PATTERN = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')
-ERROR_PATTERN = re.compile(r'(ERROR|logger\.error)', re.IGNORECASE)
+DATETIME_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
+ERROR_PATTERN = re.compile(r"(ERROR|logger\.error)", re.IGNORECASE)
 
 DB_CONFIG = {
-    'host': creds['host'],
-    'database': creds['database'],
-    'user': creds['user'],
-    'password': creds['password'],
-    'port': creds['port']
+    "host": creds["host"],
+    "database": creds["database"],
+    "user": creds["user"],
+    "password": creds["password"],
+    "port": creds["port"],
 }
 
 log_blocks = []
 csv_data = []
-error_frequency = {}   # NEW for sorting most frequent errors
+error_frequency = {}  # NEW for sorting most frequent errors
 
 
 # -----------------------------------------------------------------------
@@ -48,11 +41,11 @@ def get_current_slot_label():
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
     t = now_ist.time()
 
-    if t >= time(17,0) or t < time(8,0):
+    if t >= time(17, 0) or t < time(8, 0):
         return "5PM"
-    elif t >= time(12,0):
+    elif t >= time(12, 0):
         return "5PM"
-    elif t >= time(8,0):
+    elif t >= time(8, 0):
         return "12PM"
     else:
         return "8AM"
@@ -75,10 +68,14 @@ async def cleanup_old_data():
     except Exception as e:
         print("Cleanup error:", e)
     finally:
-        try: cur.close()
-        except: pass
-        try: conn.close()
-        except: pass
+        try:
+            cur.close()
+        except:
+            pass
+        try:
+            conn.close()
+        except:
+            pass
 
 
 # -----------------------------------------------------------------------
@@ -102,20 +99,27 @@ async def insert_csv_to_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
 
-        cur.executemany("""
+        cur.executemany(
+            """
             INSERT INTO log_summary (server, log_file, status, errors)
             VALUES (%s,%s,%s,%s)
-        """, [(x["Server"], x["Log File"], x["Status"], x["errors"]) for x in csv_data])
+        """,
+            [(x["Server"], x["Log File"], x["Status"], x["errors"]) for x in csv_data],
+        )
 
         conn.commit()
 
     except Exception as e:
         print("Insert DB error:", e)
     finally:
-        try: cur.close()
-        except: pass
-        try: conn.close()
-        except: pass
+        try:
+            cur.close()
+        except:
+            pass
+        try:
+            conn.close()
+        except:
+            pass
 
 
 # -----------------------------------------------------------------------
@@ -131,15 +135,28 @@ async def log_summary():
     for i in range(len(SLOTS)):
         if now_ist.time() < SLOTS[i][0]:
             slot_label = SLOTS[i][1]
-            slot_start = datetime.combine(today, SLOTS[i-1][0], tzinfo=ZoneInfo("Asia/Kolkata")) if i > 0 \
-                          else datetime.combine(today - timedelta(days=1), SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+            slot_start = (
+                datetime.combine(
+                    today, SLOTS[i - 1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+                )
+                if i > 0
+                else datetime.combine(
+                    today - timedelta(days=1),
+                    SLOTS[-1][0],
+                    tzinfo=ZoneInfo("Asia/Kolkata"),
+                )
+            )
             break
     else:
         slot_label = SLOTS[-1][1]
-        slot_start = datetime.combine(today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+        slot_start = datetime.combine(
+            today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+        )
 
     if slot_label == "8AM":
-        slot_start = datetime.combine(today - timedelta(days=1), time(17,0), tzinfo=ZoneInfo("Asia/Kolkata"))
+        slot_start = datetime.combine(
+            today - timedelta(days=1), time(17, 0), tzinfo=ZoneInfo("Asia/Kolkata")
+        )
 
     slot_start_utc = slot_start.astimezone(timezone.utc)
 
@@ -151,10 +168,14 @@ async def log_summary():
                     m = DATETIME_PATTERN.match(line)
                     if m:
                         try:
-                            t = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                            t = datetime.strptime(
+                                m.group(1), "%Y-%m-%d %H:%M:%S"
+                            ).replace(tzinfo=timezone.utc)
                             if t >= slot_start_utc and ERROR_PATTERN.search(line):
                                 errors.append(line.strip())
-                                error_frequency[line.strip()] = error_frequency.get(line.strip(), 0) + 1
+                                error_frequency[line.strip()] = (
+                                    error_frequency.get(line.strip(), 0) + 1
+                                )
                         except:
                             continue
 
@@ -165,16 +186,29 @@ async def log_summary():
             log_blocks.append(block)
 
             unique_errors = list(set(errors))
-            csv_data.append({
-                "Server": "211",
-                "Log File": log_file.name,
-                "Status": status,
-                "errors": "\n".join(unique_errors) if unique_errors else "(No errors found)"
-            })
+            csv_data.append(
+                {
+                    "Server": "211",
+                    "Log File": log_file.name,
+                    "Status": status,
+                    "errors": (
+                        "\n".join(unique_errors)
+                        if unique_errors
+                        else "(No errors found)"
+                    ),
+                }
+            )
 
         except Exception as e:
             msg = f"Could not read file: {e}"
-            csv_data.append({"Server": "211", "Log File": log_file.name, "Status": "FAIL", "errors": msg})
+            csv_data.append(
+                {
+                    "Server": "211",
+                    "Log File": log_file.name,
+                    "Status": "FAIL",
+                    "errors": msg,
+                }
+            )
 
 
 # -----------------------------------------------------------------------
@@ -195,15 +229,28 @@ async def monitor_remote_logs(server):
     for i in range(len(SLOTS)):
         if now_ist.time() < SLOTS[i][0]:
             slot_label = SLOTS[i][1]
-            slot_start = datetime.combine(today, SLOTS[i-1][0], tzinfo=ZoneInfo("Asia/Kolkata")) if i > 0 \
-                          else datetime.combine(today - timedelta(days=1), SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+            slot_start = (
+                datetime.combine(
+                    today, SLOTS[i - 1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+                )
+                if i > 0
+                else datetime.combine(
+                    today - timedelta(days=1),
+                    SLOTS[-1][0],
+                    tzinfo=ZoneInfo("Asia/Kolkata"),
+                )
+            )
             break
     else:
         slot_label = SLOTS[-1][1]
-        slot_start = datetime.combine(today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata"))
+        slot_start = datetime.combine(
+            today, SLOTS[-1][0], tzinfo=ZoneInfo("Asia/Kolkata")
+        )
 
     if slot_label == "8AM":
-        slot_start = datetime.combine(today - timedelta(days=1), time(17,0), tzinfo=ZoneInfo("Asia/Kolkata"))
+        slot_start = datetime.combine(
+            today - timedelta(days=1), time(17, 0), tzinfo=ZoneInfo("Asia/Kolkata")
+        )
 
     slot_start_utc = slot_start.astimezone(timezone.utc)
 
@@ -226,33 +273,47 @@ async def monitor_remote_logs(server):
                     m = DATETIME_PATTERN.match(line)
                     if m:
                         try:
-                            t = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                            t = datetime.strptime(
+                                m.group(1), "%Y-%m-%d %H:%M:%S"
+                            ).replace(tzinfo=timezone.utc)
                             if t >= slot_start_utc and ERROR_PATTERN.search(line):
                                 errors.append(line.strip())
-                                error_frequency[line.strip()] = error_frequency.get(line.strip(), 0) + 1
+                                error_frequency[line.strip()] = (
+                                    error_frequency.get(line.strip(), 0) + 1
+                                )
                         except:
                             continue
 
                 status = "FAIL" if errors else "PASS"
 
-                block = f"Server : {server}\nLog File : {fa.filename}\nStatus : {status}\n"
+                block = (
+                    f"Server : {server}\nLog File : {fa.filename}\nStatus : {status}\n"
+                )
                 block += "\n".join(errors) if errors else "(No errors found)"
                 log_blocks.append(block)
 
-                csv_data.append({
-                    "Server": server,
-                    "Log File": fa.filename,
-                    "Status": status,
-                    "errors": "\n".join(list(set(errors))) if errors else "(No errors found)"
-                })
+                csv_data.append(
+                    {
+                        "Server": server,
+                        "Log File": fa.filename,
+                        "Status": status,
+                        "errors": (
+                            "\n".join(list(set(errors)))
+                            if errors
+                            else "(No errors found)"
+                        ),
+                    }
+                )
 
             except Exception as e:
-                csv_data.append({
-                    "Server": server,
-                    "Log File": fa.filename,
-                    "Status": "FAIL",
-                    "errors": f"Could not read: {e}"
-                })
+                csv_data.append(
+                    {
+                        "Server": server,
+                        "Log File": fa.filename,
+                        "Status": "FAIL",
+                        "errors": f"Could not read: {e}",
+                    }
+                )
 
     finally:
         sftp.close()
@@ -303,7 +364,7 @@ async def send_mail(excel_path):
 
     # CSV
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["Server","Log File","Status","errors"])
+        w = csv.DictWriter(f, fieldnames=["Server", "Log File", "Status", "errors"])
         w.writeheader()
         w.writerows(csv_data)
 
@@ -316,7 +377,9 @@ async def send_mail(excel_path):
     </body></html>
     """
 
-    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+        "email"
+    )
 
     await ins.publish_message(
         subject=f"Production Servers Log Summary - {formatted}",
@@ -328,12 +391,12 @@ async def send_mail(excel_path):
             "yesu.p@algofusiontech.com",
             "manohar.v@algofusiontech.com",
             "mohith.p@algofusiontech.com",
-            "pawann.k@algofusiontech.com"
+            "pawann.k@algofusiontech.com",
         ],
         html_content=True,
         body=html_body,
         attachments=[txt_path, csv_path, excel_path],
-        force_send=True
+        force_send=True,
     )
 
 
@@ -349,7 +412,7 @@ async def main():
         "217": "remote",
         "218": "remote",
         "219": "remote",
-        "222": "remote"
+        "222": "remote",
     }
 
     for srv, typ in servers.items():
@@ -360,7 +423,13 @@ async def main():
 
     # Sort errors by frequency (most common on top)
     global csv_data
-    csv_data = sorted(csv_data, key=lambda x: (-sum(err in x["errors"] for err in error_frequency), x["Status"]))
+    csv_data = sorted(
+        csv_data,
+        key=lambda x: (
+            -sum(err in x["errors"] for err in error_frequency),
+            x["Status"],
+        ),
+    )
 
     excel_path = generate_excel()
 

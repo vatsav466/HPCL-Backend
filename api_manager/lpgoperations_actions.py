@@ -52,11 +52,11 @@
 #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
 #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-#     query = """ SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" """            
+#     query = """ SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" """
 #     if not data.days == 0:
 #         start_date = (datetime.datetime.now() - datetime.timedelta(days=data.days)).strftime('%Y-%m-%d')
 #         query = f""" SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE process_date >= '{start_date}' """
-    
+
 #     resp = await function(
 #         query=query
 #     )

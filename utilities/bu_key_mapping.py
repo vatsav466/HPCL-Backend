@@ -39,7 +39,7 @@ TAS = {
     "LocationZone": "zone",
     "LocationPinCode": "pincode",
     "Latitude": "latitude",
-    "Longitude": "longitude"
+    "Longitude": "longitude",
 }
 
 # For LPG Locations
@@ -55,7 +55,7 @@ LPG = {
     "LocationZone": "zone",
     "LocationPinCode": "pincode",
     "Latitude": "latitude",
-    "Longitude": "longitude"
+    "Longitude": "longitude",
 }
 
 RO_Device = {
@@ -68,7 +68,7 @@ RO_Device = {
     "BayID": "bay_id",
     "MPDID": "mpd_id",
     "TankID": "tank_id",
-    "NozzleID": "nozzle_id"
+    "NozzleID": "nozzle_id",
 }
 
 Role = {
@@ -84,15 +84,15 @@ Role = {
     "InchargePhone": "phone_no",
     "InchargeRole": "role",
     "NotificationLevel": "escalation_level",
-    "LocationZone": "zone"
+    "LocationZone": "zone",
 }
 
 processcodemap = {
-    'RO': '1',
-    'TAS': '2',
-    'VTS': '3',
-    'TAS_vehicle': '3',
-    'LPG_vehicle': '4'
+    "RO": "1",
+    "TAS": "2",
+    "VTS": "3",
+    "TAS_vehicle": "3",
+    "LPG_vehicle": "4",
 }
 
 tasSopcommands = {
@@ -121,17 +121,19 @@ cems_location_master = {
     "Zone": "zone",
     "Region": "region",
     "State": "state",
-    "City": "city"
+    "City": "city",
 }
 
-alertmap = {'Pulse Security': 'LOADING TERMINATE COMMAND FROM CCC FOR PULSE ERROR',
-            'K-Factors': 'LOADING TERMINATE COMMAND FROM CCC FOR KFACTOR ERROR',
-            'No Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR NO FLOW ERROR',
-            'Low Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR LOW FLOW ERROR',
-            'High Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR HIGH FLOW ERROR',
-            'Unauthorized Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR UNAUTHORISE FLOW ERROR',
-            'Meteroverrun': 'LOADING TERMINATE COMMAND FROM CCC FOR METER OVERRUN ERROR',
-            'Blendoverdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND OVERDOSE ERROR',
-            'Blendunderdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND UNDERDOSE ERROR',
-            'Additive overdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD OVERDOSE ERROR',
-            'Additive underdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD UNDERDOSE ERROR'}
+alertmap = {
+    "Pulse Security": "LOADING TERMINATE COMMAND FROM CCC FOR PULSE ERROR",
+    "K-Factors": "LOADING TERMINATE COMMAND FROM CCC FOR KFACTOR ERROR",
+    "No Flow": "LOADING TERMINATE COMMAND FROM CCC FOR NO FLOW ERROR",
+    "Low Flow": "LOADING TERMINATE COMMAND FROM CCC FOR LOW FLOW ERROR",
+    "High Flow": "LOADING TERMINATE COMMAND FROM CCC FOR HIGH FLOW ERROR",
+    "Unauthorized Flow": "LOADING TERMINATE COMMAND FROM CCC FOR UNAUTHORISE FLOW ERROR",
+    "Meteroverrun": "LOADING TERMINATE COMMAND FROM CCC FOR METER OVERRUN ERROR",
+    "Blendoverdose": "LOADING TERMINATE COMMAND FROM CCC FOR BLEND OVERDOSE ERROR",
+    "Blendunderdose": "LOADING TERMINATE COMMAND FROM CCC FOR BLEND UNDERDOSE ERROR",
+    "Additive overdose": "LOADING TERMINATE COMMAND FROM CCC FOR ADD OVERDOSE ERROR",
+    "Additive underdose": "LOADING TERMINATE COMMAND FROM CCC FOR ADD UNDERDOSE ERROR",
+}

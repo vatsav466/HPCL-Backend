@@ -23,14 +23,14 @@ Usage:
     python novex_daily_report_combined_audience_emails.py employee
     python novex_daily_report_combined_audience_emails.py chairman
 
-  """
+"""
+
 from __future__ import annotations
 
 import urdhva_base
 import argparse
 import html
-import os   
-import sys
+import os
 import asyncio
 import traceback
 import jinja2
@@ -73,12 +73,17 @@ SEGMENT_ALIASES: dict[str, str] = {
 }
 
 
-async def get_email_users_by_type(email_type:str, audience: str):
-    all_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(resp_type='plain')
+async def get_email_users_by_type(email_type: str, audience: str):
+    all_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(
+        resp_type="plain"
+    )
     print("all uers from db ---->\n", all_users)
     result = {}
     for users in all_users["data"]:
-        if users.get("audience") == audience and users.get("email_type").lower() == email_type:
+        if (
+            users.get("audience") == audience
+            and users.get("email_type").lower() == email_type
+        ):
             print("matched user ---->\n", users)
             email_type = users.get("email_type").lower()
             print("email type ---->\n", email_type)
@@ -169,7 +174,9 @@ def _merge_positional_audience(pos: list[str]) -> str:
         aud = pos[0].strip().lower()
         seg = pos[1].strip().lower()
         _audiences = frozenset({"testing", "employee", "chairman"})
-        if aud in _audiences and (seg in SEGMENT_ALIASES or seg in set(SEGMENT_ALIASES.values())):
+        if aud in _audiences and (
+            seg in SEGMENT_ALIASES or seg in set(SEGMENT_ALIASES.values())
+        ):
             return f"{aud}[{seg}]"
     raise SystemExit(
         "Provide one audience (optionally with segments). Examples:\n"
@@ -245,9 +252,13 @@ def _merge_sync_dict(
         if data is None:
             # ro_va_cleanliness.main() catches API errors and returns None; stderr has Read timeout etc.
             detail = (
-                "No dict returned — ro_va_cleanliness API likely failed (check stdout for "
-                "HTTPSConnectionPool / Read timed out or other HTTP errors)"
-            ) if fn is ro_va_cleanliness.main else "Returned None (upstream error or timeout)"
+                (
+                    "No dict returned — ro_va_cleanliness API likely failed (check stdout for "
+                    "HTTPSConnectionPool / Read timed out or other HTTP errors)"
+                )
+                if fn is ro_va_cleanliness.main
+                else "Returned None (upstream error or timeout)"
+            )
             failures.append((job_label, detail))
             return
         if not isinstance(data, dict):
@@ -270,10 +281,14 @@ def dict_to_object(d):
 
 # _SOD_DATA_PY = "orchestrator/reporting_services/reporting_helpers/sod_data.py"
 _SOD_DATA_PY = os.path.join(
-        os.path.dirname(hpcl_ceg_model.__file__),
-        '..', 'orchestrator', 'reporting_services',
-        'reporting_helpers', 'sod_data.py'
-        )
+    os.path.dirname(hpcl_ceg_model.__file__),
+    "..",
+    "orchestrator",
+    "reporting_services",
+    "reporting_helpers",
+    "sod_data.py",
+)
+
 
 def _apply_sod_placeholders_for_partial_seg1(status_data: dict) -> None:
     """seg1.html uses sod_blocked_data_resp.*; fill when SOD pipeline did not merge."""
@@ -438,9 +453,7 @@ def _partial_failure_body_html(failures: list[tuple[str, str]]) -> str:
             "Full messages are below (same text as in the run log)."
         )
     else:
-        intro = (
-            "The Novex Daily Report execution completed with an issue. See the error details below."
-        )
+        intro = "The Novex Daily Report execution completed with an issue. See the error details below."
 
     def _full_error_pre(msg: str) -> str:
         return (
@@ -478,7 +491,11 @@ def _partial_failure_body_html(failures: list[tuple[str, str]]) -> str:
             f"{_full_error_pre(sod_root)}"
         )
 
-    failed_components = "".join(email_blocks) if email_blocks else "<p><em>(No email send failures.)</em></p>"
+    failed_components = (
+        "".join(email_blocks)
+        if email_blocks
+        else "<p><em>(No email send failures.)</em></p>"
+    )
     data_section = ""
     if data_blocks:
         data_section = (
@@ -488,7 +505,7 @@ def _partial_failure_body_html(failures: list[tuple[str, str]]) -> str:
         )
 
     return (
-        "<html><body style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.5;\">"
+        '<html><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;">'
         "<p>Hi Team,</p>"
         f"<p>{html.escape(intro)}</p>"
         "<p>Error details are below:</p>"
@@ -536,26 +553,45 @@ async def _load_merge_data(
 ) -> None:
     """Load only data required for the requested segment(s); full run when segments is None."""
     if _data_needed(segments, "daily", "retail", "combined"):
-        await _merge_awaitable_dict(failures, status_data, "Data: sales", sales_data.fetch_sales_data())
+        await _merge_awaitable_dict(
+            failures, status_data, "Data: sales", sales_data.fetch_sales_data()
+        )
     if _data_needed(segments, "daily", "retail", "combined", "sod"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: retail dry-out", retail_data.fetch_dryout_data(WRITE_TO_DB)
+            failures,
+            status_data,
+            "Data: retail dry-out",
+            retail_data.fetch_dryout_data(WRITE_TO_DB),
         )
     if _data_needed(segments, "daily", "lpg", "combined"):
-        await _merge_awaitable_dict(failures, status_data, "Data: LPG rejection", lpg_data.get_lpg_rejection())
+        await _merge_awaitable_dict(
+            failures, status_data, "Data: LPG rejection", lpg_data.get_lpg_rejection()
+        )
     if _data_needed(segments, "daily", "retail", "combined"):
-        await _merge_awaitable_dict(failures, status_data, "Data: RO alerts", retail_data.get_ro_alerts())
+        await _merge_awaitable_dict(
+            failures, status_data, "Data: RO alerts", retail_data.get_ro_alerts()
+        )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: TAS alerts", sod_data.get_tas_alerts(), sod_state=sod_state
+            failures,
+            status_data,
+            "Data: TAS alerts",
+            sod_data.get_tas_alerts(),
+            sod_state=sod_state,
         )
     if _data_needed(segments, "daily", "lpg", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: LPG top/bottom plants", lpg_data.lpg_top_bottom_score_plants()
+            failures,
+            status_data,
+            "Data: LPG top/bottom plants",
+            lpg_data.lpg_top_bottom_score_plants(),
         )
     if _data_needed(segments, "daily", "lpg", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: VTS LPG blocked", lpg_data.get_vts_lpg_blocked_counts()
+            failures,
+            status_data,
+            "Data: VTS LPG blocked",
+            lpg_data.get_vts_lpg_blocked_counts(),
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
@@ -567,19 +603,35 @@ async def _load_merge_data(
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: SOD %", sod_data.sod_percentage(), sod_state=sod_state
+            failures,
+            status_data,
+            "Data: SOD %",
+            sod_data.sod_percentage(),
+            sod_state=sod_state,
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: VA path", sod_data.get_va_path(), sod_state=sod_state
+            failures,
+            status_data,
+            "Data: VA path",
+            sod_data.get_va_path(),
+            sod_state=sod_state,
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: EMLock path", sod_data.get_emlock_path(), sod_state=sod_state
+            failures,
+            status_data,
+            "Data: EMLock path",
+            sod_data.get_emlock_path(),
+            sod_state=sod_state,
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: TAS path", sod_data.get_tas_path(), sod_state=sod_state
+            failures,
+            status_data,
+            "Data: TAS path",
+            sod_data.get_tas_path(),
+            sod_state=sod_state,
         )
     if _data_needed(segments, "daily", "sod", "combined"):
         await _merge_awaitable_dict(
@@ -620,10 +672,18 @@ async def _load_merge_data(
         )
     if _data_needed(segments, "daily", "retail", "combined"):
         await _merge_awaitable_dict(
-            failures, status_data, "Data: nozzle sales", retail_data.nozzle_sales(segregation="zone")
+            failures,
+            status_data,
+            "Data: nozzle sales",
+            retail_data.nozzle_sales(segregation="zone"),
         )
     if _data_needed(segments, "daily", "retail", "combined"):
-        await _merge_awaitable_dict(failures, status_data, "Data: sales TMT excel", retail_data.sales_tmt_excel())
+        await _merge_awaitable_dict(
+            failures,
+            status_data,
+            "Data: sales TMT excel",
+            retail_data.sales_tmt_excel(),
+        )
     if _data_needed(segments, "daily", "lpg", "sod", "combined"):
         for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
             await _merge_awaitable_dict(
@@ -637,47 +697,66 @@ async def _load_merge_data(
 # ---------------------------------------------------------------------------
 # Testing — recipients from novex_daily_report_dryout_testing.py
 # ---------------------------------------------------------------------------
-async def publish_daily_novex_status_email_testing(segments: frozenset[str] | None = None):
+async def publish_daily_novex_status_email_testing(
+    segments: frozenset[str] | None = None,
+):
     global WRITE_TO_DB
     date = urdhva_base.utilities.get_present_time()
-    print("="*100)
+    print("=" * 100)
     print("Execution date ---->", date)
     print("Testing Email")
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                       date_time_format=None)
-    report_generated_time = date.strftime('%I:%M %p')
-    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
-        print("datde inside if",date)
-        status_yes_date = date
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    report_generated_time = date.strftime("%I:%M %p")
+    if (
+        date.strftime("%Y-%m-%d").split("-")[-1] == "01"
+        or date.strftime("%Y-%m-%d").split("-")[-1] == "1"
+    ):
+        print("datde inside if", date)
         tmp_date = urdhva_base.utilities.get_present_time()
-        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
-                                               date_time_format=None)
+        tmp_date_yes = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=False, date_time_format=None
+        )
+        tmp_date_start = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=True, date_time_format=None
+        )
 
-        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "present_month": f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}",
+        }
+        # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
     else:
-         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                   'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+            "present_month": f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}",
+        }
 
     failures: list[tuple[str, str]] = []
     sod_state: dict = {"failed": False}
@@ -686,15 +765,19 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
 
     if sod_state["failed"]:
         if _segment_set_wants(segments, "sod"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
-                "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
+                    "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
+                )
+            )
         if _segment_set_wants(segments, "combined"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
-                "Not sent: combined mail includes SOD/TAS sections.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
+                    "Not sent: combined mail includes SOD/TAS sections.",
+                )
+            )
     if sod_state["failed"] and _segment_set_wants(segments, "daily"):
         _apply_sod_placeholders_for_partial_seg1(status_data)
 
@@ -750,7 +833,9 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
                 "plant_wise_score_path": f"{status_data.get('plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("lpg_day_wise_trend_exl_path"),status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "sod"):
@@ -769,8 +854,11 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if _segment_set_wants(segments, "clean"):
@@ -821,9 +909,14 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
-                status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if failures:
@@ -839,47 +932,66 @@ async def publish_daily_novex_status_email_testing(segments: frozenset[str] | No
 # ---------------------------------------------------------------------------
 # Employee — recipients from novex_daily_report_dryout.py
 # ---------------------------------------------------------------------------
-async def publish_daily_novex_status_email_employee(segments: frozenset[str] | None = None):
+async def publish_daily_novex_status_email_employee(
+    segments: frozenset[str] | None = None,
+):
     global WRITE_TO_DB
     date = urdhva_base.utilities.get_present_time()
-    print("="*100)
+    print("=" * 100)
     print("Execution date ---->", date)
     print("Employee Email")
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                       date_time_format=None)
-    report_generated_time = date.strftime('%I:%M %p')
-    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
-        print("datde inside if",date)
-        status_yes_date = date
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    report_generated_time = date.strftime("%I:%M %p")
+    if (
+        date.strftime("%Y-%m-%d").split("-")[-1] == "01"
+        or date.strftime("%Y-%m-%d").split("-")[-1] == "1"
+    ):
+        print("datde inside if", date)
         tmp_date = urdhva_base.utilities.get_present_time()
-        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
-                                               date_time_format=None)
+        tmp_date_yes = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=False, date_time_format=None
+        )
+        tmp_date_start = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=True, date_time_format=None
+        )
 
-        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "present_month": f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}",
+        }
+        # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
     else:
-         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                   'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+            "present_month": f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}",
+        }
 
     failures: list[tuple[str, str]] = []
     sod_state: dict = {"failed": False}
@@ -888,15 +1000,19 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
 
     if sod_state["failed"]:
         if _segment_set_wants(segments, "sod"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
-                "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
+                    "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
+                )
+            )
         if _segment_set_wants(segments, "combined"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
-                "Not sent: combined mail includes SOD/TAS sections.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
+                    "Not sent: combined mail includes SOD/TAS sections.",
+                )
+            )
     if sod_state["failed"] and _segment_set_wants(segments, "daily"):
         _apply_sod_placeholders_for_partial_seg1(status_data)
 
@@ -952,7 +1068,9 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
                 "plant_wise_score_path": f"{status_data.get('plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("lpg_day_wise_trend_exl_path"),status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "sod"):
@@ -971,8 +1089,11 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if _segment_set_wants(segments, "clean"):
@@ -1023,9 +1144,14 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
-                status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if failures:
@@ -1034,53 +1160,72 @@ async def publish_daily_novex_status_email_employee(segments: frozenset[str] | N
             failures,
             to_recipients=recipients.get("daily_to", []),
             cc_recipients=recipients.get("daily_cc", []),
-            bcc_recipients=recipients.get("daily_bcc", [])
+            bcc_recipients=recipients.get("daily_bcc", []),
         )
 
 
 # ---------------------------------------------------------------------------
 # Chairman — recipients from novex_daily_report_segregation.py
 # ---------------------------------------------------------------------------
-async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | None = None):
+async def publish_daily_novex_status_email_chairman(
+    segments: frozenset[str] | None = None,
+):
     date = urdhva_base.utilities.get_present_time()
-    print("="*100)
+    print("=" * 100)
     print("Execution date ---->", date)
     print("Chairman Email")
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                       date_time_format=None)
-    report_generated_time = date.strftime('%I:%M %p')
-    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
-        print("datde inside if",date)
-        status_yes_date = date
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+    report_generated_time = date.strftime("%I:%M %p")
+    if (
+        date.strftime("%Y-%m-%d").split("-")[-1] == "01"
+        or date.strftime("%Y-%m-%d").split("-")[-1] == "1"
+    ):
+        print("datde inside if", date)
         tmp_date = urdhva_base.utilities.get_present_time()
-        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
-                                               date_time_format=None)
+        tmp_date_yes = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=False, date_time_format=None
+        )
+        tmp_date_start = helpers.get_time_stamp_by_delta(
+            tmp_date, days=1, with_month_start_day=True, date_time_format=None
+        )
 
-        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "present_month": f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}",
+        }
+        # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
     else:
-         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
-                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                               date_time_format='%d-%B-%Y'),
-                   'today_week': date.strftime('%A'), 'yesterday_week':
-                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                 date_time_format='%A'),
-                   'today': date.strftime('%d-%B-%Y'),
-                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                                          date_time_format='%d-%B-%Y'),
-                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
-                   'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+        status_data = {
+            "today_date": date.strftime("%d-%B-%Y"),
+            "report_generated_time": report_generated_time,
+            "yesterday_date": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            "today_week": date.strftime("%A"),
+            "yesterday_week": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%A"
+            ),
+            "today": date.strftime("%d-%B-%Y"),
+            "yesterday": helpers.get_time_stamp_by_delta(
+                date, days=1, with_month_start_day=False, date_time_format="%d-%B-%Y"
+            ),
+            # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+            "present_month": f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}",
+        }
 
     failures: list[tuple[str, str]] = []
     sod_state: dict = {"failed": False}
@@ -1089,15 +1234,19 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
 
     if sod_state["failed"]:
         if _segment_set_wants(segments, "sod"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
-                "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report: SOD (seg4.html)",
+                    "Not sent: SOD/TAS data incomplete; see Data: TAS/SOD/... rows above.",
+                )
+            )
         if _segment_set_wants(segments, "combined"):
-            failures.append((
-                "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
-                "Not sent: combined mail includes SOD/TAS sections.",
-            ))
+            failures.append(
+                (
+                    "Skipped (SOD data): Email: Novex Daily Report combined (seg5.html)",
+                    "Not sent: combined mail includes SOD/TAS sections.",
+                )
+            )
     if sod_state["failed"] and _segment_set_wants(segments, "daily"):
         _apply_sod_placeholders_for_partial_seg1(status_data)
 
@@ -1107,10 +1256,10 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Novex Daily Report (seg1.html)",
             failures,
             template_name="seg1.html",
-            to_recipients= recipients.get("daily_to", []),
+            to_recipients=recipients.get("daily_to", []),
             subject=recipients.get("daily_subject", ""),
-            cc_recipients= recipients.get("daily_cc", []),
-            bcc_recipients= recipients.get("daily_bcc", []),
+            cc_recipients=recipients.get("daily_cc", []),
+            bcc_recipients=recipients.get("daily_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1125,10 +1274,10 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Novex Daily Report: Retail (seg2.html)",
             failures,
             template_name="seg2.html",
-            to_recipients= recipients.get("retail_to", []),
+            to_recipients=recipients.get("retail_to", []),
             subject=recipients.get("retail_subject", ""),
-            cc_recipients= recipients.get("retail_cc", []),
-            bcc_recipients= recipients.get("retail_bcc", []),
+            cc_recipients=recipients.get("retail_cc", []),
+            bcc_recipients=recipients.get("retail_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1143,17 +1292,19 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Novex Daily Report: LPG (seg3.html)",
             failures,
             template_name="seg3.html",
-            to_recipients= recipients.get("lpg_to", []),
+            to_recipients=recipients.get("lpg_to", []),
             subject=recipients.get("lpg_subject", ""),
-            cc_recipients= recipients.get("lpg_cc", []),
-            bcc_recipients= recipients.get("lpg_bcc", []),
+            cc_recipients=recipients.get("lpg_cc", []),
+            bcc_recipients=recipients.get("lpg_bcc", []),
             notification_data=status_data,
             inline_images={
                 "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
                 "plant_wise_score_path": f"{status_data.get('plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("lpg_day_wise_trend_exl_path"),status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "sod"):
@@ -1162,18 +1313,21 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Novex Daily Report: SOD (seg4.html)",
             failures,
             template_name="seg4.html",
-            to_recipients= recipients.get("sod_to", []),
+            to_recipients=recipients.get("sod_to", []),
             subject=recipients.get("sod_subject", ""),
-            cc_recipients= recipients.get("sod_cc", []),
-            bcc_recipients= recipients.get("sod_bcc", []),
+            cc_recipients=recipients.get("sod_cc", []),
+            bcc_recipients=recipients.get("sod_bcc", []),
             notification_data=status_data,
             inline_images={
                 "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path"),
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if not sod_state["failed"] and _segment_set_wants(segments, "combined"):
@@ -1182,10 +1336,10 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Novex Daily Report combined (seg5.html)",
             failures,
             template_name="seg5.html",
-            to_recipients= recipients.get("combined_to", []),
+            to_recipients=recipients.get("combined_to", []),
             subject=recipients.get("combined_subject", ""),
-            cc_recipients= recipients.get("combined_cc", []),
-            bcc_recipients= recipients.get("combined_bcc", []),
+            cc_recipients=recipients.get("combined_cc", []),
+            bcc_recipients=recipients.get("combined_bcc", []),
             notification_data=status_data,
             inline_images={
                 "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -1197,9 +1351,14 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
                 "plant_wise_score_path_sod": f"{status_data.get('sod_plant_wise_score_df_path')}",
             },
             attachments=[
-                status_data.get("zone_wise_pdf_path"),status_data.get("lpg_day_wise_trend_exl_path"),
-                status_data.get("lpg_va_path"),status_data.get("lpg_pq_path"),status_data.get("tas_day_wise_trend_exl_path"),
-                status_data.get("tas_va_path"),status_data.get("tas_emlock_path"),status_data.get("tas_tas_path")
+                status_data.get("zone_wise_pdf_path"),
+                status_data.get("lpg_day_wise_trend_exl_path"),
+                status_data.get("lpg_va_path"),
+                status_data.get("lpg_pq_path"),
+                status_data.get("tas_day_wise_trend_exl_path"),
+                status_data.get("tas_va_path"),
+                status_data.get("tas_emlock_path"),
+                status_data.get("tas_tas_path"),
             ],
         )
     if _segment_set_wants(segments, "clean"):
@@ -1208,10 +1367,10 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Clean Toilet Picture upload | MIS (ro_va_cleanliness.html)",
             failures,
             template_name="ro_va_cleanliness.html",
-            to_recipients= recipients.get("clean_to", []),
+            to_recipients=recipients.get("clean_to", []),
             subject=f"{recipients.get('clean_subject', '')} | Date : {status_data.get('yesterday_date')}",
-            cc_recipients= recipients.get("clean_cc", []),
-            bcc_recipients= recipients.get("clean_bcc", []),
+            cc_recipients=recipients.get("clean_cc", []),
+            bcc_recipients=recipients.get("clean_bcc", []),
             notification_data=status_data,
         )
     if _segment_set_wants(segments, "nozzle"):
@@ -1220,10 +1379,10 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             "Email: Nozzle Sales Trend (nozzle_sales_trend.html)",
             failures,
             template_name="nozzle_sales_trend.html",
-            to_recipients= recipients.get("nozzle_to", []),
+            to_recipients=recipients.get("nozzle_to", []),
             subject=recipients.get("nozzle_subject", ""),
-            cc_recipients= recipients.get("nozzle_cc", []),
-            bcc_recipients= recipients.get("nozzle_bcc", []),
+            cc_recipients=recipients.get("nozzle_cc", []),
+            bcc_recipients=recipients.get("nozzle_bcc", []),
             notification_data=status_data,
             inline_images={
                 "nozzle_trend_chart": f"{status_data.get('nozzle_trend_chart')}",
@@ -1235,22 +1394,34 @@ async def publish_daily_novex_status_email_chairman(segments: frozenset[str] | N
             failures,
             to_recipients=recipients.get("daily_to", []),
             cc_recipients=recipients.get("daily_cc", []),
-            bcc_recipients=recipients.get("daily_bcc", [])
+            bcc_recipients=recipients.get("daily_bcc", []),
         )
 
 
-async def send_notification(template_name, to_recipients, subject, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None, attachments=None):
+async def send_notification(
+    template_name,
+    to_recipients,
+    subject,
+    cc_recipients=None,
+    bcc_recipients=None,
+    notification_data=None,
+    inline_images=None,
+    attachments=None,
+):
     template_path = os.path.join(
         os.path.dirname(hpcl_ceg_model.__file__),
-        '..', 'orchestrator', 'reporting_services',
-        'templates', template_name
-        )
-    with open(template_path, 'r') as f:
+        "..",
+        "orchestrator",
+        "reporting_services",
+        "templates",
+        template_name,
+    )
+    with open(template_path, "r") as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
     tmp_file = f"/tmp/{template_name}"
-    with open(tmp_file, 'w') as f:
+    with open(tmp_file, "w") as f:
         f.write(final_data)
     # Send email
     ins = await notification_factory.get_notification_module("email")
@@ -1263,11 +1434,13 @@ async def send_notification(template_name, to_recipients, subject, cc_recipients
         body=final_data,
         force_send=True,
         inline_images=inline_images or {},
-        attachments=attachments or []
+        attachments=attachments or [],
     )
 
 
-async def _send_email_safe(label: str, failures: list[tuple[str, str]], **kwargs) -> None:
+async def _send_email_safe(
+    label: str, failures: list[tuple[str, str]], **kwargs
+) -> None:
     try:
         await send_notification(**kwargs)
     except Exception as exc:
@@ -1296,7 +1469,9 @@ def _parse_args(args: argparse.Namespace) -> tuple[str, bool, list[str] | None]:
         if pos:
             raise SystemExit("Use either --audience or positional arguments, not both.")
         if "[" in args.audience:
-            raise SystemExit("Bracket segments must be on the positional audience, e.g. 'testing[retail, lpg]'")
+            raise SystemExit(
+                "Bracket segments must be on the positional audience, e.g. 'testing[retail, lpg]'"
+            )
         return args.audience, write_db, None
     if len(pos) < 1:
         raise SystemExit(
@@ -1307,7 +1482,9 @@ def _parse_args(args: argparse.Namespace) -> tuple[str, bool, list[str] | None]:
     merged = _merge_positional_audience(pos)
     audience, seg_from_brackets = _split_audience_brackets(merged)
     if audience not in _RUNNERS:
-        raise SystemExit(f"Unknown audience {audience!r}. Use: testing, employee, chairman")
+        raise SystemExit(
+            f"Unknown audience {audience!r}. Use: testing, employee, chairman"
+        )
     return audience, write_db, seg_from_brackets
 
 
@@ -1327,7 +1504,7 @@ def main() -> None:
         nargs="*",
         default=[],
         metavar="ARG",
-        help='Optional true, then audience or audience[seg,...] e.g. testing or \'testing[retail, lpg]\'',
+        help="Optional true, then audience or audience[seg,...] e.g. testing or 'testing[retail, lpg]'",
     )
     parser.add_argument(
         "--write-db",
@@ -1347,7 +1524,9 @@ def main() -> None:
     audience, write_db, seg_from_brackets = _parse_args(ns)
     if seg_from_brackets is not None and ns.segments is not None:
         raise SystemExit("Use either audience[retail, lpg] or --segments, not both.")
-    segments = _parse_segments_arg(seg_from_brackets if seg_from_brackets is not None else ns.segments)
+    segments = _parse_segments_arg(
+        seg_from_brackets if seg_from_brackets is not None else ns.segments
+    )
     global WRITE_TO_DB
     WRITE_TO_DB = write_db
     asyncio.run(_RUNNERS[audience](segments))
@@ -1355,4 +1534,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -32,13 +32,13 @@ Usage::
 
     python -m orchestrator.sync_services.lpg.lpg_log_daily_reconcilisation_sync
 """
+
 from __future__ import annotations
 
 import concurrent.futures
 import datetime as dt
 import json
 import os
-import sys
 import socket
 import tempfile
 import traceback
@@ -93,8 +93,13 @@ _DTYPE_MAP = {
 
 def _resolve_plants_csv_path() -> Path:
     # /opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv
-    file_path = os.path.join(os.path.dirname(credential_loader.__file__), "..", "sync_services",
-                             "lpg", "LPG_PLANTS_CREDENTIALS.csv").strip()
+    file_path = os.path.join(
+        os.path.dirname(credential_loader.__file__),
+        "..",
+        "sync_services",
+        "lpg",
+        "LPG_PLANTS_CREDENTIALS.csv",
+    ).strip()
     return Path(file_path).expanduser().resolve()
 
 
@@ -157,7 +162,7 @@ def fetch_data(
     """
     if params is None:
         return pl.DataFrame() if getData else None
-    print("\n" + "-"*50)
+    print("\n" + "-" * 50)
     query = query.replace(";", "")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
@@ -192,9 +197,7 @@ def fetch_data(
                 connection_timeout=timeout,
             )
             cursor = pg_conn.cursor()
-            cursor.execute(
-                f"SET SESSION max_execution_time = {query_timeout * 1000};"
-            )
+            cursor.execute(f"SET SESSION max_execution_time = {query_timeout * 1000};")
         else:
             pg_conn = psycopg2.connect(
                 host=params["host"],
@@ -304,7 +307,7 @@ def fetch_app_db_day(
 ) -> pl.DataFrame:
     """Rows already in APP_DB for this ``sap_id`` on ``sync_date`` (calendar day)."""
     creds = credential_loader.get_credentials("APP_DB")
-    
+
     conn = psycopg2.connect(
         host=creds["host"],
         database=creds["database"],
@@ -345,13 +348,7 @@ def _enrich_server_frame(data: pl.DataFrame, params: Dict[str, Any]) -> pl.DataF
 def _id_set(frame: pl.DataFrame, id_col: str) -> set:
     if frame.is_empty() or id_col not in frame.columns:
         return set()
-    s = (
-        frame.select(pl.col(id_col))
-        .drop_nulls()
-        .unique()
-        .to_series()
-        .to_list()
-    )
+    s = frame.select(pl.col(id_col)).drop_nulls().unique().to_series().to_list()
     return set(s)
 
 
@@ -377,14 +374,16 @@ def _strip_utf8_nulls(data: pl.DataFrame) -> pl.DataFrame:
     return out
 
 
-def copy_dataframe_to_app_table(data: pl.DataFrame, table_name: str, batch_size: int = 50_000) -> None:
+def copy_dataframe_to_app_table(
+    data: pl.DataFrame, table_name: str, batch_size: int = 50_000
+) -> None:
     """
     CREATE TABLE IF NOT EXISTS (from frame schema) + indexes, then COPY rows in slices.
     Matches legacy ``insertToDB`` behavior without the broken ``group_by`` batching.
     """
-    print("\n" + "-"*60)
+    print("\n" + "-" * 60)
     print(f"Starting data insertion into table: {table_name}")
-    print("-"*60)
+    print("-" * 60)
     if data.is_empty():
         print("No data to insert")
         logger.info("copy_dataframe_to_app_table: empty frame, skip")
@@ -393,7 +392,9 @@ def copy_dataframe_to_app_table(data: pl.DataFrame, table_name: str, batch_size:
 
     data = _strip_utf8_nulls(data)
     creds = credential_loader.get_credentials("APP_DB")
-    print(f"Connecting to database {creds['database']} at {creds['host']}:{creds['port']}...")
+    print(
+        f"Connecting to database {creds['database']} at {creds['host']}:{creds['port']}..."
+    )
     conn = psycopg2.connect(
         host=creds["host"],
         database=creds["database"],
@@ -425,7 +426,6 @@ def copy_dataframe_to_app_table(data: pl.DataFrame, table_name: str, batch_size:
                 cur.execute(idx_sql)
             except Exception:
                 print(f"Index creation failed or already exists, continuing...")
-                pass
         conn.commit()
 
         cur.execute(f'SELECT * FROM "{table_name}" LIMIT 1')
@@ -436,7 +436,7 @@ def copy_dataframe_to_app_table(data: pl.DataFrame, table_name: str, batch_size:
                 aligned = aligned.with_columns(pl.lit(None).alias(c))
         aligned = aligned.select(existing_cols)
 
-        copy_sql = f'COPY "{table_name}" FROM STDIN CSV HEADER DELIMITER \'~\''
+        copy_sql = f"COPY \"{table_name}\" FROM STDIN CSV HEADER DELIMITER '~'"
         n = len(aligned)
         print(f"Starting batch insertion with batch size: {batch_size}")
         for start in range(0, n, batch_size):
@@ -648,8 +648,7 @@ def ensure_extraction_tables() -> None:
     conn = _app_db_connect()
     cur = conn.cursor()
     try:
-        cur.execute(
-            """
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS lpg_eventlog_extraction_log (
                 plant_name VARCHAR(255),
                 last_extracted_date TIMESTAMP,
@@ -657,10 +656,8 @@ def ensure_extraction_tables() -> None:
                 extraction_status VARCHAR(50),
                 PRIMARY KEY (plant_name)
             );
-            """
-        )
-        cur.execute(
-            """
+            """)
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS lpg_plant_extraction_log (
                 plant_name VARCHAR(255),
                 last_extracted_date TIMESTAMP,
@@ -668,8 +665,7 @@ def ensure_extraction_tables() -> None:
                 extraction_status VARCHAR(50),
                 PRIMARY KEY (plant_name)
             );
-            """
-        )
+            """)
         cur.execute(
             f"ALTER TABLE {TABLE_EXTRACTION_EVENT} "
             "ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMP;"
@@ -684,7 +680,15 @@ def ensure_extraction_tables() -> None:
         conn.close()
 
 
-def sync_one_kind(params: Dict[str, Any], *,  kind: str, app_table: str, id_col: str, sync_date: dt.date, dedupe: bool) -> Dict[str, Any]:
+def sync_one_kind(
+    params: Dict[str, Any],
+    *,
+    kind: str,
+    app_table: str,
+    id_col: str,
+    sync_date: dt.date,
+    dedupe: bool,
+) -> Dict[str, Any]:
     """kind: 'event' | 'production'"""
     plant = params["PlantName"]
     print(f"\nFetching data for plant {plant} ({kind}) with chunking...")
@@ -709,7 +713,9 @@ def sync_one_kind(params: Dict[str, Any], *,  kind: str, app_table: str, id_col:
     dedupe_deleted = 0
     if dedupe and not app.is_empty():
         print(f"Checking duplicates for {plant} ({kind})...")
-        dedupe_deleted = dedupe_app_table_by_id(app_table, id_col, str(params["sap_id"]), sync_date)
+        dedupe_deleted = dedupe_app_table_by_id(
+            app_table, id_col, str(params["sap_id"]), sync_date
+        )
         print(f"Duplicates deleted for {plant} ({kind}): {dedupe_deleted}")
         print(f"Re-fetching APP DB data after dedupe for {plant} ({kind})...")
         app = fetch_app_db_day(app_table, str(params["sap_id"]), sync_date)
@@ -744,22 +750,26 @@ def sync_one_kind(params: Dict[str, Any], *,  kind: str, app_table: str, id_col:
     stats["missing_ids"] = len(to_insert)
 
     if not to_insert.is_empty():
-        print(f"Inserting {len(to_insert)} records into {app_table} for {plant} ({kind})...")
+        print(
+            f"Inserting {len(to_insert)} records into {app_table} for {plant} ({kind})..."
+        )
         copy_dataframe_to_app_table(to_insert, app_table)
         print(f"-- Data Inserted to {app_table} for {plant} ({kind}) --")
         stats["inserted"] = len(to_insert)
 
     print(f"Completed {kind.upper()} sync for plant: {plant}")
-    print("-"*60)
+    print("-" * 60)
     return stats
 
 
-def process_plant(plant_row: Dict[str, Any], sync_date: dt.date, dedupe: bool) -> Dict[str, Any]:
+def process_plant(
+    plant_row: Dict[str, Any], sync_date: dt.date, dedupe: bool
+) -> Dict[str, Any]:
     params = _plant_params_from_row(plant_row)
     plant = params["PlantName"]
-    print("\n" + "-"*60)
+    print("\n" + "-" * 60)
     print(f"Sync started for plant: {plant}")
-    print("-"*60)
+    print("-" * 60)
 
     out: Dict[str, Any] = {"plant": plant, "event": {}, "production": {}}
     try:
@@ -828,7 +838,7 @@ def process_plant(plant_row: Dict[str, Any], sync_date: dt.date, dedupe: bool) -
             pass
 
     print(f"Finished processing plant: {plant}")
-    print("-"*60)
+    print("-" * 60)
     return out
 
 
@@ -842,19 +852,24 @@ def main() -> None:
         )
 
     plants = pl.read_csv(csv_path)
-    #plants = plants.filter(pl.col("PlantName") == "Unnao")
+    # plants = plants.filter(pl.col("PlantName") == "Unnao")
     sync_date = _sync_date_from_env()
     print(f"Sync date: {sync_date}")
     dedupe = os.environ.get("LPG_DEDUPE_APP_DB", "").lower() in ("1", "true", "yes")
     dedupe = True
     max_workers = int(os.environ.get("LPG_MAX_WORKERS", "10"))
 
-    logger.info("LPG daily reconciliation: date=%s csv=%s dedupe=%s", sync_date, csv_path, dedupe)
+    logger.info(
+        "LPG daily reconciliation: date=%s csv=%s dedupe=%s",
+        sync_date,
+        csv_path,
+        dedupe,
+    )
     ensure_extraction_tables()
 
     max_workers = max(1, min(max_workers, len(plants)))
     results: List[Dict[str, Any]] = []
-    
+
     print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -865,21 +880,31 @@ def main() -> None:
         for fut in concurrent.futures.as_completed(futs):
             try:
                 result = fut.result()
-                print(f"Completed plant: {result.get('plant')} | Status: {result.get('ok')}")
+                print(
+                    f"Completed plant: {result.get('plant')} | Status: {result.get('ok')}"
+                )
                 results.append(result)
             except Exception as e:
                 print(f"Error in future execution: {str(e)}")
     print("All plants processed. Preparing summary file...")
-    summary_path = Path(tempfile.gettempdir()) / f"lpg_reconcile_{sync_date}_{uuid.uuid4().hex[:8]}.json"
-    summary_path.write_text(json.dumps(results, default=str, indent=2), encoding="utf-8")
+    summary_path = (
+        Path(tempfile.gettempdir())
+        / f"lpg_reconcile_{sync_date}_{uuid.uuid4().hex[:8]}.json"
+    )
+    summary_path.write_text(
+        json.dumps(results, default=str, indent=2), encoding="utf-8"
+    )
     logger.info("Wrote summary: %s", summary_path)
     print("\nFinal Summary:")
     print(json.dumps(results, default=str, indent=2), flush=True)
 
-    # Added to calculate total execution time    
+    # Added to calculate total execution time
     end_time = time.time()
     total_time = end_time - start_time
-    print(f"\n{'='*50}\nTOTAL EXECUTION TIME: {total_time:.2f} sec ({total_time/60:.2f} min)\n{'='*50}", flush=True)
+    print(
+        f"\n{'='*50}\nTOTAL EXECUTION TIME: {total_time:.2f} sec ({total_time/60:.2f} min)\n{'='*50}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

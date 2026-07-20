@@ -9,6 +9,7 @@ are emitted as PostgreSQL double-quoted names so mixed-case tables and columns m
 
 Execution uses :meth:`urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data`.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -40,9 +41,8 @@ def _validate_date_trunc_inner(inner: str) -> None:
     try:
         _column_ref(base, kind="date_trunc column")
     except ValueError as e:
-        raise ValueError(
-            f"Invalid date_trunc column in {inner!r}: {e}"
-        ) from e
+        raise ValueError(f"Invalid date_trunc column in {inner!r}: {e}") from e
+
 
 _AGG_FUNCS = frozenset({"sum", "avg", "min", "max", "count"})
 # Arithmetic on validated column refs only (``alias.col * alias.col``); see :func:`_emit_agg_arithmetic_sql`.
@@ -122,9 +122,7 @@ def _group_by_item(raw: str) -> str:
         try:
             _validate_date_trunc_inner(inner)
         except ValueError as e:
-            raise ValueError(
-                f"Invalid date_trunc in GROUP BY {raw!r}: {e}"
-            ) from e
+            raise ValueError(f"Invalid date_trunc in GROUP BY {raw!r}: {e}") from e
         precision = m.group(1)
         qi = _quoted_date_trunc_inner_sql(inner)
         return f"date_trunc('{precision}', {qi})"
@@ -338,7 +336,9 @@ def _parse_join_entries(
                 f"got {item!r}"
             )
         kind_s, jtable, jalias, on_left, on_right = t
-        if not all(isinstance(x, str) for x in (kind_s, jtable, jalias, on_left, on_right)):
+        if not all(
+            isinstance(x, str) for x in (kind_s, jtable, jalias, on_left, on_right)
+        ):
             raise ValueError(f"joins[{i}] must contain only strings; got {item!r}")
         kind_u = kind_s.strip().upper()
         if kind_u not in _JOIN_KIND_SQL:
@@ -349,7 +349,9 @@ def _parse_join_entries(
         tbl = _qualified_table(jtable.strip())
         ja = _ident(jalias.strip(), kind="JOIN alias")
         if ja in seen_aliases:
-            raise ValueError(f"joins[{i}] reuses JOIN alias {ja!r}; each join must use a unique alias.")
+            raise ValueError(
+                f"joins[{i}] reuses JOIN alias {ja!r}; each join must use a unique alias."
+            )
         seen_aliases.add(ja)
         left_on = _column_ref(on_left, kind="JOIN ON left")
         right_on = _column_ref(on_right, kind="JOIN ON right")
@@ -415,7 +417,9 @@ def _build_where(
 
     if date_from is not None or date_to is not None:
         if not date_column or not str(date_column).strip():
-            raise ValueError("date_column is required when date_from or date_to is set.")
+            raise ValueError(
+                "date_column is required when date_from or date_to is set."
+            )
         dc = dc_for_dates or _column_ref(str(date_column).strip(), kind="date column")
         if date_from is not None:
             parts.append(f"{dc} >= {_sql_literal(date_from)}")
@@ -434,7 +438,9 @@ def _order_clause(
     for col, direction in order_by:
         d = direction.strip().upper()
         if d not in ("ASC", "DESC"):
-            raise ValueError(f"ORDER BY direction must be ASC or DESC, got {direction!r}")
+            raise ValueError(
+                f"ORDER BY direction must be ASC or DESC, got {direction!r}"
+            )
         if col in known_aliases:
             bits.append(f"{_sql_quote_ident(_ident(col, kind='alias'))} {d}")
         else:
@@ -602,7 +608,9 @@ async def query_aggregate_gateway(
         for expr, gb_alias in zip(gb_list, gb_out_aliases):
             if gb_alias:
                 if gb_alias in alias_names:
-                    raise ValueError(f"Duplicate output alias {gb_alias!r} (group_by vs aggregates)")
+                    raise ValueError(
+                        f"Duplicate output alias {gb_alias!r} (group_by vs aggregates)"
+                    )
                 alias_names.add(gb_alias)
                 select_parts.append(f"{expr} AS {_sql_quote_ident(gb_alias)}")
             else:
@@ -610,7 +618,9 @@ async def query_aggregate_gateway(
         for raw_agg in aggregations:
             t = ast.literal_eval(raw_agg) if isinstance(raw_agg, str) else raw_agg
             if not isinstance(t, (list, tuple)):
-                raise ValueError(f"aggregations entry must be a tuple or list; got {raw_agg!r}")
+                raise ValueError(
+                    f"aggregations entry must be a tuple or list; got {raw_agg!r}"
+                )
             round_scale: typing.Optional[int] = None
             if len(t) == 3:
                 alias, fn, col = t[0], t[1], t[2]
@@ -640,7 +650,9 @@ async def query_aggregate_gateway(
         sql = f"SELECT {', '.join(select_parts)} {from_sql}{where_sql}{group_sql}"
     else:
         if detail_fields:
-            fields_sql = ", ".join(_column_ref(f, kind="detail field") for f in detail_fields)
+            fields_sql = ", ".join(
+                _column_ref(f, kind="detail field") for f in detail_fields
+            )
         else:
             fields_sql = "*"
         sql = f"SELECT {fields_sql} {from_sql}{where_sql}"

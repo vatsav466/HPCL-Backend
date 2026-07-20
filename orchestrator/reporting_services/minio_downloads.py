@@ -1,4 +1,3 @@
-import urdhva_base
 import asyncio
 import os
 import fnmatch
@@ -14,17 +13,22 @@ async def download_to_local():
     today = datetime.now()
     last_10_dates = [(today - timedelta(days=i)).strftime("%y%m%d") for i in range(10)]
 
-    objects = list(minio_client.list_objects(
-        minio_connector.urdhva_base.settings.minio_bucket,
-        recursive=True
-    ))
+    objects = list(
+        minio_client.list_objects(
+            minio_connector.urdhva_base.settings.minio_bucket, recursive=True
+        )
+    )
 
     base_path = Path("/tmp/minio_downloads")
     base_path.mkdir(exist_ok=True)
 
     for date_str in last_10_dates:
         pattern = f"*{date_str}*"
-        file_list = [obj.object_name for obj in objects if fnmatch.fnmatch(os.path.basename(obj.object_name), pattern)]
+        file_list = [
+            obj.object_name
+            for obj in objects
+            if fnmatch.fnmatch(os.path.basename(obj.object_name), pattern)
+        ]
         if not file_list:
             print(f"No files found for {date_str}")
             continue
@@ -40,9 +44,9 @@ async def download_to_local():
                 shutil.move(temp_path, final_path)
             else:
                 print(f"Failed to download {fp}: {temp_path}")
-        
+
         zip_path = "/tmp/minio_downloads.zip"
-        shutil.make_archive("/tmp/minio_downloads", 'zip', root_dir=base_path)
+        shutil.make_archive("/tmp/minio_downloads", "zip", root_dir=base_path)
         print(f"All last 10 days zipped into: {zip_path}")
         print(f"All files for {date_str} saved in {date_folder}")
     print("All last 10 days processed.")

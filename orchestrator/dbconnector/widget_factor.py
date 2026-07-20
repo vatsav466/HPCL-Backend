@@ -6,7 +6,9 @@ class MultiDBWidgetQueryGenerator:
         """
         self.db_connector = db_connector
 
-    def generate_query(self, widget_type: str, x_axis: str, y_axis: str = None, filters: dict = None):
+    def generate_query(
+        self, widget_type: str, x_axis: str, y_axis: str = None, filters: dict = None
+    ):
         """
         Generate a query for a specific widget type.
         :param widget_type: Type of widget (e.g., 'pie', 'bar', 'area').

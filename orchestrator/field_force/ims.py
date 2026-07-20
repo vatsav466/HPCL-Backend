@@ -2,18 +2,20 @@
 IMS (Indent Management System) - Field Force orchestrator.
 Functional schema for IndentManagement APIs. No implementation.
 """
-import urdhva_base
+
 import charts_actions
 import field_force_model
 import dashboard_studio_model
-from typing import Any, List, Optional
+from typing import List, Optional
 import orchestrator.field_force.ims_query as ims_query
 import orchestrator.field_force.utils as field_force_utils
 
 # -------- Session-based filter generation (IMS) --------
 
 
-def generate_session_filters(query_filters: Optional[List[str]] = None, model: str = "IMS") -> List[str]:
+def generate_session_filters(
+    query_filters: Optional[List[str]] = None, model: str = "IMS"
+) -> List[str]:
     """
     Build a list of WHERE-style conditions from the current user's session (role-based territory) for IMS.
 
@@ -24,7 +26,9 @@ def generate_session_filters(query_filters: Optional[List[str]] = None, model: s
     :param model: Reserved for future use; defaults to "IMS".
     :return: List of condition strings (e.g. "sales_area='MUMBAI DS SA'").
     """
-    return field_force_utils.generate_session_filters(vendor="IMS", model=model, query_filters=query_filters)
+    return field_force_utils.generate_session_filters(
+        vendor="IMS", model=model, query_filters=query_filters
+    )
 
 
 async def get_indents_by_product_volume(
@@ -45,7 +49,9 @@ async def get_indents_by_product_volume(
          "drill_down": [{"location_id", "location_name", "product_code", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -67,7 +73,9 @@ async def get_pending_vs_executed_indents(
          "drill_down": [{"location_id", "location_name", "status", "count", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -89,7 +97,9 @@ async def get_cancelled_indents(
          "drill_down": [{"location_id", "location_name", "product_code", "volume", "cancelled_at", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -109,7 +119,9 @@ async def get_dtp_dealers_count(
          "drill_down": [{"dealer_id", "dealer_name", "dealer_code", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -133,7 +145,9 @@ async def get_top_dtp_customers(
          "drill_down": [{"dealer_id", "dealer_name", "product_breakdown", ...}] or None,
          "total": int?, "drill_to": str?, "sales_cutoff_kl": float?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -155,7 +169,9 @@ async def get_dct_indents_by_product_volume(
          "drill_down": [{"dealer_id", "dealer_name", "product_code", "volume", ...}] or None,
          "total": int?, "level": str?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -175,7 +191,9 @@ async def get_trucks_failed_to_report(
          "drill_down": [{"dealer_id", "dealer_name", "truck_id", "expected_at", "status", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -195,7 +213,9 @@ async def get_tpt_indents_vs_availability(
          "drill_down": [{"dealer_id", "dealer_name", "indents", "trucks_available", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -216,43 +236,51 @@ async def get_indents_details(
     Output:
         Same as get_indents_by_product_volume.
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="IMS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="IMS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="IMS")
     pass  # TODO: use effective_filters and session_conditions in implementation
+
 
 async def r3_r1_monthwise(data):
     """
     r3 difference r1 monthwiswe data
     """
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    try: 
-            # location wise data
-            location_wise_query = ims_query.ims_queries.get('location_wise_query', '')
-            location_data = await function(query=location_wise_query) if location_wise_query else []
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+        "execute_query"
+    )
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+    try:
+        # location wise data
+        location_wise_query = ims_query.ims_queries.get("location_wise_query", "")
+        location_data = (
+            await function(query=location_wise_query) if location_wise_query else []
+        )
 
-            # month wise data
-            monthly_query = ims_query.ims_queries.get('monthly_query', '')
-            month_wise_data =  await function(query=monthly_query) if monthly_query else []
-        
-            #zone wise data
-            zone_wise_query = ims_query.ims_queries.get('zone_wise_query', [])
-            zone_wise_data = await function(query=zone_wise_query) if zone_wise_query else []
+        # month wise data
+        monthly_query = ims_query.ims_queries.get("monthly_query", "")
+        month_wise_data = await function(query=monthly_query) if monthly_query else []
 
-            return {
-                "status" : True,
-                "message": "Success",
-                "location_data": location_data if location_data else [],
-                "monthly_data": month_wise_data if month_wise_data else [],
-                "zone_data": zone_wise_data if zone_wise_data else [],
-            }
-    except Exception as e:
+        # zone wise data
+        zone_wise_query = ims_query.ims_queries.get("zone_wise_query", [])
+        zone_wise_data = (
+            await function(query=zone_wise_query) if zone_wise_query else []
+        )
+
         return {
-            "status": False,
-            "message": f"Failed to retrieve data {e}",
-            "data": []
+            "status": True,
+            "message": "Success",
+            "location_data": location_data if location_data else [],
+            "monthly_data": month_wise_data if month_wise_data else [],
+            "zone_data": zone_wise_data if zone_wise_data else [],
         }
+    except Exception as e:
+        return {"status": False, "message": f"Failed to retrieve data {e}", "data": []}
+
 
 async def r3_r1_daywise(data):
     """
@@ -271,45 +299,43 @@ async def r3_r1_daywise(data):
         conditions = []
         if cross_filters:
             for rec in cross_filters:
-                if 'DATE' in rec.key.upper():
+                if "DATE" in rec.key.upper():
                     val = rec.value
                     start = val.split(",")[0]
                     end_date = val.split(",")[-1]
                     end = f"{end_date} 23:59:59"
 
-                    conditions.append(f"""tses."CARD_DATE" BETWEEN DATE '{start}' AND DATE '{end}' """)
-                
-                if 'zone' in rec.key:
+                    conditions.append(
+                        f"""tses."CARD_DATE" BETWEEN DATE '{start}' AND DATE '{end}' """
+                    )
+
+                if "zone" in rec.key:
                     zone_val = rec.value
-                    conditions.append(f""" lm.zone ='{zone_val}' """ )
-                
-                if 'sap_id' in rec.key:
+                    conditions.append(f""" lm.zone ='{zone_val}' """)
+
+                if "sap_id" in rec.key:
                     sap_id = rec.value
                     conditions.append(f""" tses."LOCN_CODE" = '{sap_id}' """)
             conditions.append("""tses."CARD_STATUS" IN ('O', 'R')""")
 
         where_clause = " AND ".join(conditions)
         print("where clause -->", where_clause)
-        query = ims_query.ims_queries.get('daywise_query', '').format(where_clause)
+        query = ims_query.ims_queries.get("daywise_query", "").format(where_clause)
         print("query --->", query)
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = (
+            "execute_query"
+        )
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
         daily_data = await function(query=query)
         print("daily_data -->", daily_data)
 
         return {
-                "status" : True,
-                "message": "Success",
-                "data": daily_data if daily_data else []
-
+            "status": True,
+            "message": "Success",
+            "data": daily_data if daily_data else [],
         }
     except Exception as e:
-        return {
-                 "status" : False,
-                 "message": f"Failed {e}",
-                 "data": []
-
-            }
-
-
+        return {"status": False, "message": f"Failed {e}", "data": []}

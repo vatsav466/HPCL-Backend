@@ -2,8 +2,10 @@
 Retail Sales (Single Store, including Lubes) - Field Force orchestrator.
 Functional schema for RetailSales APIs. No implementation.
 """
+
 import field_force_model
-from typing import List, Optional
+from typing import Optional
+
 # comparison_type: yesterday | mtd | ytd | historical
 
 
@@ -23,7 +25,6 @@ async def get_sales_by_product(
          "drill_down": [{"dealer_id", "dealer_name", "product_code", "volume", "amount", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    pass
 
 
 async def get_lubes_arb_comparison(
@@ -41,7 +42,6 @@ async def get_lubes_arb_comparison(
          "drill_down": [{"dealer_id", "dealer_name", "product_code", "category", "volume", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    pass
 
 
 async def get_lube_sales_comparison(
@@ -56,7 +56,6 @@ async def get_lube_sales_comparison(
         {"summary": [{"lube_product_code", "lube_product_name", "volume", "amount", "period", "comparison_period", "pct_change", ...}],
          "drill_down": None, "total": int?}
     """
-    pass
 
 
 async def get_sales_comparison(
@@ -76,7 +75,6 @@ async def get_sales_comparison(
          "comparison": [{"product_code", "current_volume", "previous_volume", "pct_change", ...}],
          "period_current": str, "period_previous": str}
     """
-    pass
 
 
 async def get_volume_tracking(
@@ -91,4 +89,3 @@ async def get_volume_tracking(
         {"summary": [{"product_code", "period", "volume", "cumulative_volume", "target"?, "achievement_pct"?, ...}],
          "drill_down": None, "total": int?}
     """
-    pass

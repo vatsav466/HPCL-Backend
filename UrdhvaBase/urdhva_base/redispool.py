@@ -7,29 +7,44 @@ from redis import asyncio as aioredis
 # Async redis connection pool
 @urdhva_base.utilities.run_once
 async def get_redis_connection() -> aioredis.Redis:
-    redis_url = urdhva_base.settings.db_urls['redis'][0]
-    pool = aioredis.ConnectionPool.from_url(url=redis_url.unicode_string(),
-                                            max_connections=urdhva_base.settings.max_redis_connections, encoding='utf8',
-                                            socket_timeout=10, retry_on_timeout=True)
+    redis_url = urdhva_base.settings.db_urls["redis"][0]
+    pool = aioredis.ConnectionPool.from_url(
+        url=redis_url.unicode_string(),
+        max_connections=urdhva_base.settings.max_redis_connections,
+        encoding="utf8",
+        socket_timeout=10,
+        retry_on_timeout=True,
+    )
     return aioredis.Redis.from_pool(pool)
 
 
 # Synchronous redis connection pool
 @urdhva_base.utilities.run_once
 def get_synchronous_redis_connection():
-    redis_url = urdhva_base.settings.db_urls['redis'][0]
-    redis_pool = redis.ConnectionPool.from_url(url=redis_url.unicode_string(),
-                                               max_connections=urdhva_base.settings.max_redis_connections,
-                                               encoding='utf8', socket_timeout=10, retry_on_timeout=True)
+    redis_url = urdhva_base.settings.db_urls["redis"][0]
+    redis_pool = redis.ConnectionPool.from_url(
+        url=redis_url.unicode_string(),
+        max_connections=urdhva_base.settings.max_redis_connections,
+        encoding="utf8",
+        socket_timeout=10,
+        retry_on_timeout=True,
+    )
     return redis.StrictRedis(connection_pool=redis_pool)
 
 
 # Code Derived From http://peter-hoffmann.com/2012/python-simple-queue-redis-queue.html
 class RedisQueue(object):
     """Simple Queue with Redis Backend"""
-    def __init__(self, name, base_name=urdhva_base.settings.app_name.lower(), namespace='queue', **redis_kwargs):
+
+    def __init__(
+        self,
+        name,
+        base_name=urdhva_base.settings.app_name.lower(),
+        namespace="queue",
+        **redis_kwargs
+    ):
         """The default connection parameters are: host='localhost', port=6379, db=0"""
-        self.key = '%s:%s:%s' % (base_name, namespace, name)
+        self.key = "%s:%s:%s" % (base_name, namespace, name)
 
     @classmethod
     async def client(cls) -> aioredis.Redis:

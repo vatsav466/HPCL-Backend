@@ -10,19 +10,19 @@ import polars as pl
 from rabbitmq_producer import RabbitMQProducer
 
 # Set stdout encoding to UTF-8 to handle non-ASCII characters
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 dtype_map = {
-    'String': 'VARCHAR2(255)',
-    'Int64': 'NUMBER',
-    'Int32': 'NUMBER',
-    'Boolean': 'NUMBER(1)',
-    'Float64': 'NUMBER',
-    'Float32': 'NUMBER',
-    'Object': 'VARCHAR2(4000)',
-    'Datetime': 'DATE',
-    'Utf8': 'NVARCHAR2(255)',
-    "Datetime(time_unit='us', time_zone=None)": 'DATE'
+    "String": "VARCHAR2(255)",
+    "Int64": "NUMBER",
+    "Int32": "NUMBER",
+    "Boolean": "NUMBER(1)",
+    "Float64": "NUMBER",
+    "Float32": "NUMBER",
+    "Object": "VARCHAR2(4000)",
+    "Datetime": "DATE",
+    "Utf8": "NVARCHAR2(255)",
+    "Datetime(time_unit='us', time_zone=None)": "DATE",
 }
 
 with open("config.json", "r", encoding="utf-8") as config_file:
@@ -50,8 +50,10 @@ class Oracle(BaseAction):
     def __init__(self, params: typing.Dict):
         super().__init__(params)
 
-        if 'opcdaipmapp' not in self.params or 'opcdaservicepath' not in self.params:
-            raise ValueError("OPC DA IP mapping configuration is required (opcdaipmapp and opcdaservicepath)")
+        if "opcdaipmapp" not in self.params or "opcdaservicepath" not in self.params:
+            raise ValueError(
+                "OPC DA IP mapping configuration is required (opcdaipmapp and opcdaservicepath)"
+            )
 
         try:
             # Read and store the OPC DA IP at init time
@@ -59,11 +61,13 @@ class Oracle(BaseAction):
             if not current_opcda_ip:
                 raise ValueError("Could not determine OPC DA IP from service file")
 
-            oracle_ip = self.params['opcdaipmapp'].get(current_opcda_ip)
+            oracle_ip = self.params["opcdaipmapp"].get(current_opcda_ip)
             if not oracle_ip:
-                raise ValueError(f"No Oracle IP mapping found for OPC DA IP {current_opcda_ip}")
+                raise ValueError(
+                    f"No Oracle IP mapping found for OPC DA IP {current_opcda_ip}"
+                )
 
-            self.params['host'] = oracle_ip
+            self.params["host"] = oracle_ip
 
             # Remember which OPC DA IP we are currently connected through
             self.active_opcda_ip = current_opcda_ip
@@ -71,7 +75,9 @@ class Oracle(BaseAction):
             # Persistent connection — shared across all queries, explicitly closed on IP change
             self._connection = None
 
-            print(f"Using Oracle IP: {oracle_ip} (mapped from OPC DA IP {current_opcda_ip})")
+            print(
+                f"Using Oracle IP: {oracle_ip} (mapped from OPC DA IP {current_opcda_ip})"
+            )
 
         except Exception as e:
             raise ValueError(f"OPC DA IP mapping failed: {str(e)}")
@@ -80,10 +86,10 @@ class Oracle(BaseAction):
     def _get_current_opcda_ip(self):
         """Read the currently configured OPC DA IP from the service file."""
         try:
-            opcda_path = self.params['opcdaservicepath']
+            opcda_path = self.params["opcdaservicepath"]
             print(f"Reading OPC DA IP from file: {opcda_path}")
 
-            with open(opcda_path, 'r') as f:
+            with open(opcda_path, "r") as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith("ip="):
@@ -92,7 +98,9 @@ class Oracle(BaseAction):
                             print(f"Found OPC DA IP: {ip}")
                             return ip
 
-            raise ValueError("No valid IP found in OPC DA service file (looking for line starting with 'ip=')")
+            raise ValueError(
+                "No valid IP found in OPC DA service file (looking for line starting with 'ip=')"
+            )
 
         except FileNotFoundError:
             raise ValueError(f"OPC DA service file not found at: {opcda_path}")
@@ -125,21 +133,21 @@ class Oracle(BaseAction):
                 print("Existing Oracle connection is no longer alive. Reconnecting...")
                 self._connection = None
 
-        self.params['dns'] = f"{self.params['host']}:{self.params['port']}"
+        self.params["dns"] = f"{self.params['host']}:{self.params['port']}"
 
-        if self.params.get('sid', ''):
-            self.params['dns'] += f"/{self.params['sid']}"
-        elif self.params.get('service_name', ''):
-            self.params['dns'] += f"/{self.params['service_name']}"
-        elif self.params.get('database_name', ''):
-            self.params['dns'] += f"/{self.params['database_name']}"
+        if self.params.get("sid", ""):
+            self.params["dns"] += f"/{self.params['sid']}"
+        elif self.params.get("service_name", ""):
+            self.params["dns"] += f"/{self.params['service_name']}"
+        elif self.params.get("database_name", ""):
+            self.params["dns"] += f"/{self.params['database_name']}"
 
         self._connection = cx_Oracle.connect(
             self.params["user_name"],
             self.params["password"],
             self.params["dns"],
             encoding="UTF-8",
-            nencoding="UTF-8"
+            nencoding="UTF-8",
         )
         print(f"Oracle connection opened -> {self.params['dns']}")
         return self._connection
@@ -149,8 +157,10 @@ class Oracle(BaseAction):
         if self._connection is not None:
             try:
                 self._connection.close()
-                print(f"Oracle connection to {self.params.get('dns', self.params.get('host'))} "
-                      f"(OPC DA IP: {self.active_opcda_ip}) CLOSED and exited completely.")
+                print(
+                    f"Oracle connection to {self.params.get('dns', self.params.get('host'))} "
+                    f"(OPC DA IP: {self.active_opcda_ip}) CLOSED and exited completely."
+                )
             except Exception as e:
                 print(f"Warning during connection close: {e}")
             finally:
@@ -164,8 +174,8 @@ class Oracle(BaseAction):
     async def close_connection(self, connection):
         # NOTE: do NOT close here — connection is persistent and shared.
         # It is only closed explicitly via disconnect() on IP change.
-        if 'tunnel' in self.params.keys():
-            self.params['tunnel'].stop()
+        if "tunnel" in self.params.keys():
+            self.params["tunnel"].stop()
 
     async def test_connection(self):
         try:
@@ -175,7 +185,11 @@ class Oracle(BaseAction):
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": "Unable to connect to Oracle", "data": []}
+            return {
+                "status": False,
+                "message": "Unable to connect to Oracle",
+                "data": [],
+            }
 
     async def get_schema(self, debug=False, **kwargs):
         try:
@@ -184,74 +198,136 @@ class Oracle(BaseAction):
             cursor.execute("SELECT username FROM sys.all_users")
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
             await self.close_connection(connection)
-            print(df['USERNAME'].unique().tolist())
+            print(df["USERNAME"].unique().tolist())
             df.to_csv("schema-list.csv", index=False)
-            return {"status": True, "message": "Success", "data": df['USERNAME'].unique().tolist()}
+            return {
+                "status": True,
+                "message": "Success",
+                "data": df["USERNAME"].unique().tolist(),
+            }
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to connect {err}", "data": None}
+            return {
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
+            }
 
     async def table_name(self, schema_name, debug=False, **kwargs):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            cursor.execute(f"""SELECT table_name FROM all_tables WHERE OWNER = '{schema_name}'""")
+            cursor.execute(
+                f"""SELECT table_name FROM all_tables WHERE OWNER = '{schema_name}'"""
+            )
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
             await self.close_connection(connection)
-            print(df['TABLE_NAME'].unique().tolist())
+            print(df["TABLE_NAME"].unique().tolist())
             df.to_csv("tables_list.csv", index=False)
-            return {"status": True, "message": "Success", "data": df['TABLE_NAME'].unique().tolist()}
+            return {
+                "status": True,
+                "message": "Success",
+                "data": df["TABLE_NAME"].unique().tolist(),
+            }
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to connect {err}", "data": None}
+            return {
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
+            }
 
     async def primary_key(self, schema_name, table_name, debug=False, **kwargs):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            cursor.execute(f"SELECT DISTINCT cols.COLUMN_NAME FROM all_constraints cons, "
-                           f"all_cons_columns cols WHERE cols.TABLE_NAME = '{table_name}' "
-                           f"AND cons.CONSTRAINT_TYPE = 'P' AND cons.STATUS ='ENABLED'")
+            cursor.execute(
+                f"SELECT DISTINCT cols.COLUMN_NAME FROM all_constraints cons, "
+                f"all_cons_columns cols WHERE cols.TABLE_NAME = '{table_name}' "
+                f"AND cons.CONSTRAINT_TYPE = 'P' AND cons.STATUS ='ENABLED'"
+            )
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
             await self.close_connection(connection)
-            return {"status": True, "message": "Success", "data": df['COLUMN_NAME'].unique().tolist()}
+            return {
+                "status": True,
+                "message": "Success",
+                "data": df["COLUMN_NAME"].unique().tolist(),
+            }
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to connect {err}", "data": None}
+            return {
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
+            }
 
     async def column_names(self, schema_name, table_name, debug=False, **kwargs):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            cursor.execute(f"""SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='{table_name}'""")
+            cursor.execute(
+                f"""SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='{table_name}'"""
+            )
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
+            df = pd.DataFrame(
+                {
+                    column: [row[i] for row in row]
+                    for i, column in enumerate(column_names)
+                }
+            )
             await self.close_connection(connection)
-            return {"status": True, "message": "Success", "data": df['COLUMN_NAME'].unique().tolist()}
+            return {
+                "status": True,
+                "message": "Success",
+                "data": df["COLUMN_NAME"].unique().tolist(),
+            }
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to connect {err}", "data": None}
+            return {
+                "status": False,
+                "message": f"Not able to connect {err}",
+                "data": None,
+            }
 
-    async def create_table(self, schema_name, table_name, table_schema, debug=False, **kwargs):
+    async def create_table(
+        self, schema_name, table_name, table_schema, debug=False, **kwargs
+    ):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            table_create_sql = ''
+            table_create_sql = ""
             for col, dty in table_schema.items():
                 table_create_sql += f'"{col}" {dty}, '
             table_create_sql = table_create_sql[:-1]
-            table_create_sql = f"""CREATE TABLE {schema_name}.{table_name} ({table_create_sql})"""
+            table_create_sql = (
+                f"""CREATE TABLE {schema_name}.{table_name} ({table_create_sql})"""
+            )
             list_table = await self.table_name(schema_name)
             if table_name not in list_table.get("data", []):
                 cursor.execute(table_create_sql)
@@ -261,7 +337,9 @@ class Oracle(BaseAction):
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def write_data_from_csv(self, *records, schema_name, table_name, debug=False, **kwargs):
+    async def write_data_from_csv(
+        self, *records, schema_name, table_name, debug=False, **kwargs
+    ):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
@@ -295,7 +373,9 @@ class Oracle(BaseAction):
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def write_data(self, *records, schema_name, table_name, debug=False, **kwargs):
+    async def write_data(
+        self, *records, schema_name, table_name, debug=False, **kwargs
+    ):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
@@ -310,8 +390,16 @@ class Oracle(BaseAction):
             print(err)
             traceback.print_exc(file=sys.stdout)
 
-    async def get_data(self, table_name, query=None, columns=None, limit=None,
-                       debug=False, schema_name=None, **kwargs):
+    async def get_data(
+        self,
+        table_name,
+        query=None,
+        columns=None,
+        limit=None,
+        debug=False,
+        schema_name=None,
+        **kwargs,
+    ):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
@@ -328,52 +416,97 @@ class Oracle(BaseAction):
                 if not rows:
                     break
                 column_names = [desc[0] for desc in cursor.description]
-                df = pd.DataFrame({column: [row[i] for row in rows] for i, column in enumerate(column_names)})
+                df = pd.DataFrame(
+                    {
+                        column: [row[i] for row in rows]
+                        for i, column in enumerate(column_names)
+                    }
+                )
                 final_df = pd.concat([final_df, df])
             await self.close_connection(connection)
             if debug:
-                return {"status": True, "message": "Success", "data": final_df.to_dict(orient='records')}
+                return {
+                    "status": True,
+                    "message": "Success",
+                    "data": final_df.to_dict(orient="records"),
+                }
 
             try:
                 print("Saving data for table:", table_name)
-                final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8')
+                final_df.to_csv(
+                    f"{table_name}.csv",
+                    mode="a",
+                    index=False,
+                    header=False,
+                    encoding="utf-8",
+                )
                 print(f"Data saved to {table_name}.csv")
             except UnicodeEncodeError:
-                print(f"Warning: Encoding issue when saving {table_name}.csv - trying alternate encoding")
-                final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8-sig')
+                print(
+                    f"Warning: Encoding issue when saving {table_name}.csv - trying alternate encoding"
+                )
+                final_df.to_csv(
+                    f"{table_name}.csv",
+                    mode="a",
+                    index=False,
+                    header=False,
+                    encoding="utf-8-sig",
+                )
 
             return pl.from_pandas(final_df)
         except cx_Oracle.Error as err:
             print(f"Oracle Error for table {table_name}: {err}")
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to fetch data {err}", "data": []}
+            return {
+                "status": False,
+                "message": f"Not able to fetch data {err}",
+                "data": [],
+            }
 
-    async def get_distinct_values(self, schema_name, table_name, column_name,
-                                   where_clause=None, debug=False, **kwargs):
+    async def get_distinct_values(
+        self,
+        schema_name,
+        table_name,
+        column_name,
+        where_clause=None,
+        debug=False,
+        **kwargs,
+    ):
         try:
             columns_mapping = dict()
             connection = await self.get_connection()
             cursor = connection.cursor()
             for column in column_name:
-                query = f'''SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}"'''
+                query = (
+                    f'''SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}"'''
+                )
                 if where_clause:
-                    where_query = ''
+                    where_query = ""
                     for key, value in where_clause.items():
-                        where_query += f'"{key}" = \'{value}\' AND '
+                        where_query += f"\"{key}\" = '{value}' AND "
                     where_query = where_query[:-5]
                     if where_query:
-                        query = f'''SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query}'''
+                        query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query}"""
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 list_columns = [desc[0] for desc in cursor.description]
-                df = pd.DataFrame({col: [row[i] for row in rows] for i, col in enumerate(list_columns)})
+                df = pd.DataFrame(
+                    {
+                        col: [row[i] for row in rows]
+                        for i, col in enumerate(list_columns)
+                    }
+                )
                 columns_mapping[column] = df[column].unique().tolist()
             await self.close_connection(connection)
             return {"status": True, "message": "Success", "data": columns_mapping}
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
-            return {"status": False, "message": f"Not able to fetch data {err}", "data": []}
+            return {
+                "status": False,
+                "message": f"Not able to fetch data {err}",
+                "data": [],
+            }
 
     async def execute_query(self, query, debug=False, **kwargs):
         try:
@@ -382,10 +515,13 @@ class Oracle(BaseAction):
             cursor.execute(query)
             records = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
-            records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
+            records = {
+                column: [record[i] for record in records]
+                for i, column in enumerate(column_names)
+            }
             records = pd.DataFrame(records)
             await self.close_connection(connection)
-            return records.to_dict(orient='records')
+            return records.to_dict(orient="records")
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
@@ -415,8 +551,8 @@ class DataMonitor:
         if not changed:
             return False
 
-        old_opcda_ip  = self.oracle.active_opcda_ip
-        old_oracle_ip = self.oracle.params.get('host', 'unknown')
+        old_opcda_ip = self.oracle.active_opcda_ip
+        old_oracle_ip = self.oracle.params.get("host", "unknown")
         print(f"{'='*60}")
         print(f"OPC DA IP CHANGE DETECTED")
         print(f"  Old OPC DA IP : {old_opcda_ip}  →  Oracle IP: {old_oracle_ip}")
@@ -424,31 +560,39 @@ class DataMonitor:
         print(f"{'='*60}")
 
         # Verify the new IP has a mapping BEFORE closing the old connection
-        new_oracle_ip = self.oracle.params['opcdaipmapp'].get(new_opcda_ip)
+        new_oracle_ip = self.oracle.params["opcdaipmapp"].get(new_opcda_ip)
         if not new_oracle_ip:
-            print(f"WARNING: No Oracle IP mapping found for new OPC DA IP {new_opcda_ip}. "
-                  f"Keeping existing connection unchanged.")
+            print(
+                f"WARNING: No Oracle IP mapping found for new OPC DA IP {new_opcda_ip}. "
+                f"Keeping existing connection unchanged."
+            )
             return False
 
         # ── STEP 1: Explicitly close and exit the current connection completely ──
         print(f"Closing existing Oracle connection to {old_oracle_ip} completely...")
         await self.oracle.disconnect()
-        print(f"Existing Oracle connection CLOSED. Exited from {old_oracle_ip} successfully.")
+        print(
+            f"Existing Oracle connection CLOSED. Exited from {old_oracle_ip} successfully."
+        )
 
         # ── STEP 2: Build a fresh Oracle instance for the new IP ────────────────
         new_params = dict(self.oracle.params)
-        new_params.pop('host', None)   # __init__ will set host from mapping
-        new_params.pop('dns', None)
+        new_params.pop("host", None)  # __init__ will set host from mapping
+        new_params.pop("dns", None)
 
         try:
-            print(f"Establishing new Oracle connection via OPC DA IP {new_opcda_ip} → Oracle IP {new_oracle_ip} ...")
+            print(
+                f"Establishing new Oracle connection via OPC DA IP {new_opcda_ip} → Oracle IP {new_oracle_ip} ..."
+            )
             new_oracle = Oracle(new_params)
 
             # Test the new connection before committing to it
             test = await new_oracle.test_connection()
             if not test["status"]:
-                print(f"ERROR: New Oracle connection test failed: {test['message']}. "
-                      f"Cannot reconnect. Will retry next cycle.")
+                print(
+                    f"ERROR: New Oracle connection test failed: {test['message']}. "
+                    f"Cannot reconnect. Will retry next cycle."
+                )
                 return False
 
             # ── STEP 3: Swap in the new Oracle instance ──────────────────────────
@@ -478,11 +622,15 @@ class DataMonitor:
 
             for table_name, records in current_data.items():
                 if not isinstance(records, list):
-                    print(f"Warning: Expected list for table {table_name}, but got {type(records)}")
+                    print(
+                        f"Warning: Expected list for table {table_name}, but got {type(records)}"
+                    )
                     continue
 
                 previous_records = self.previous_data.get(table_name, [])
-                new_records = [record for record in records if record not in previous_records]
+                new_records = [
+                    record for record in records if record not in previous_records
+                ]
 
                 if new_records:
                     changed_data[table_name] = new_records
@@ -518,7 +666,9 @@ class DataMonitor:
 
             if changed_data:
                 await RabbitMQProducer().send_to_rabbitmq(changed_data)
-                print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
+                print(
+                    f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}"
+                )
             else:
                 print("No changes detected. Nothing to send.")
 
@@ -545,7 +695,9 @@ class DataMonitor:
                     """
                     tasks[table] = self.oracle.get_data(table_name=table, query=query)
                 elif table in self.table_queries and self.table_queries[table]:
-                    tasks[table] = self.oracle.get_data(table_name=table, query=self.table_queries[table])
+                    tasks[table] = self.oracle.get_data(
+                        table_name=table, query=self.table_queries[table]
+                    )
                 else:
                     tasks[table] = self.oracle.get_data(table_name=table)
 
@@ -565,7 +717,10 @@ class DataMonitor:
                 if result is None:
                     continue
                 if isinstance(result, dict):
-                    print(f"Error in {table_name}:", result.get("message", "Unknown error"))
+                    print(
+                        f"Error in {table_name}:",
+                        result.get("message", "Unknown error"),
+                    )
                     continue
                 if isinstance(result, pl.DataFrame) and result.shape[0] > 0:
                     try:
@@ -578,7 +733,9 @@ class DataMonitor:
                         print(f"Error processing data for table {table_name}: {e}")
                         print(traceback.format_exc())
 
-            print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+            print(
+                f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}"
+            )
             return processed_results
 
         except Exception as e:
@@ -591,11 +748,16 @@ class DataMonitor:
         try:
             connection_test = await self.oracle.test_connection()
             if not connection_test["status"]:
-                print(f"ERROR: Cannot connect to Oracle database: {connection_test['message']}")
+                print(
+                    f"ERROR: Cannot connect to Oracle database: {connection_test['message']}"
+                )
                 print("Please check your Oracle credentials and connection settings.")
                 return
 
-            print("Starting data monitoring... datetime:", datetime.datetime.now().isoformat())
+            print(
+                "Starting data monitoring... datetime:",
+                datetime.datetime.now().isoformat(),
+            )
             while True:
                 print(f"Fetching data (checking every {self.sleep_duration} seconds)")
 
@@ -604,7 +766,9 @@ class DataMonitor:
                 if ip_changed:
                     # IP switched — clear previous_data so we don't do a stale diff
                     # against records fetched from the old Oracle instance.
-                    print("Clearing previous_data cache after IP change to avoid stale comparison.")
+                    print(
+                        "Clearing previous_data cache after IP change to avoid stale comparison."
+                    )
                     self.previous_data = {}
 
                 current_data = await self.fetch_data()

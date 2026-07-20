@@ -17,7 +17,7 @@ ZONE_FALLBACK_MAPPING = {
     "CEN": "11350",
     "ECZ": "11600",
     "NFZ": "11100",
-    "NWF": "11370"
+    "NWF": "11370",
 }
 
 ZONE_CODE_MAPPING = [
@@ -148,18 +148,15 @@ ZONE_CODE_MAPPING = [
 ]
 
 
-
-
-
 def get_zone_code(sap_id: str, zone: str) -> str:
     """
     Get zone code from mapping based on sap_id and zone.
     If exact mapping not found, falls back to zone-only mapping.
-    
+
     Args:
         sap_id: SAP ID to look up
         zone: Zone to match
-    
+
     Returns:
         Zone code string from exact mapping or zone fallback mapping,
         empty string if zone not found in fallback mapping
@@ -168,10 +165,10 @@ def get_zone_code(sap_id: str, zone: str) -> str:
     for mapping in ZONE_CODE_MAPPING:
         if mapping["sap_id"] == str(sap_id) and mapping["zone"] == zone:
             return mapping["zone_code"]
-    
+
     # Fallback to zone-only mapping
     if zone in ZONE_FALLBACK_MAPPING:
         return ZONE_FALLBACK_MAPPING[zone]
-    
+
     # If no mapping found anywhere, return empty string
     return ""

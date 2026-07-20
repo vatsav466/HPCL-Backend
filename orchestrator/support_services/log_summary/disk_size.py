@@ -5,11 +5,8 @@ import pytz
 import subprocess
 import paramiko
 import psycopg2
-from psycopg2 import Error
 from datetime import datetime
 import orchestrator.notification_manager.notification_factory
-import io
-import base64
 import tempfile
 import os
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -19,17 +16,19 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 creds = credential_loader.get_credentials("HPCL_DEV")
 
 DB_CONFIG = {
-    'host': creds['host'],
-    'database': creds['database'],
-    'user': creds['user'],
-    'password': creds['password'],
-    'port': creds['port']
+    "host": creds["host"],
+    "database": creds["database"],
+    "user": creds["user"],
+    "password": creds["password"],
+    "port": creds["port"],
 }
 
 # List of servers to check, adjust IP range as needed
 servers = [f"10.90.38.{i}" for i in range(211, 223)]
 ssh_username = urdhva_base.settings.novex_user
-ssh_password = urdhva_base.settings.novex_password  # confirm if this password is correct otherwise update
+ssh_password = (
+    urdhva_base.settings.novex_password
+)  # confirm if this password is correct otherwise update
 
 
 # NEW FUNCTION - Clean old data to keep only 7 days
@@ -53,7 +52,9 @@ async def cleanup_old_disk_usage_data():
         connection.commit()
 
         if deleted_count > 0:
-            print(f"Successfully deleted {deleted_count} old records (older than 7 days)")
+            print(
+                f"Successfully deleted {deleted_count} old records (older than 7 days)"
+            )
         else:
             print("No old records found to delete")
 
@@ -113,22 +114,27 @@ async def insert_disk_usage_to_database(all_reports):
             # Insert only filtered records (same as CSV data)
             for _, row in filtered_df.iterrows():
                 try:
-                    cursor.execute(insert_query, (
-                        server,
-                        row.get('Filesystem', ''),
-                        row.get('Size', ''),
-                        row.get('Used', ''),
-                        row.get('Avail', ''),
-                        row.get('Use%', ''),
-                        row.get('Mounted on', '')
-                    ))
+                    cursor.execute(
+                        insert_query,
+                        (
+                            server,
+                            row.get("Filesystem", ""),
+                            row.get("Size", ""),
+                            row.get("Used", ""),
+                            row.get("Avail", ""),
+                            row.get("Use%", ""),
+                            row.get("Mounted on", ""),
+                        ),
+                    )
                     total_records += 1
                 except Exception as row_error:
                     print(f"Error inserting row for {server}: {row_error}")
                     continue
 
         connection.commit()
-        print(f"Successfully inserted {total_records} filtered disk usage records (>60%) into database")
+        print(
+            f"Successfully inserted {total_records} filtered disk usage records (>60%) into database"
+        )
 
     except Exception as e:
         print(f"Error inserting filtered disk usage data to database: {e}")
@@ -145,7 +151,9 @@ def fetch_disk_usage(host):
     try:
         if host == "10.90.38.211":
             # Local execution for this host
-            result = subprocess.run(['df', '-h'], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["df", "-h"], capture_output=True, text=True, check=True
+            )
             output = result.stdout
         else:
             # Remote execution via SSH
@@ -156,15 +164,15 @@ def fetch_disk_usage(host):
             output = stdout.read().decode()
             ssh.close()
 
-        lines = output.strip().split('\n')
-        columns = ['Filesystem', 'Size', 'Used', 'Avail', 'Use%', 'Mounted on']
+        lines = output.strip().split("\n")
+        columns = ["Filesystem", "Size", "Used", "Avail", "Use%", "Mounted on"]
         data = []
 
         # Parse lines while handling multiple words in Filesystem column
         for line in lines[1:]:
             parts = line.split()
             if len(parts) >= 6:
-                fs = ' '.join(parts[0:len(parts) - 5])
+                fs = " ".join(parts[0 : len(parts) - 5])
                 size, used, avail, use_percent, mount = parts[-5:]
                 data.append([fs, size, used, avail, use_percent, mount])
 
@@ -180,16 +188,16 @@ def parse_usage(usage_str):
     """Convert Use% string value like '77%' to integer 77 safely."""
     try:
         # Handle both string and numeric inputs
-        if usage_str is None or usage_str == '':
+        if usage_str is None or usage_str == "":
             return 0
-        
+
         # Convert to string and clean it
-        usage_clean = str(usage_str).strip().replace('%', '')
-        
+        usage_clean = str(usage_str).strip().replace("%", "")
+
         # Handle empty string after cleaning
         if not usage_clean:
             return 0
-            
+
         # Convert to integer
         return int(usage_clean)
     except (ValueError, TypeError) as e:
@@ -204,7 +212,7 @@ def filter_high_usage(df, threshold=60):
     """
     if "Use%" not in df.columns:
         return pd.DataFrame()  # no Use% column means no data to filter
-    usage_series = df['Use%'].apply(parse_usage)
+    usage_series = df["Use%"].apply(parse_usage)
     filtered_df = df[usage_series > threshold].reset_index(drop=True)
     return filtered_df
 
@@ -219,7 +227,7 @@ def create_csv_attachment(all_reports, file_timestamp):
         # Add server column to each row
         if not filtered_df.empty:
             filtered_df_copy = filtered_df.copy()
-            filtered_df_copy.insert(0, 'Server', server)
+            filtered_df_copy.insert(0, "Server", server)
             csv_data.append(filtered_df_copy)
 
     if csv_data:
@@ -239,9 +247,9 @@ def create_csv_attachment(all_reports, file_timestamp):
 
 
 async def send_disk_report(all_reports):
-    ist = pytz.timezone('Asia/Kolkata')
-    now_ist = datetime.now(ist).strftime('%d-%m-%Y %I:%M %p IST')
-    file_timestamp = datetime.now(ist).strftime('%d-%m-%Y_%H-%M')
+    ist = pytz.timezone("Asia/Kolkata")
+    now_ist = datetime.now(ist).strftime("%d-%m-%Y %I:%M %p IST")
+    file_timestamp = datetime.now(ist).strftime("%d-%m-%Y_%H-%M")
 
     html_tables = ""
     for server, df in all_reports.items():
@@ -253,8 +261,13 @@ async def send_disk_report(all_reports):
 
         try:
             # No special styling applied now, just plain table
-            html_table = filtered_df.to_html(index=False, border=0, justify='center', classes='disk-table',
-                                             escape=False)
+            html_table = filtered_df.to_html(
+                index=False,
+                border=0,
+                justify="center",
+                classes="disk-table",
+                escape=False,
+            )
         except Exception:
             # Fallback to something very basic
             html_table = filtered_df.to_html(index=False)
@@ -262,7 +275,9 @@ async def send_disk_report(all_reports):
         html_tables += f"<h3>Server: {server}</h3>{html_table}<br><br>"
 
     if not html_tables:
-        html_tables = "<p>No disk partitions with usage above 60% found on monitored servers.</p>"
+        html_tables = (
+            "<p>No disk partitions with usage above 60% found on monitored servers.</p>"
+        )
 
     html_body = f"""
     <html>
@@ -308,7 +323,9 @@ async def send_disk_report(all_reports):
 
     for attempt in range(1, 4):
         try:
-            ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+            ins = await orchestrator.notification_manager.notification_factory.get_notification_module(
+                "email"
+            )
 
             # Prepare email parameters
             email_params = {
@@ -322,11 +339,11 @@ async def send_disk_report(all_reports):
                     "manohar.v@algofusiontech.com",
                     "mohith.p@algofusiontech.com",
                     "pawann.k@algofusiontech.com",
-                    "poojitha.gumma@algofusiontech.com"
+                    "poojitha.gumma@algofusiontech.com",
                 ],
                 "html_content": True,
                 "body": html_body,
-                "force_send": True
+                "force_send": True,
             }
 
             # Add attachment if CSV file exists
@@ -342,7 +359,9 @@ async def send_disk_report(all_reports):
                     os.remove(csv_filepath)
                     print("Temporary CSV file cleaned up.")
                 except Exception as cleanup_error:
-                    print(f"Warning: Could not clean up temporary file {csv_filepath}: {cleanup_error}")
+                    print(
+                        f"Warning: Could not clean up temporary file {csv_filepath}: {cleanup_error}"
+                    )
 
             break
         except Exception as e:

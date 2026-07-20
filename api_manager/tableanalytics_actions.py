@@ -5,15 +5,17 @@ import orchestrator.analytics.aggregate_query_gateway as query_aggregate_gateway
 import orchestrator.analytics.date_bounds as date_bounds
 import orchestrator.analytics.session_filters as session_filters
 
-router = fastapi.APIRouter(prefix='/tableanalytics')
+router = fastapi.APIRouter(prefix="/tableanalytics")
 
 # Session territory filters are always merged (not exposed on the API model). Adjust here if needed.
 _TABLEANALYTICS_SESSION_VENDOR = "NOVEX"
 _TABLEANALYTICS_SESSION_MODEL = None  # None → same column map as vendor
-_TABLEANALYTICS_SESSION_COLUMN_PREFIX = ""  # joined table alias for NOVEX columns (region, zone, etc.)
+_TABLEANALYTICS_SESSION_COLUMN_PREFIX = (
+    ""  # joined table alias for NOVEX columns (region, zone, etc.)
+)
 
 
-TABLE_VENDOR_MAPPING= {
+TABLE_VENDOR_MAPPING = {
     "MOM_DAY_LEVEL_DATA": "TIBCO_SALES",
     "industry_performance": "INDUSTRY",
     "M60_LEVEL_METADATA": "TIBCO_SALES",
@@ -33,15 +35,17 @@ def _apply_tableanalytics_session_filters(data: dict) -> None:
 
 
 # Action generate_data_aggregations
-@router.post('/generate_data_aggregations', tags=['TableAnalytics'])
-async def tableanalytics_generate_data_aggregations(data: Tableanalytics_Generate_Data_AggregationsParams):
+@router.post("/generate_data_aggregations", tags=["TableAnalytics"])
+async def tableanalytics_generate_data_aggregations(
+    data: Tableanalytics_Generate_Data_AggregationsParams,
+):
     data = data.model_dump()
-    if data.get('group_by'):
-        for index, rec in enumerate(data['group_by']):
+    if data.get("group_by"):
+        for index, rec in enumerate(data["group_by"]):
             try:
                 dec = ast.literal_eval(rec)
                 if len(dec) > 1:
-                    data['group_by'][index] = dec
+                    data["group_by"][index] = dec
             except Exception as e:
                 print(e)
     _apply_tableanalytics_session_filters(data)

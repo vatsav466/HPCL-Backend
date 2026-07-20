@@ -6,33 +6,33 @@ import asyncio
 import traceback
 import numpy as np
 import pandas as pd
-import hpcl_ceg_model
 from postgresql import Postgresql
 import utilities.helpers as helpers
+
 
 class RabbitMQConsumer:
     def __init__(self):
         """Load RabbitMQ configuration from JSON file for the consumer."""
-       
+
         # Determine the environment
         environment = urdhva_base.settings.environment
 
         # Select the appropriate configuration file
-        if environment == 'prod':
+        if environment == "prod":
             config_file = "config_prod.json"
-        elif environment == 'uat':
+        elif environment == "uat":
             config_file = "config_uat.json"
         else:
             config_file = "config.json"
         with open(config_file, "r") as file:
             config = json.load(file)
 
-        self.rabbitmq_host = config.get('conn_host', '')
-        self.rabbitmq_port = int(config.get('conn_port', 5672))
-        self.rabbitmq_user = config.get('conn_user', '')
-        self.rabbitmq_password = config.get('conn_secret', '')
-        self.queue_name = config.get('conn_channel', '')
-        self.virtualhost = config.get('conn_vhost', '')
+        self.rabbitmq_host = config.get("conn_host", "")
+        self.rabbitmq_port = int(config.get("conn_port", 5672))
+        self.rabbitmq_user = config.get("conn_user", "")
+        self.rabbitmq_password = config.get("conn_secret", "")
+        self.queue_name = config.get("conn_channel", "")
+        self.virtualhost = config.get("conn_vhost", "")
 
         self.table_rename_map = config.get("rename_tables", {})
         self.column_rename_map = config.get("column_rename", {})
@@ -44,12 +44,12 @@ class RabbitMQConsumer:
     def rename_columns(self, record):
         """Rename columns based on config mapping."""
         return {self.column_rename_map.get(k, k): v for k, v in record.items()}
-    
+
     async def get_loc_details(self, sap_id):
         """Fetch location details asynchronously."""
-        bu = 'TAS'
+        bu = "TAS"
         return await helpers.get_location_details(bu, sap_id)
-        
+
     async def process_message(self, body):
         """Process received RabbitMQ messages and store them in PostgreSQL asynchronously."""
         print("body --> ", body)
@@ -65,16 +65,22 @@ class RabbitMQConsumer:
             for table_name, records in data.items():
                 new_table_name = self.rename_table(table_name)
 
-                if isinstance(records, list) and all(isinstance(record, dict) for record in records):
-                    renamed_records = [self.rename_columns(record) for record in records]
+                if isinstance(records, list) and all(
+                    isinstance(record, dict) for record in records
+                ):
+                    renamed_records = [
+                        self.rename_columns(record) for record in records
+                    ]
 
-                    print(f"Processing table: {new_table_name} with {len(records)} records")
+                    print(
+                        f"Processing table: {new_table_name} with {len(records)} records"
+                    )
 
                     # Convert to DataFrame
                     df = pd.DataFrame(renamed_records)
                     if new_table_name == "HostLocalLoadedTts":
-                         compare_cols = [col for col in df.columns if col != 'SR_NUMBER']
-                         df = df.drop_duplicates(subset=compare_cols, keep='first')
+                        compare_cols = [col for col in df.columns if col != "SR_NUMBER"]
+                        df = df.drop_duplicates(subset=compare_cols, keep="first")
                     # Convert all float to float, int to int, str to str, datetime to datetime, and handle NaN/Null values
                     for col in df.columns:
                         if df[col].dtype == np.float64 or df[col].dtype == np.float32:
@@ -89,15 +95,30 @@ class RabbitMQConsumer:
                     # Fetch location details in bulk and update DataFrame
                     if "sap_id" in df.columns:
                         unique_sap_ids = df["sap_id"].dropna().unique()
-                        location_mapping = {sap_id: await self.get_loc_details(sap_id) for sap_id in unique_sap_ids}
+                        location_mapping = {
+                            sap_id: await self.get_loc_details(sap_id)
+                            for sap_id in unique_sap_ids
+                        }
 
-                        df["location_name"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("name", ""))
-                        df["zone"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("zone", ""))
+                        df["location_name"] = df["sap_id"].map(
+                            lambda sap_id: location_mapping.get(sap_id, [None, {}])[
+                                1
+                            ].get("name", "")
+                        )
+                        df["zone"] = df["sap_id"].map(
+                            lambda sap_id: location_mapping.get(sap_id, [None, {}])[
+                                1
+                            ].get("zone", "")
+                        )
                     # Convert back to list of dictionaries
                     cleaned_records = df.to_dict(orient="records")
                     for record in cleaned_records:
-                        if 'sick_date' in record and isinstance(record['sick_date'], str):
-                           record['sick_date'] = datetime.strptime(record['sick_date'], '%Y-%m-%d %H:%M:%S')
+                        if "sick_date" in record and isinstance(
+                            record["sick_date"], str
+                        ):
+                            record["sick_date"] = datetime.strptime(
+                                record["sick_date"], "%Y-%m-%d %H:%M:%S"
+                            )
                     #     for key, value in record.items():
                     #         if isinstance(value, pd.Timestamp):
                     #             record[key] = value.to_pydatetime() if not pd.isna(value) else None
@@ -118,7 +139,6 @@ class RabbitMQConsumer:
             print(traceback.format_exc())
             print(e)
 
-    
     async def consume_from_rabbitmq(self):
         """Consume messages from RabbitMQ asynchronously with auto-reconnect on failure."""
         while True:  # Infinite loop to handle reconnections
@@ -130,7 +150,7 @@ class RabbitMQConsumer:
                     virtualhost=self.virtualhost,
                     login=self.rabbitmq_user,
                     password=self.rabbitmq_password,
-                    heartbeat=60
+                    heartbeat=60,
                 )
 
                 async with connection:
@@ -144,7 +164,9 @@ class RabbitMQConsumer:
                             async with message.process():
                                 try:
                                     body = message.body.decode()
-                                    await self.process_message(body)  # Process message asynchronously
+                                    await self.process_message(
+                                        body
+                                    )  # Process message asynchronously
                                 except Exception as e:
                                     print(f"⚠ Error processing message: {e}")
 
@@ -155,6 +177,7 @@ class RabbitMQConsumer:
             except Exception as e:
                 print(f"Unexpected error: {e}. Retrying in 5 seconds...")
                 await asyncio.sleep(5)  # Fixed 5-second retry delay
+
 
 if __name__ == "__main__":
     consumer = RabbitMQConsumer()

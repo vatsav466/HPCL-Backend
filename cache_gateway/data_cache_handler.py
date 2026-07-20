@@ -19,7 +19,9 @@ class InMemTTLCache:
         self.write_lock = threading.Lock()
         self.fetch_function = fetch_function
         print("fetch_args --> ", fetch_args)
-        self.fetch_args = fetch_args if fetch_args is not None else ()  # Initialize as empty tuple if None
+        self.fetch_args = (
+            fetch_args if fetch_args is not None else ()
+        )  # Initialize as empty tuple if None
         print("self.fetch_args --> ", self.fetch_args)
 
     @classmethod
@@ -47,11 +49,15 @@ class InMemTTLCache:
                         return value  # Return valid value
                 print("self.fetch_args --> ", self.fetch_args)
                 # If key is not found or expired, fetch and refresh
-                new_value = await self.fetch_function(*self.fetch_args)  # Pass the arguments to the fetch function
+                new_value = await self.fetch_function(
+                    *self.fetch_args
+                )  # Pass the arguments to the fetch function
                 await self.set(key, new_value)
                 return new_value
             except Exception as e:
-                print(f"Exception while doing get operation {e}, Traceback {traceback.format_exc()}")
+                print(
+                    f"Exception while doing get operation {e}, Traceback {traceback.format_exc()}"
+                )
                 return None
 
     async def set(self, key, value):
@@ -68,7 +74,9 @@ class InMemTTLCache:
         """
         String representation of the cache with non-expired items.
         """
-        return str({k: v[0] for k, v in self.store.items() if not self._is_expired(v[1])})
+        return str(
+            {k: v[0] for k, v in self.store.items() if not self._is_expired(v[1])}
+        )
 
 
 """

@@ -21,7 +21,9 @@ async def upload_tas_master_data(df):
         for data_dump in data:
             data_obj = hpcl_ceg_model.TASAssetMasterCreate(**data_dump)
             await data_obj.create()
-            await alert_helper.set_location_details(data_dump["bu"], data_dump["sap_id"], data_dump, redis_client)
+            await alert_helper.set_location_details(
+                data_dump["bu"], data_dump["sap_id"], data_dump, redis_client
+            )
         return True, "TAS Master Uploaded Successfully"
     except Exception as e:
         print(traceback.format_exc())

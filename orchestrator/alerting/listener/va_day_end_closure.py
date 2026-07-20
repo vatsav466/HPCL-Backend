@@ -10,11 +10,16 @@ import orchestrator.notification_manager.notification_factory as notification_fa
 
 logger = urdhva_base.Logger.getInstance("va_day_end_closure")
 
-async def send_closure_notification(html_table, attachment_file, total_alerts, sap_id, location_name):
+
+async def send_closure_notification(
+    html_table, attachment_file, total_alerts, sap_id, location_name
+):
 
     ins = await notification_factory.get_notification_module("email")
 
-    closure_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%d-%b-%Y")
+    closure_date = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime(
+        "%d-%b-%Y"
+    )
 
     body = body = f"""
                     <html>
@@ -104,26 +109,28 @@ async def send_closure_notification(html_table, attachment_file, total_alerts, s
     await ins.publish_message(
         subject=f"VA Day End Alert Closure Summary - {sap_id} - {location_name}",
         recipients=["sreedhar.maddipati@algofusiontech.com "],
-        cc_recipients=["venu@algofusiontech.com","moufikali@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","poojitha.gumma@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com"],
+        bcc_recipients=[
+            "yesu.p@algofusiontech.com",
+            "poojitha.gumma@algofusiontech.com",
+        ],
         html_content=True,
         body=body,
         force_send=True,
         inline_images={},
-        attachments=[attachment_file]
+        attachments=[attachment_file],
     )
+
 
 async def get_process_instance_id(business_key, camunda_url):
     process_instance_id = ""
     params = {"businessKey": business_key}
 
     url = f"{camunda_url}/engine-rest/process-instance"
-    
+
     try:
         response = requests.get(
-            url,
-            params=params,
-            timeout=(15, 15)  # (connect timeout, read timeout)
+            url, params=params, timeout=(15, 15)  # (connect timeout, read timeout)
         )
 
         response.raise_for_status()
@@ -149,7 +156,7 @@ async def _close_camunda_workflow(alert_data=None):
     RETRY_DELAY = 10
     headers = {"Content-Type": "application/json"}
     business_key = alert_data.get("unique_id")
-    instance_id = await get_process_instance_id(business_key,camunda_url)
+    instance_id = await get_process_instance_id(business_key, camunda_url)
 
     if not instance_id:
         instance_id = alert_data.get("workflow_instance_id")
@@ -157,7 +164,9 @@ async def _close_camunda_workflow(alert_data=None):
     url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
     for attempt in range(MAX_RETRIES):
         try:
-            response = requests.delete(url, headers=headers, timeout=(15, 15))  # (connect timeout, read timeout)
+            response = requests.delete(
+                url, headers=headers, timeout=(15, 15)
+            )  # (connect timeout, read timeout)
 
             if response.status_code == 204:  # Success in Camunda
                 print(f"{instance_id} Deleted successfully.")
@@ -165,22 +174,33 @@ async def _close_camunda_workflow(alert_data=None):
                 break
             else:
                 print(
-                    f"Error Deleting {alert_data['id']} {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                    f"Error Deleting {alert_data['id']} {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}"
+                )
                 logger.info(
-                    f"Error Deleting {alert_data['id']} {camunda_url} {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                    f"Error Deleting {alert_data['id']} {camunda_url} {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}"
+                )
 
         except requests.RequestException as e:
-            print(f"Request error for {camunda_url} {instance_id} {alert_data['id']} (attempt {attempt + 1}): {e}")
-            logger.info(f"Request error for {camunda_url} {instance_id} {alert_data['id']} (attempt {attempt + 1}): {e}")
+            print(
+                f"Request error for {camunda_url} {instance_id} {alert_data['id']} (attempt {attempt + 1}): {e}"
+            )
+            logger.info(
+                f"Request error for {camunda_url} {instance_id} {alert_data['id']} (attempt {attempt + 1}): {e}"
+            )
 
         # Retry logic with exponential backoff
         if attempt < MAX_RETRIES - 1:
             time.sleep(RETRY_DELAY)
         else:
-            print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
-            logger.info(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
+            print(
+                f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries."
+            )
+            logger.info(
+                f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries."
+            )
             return False
     return True
+
 
 async def day_end_closure():
     query = f"""SELECT
@@ -200,7 +220,7 @@ async def day_end_closure():
                 AND (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date =
                     ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - 1)
                 """
-    
+
     result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
 
     print(f"Total alerts to be closed: {len(result.get('data', []))}")
@@ -208,20 +228,24 @@ async def day_end_closure():
     if result.get("data", []):
         alert_counts = result["data"]
         for alert in alert_counts:
-            alert['alert_status'] = 'Close'
-            alert['alert_state'] = 'Resolved'
-            alert['closed_at'] = datetime.datetime.utcnow()
-            alert['auto_close'] = True
-            alert['alert_history'] = (alert.get('alert_history') or []) + [{
-                'action_type': 'Resolved',
-                'action_msg': 'Auto closed at the end of the day',
-                'alert_status': 'Close',
-                'action_by': 'SYSTEM',
-                'processed_time': datetime.datetime.now(datetime.timezone.utc).isoformat()
-            }]
-            alert['alert_closure_reason'] = 'DAY_END'
+            alert["alert_status"] = "Close"
+            alert["alert_state"] = "Resolved"
+            alert["closed_at"] = datetime.datetime.utcnow()
+            alert["auto_close"] = True
+            alert["alert_history"] = (alert.get("alert_history") or []) + [
+                {
+                    "action_type": "Resolved",
+                    "action_msg": "Auto closed at the end of the day",
+                    "alert_status": "Close",
+                    "action_by": "SYSTEM",
+                    "processed_time": datetime.datetime.now(
+                        datetime.timezone.utc
+                    ).isoformat(),
+                }
+            ]
+            alert["alert_closure_reason"] = "DAY_END"
             await hpcl_ceg_model.Alerts(**alert).modify()
-            
+
             try:
                 status = await _close_camunda_workflow(alert_data=alert)
                 if not status:
@@ -233,26 +257,24 @@ async def day_end_closure():
                     f"Unexpected error while closing Camunda workflow for alert "
                     f"{alert.get('id')}: {str(e)}"
                 )
-        
+
         location_wise_alerts = defaultdict(list)
 
         for alert in alert_counts:
             sap_id = alert.get("sap_id", "")
             location_wise_alerts[sap_id].append(alert)
-        
+
         for sap_id, location_alerts in location_wise_alerts.items():
             try:
                 location_name = location_alerts[0].get(
-                    "location_name",
-                    location_alerts[0].get("location", "")
+                    "location_name", location_alerts[0].get("location", "")
                 )
                 summary = defaultdict(int)
 
                 for alert in location_alerts:
                     summary[alert["interlock_name"]] += 1
-                
-                total_alerts = sum(summary.values())
 
+                total_alerts = sum(summary.values())
 
                 html_table = """
                 <table class="summary-table">
@@ -280,7 +302,7 @@ async def day_end_closure():
                 </tr>
                 </table>
                 """
-            
+
                 safe_sap_id = str(sap_id).replace("/", "_")
                 xlsx_file = f"/tmp/VA_Day_End_Closure_{safe_sap_id}.xlsx"
 
@@ -318,7 +340,7 @@ async def day_end_closure():
                     left=Side(style="thin"),
                     right=Side(style="thin"),
                     top=Side(style="thin"),
-                    bottom=Side(style="thin")
+                    bottom=Side(style="thin"),
                 )
 
                 for col_num, header in enumerate(headers, start=1):
@@ -344,10 +366,7 @@ async def day_end_closure():
 
                 # Total Row
                 ws.merge_cells(
-                    start_row=row_num,
-                    start_column=1,
-                    end_row=row_num,
-                    end_column=2
+                    start_row=row_num, start_column=1, end_row=row_num, end_column=2
                 )
 
                 total_cell = ws.cell(row=row_num, column=1)
@@ -372,9 +391,7 @@ async def day_end_closure():
                 try:
                     wb.save(xlsx_file)
                 except Exception as e:
-                    logger.exception(
-                        f"Failed to generate Excel for {sap_id}: {str(e)}"
-                    )
+                    logger.exception(f"Failed to generate Excel for {sap_id}: {str(e)}")
                     continue
 
                 try:
@@ -383,7 +400,7 @@ async def day_end_closure():
                         attachment_file=xlsx_file,
                         total_alerts=total_alerts,
                         sap_id=sap_id,
-                        location_name=location_name
+                        location_name=location_name,
                     )
                     logger.info(
                         f"Mail sent successfully for {sap_id} - {location_name}"
@@ -393,12 +410,11 @@ async def day_end_closure():
                         f"Mail sending failed for {sap_id} - {location_name}: {str(e)}"
                     )
             except Exception as e:
-                logger.exception(
-                    f"Location processing failed for {sap_id}: {str(e)}"
-                )
+                logger.exception(f"Location processing failed for {sap_id}: {str(e)}")
                 continue
+
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(day_end_closure())
-            

@@ -36,7 +36,9 @@ def _to_int(val: typing.Any, default: int = 0) -> int:
         return default
 
 
-def _conn_date_from_prefixed_key(key: str, prefix: str) -> typing.Optional[datetime.date]:
+def _conn_date_from_prefixed_key(
+    key: str, prefix: str
+) -> typing.Optional[datetime.date]:
     """Map ``{prefix}`` / ``{prefix}_DD_MM_YY`` to a calendar date."""
     if key == prefix:
         return datetime.date.today()
@@ -128,7 +130,9 @@ async def convert_dpr_file_data(file_pointer: fastapi.UploadFile):
     if resp.get("error") or flat_rows is None:
         return fastapi.responses.JSONResponse(
             status_code=400,
-            content={"message": resp.get("error") or "Detailed Report sheet missing or empty"},
+            content={
+                "message": resp.get("error") or "Detailed Report sheet missing or empty"
+            },
         )
     if len(flat_rows) == 0:
         return fastapi.responses.JSONResponse(
@@ -152,10 +156,12 @@ async def convert_dpr_file_data(file_pointer: fastapi.UploadFile):
     )
     await r_ins.close()
     return fastapi.responses.JSONResponse(
-        content=jsonable_encoder({
-            "ack_id": unique_id,
-            "payload": split,
-        })
+        content=jsonable_encoder(
+            {
+                "ack_id": unique_id,
+                "payload": split,
+            }
+        )
     )
 
 
@@ -170,20 +176,27 @@ async def sync_dpr_data(ack_id: str):
     if not raw:
         return False, "Expired records, Please upload file again"
     data = json.loads(raw)
-    if not data['detailed_report']:
+    if not data["detailed_report"]:
         return False, "Unknown cached payload format or no rows to sync."
-    for row in data['consolidated']:
+    for row in data["consolidated"]:
         q = f"""gv_name='{row["gv_name"]}' AND ga_name='{row["ga_name"]}' AND conn_date='{row["conn_date"]}'"""
-        q_parmas = urdhva_base.queryparams.QueryParams(q=q,limit=1)
-        resp = await hpcl_ceg_model.NaturalGasGVConnections.get_all(q_parmas, resp_type='')
-        if not resp['data']:
-            data['detailed_report'].append(row)
+        q_parmas = urdhva_base.queryparams.QueryParams(q=q, limit=1)
+        resp = await hpcl_ceg_model.NaturalGasGVConnections.get_all(
+            q_parmas, resp_type=""
+        )
+        if not resp["data"]:
+            data["detailed_report"].append(row)
         else:
             continue
-    for rec in data['detailed_report']:
-        rec['conn_date'] = dateutil_parser.parse(rec['conn_date']).date()
-    await hpcl_ceg_model.NaturalGasGVConnections.bulk_update(data['detailed_report'], upsert=True)
-    return True, f"Synced {len(data['detailed_report'])} NaturalGasGVConnections row(s))."
+    for rec in data["detailed_report"]:
+        rec["conn_date"] = dateutil_parser.parse(rec["conn_date"]).date()
+    await hpcl_ceg_model.NaturalGasGVConnections.bulk_update(
+        data["detailed_report"], upsert=True
+    )
+    return (
+        True,
+        f"Synced {len(data['detailed_report'])} NaturalGasGVConnections row(s)).",
+    )
 
 
 async def main(file_path) -> None:
@@ -191,16 +204,19 @@ async def main(file_path) -> None:
     split = flat_detailed_rows_to_gv_split(resp["detailed_report"])
     print(json.dumps(split, default=str))
     from orchestrator.aggregate_query_gateway import query_aggregate_gateway
-    print(await query_aggregate_gateway(
-        table="natural_gas_gv_connections",
-        filters={},
-        date_column="conn_date",
-        date_from=datetime.date(2026, 4, 1),
-        date_to=datetime.date(2026, 4, 8),
-        group_by=["gv_name", "conn_date"],
-        aggregations=[("Total", "sum", "achieved_count")],
-        order_by=[("Total", "desc")],
-    ))
+
+    print(
+        await query_aggregate_gateway(
+            table="natural_gas_gv_connections",
+            filters={},
+            date_column="conn_date",
+            date_from=datetime.date(2026, 4, 1),
+            date_to=datetime.date(2026, 4, 8),
+            group_by=["gv_name", "conn_date"],
+            aggregations=[("Total", "sum", "achieved_count")],
+            order_by=[("Total", "desc")],
+        )
+    )
 
 
 if __name__ == "__main__":

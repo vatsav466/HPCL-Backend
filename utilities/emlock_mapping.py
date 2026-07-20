@@ -11,9 +11,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "SwipeInCountExceeded": {
             "interlock_name": "Swipe In Count Exceeded",
@@ -26,9 +26,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "TToutsideTerminalRadius": {
             "interlock_name": "TT outside Terminal Radius",
@@ -41,9 +41,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "SwipeOutCountExceeded": {
             "interlock_name": "Swipe Out Count Limit Exceed",
@@ -56,9 +56,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "InvoiceNotGenerated": {
             "interlock_name": "Invoice Not Generated",
@@ -71,9 +71,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "ShipmentNumberNotGenerated": {
             "interlock_name": "Shipment Number Not Generated",
@@ -86,9 +86,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "TToutsideRoRadius": {
             "interlock_name": "TT outside RO radius",
@@ -101,9 +101,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "PreDecantationRequestExceeded": {
             "interlock_name": "Pre Decantation Request Exceed",
@@ -116,9 +116,9 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
+            },
         },
         "PostDecantationRequestExceeded": {
             "interlock_name": "Post Decantation Request Exceed",
@@ -131,14 +131,26 @@ emlock_vehicle_mapping = {
                     "value": 0,
                     "assign_role": "Location In-Charge SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": ""
+                    "escalation_time": "",
                 }
-            }
-        }
+            },
+        },
     },
     "RO": {
-        "TToutsideRoRadius": {"interlock_name": "TT outside RO radius","sop_id": "SOP020","severity": "Critical"},
-        "PreDecantationRequestExceeded": {"interlock_name": "Pre Decantation Request Exceed","sop_id": "SOP021","severity": "HIGH"},
-        "PostDecantationRequestExceeded": {"interlock_name": "Post Decantation Request Exceed","sop_id": "SOP022","severity": "Medium"}
-    }
+        "TToutsideRoRadius": {
+            "interlock_name": "TT outside RO radius",
+            "sop_id": "SOP020",
+            "severity": "Critical",
+        },
+        "PreDecantationRequestExceeded": {
+            "interlock_name": "Pre Decantation Request Exceed",
+            "sop_id": "SOP021",
+            "severity": "HIGH",
+        },
+        "PostDecantationRequestExceeded": {
+            "interlock_name": "Post Decantation Request Exceed",
+            "sop_id": "SOP022",
+            "severity": "Medium",
+        },
+    },
 }

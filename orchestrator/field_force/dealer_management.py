@@ -2,7 +2,8 @@
 Dealer Management (Ledger and Tar Analysis) - Field Force orchestrator.
 Functional schema for DealerManagement APIs. No implementation.
 """
-from typing import List, Optional
+
+from typing import Optional
 import field_force_model
 
 
@@ -22,7 +23,6 @@ async def get_last_transactions(
         {"data": [{"transaction_id", "dealer_id", "dealer_name", "date", "type", "amount", "balance", "reference", "description", ...}],
          "total": int?, "filters_applied": dict?}
     """
-    pass
 
 
 async def get_retail_ledger_transactions(
@@ -38,7 +38,6 @@ async def get_retail_ledger_transactions(
     Output:
         {"data": [TransactionRow, ...], "total": int?, "filters_applied": dict?}
     """
-    pass
 
 
 async def get_total_outstanding_dues(
@@ -53,7 +52,6 @@ async def get_total_outstanding_dues(
         {"summary": [{"total_outstanding": float, "dealer_count", "as_of_date", "level_id"?, ...}],
          "drill_down": None, "total": int?}
     """
-    pass
 
 
 async def get_top_outstanding_dealers(
@@ -70,7 +68,6 @@ async def get_top_outstanding_dealers(
         {"summary": [{"dealer_id", "dealer_name", "outstanding_amount", "days_outstanding", "rank", ...}],
          "drill_down": None, "total": int?, "top_count": int?}
     """
-    pass
 
 
 async def get_outstanding_by_days_group(
@@ -85,7 +82,6 @@ async def get_outstanding_by_days_group(
         {"data": [{"bucket_label": str, "dealer_count": int, "total_amount": float, "dealers": [{"dealer_id", "dealer_name", "amount", "days"}, ...]?}, ...],
          "total": int?, "filters_applied": dict?}
     """
-    pass
 
 
 async def get_dealer_outstanding_table(
@@ -100,7 +96,6 @@ async def get_dealer_outstanding_table(
         {"data": [{"dealer_id", "dealer_name", "pending_outstanding": float, "days_outstanding": int, "oldest_transaction_date", ...}],
          "total": int?, "filters_applied": dict?}
     """
-    pass
 
 
 async def get_outstanding_details(
@@ -115,7 +110,6 @@ async def get_outstanding_details(
         {"summary": [{"overdue_dealer_count": int, "overdue_amount": float, "level_id"?, ...}],
          "drill_down": None, "total": int?}
     """
-    pass
 
 
 async def get_outstanding_dealers(
@@ -132,4 +126,3 @@ async def get_outstanding_dealers(
         {"data": [{"dealer_id", "dealer_name", "outstanding_amount", "days_outstanding", ...}],
          "total": int?, "filters_applied": dict?}
     """
-    pass

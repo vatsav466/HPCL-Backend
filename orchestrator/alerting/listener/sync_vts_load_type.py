@@ -10,7 +10,6 @@ import redis.exceptions
 
 import orchestrator.dbconnector.credential_loader as credential_loader
 
-
 # ---------------------------------------------------------
 # Load TIBCO Credentials
 # ---------------------------------------------------------
@@ -23,10 +22,10 @@ tibco_creds = credential_loader.get_credentials("TIBCO")
 def _sync_fetch_from_tibco(query: str, params=None) -> typing.List[typing.Dict]:
     try:
         connection = mysql.connector.connect(
-            host=tibco_creds['host'],
-            user=tibco_creds['user'],
-            passwd=tibco_creds['password'],
-            port=tibco_creds['port']
+            host=tibco_creds["host"],
+            user=tibco_creds["user"],
+            passwd=tibco_creds["password"],
+            port=tibco_creds["port"],
         )
 
         cursor = connection.cursor()
@@ -52,9 +51,7 @@ def _sync_fetch_from_tibco(query: str, params=None) -> typing.List[typing.Dict]:
 # ---------------------------------------------------------
 async def fetch_from_tibco(query: str, params=None) -> typing.List[typing.Dict]:
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(
-        None, _sync_fetch_from_tibco, query, params
-    )
+    return await loop.run_in_executor(None, _sync_fetch_from_tibco, query, params)
 
 
 # ---------------------------------------------------------
@@ -148,10 +145,7 @@ class VTSLoadTypeListener:
 
             # Update Alert
             await hpcl_ceg_model.Alerts(
-                **{
-                    "id": alert_id,
-                    "load_type": transport_unit
-                }
+                **{"id": alert_id, "load_type": transport_unit}
             ).modify()
 
             print(f"Alert {alert_id} updated with load_type {transport_unit}")

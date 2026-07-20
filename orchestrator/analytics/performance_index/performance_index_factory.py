@@ -1,4 +1,3 @@
-import urdhva_base
 import os
 import pandas as pd
 import utilities.fiscal_year as fiscal_year
@@ -15,8 +14,9 @@ class PerformanceIndex:
         ...
 
     async def load_performance_index(self):
-        df = pd.read_excel(os.path.join(base_path, "PerformanceIndex_Rules.xlsx"), sheet_name=self.bu)
+        df = pd.read_excel(
+            os.path.join(base_path, "PerformanceIndex_Rules.xlsx"), sheet_name=self.bu
+        )
         return df
 
-    async def generate_performance_index(self, location_id):
-        ...
+    async def generate_performance_index(self, location_id): ...

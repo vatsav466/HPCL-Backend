@@ -1,11 +1,9 @@
 vts_query = {
     "total_trips": """select count(distinct invoice_number) from vts_alert_history""",
-
-    "tt_having_device_issue" : """SELECT count(*)
+    "tt_having_device_issue": """SELECT count(*)
                                             FROM vts_alert_history 
                                             WHERE main_supply_removal_count >= 6 
                                 """,
-
     "unblocked_by_L1": """SELECT COUNT(*) AS location_incharge_sod_count
                             FROM alerts a
                             WHERE a.alert_section = 'VTS'
@@ -35,7 +33,6 @@ vts_query = {
                                             )
                                     )
                                 )""",
-
     "unblocked_by_L2": """SELECT COUNT(*) AS zonal_transport_officer_sod_count
                             FROM alerts a
                             WHERE a.alert_section = 'VTS'
@@ -80,7 +77,6 @@ vts_query = {
                                         )
                                     )
                                 )""",
-
     "unblocked_by_L3": """SELECT COUNT(*) AS zonal_head_sod_count
                             FROM alerts a
                             WHERE a.alert_section = 'VTS'
@@ -105,14 +101,13 @@ vts_query = {
                                         AND obj->>'action_msg' ILIKE '%Zonal Transport Officer SOD%'
                                     )
                                 )""",
-    "unblocked_by_L4":"""SELECT COUNT(*) AS alert_manager_count
+    "unblocked_by_L4": """SELECT COUNT(*) AS alert_manager_count
                             FROM alerts
                             WHERE alert_section = 'VTS'
                             AND vehicle_unblocked_date IS NOT NULL
                             AND mark_as_false = TRUE
                             AND assigned_user_roles IS NOT NULL
                             AND array_length(assigned_user_roles, 1) > 0""",
-                            
     "unblocked_by_L1_data": """SELECT * 
                             FROM alerts a
                             WHERE a.alert_section = 'VTS'
@@ -210,94 +205,81 @@ vts_query = {
                                         AND obj->>'action_msg' ILIKE '%Zonal Transport Officer SOD%'
                                     )
                                 )""",
-    "unblocked_by_L4_data":"""SELECT *
+    "unblocked_by_L4_data": """SELECT *
                             FROM alerts
                             WHERE alert_section = 'VTS'
                             AND vehicle_unblocked_date IS NOT NULL
                             AND mark_as_false = TRUE
                             AND assigned_user_roles IS NOT NULL
                             AND array_length(assigned_user_roles, 1) > 0""",
-
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
                                                             and (vehicle_unblocked_date - created_at) <= interval '1 day'""",
-                                                            
     "unblocked_2_to_3_days": """select count (*) from alerts where  alert_section = 'VTS' 
                                                              and alert_status = 'Close' 
                                                              and (vehicle_unblocked_date - created_at) > interval '1 day' 
                                                              and (vehicle_unblocked_date - created_at) <= interval '3 days'""",
-
     "unblocked_greater_3_days": """select count (*) from alerts where alert_section = 'VTS' 
                                                                 and alert_status = 'Close' 
                                                                 and (vehicle_unblocked_date - created_at) > interval '3 days'""",
-    
-    "itdg_actionable" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
+    "itdg_actionable": """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
-
-    "blocked_in_ims" : """SELECT count (*) from alerts where alert_section = 'VTS' and vehicle_unblocked_date is null""",
-
-    "total_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
+    "blocked_in_ims": """SELECT count (*) from alerts where alert_section = 'VTS' and vehicle_unblocked_date is null""",
+    "total_alerts": """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                                                               AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
-
-    "blocked_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
+    "blocked_alerts": """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                                                               AND vehicle_unblocked_date is null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
-
-    "auto_unblock" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
+    "auto_unblock": """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND alert_status = 'Close' and mark_as_false = false 
                                                               and vehicle_unblocked_date is not null  and
                                                               interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                                                               and device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
-
-    "manual_unblock" : """ SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
+    "manual_unblock": """ SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND alert_status = 'Close' and mark_as_false = true and
                                                               interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') 
                                                               and vehicle_unblocked_date is not null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
-    
-    "total_alerts_download" : """
+    "total_alerts_download": """
                                  SELECT * FROM alerts WHERE  alert_section = 'VTS' AND
                                  interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                                  AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
-                               """ ,
-
-    "blocked_alerts_download" : """
+                               """,
+    "blocked_alerts_download": """
                                    SELECT * FROM alerts  WHERE  alert_section = 'VTS'
                                    AND vehicle_unblocked_date is null 
                                    AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                                    device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')	                                                                                          
                                 """,
-
-    "auto_unblock_download" : """
+    "auto_unblock_download": """
                               SELECT * FROM alerts WHERE  alert_section = 'VTS'
                               AND alert_status = 'Close' and mark_as_false = false and
                               vehicle_unblocked_date is not null 
                               AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')                                                     
                               """,
-                              
-    "manual_unblock_download" : """
+    "manual_unblock_download": """
                                 SELECT * FROM alerts
                                 WHERE  alert_section = 'VTS'
                                 AND alert_status = 'Close' AND mark_as_false = true and
                                 vehicle_unblocked_date is not null 
                                 AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                                 device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
-                                """,                          
-    "safety_compliance" : """
+                                """,
+    "safety_compliance": """
                             SELECT 
                                 event_date, 
                                 sap_id, 
@@ -309,15 +291,10 @@ vts_query = {
                                 zone from 
                             {drill_state}
                           """,
-    
-    "vts_panic" : """SELECT count(distinct invoice_no) as driver_panic from vts_panic""",
-
-    "vts_harsh_braking" : """SELECT count(distinct invoice_no) as harsh_braking from vts_harsh_braking""",
-
-    "vts_harsh_acceleration" : """SELECT count(distinct invoice_no) as harsh_acceleration from vts_harsh_acceleration""",
-
-    "vts_device_removed" : """SELECT count(distinct invoice_no) as device_removed from vts_device_removed""",
-    
+    "vts_panic": """SELECT count(distinct invoice_no) as driver_panic from vts_panic""",
+    "vts_harsh_braking": """SELECT count(distinct invoice_no) as harsh_braking from vts_harsh_braking""",
+    "vts_harsh_acceleration": """SELECT count(distinct invoice_no) as harsh_acceleration from vts_harsh_acceleration""",
+    "vts_device_removed": """SELECT count(distinct invoice_no) as device_removed from vts_device_removed""",
     "total_violations_product": """
                 SELECT 
                 (
@@ -328,8 +305,7 @@ vts_query = {
                 ) AS count
                 FROM vts_alert_history
            """,
-
-    "total_violations_trip" : """
+    "total_violations_trip": """
                 SELECT 
                 (
                  COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END) +
@@ -338,13 +314,10 @@ vts_query = {
                 ) AS count
                FROM vts_alert_history
            """,
-
-
     "vts_ongoing_trips": """
                          SELECT * from vts_ongoing_trips where violation_type = '{ongoing_trips_type}'
                          """,
-
-    "percentage_of_violations" : """
+    "percentage_of_violations": """
                                   WITH invoice_level AS (
                                             SELECT
                                                 invoice_number,
@@ -371,7 +344,6 @@ vts_query = {
                                             SUM(continuous_driving_count)     AS continuous_driving_count
                                         FROM invoice_level      
                                  """,
-
     "product_safety": """
             SELECT
             location_id,
@@ -382,7 +354,6 @@ vts_query = {
             FROM vts_alert_history
             GROUP BY location_id                   
     """,
-
     "trip_safety": """
             SELECT
             location_id,
@@ -392,8 +363,7 @@ vts_query = {
             FROM vts_alert_history
             GROUP BY location_id               
     """,
-
-    "total_violations_alerts" : """
+    "total_violations_alerts": """
         SELECT 
             {group_by_column},
             SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS "Route Deviation",
@@ -410,8 +380,7 @@ vts_query = {
             AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
         GROUP BY {group_by_column}
          """,
-
-    "violations_blocked" : """
+    "violations_blocked": """
            SELECT 
             {group_by_column},
             SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS "Route Deviation",
@@ -428,8 +397,7 @@ vts_query = {
             AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
         GROUP BY {group_by_column}
           """,
-
-    "violations_auto_unblocked" : """
+    "violations_auto_unblocked": """
             SELECT 
             {group_by_column},
             SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS "Route Deviation",
@@ -449,8 +417,7 @@ vts_query = {
             AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
         GROUP BY {group_by_column}
        """,
-
-       "violations_manual_unblocked" : """
+    "violations_manual_unblocked": """
                 SELECT
                 {group_by_column},
                 SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS "Route Deviation",
@@ -468,9 +435,7 @@ vts_query = {
                 AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
             GROUP BY {group_by_column}
            """,
-        
-
-        "violation_analytics" : """
+    "violation_analytics": """
               SELECT  vehicle_number, zone, location_name, violation_type, device_id
                 FROM alerts
                 WHERE alert_section = 'VTS'
@@ -486,8 +451,7 @@ vts_query = {
                 AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
                 AND zone != ''
           """,
-
-        "vts_history_query" : """   
+    "vts_history_query": """   
                     SELECT DISTINCT invoice_number, 
                                     tl_number, 
                                     route_deviation_count_orig, 
@@ -499,8 +463,7 @@ vts_query = {
                                     continuous_driving_count 
                     FROM vts_alert_history
            """,
-        
-        "violation_trend_alerts" : """
+    "violation_trend_alerts": """
                     SELECT 
                         {period_expr} AS period,
                          vehicle_number,
@@ -520,8 +483,7 @@ vts_query = {
                     AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
                     ORDER BY period, vehicle_number
              """,
-            
-    "violation_details" : """
+    "violation_details": """
                 SELECT
                     {period_expr} AS period,
                     COUNT(*) AS total_alerts,
@@ -539,8 +501,7 @@ vts_query = {
             GROUP BY period
             ORDER BY period
           """,
-
-    "alert_summary" : """
+    "alert_summary": """
             SELECT
             {group_by_column},
             device_id as instance_level,
@@ -570,14 +531,11 @@ vts_query = {
             AND zone != ''
         GROUP BY {group_by_column}, device_id
         ORDER BY {group_by_column}, device_id;
-             """ ,
-    
-    "shortage_tibco" : """
+             """,
+    "shortage_tibco": """
                           SELECT PLANT_CD, ZONE_CD, INVOICE_NO, VEHICLE_ID,QTY_SHORTAGE
                           FROM SALES_BASED_TRIPS_TILL_DATE
                         """,
-    
-
     "violation_drill_down": """
                             SELECT 
                                 {select_clause}
@@ -607,8 +565,7 @@ vts_query = {
                             {group_clause}
                             {order_clause}
                         """.strip(),
-
-    "shoratage_vts_history" : """
+    "shoratage_vts_history": """
                               SELECT 
                                     invoice_number,
                                     route_deviation_count_orig,
@@ -620,8 +577,7 @@ vts_query = {
                                     continuous_driving_count
                               FROM vts_alert_history  
                               """,
-    
-    "vts_insite" : """        
+    "vts_insite": """        
                 SELECT
                     sap_id,
                     location_name,
@@ -638,8 +594,7 @@ vts_query = {
                 WHERE alert_section = 'VTS'
                 GROUP BY sap_id, location_name, vehicle_number, zone
                   """,
-
-    "vts_insite_violation_type" : """
+    "vts_insite_violation_type": """
                                      SELECT 
                                         sap_id,
                                         location_name,
@@ -651,7 +606,6 @@ vts_query = {
                                     GROUP BY sap_id, location_name, vehicle_number, zone
                                     HAVING {having_clause}
                                   """,
-    
     "vts_insite_history": """
                            SELECT
                                tl_number,
@@ -679,7 +633,6 @@ vts_query = {
                                zone,
                                date_trunc('day', scheduled_trip_start_datetime);
                           """,
-
     "vts_insite_history_type": """
                                     SELECT 
                                     tl_number,
@@ -698,7 +651,6 @@ vts_query = {
                                 GROUP BY invoice_number, tl_number,DATE(scheduled_trip_start_datetime), zone, location_name
                                 HAVING {having_clause}
                             """,
-
     "closed_alerts": """ SELECT 
                             sap_id, location_name, zone, vehicle_number as tt_number, transporter_code, 
                             violation_type, zone, vehicle_blocked_start_date, 
@@ -707,7 +659,6 @@ vts_query = {
                             alerts 
                         WHERE 
                             alert_status='Close' AND alert_section='VTS' """,
-    
     "unblocked_tt_shortage": """
                             SELECT 
                                 SUM(CAST(qty_shortage AS FLOAT)) AS shortage, vehicle_id as tt_number
@@ -716,7 +667,6 @@ vts_query = {
                             WHERE 
                                 load_status = '6'
                             """,
-    
     "get_emlock_open_data": """
                             SELECT
                                 createdat, sap_id, location_name, zone, region, trucknumber,
@@ -734,44 +684,38 @@ vts_query = {
                     as emlock_open
                     FROM vts_tripauditmaster
                     WHERE invoicenumber != 'null' and invoicenumber != '' AND trip_status != 'Closed'
-                    """,   
-                                     
-    "all_violations" : [   
-                            "route_deviation_count_orig",
-                            "stoppage_violations_count",
-                            "device_tamper_count",
-                            "main_supply_removal_count",
-                            "night_driving_count",
-                            "speed_violation_count",
-                            "continuous_driving_count"
-                      ],
-
-     "power_disconnection": """
+                    """,
+    "all_violations": [
+        "route_deviation_count_orig",
+        "stoppage_violations_count",
+        "device_tamper_count",
+        "main_supply_removal_count",
+        "night_driving_count",
+        "speed_violation_count",
+        "continuous_driving_count",
+    ],
+    "power_disconnection": """
                             SELECT * 
                             FROM vts_alert_history 
                             WHERE main_supply_removal_count >= 6  
                            """,
-
     "email_master_details": """
                             SELECT sap_id, zone, transporter_name, transporter_code, location_name
                             FROM email_master
                             """,
-    "alert_details":"""
+    "alert_details": """
                     SELECT bu,zone,location_name,sap_id,alert_status,transporter_code,vehicle_number,unique_id,vehicle_blocked_start_date,vehicle_blocked_end_date 
                     FROM alerts 
                     """,
-    
-    "accept_and_block":"""
+    "accept_and_block": """
                 SELECT
                     a.id AS alert_id, a.vehicle_number,a.unique_id,
                     n.alert_id, n.notices
                 FROM alerts a, notices_vts n
                 WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'
                 AND a.vehicle_unblocked_date IS NULL AND CAST(n.alert_id AS BIGINT) = a.id
-                {final_condition}  """    ,
-
-
-                    "tt_risk_score_daily_violations": """
+                {final_condition}  """,
+    "tt_risk_score_daily_violations": """
                                         SELECT 
                                             DATE(version_date) as violation_date,
                                             dr as device_remove_count,
@@ -790,7 +734,6 @@ vts_query = {
                                         AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.tt_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
-
     "transporter_risk_score_daily_violations": """
                                         SELECT 
                                             DATE(version_date) as violation_date,
@@ -810,12 +753,10 @@ vts_query = {
                                         AND DATE(version_date) >= (SELECT DATE(MAX(version_date)) - INTERVAL '60 days' FROM public.transporter_risk_score)
                                         ORDER BY violation_date DESC
                                        """,
-
     "risk_score_violations_table_mapping": {
-                    "tt_risk_score": "tt_risk_score_daily_violations",
-                    "transporter_risk_score": "transporter_risk_score_daily_violations"
-                },
-
+        "tt_risk_score": "tt_risk_score_daily_violations",
+        "transporter_risk_score": "transporter_risk_score_daily_violations",
+    },
     "violation_columns_map": {
         "device_remove_count": "Device Removal",
         "power_disconnection_count": "Power Disconnection",
@@ -825,14 +766,11 @@ vts_query = {
         "night_driving_count": "Night Driving",
         "harsh_acceleration_count": "Harsh Acceleration",
         "harsh_turn_count": "Harsh Turn",
-        "harsh_brake_count": "Harsh Brake"
+        "harsh_brake_count": "Harsh Brake",
     },
-
-
     "cluster_map_master_drilldown": """
     SELECT m.* FROM public.cluster_master m WHERE {master_cond} {filter_str}
     """,
-
     "cluster_map_event_drilldown": """
         SELECT e.*, ctrs.trip_name
         FROM public.clusterwise_event e
@@ -840,11 +778,9 @@ vts_query = {
         LEFT JOIN public.completed_trips_risk_score ctrs ON e.invoice_no = ctrs.invoice_no
         WHERE {master_cond} {filter_str} {event_cond}
     """,
-
     "cluster_map_master_summary": """
         SELECT * FROM public.cluster_master WHERE version_date::date = '{safe_date}' {filter_str}
     """,
-
     "cluster_map_count_summary": """
         SELECT 
             e.cluster_id::text AS c_id, 
@@ -859,7 +795,6 @@ vts_query = {
         )
         GROUP BY e.cluster_id::text
     """,
-    
     "cluster_wise_daily_trends": """
         SELECT 
             DATE(version_date::date) AS day,
@@ -871,7 +806,5 @@ vts_query = {
         ) {filter_sql}
         GROUP BY DATE(version_date::date)
         ORDER BY day ASC
-    """
-    }
-    
-
+    """,
+}

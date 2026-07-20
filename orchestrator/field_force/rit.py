@@ -2,8 +2,9 @@
 RIT - Field Force orchestrator (Phase 2).
 Functional schema placeholder. To be discussed in detail; no implementation.
 """
+
 import field_force_model
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 
 async def rit_placeholder(
@@ -17,4 +18,3 @@ async def rit_placeholder(
     Output:
         To be defined with RIT scope (e.g. ListResponse or custom RIT response).
     """
-    pass

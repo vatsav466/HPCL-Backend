@@ -4,28 +4,35 @@ from hpcl_ceg_ticketing_model import *
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
 import uuid
-import traceback
 import datetime
 import json
 from pathlib import Path
 import utilities.minio_connector as minio_connector
 from typing import List
 
+
 async def attach_file_common(
     model_class,
     ticket_id: str,
     comment_id: str,
     upload_files: List[fastapi.UploadFile],
-    attachment_field: str
+    attachment_field: str,
 ):
 
     if not upload_files:
         return {"status": False, "message": "No files uploaded"}
 
     allowed_extensions = [
-        ".png", ".jpg", ".jpeg", ".gif",
-        ".csv", ".xlsx", ".xls",
-        ".pdf", ".doc", ".docx"
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".csv",
+        ".xlsx",
+        ".xls",
+        ".pdf",
+        ".doc",
+        ".docx",
     ]
 
     target_dir = urdhva_base.settings.ticketing_attachments or "/tmp"
@@ -33,8 +40,7 @@ async def attach_file_common(
 
     # Fetch record first
     params = urdhva_base.queryparams.QueryParams(
-        q=f"id='{comment_id}' and ticket_id='{ticket_id}'",
-        limit=1
+        q=f"id='{comment_id}' and ticket_id='{ticket_id}'", limit=1
     )
 
     resp = await model_class.get_all(params, resp_type="plain")
@@ -80,10 +86,7 @@ async def attach_file_common(
 
             # Upload to MinIO
             status, minio_path = minio_connector.upload_to_minio(
-                "ticket_comments",
-                record.get("ticket_id"),
-                unique_id,
-                saved_file_path
+                "ticket_comments", record.get("ticket_id"), unique_id, saved_file_path
             )
 
             if status:
@@ -105,28 +108,21 @@ async def attach_file_common(
 
     # Update DB once
     await model_class(
-        **{
-            "id": record.get("id"),
-            attachment_field: existing_attachments
-        }
+        **{"id": record.get("id"), attachment_field: existing_attachments}
     ).modify()
 
     return {
         "status": True,
         "message": "Files attached successfully",
-        attachment_field: existing_attachments
+        attachment_field: existing_attachments,
     }
+
+
 async def download_attachment_common(
-    model_class,
-    record_id: str,
-    requested_file_name: str,
-    attachment_field: str
+    model_class, record_id: str, requested_file_name: str, attachment_field: str
 ):
     # ---------------- FETCH RECORD ----------------
-    params = urdhva_base.queryparams.QueryParams(
-        q=f"id='{record_id}'",
-        limit=1
-    )
+    params = urdhva_base.queryparams.QueryParams(q=f"id='{record_id}'", limit=1)
 
     resp = await model_class.get_all(params, resp_type="plain")
 
@@ -165,5 +161,5 @@ async def download_attachment_common(
     return FileResponse(
         path=local_file_path,
         filename=requested_file_name,
-        media_type="application/octet-stream"
+        media_type="application/octet-stream",
     )

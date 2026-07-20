@@ -1,4 +1,3 @@
-import re
 import pytz
 import asyncio
 import datetime
@@ -27,9 +26,10 @@ def run_once(func):
     @run_once
     async def async_foo():
         pass
-    
+
     """
     if asyncio.iscoroutinefunction(func):
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             async with wrapper.lock:
@@ -37,8 +37,10 @@ def run_once(func):
                     wrapper.has_executed = True
                     wrapper.response = await func(*args, **kwargs)
             return wrapper.response
+
         wrapper.lock = asyncio.Lock()
     else:
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             with wrapper.lock:
@@ -46,16 +48,20 @@ def run_once(func):
                     wrapper.has_executed = True
                     wrapper.response = func(*args, **kwargs)
             return wrapper.response
-                    
+
         wrapper.lock = threading.Lock()
     wrapper.has_executed = False
     return wrapper
 
 
 def generate_unique_id(name, table_args):
-    unique_constraint = f"{snake_case(name)}_{'_'.join(table_args).replace('UrdhvaPostgresBase.', '')}"
+    unique_constraint = (
+        f"{snake_case(name)}_{'_'.join(table_args).replace('UrdhvaPostgresBase.', '')}"
+    )
     if len(unique_constraint) > 63:
-        unique_constraint = f"{snake_case(name)}_{'_'.join([args.replace('_', '')[0:5] for args in table_args]).replace('UrdhvaPostgresBase.', '')}"[0:62]
+        unique_constraint = f"{snake_case(name)}_{'_'.join([args.replace('_', '')[0:5] for args in table_args]).replace('UrdhvaPostgresBase.', '')}"[
+            0:62
+        ]
     return unique_constraint
 
 
@@ -68,7 +74,7 @@ def snake_case(s):
     Example:- snake_case("AlgoFusion")
               return:- algo_fusion
     """
-    return snakecase.convert(s)    
+    return snakecase.convert(s)
 
 
 def get_present_time(utc=False):
@@ -79,6 +85,5 @@ def get_present_time(utc=False):
     """
     time_stamp = datetime.datetime.now(datetime.timezone.utc)
     if not utc:
-        time_stamp = time_stamp.astimezone(pytz.timezone('Asia/Kolkata'))
+        time_stamp = time_stamp.astimezone(pytz.timezone("Asia/Kolkata"))
     return time_stamp
-

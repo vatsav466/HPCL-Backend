@@ -3,22 +3,21 @@ from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import os
 import json
-import shutil
 import fastapi
-import traceback
 import polars as pl
 from fastapi.responses import FileResponse
-import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.masterdata.lpg_master_upload as lpg_master_upload
 
-router = fastapi.APIRouter(prefix='/lpgassetmaster')
+router = fastapi.APIRouter(prefix="/lpgassetmaster")
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
 
 # Action upload_lpg_asset_master
-@router.post('/upload_lpg_asset_master', tags=['LPGAssetMaster'])
-async def lpgassetmaster_upload_tas_asset_master(upload_file: fastapi.UploadFile = fastapi.File(None)):
+@router.post("/upload_lpg_asset_master", tags=["LPGAssetMaster"])
+async def lpgassetmaster_upload_tas_asset_master(
+    upload_file: fastapi.UploadFile = fastapi.File(None),
+):
     """
     Upload TAS Asset Master file.
 
@@ -36,16 +35,23 @@ async def lpgassetmaster_upload_tas_asset_master(upload_file: fastapi.UploadFile
         HTTPException: If there is an error processing the CSV file.
     """
     try:
-        df = pl.read_csv(upload_file.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
+        df = pl.read_csv(upload_file.file).with_columns(
+            pl.all().cast(pl.Utf8, strict=False)
+        )
     except Exception as e:
         print(f"Exception while reading CSV file, {e}")
-        return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
+        return (
+            False,
+            "Failed to process CSV file, Please reverify uploaded content and reverify",
+        )
     return await lpg_master_upload.upload_lpg_master_data(df)
 
 
 # Action download_lpg_asset_master
-@router.post('/download_lpg_asset_master', tags=['LPGAssetMaster'])
-async def lpgassetmaster_download_lpg_asset_master(data: Lpgassetmaster_Download_Lpg_Asset_MasterParams):
+@router.post("/download_lpg_asset_master", tags=["LPGAssetMaster"])
+async def lpgassetmaster_download_lpg_asset_master(
+    data: Lpgassetmaster_Download_Lpg_Asset_MasterParams,
+):
     """
     Download LPG Asset Master data.
 
@@ -64,41 +70,47 @@ async def lpgassetmaster_download_lpg_asset_master(data: Lpgassetmaster_Download
             and the "data" is an empty list.
     """
     data = await LPGAssetMaster.get_all()
-    
+
     # Convert to a dictionary if it's a custom object
     resp_dict = data.__dict__
-    
-    if resp_dict.get('body'):
+
+    if resp_dict.get("body"):
         # Decode the byte string to a normal string
-        body_str = resp_dict['body'].decode('utf-8')
-        
+        body_str = resp_dict["body"].decode("utf-8")
+
         # Parse the JSON string into a Python dictionary
         lpg_data = json.loads(body_str)
-        
+
         # Check if there are multiple records in the "data" key
         records = lpg_data.get("data", [])
-        
+
         if records:
             # Convert the records to a Polars DataFrame
             df = pl.DataFrame(records)
-            
+
             # Save the Polars DataFrame as a CSV file
             download_path = urdhva_base.settings.download_path
             downloadpath = os.path.join(download_path, "downloads")
             if not os.path.exists(downloadpath):
                 os.makedirs(downloadpath)
-            
-            if not os.path.exists(f'{urdhva_base.settings.ui_path}/downloads'):
-                os.system(f'ln -s {downloadpath} {urdhva_base.settings.ui_path}')
+
+            if not os.path.exists(f"{urdhva_base.settings.ui_path}/downloads"):
+                os.system(f"ln -s {downloadpath} {urdhva_base.settings.ui_path}")
             df.write_csv(downloadpath + "lpg_master.csv")  # Save directly to file
-            return {"status": True, "message": "Success","data": os.path.join('/downloads', "lpg_master.csv")}        
+            return {
+                "status": True,
+                "message": "Success",
+                "data": os.path.join("/downloads", "lpg_master.csv"),
+            }
         return {"status": False, "message": "No data found", "data": []}
     return {"status": False, "message": "No response", "data": []}
 
 
 # Action download_template
-@router.post('/download_template', tags=['LPGAssetMaster'])
-async def lpgassetmaster_download_template(data: Lpgassetmaster_Download_TemplateParams):
+@router.post("/download_template", tags=["LPGAssetMaster"])
+async def lpgassetmaster_download_template(
+    data: Lpgassetmaster_Download_TemplateParams,
+):
     """
     Download LPG Asset Master Template.
 
@@ -107,7 +119,7 @@ async def lpgassetmaster_download_template(data: Lpgassetmaster_Download_Templat
     The template file is then served for download.
 
     Args:
-        data (Lpgassetmaster_Download_TemplateParams): The parameters for the 
+        data (Lpgassetmaster_Download_TemplateParams): The parameters for the
         download template request.
 
     Returns:
@@ -117,13 +129,17 @@ async def lpgassetmaster_download_template(data: Lpgassetmaster_Download_Templat
         HTTPException: If there is an error creating or serving the CSV template.
     """
     download_path = urdhva_base.settings.download_path
-    template_file_path = os.path.join(download_path, "templates", "lpg_master_template.csv")
+    template_file_path = os.path.join(
+        download_path, "templates", "lpg_master_template.csv"
+    )
 
     # Read the CSV file into a DataFrame
     df = pl.read_csv(f"{download_path}/lpg_master.csv")
 
     # Create a new empty DataFrame with the same columns as the original
-    template_df = pl.DataFrame({col: pl.Series(name=col, values=[]) for col in df.columns})
+    template_df = pl.DataFrame(
+        {col: pl.Series(name=col, values=[]) for col in df.columns}
+    )
 
     # Ensure the "templates" directory exists
     os.makedirs(os.path.dirname(template_file_path), exist_ok=True)
@@ -135,5 +151,5 @@ async def lpgassetmaster_download_template(data: Lpgassetmaster_Download_Templat
     return FileResponse(
         path=template_file_path,
         media_type="application/octet-stream",
-        filename="lpg_master_template.csv"
+        filename="lpg_master_template.csv",
     )

@@ -11,8 +11,14 @@ import json
 # CLEAN ALERT DATA
 # ============================================
 def sanitize_alert_data(alert_data):
-    for key in ["region", "district", "terminal_plant_id", "terminal_plant_name", 
-                "sales_area", "category"]:
+    for key in [
+        "region",
+        "district",
+        "terminal_plant_id",
+        "terminal_plant_name",
+        "sales_area",
+        "category",
+    ]:
         if not alert_data.get(key):
             alert_data[key] = None
     return alert_data
@@ -51,25 +57,13 @@ async def fetch_overload_data(start_date, end_date):
     )
 
     #  ADDED location_name, zone
-    fields = json.dumps([
-        "sap_id",
-        "truck_number",
-        "load_number",
-        "date_time",
-        "location_name",
-        "zone"
-    ])
-
-    params = urdhva_base.queryparams.QueryParams(
-        q=query,
-        limit=0,
-        fields=fields
+    fields = json.dumps(
+        ["sap_id", "truck_number", "load_number", "date_time", "location_name", "zone"]
     )
 
-    resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(
-        params,
-        resp_type="plain"
-    )
+    params = urdhva_base.queryparams.QueryParams(q=query, limit=0, fields=fields)
+
+    resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
 
     return resp.get("data", [])
 
@@ -97,17 +91,15 @@ async def fetch_existing_alerts(start_date):
 async def append_skip_history(existing_alert):
 
     history = existing_alert.get("alert_history") or []
-    
 
-    history.append({
-        "action_type": "Message",
-        "action_msg": "Skipped: Alert already created it already crossed the threshold count 5"
-    })
+    history.append(
+        {
+            "action_type": "Message",
+            "action_msg": "Skipped: Alert already created it already crossed the threshold count 5",
+        }
+    )
 
-    await hpcl_ceg_model.Alerts(
-        id=existing_alert["id"],
-        alert_history=history
-    ).modify()
+    await hpcl_ceg_model.Alerts(id=existing_alert["id"], alert_history=history).modify()
 
 
 # ============================================
@@ -136,10 +128,7 @@ async def process_overload_alert():
     df = df.drop_nulls(["sap_id", "truck_number", "load_number"])
 
     df = df.with_columns(
-        pl.col("sap_id")
-        .cast(pl.Utf8)
-        .str.replace_all("\x00", "")
-        .str.strip_chars()
+        pl.col("sap_id").cast(pl.Utf8).str.replace_all("\x00", "").str.strip_chars()
     )
 
     # STEP 4: DISTINCT COUNT
@@ -184,8 +173,8 @@ async def process_overload_alert():
         alert_data = {
             "bu": "TAS",
             "sap_id": sap_id,
-            "location_name": base.get("location_name"),  
-            "zone": base.get("zone"),                    
+            "location_name": base.get("location_name"),
+            "zone": base.get("zone"),
             "interlock_name": "frequent_overload_alert",
             "severity": "High",
             "alert_category": "TAS",
@@ -196,16 +185,14 @@ async def process_overload_alert():
             "alert_history": [
                 {
                     "action_type": "Created",
-                    "action_msg": f"Overload count ({cnt}) exceeded"
+                    "action_msg": f"Overload count ({cnt}) exceeded",
                 }
-            ]
+            ],
         }
 
         print(f"CREATING ALERT for SAP_ID: {sap_id}")
 
-        await alert_factory.AlertFactory.create_alert(
-            sanitize_alert_data(alert_data)
-        )
+        await alert_factory.AlertFactory.create_alert(sanitize_alert_data(alert_data))
 
     print("=== JOB COMPLETED ===\n")
 

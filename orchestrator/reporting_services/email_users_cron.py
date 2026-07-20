@@ -14,11 +14,14 @@ async def main():
         sys.exit(1)
 
     audience = sys.argv[1]
-    write_to_db = "true" if len(sys.argv) > 2 and sys.argv[2].lower() == "true" else "false"
+    write_to_db = (
+        "true" if len(sys.argv) > 2 and sys.argv[2].lower() == "true" else "false"
+    )
 
     existing_users = await hpcl_ceg_model.DailyEmailNotificationUsers.get_all(
         urdhva_base.queryparams.QueryParams(q=f"audience='{audience}'", limit=0),
-        resp_type='plain')
+        resp_type="plain",
+    )
     print("existing_users----->\n", existing_users)
 
     enabled_types = set()
@@ -38,20 +41,14 @@ async def main():
     script_path = os.path.abspath(
         os.path.join(
             os.path.dirname(hpcl_ceg_model.__file__),
-            '..',
-            'orchestrator',
-            'reporting_services',
-            'novex_daily_report_combined_test.py'
+            "..",
+            "orchestrator",
+            "reporting_services",
+            "novex_daily_report_combined_test.py",
         )
     )
 
-    cmd = [
-        sys.executable,
-        script_path,
-        write_to_db,
-        audience,
-        email_types_arg
-    ]
+    cmd = [sys.executable, script_path, write_to_db, audience, email_types_arg]
 
     print(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)

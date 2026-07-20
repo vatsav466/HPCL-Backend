@@ -2,31 +2,42 @@ import os
 import urdhva_base.model.helpers
 
 databases = {
-    'mongo': ['urdhva_base.mongomodel', 'urdhva_base.mongomodel.BaseMongoModel', 'urdhva_base.mongomodel.MongoModel'],
-    'elastic': ['urdhva_base.elasticmodel', 'urdhva_base.elasticmodel.BaseElasticModel',
-                'urdhva_base.elasticmodel.ElasticModel'],
-    'postgres': ['urdhva_base.postgresmodel', 'urdhva_base.postgresmodel.BasePostgresModel',
-                 'urdhva_base.postgresmodel.PostgresModel', 'urdhva_base.postgrestable']
+    "mongo": [
+        "urdhva_base.mongomodel",
+        "urdhva_base.mongomodel.BaseMongoModel",
+        "urdhva_base.mongomodel.MongoModel",
+    ],
+    "elastic": [
+        "urdhva_base.elasticmodel",
+        "urdhva_base.elasticmodel.BaseElasticModel",
+        "urdhva_base.elasticmodel.ElasticModel",
+    ],
+    "postgres": [
+        "urdhva_base.postgresmodel",
+        "urdhva_base.postgresmodel.BasePostgresModel",
+        "urdhva_base.postgresmodel.PostgresModel",
+        "urdhva_base.postgrestable",
+    ],
 }
 
 
 def generate(m):
-    fbase = os.path.splitext(os.path.basename(m._tx_model_params['file']))[0]
-    db = databases[m._tx_model_params['db']]
+    fbase = os.path.splitext(os.path.basename(m._tx_model_params["file"]))[0]
+    db = databases[m._tx_model_params["db"]]
     for model in m.models:
         model.dbbase = db
         model.fbase = fbase
 
     # 1) Generate the enum's in a separate file
     enum_output = urdhva_base.model.helpers.EnumsFile(m.enums).render()
-    file_name = f'{fbase}_enum.py'
+    file_name = f"{fbase}_enum.py"
     with open(file_name, "w") as f:
         f.write(enum_output)
 
     # 2) Generate the Model's in a separate file
     # model_output = '\n'.join(list(map(lambda x: x.render(), m.models)))
     model_output = urdhva_base.model.helpers.ModelsFile(m.models).render()
-    file_name = f'{fbase}_model.py'
+    file_name = f"{fbase}_model.py"
     with open(file_name, "w") as f:
         model_output = model_output.splitlines()
         # Fixing pep-8 line spaces in the final model data
@@ -48,7 +59,7 @@ def generate(m):
 
     # 3) Generate the standard API endpoints in a separate file
     std_api_output = urdhva_base.model.helpers.StdApiFile(m.models).render()
-    file_name = f'{fbase}_stdapi.py'
+    file_name = f"{fbase}_stdapi.py"
     with open(file_name, "w") as f:
         std_api_output = std_api_output.lstrip().splitlines()
         # Fixing pep-8 line spaces in the final model data
@@ -68,8 +79,8 @@ def generate(m):
     # 4) Generate the custom action's in their own files to make the editing easy
     for model in m.models:
         if len(model.actions):
-            if os.path.exists(f'{model.name.lower()}_actions.py'):
-                with open(f'{model.name.lower()}_actions.py') as f:
+            if os.path.exists(f"{model.name.lower()}_actions.py"):
+                with open(f"{model.name.lower()}_actions.py") as f:
                     actions_data = f.read().splitlines()
             else:
                 action = model.actions[0]
@@ -84,5 +95,5 @@ def generate(m):
                     continue
                 action.fbase = fbase
                 actions_data.extend(["", ""] + action.render().lstrip().splitlines())
-            with open(f'{model.name.lower()}_actions.py', "w+") as f:
-                f.write("\n".join(actions_data)+"\n")
+            with open(f"{model.name.lower()}_actions.py", "w+") as f:
+                f.write("\n".join(actions_data) + "\n")

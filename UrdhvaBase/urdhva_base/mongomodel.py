@@ -7,7 +7,6 @@ import pymongo.errors
 import motor.motor_asyncio
 import urdhva_base.utilities
 import urdhva_base.queryparams
-from pydantic.fields import Field
 
 
 class ObjectIdStr(str):
@@ -64,21 +63,25 @@ class BaseMongoModel(pydantic.BaseModel):
 
     @classmethod
     def collection_name(cls) -> str:
-        return cls.__config__.collection_name if cls.__config__.collection_name else cls.__name__.lower()
+        return (
+            cls.__config__.collection_name
+            if cls.__config__.collection_name
+            else cls.__name__.lower()
+        )
 
     @classmethod
     def from_mongo(cls, data: dict):
-        """We must convert _id into "id". """
+        """We must convert _id into "id"."""
         if not data:
             return data
         # id = data.pop('_id', None)
         return cls(**dict(data))
 
     def to_mongo(self, **kwargs):
-        exclude_unset = kwargs.pop('exclude_unset', True)
-        by_alias = kwargs.pop('by_alias', True)
-        exclude = kwargs.pop('exclude', set())
-        exclude.union({'created', 'updated', 'tenantId'})
+        exclude_unset = kwargs.pop("exclude_unset", True)
+        by_alias = kwargs.pop("by_alias", True)
+        exclude = kwargs.pop("exclude", set())
+        exclude.union({"created", "updated", "tenantId"})
 
         parsed = self.dict(
             exclude_unset=exclude_unset,
@@ -96,11 +99,13 @@ class BaseMongoModel(pydantic.BaseModel):
     async def create(self):
         try:
             data = self.to_mongo(exclude_unset=False, exclude_none=True)
-            data['c'] = data['u'] = datetime.datetime.utcnow()
-            data['tid'] = bson.ObjectId()
+            data["c"] = data["u"] = datetime.datetime.utcnow()
+            data["tid"] = bson.ObjectId()
 
             inserted_doc = await self.collection().insert_one(data)
-            collection = self.collection().with_options(read_preference=pymongo.ReadPreference.PRIMARY)
+            collection = self.collection().with_options(
+                read_preference=pymongo.ReadPreference.PRIMARY
+            )
             resp = await collection.find_one(inserted_doc.inserted_id)
             return self.from_mongo(resp)
         except pymongo.errors.DuplicateKeyError as e:
@@ -109,8 +114,10 @@ class BaseMongoModel(pydantic.BaseModel):
     async def update(self):
         try:
             data = self.to_mongo()
-            data['u'] = datetime.datetime.utcnow()
-            updated_doc = await self.collection().update_one({'_id': bson.ObjectId(self.id)}, {'$set': data})
+            data["u"] = datetime.datetime.utcnow()
+            updated_doc = await self.collection().update_one(
+                {"_id": bson.ObjectId(self.id)}, {"$set": data}
+            )
             collection = self.collection().with_options()
             resp = await collection.find_one(self.id)
             return self.from_mongo(resp)
@@ -131,20 +138,19 @@ class BaseMongoModel(pydantic.BaseModel):
 
     @classmethod
     async def delete(cls, element_id):
-        resp = await cls.collection().delete_one({'_id': bson.ObjectId(element_id)})
+        resp = await cls.collection().delete_one({"_id": bson.ObjectId(element_id)})
         return True
 
     @classmethod
     async def createIndex(cls, fieldSpec, unique=False):
-        return await cls.collection().create_index(fieldSpec, background=True, unique=unique)
+        return await cls.collection().create_index(
+            fieldSpec, background=True, unique=unique
+        )
 
     class ConfigDict:
         populate_by_name = True
-        json_encoders = {
-            bson.ObjectId: str
-        }
+        json_encoders = {bson.ObjectId: str}
         collection_name: None
 
 
-class MongoModel(BaseMongoModel):
-    ...
+class MongoModel(BaseMongoModel): ...

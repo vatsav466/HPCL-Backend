@@ -21,7 +21,7 @@
 # async def publish_command(sap_id, command, bu, location_name, user_name, employee_id, value):
 #     """
 #     Publishes commands to control gantry or ESD systems and creates/updates alerts.
-    
+
 #     Args:
 #         sap_id (str): SAP ID of the location
 #         command (str): Command to execute (gantry_shutdown, gantry_start, esd_shutdown, esd_start)
@@ -30,7 +30,7 @@
 #         user_name (str): Name of the user initiating the command
 #         employee_id (str): Employee ID of the user
 #         value: Unused parameter, maintained for backward compatibility
-        
+
 #     Returns:
 #         tuple: (success_status, message_or_data)
 #     """
@@ -104,7 +104,7 @@
 #         except Exception as e:
 #             logger.error(f"Error creating shutdown alert: {str(e)}\n{traceback.format_exc()}")
 #             return False, f"Error creating alert: {str(e)}"
-    
+
 #     # Handle alert management for start commands
 #     elif command in ("gantry_start", "esd_start"):
 #         try:
@@ -154,14 +154,14 @@
 #                     fetched_alert = fetched_alert.__dict__
 
 #                 history = fetched_alert.get("alert_history", [])
-                
+
 #                 # Get the processed_time from the last history entry to use as allocated_time
 #                 previous_processed_time = processed_time.isoformat()
 #                 if history and isinstance(history[-1], dict):
 #                     previous_processed_time = history[-1].get("processed_time", previous_processed_time)
-                
+
 #                 followup_msg = f"{'Gantry' if command == 'gantry_start' else 'ESD'} Clear Acknowledged by {user_name} with employee id {employee_id}"
-                
+
 #                 new_processed_time = datetime.datetime.now(datetime.timezone.utc)
 #                 history.append({
 #                     "processed_time": new_processed_time.isoformat(),
@@ -199,14 +199,14 @@
 #                     alert_id = alert.get("id")
 #                     if alert_id:
 #                         alert_history = alert.get('alert_history', [])
-                        
+
 #                         # Get the processed_time from the last history entry to use as allocated_time
 #                         previous_processed_time = processed_time.isoformat()
 #                         if alert_history and isinstance(alert_history[-1], dict):
 #                             previous_processed_time = alert_history[-1].get("processed_time", previous_processed_time)
-                        
+
 #                         close_processed_time = datetime.datetime.now(datetime.timezone.utc)
-                        
+
 #                         alert_history.append({
 #                             "processed_time": close_processed_time.isoformat(),
 #                             "allocated_time": previous_processed_time,  # Use previous entry's processed_time
@@ -242,21 +242,21 @@
 #             login=urdhva_base.settings.rabbitmq_username,
 #             password=urdhva_base.settings.rabbitmq_password
 #         )
-        
+
 #         message = {
 #             "command": "write",
 #             "sensor_tag": command_mapping[command]['tag'],
 #             "value": f"{command_mapping[command]['value']}"
 #         }
-        
+
 #         async with connection:
 #             channel = await connection.channel()
 #             queue_name = f'command_write_{sap_id}'
 #             logger.info(f"Publishing to queue: {queue_name}")
-            
+
 #             # Declare the queue
 #             await channel.declare_queue(queue_name, durable=True)
-            
+
 #             # Create and send the message
 #             await channel.default_exchange.publish(
 #                 aio_pika.Message(
@@ -265,10 +265,10 @@
 #                 ),
 #                 routing_key=queue_name
 #             )
-            
+
 #         logger.info(f"Successfully published {command} command to {sap_id}")
 #         return True, {"message": f"Command sent to location {sap_id}"}
-    
+
 #     except Exception as e:
 #         error_msg = f"Error publishing command to RabbitMQ: {str(e)}"
 #         logger.error(f"{error_msg}\n{traceback.format_exc()}")

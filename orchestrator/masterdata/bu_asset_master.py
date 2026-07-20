@@ -1,5 +1,4 @@
 import urdhva_base
-import os
 import json
 import requests
 import pandas as pd
@@ -34,7 +33,9 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
 
     # Iterate over each sheet and its corresponding DataFrame
     for sheet_name, df in sheets.items():
-        df.fillna("", inplace=True)  # Replace NaN values with empty strings to simplify processing
+        df.fillna(
+            "", inplace=True
+        )  # Replace NaN values with empty strings to simplify processing
 
         # Convert each row in the DataFrame to a dictionary
         for record in df.to_dict(orient="records"):
@@ -47,13 +48,26 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
             # Construct a list of sensors from the remaining key-value pairs in the record
             sensors = [
                 {"sensor_name": key.strip(), "sensor_tag": value.strip()}
-                for key, value in record.items() if value  # Include only non-empty values
+                for key, value in record.items()
+                if value  # Include only non-empty values
             ]
 
             # Add the processed device data to the list
-            devices_data.append({"device_name": device_name, "device_id": "", "entity_id": "", "sensors": sensors,
-                                 "device_type": sheet_name})
-    return {"data": devices_data, "location_id": location_id, "bu": bu, "location_name": location_name}
+            devices_data.append(
+                {
+                    "device_name": device_name,
+                    "device_id": "",
+                    "entity_id": "",
+                    "sensors": sensors,
+                    "device_type": sheet_name,
+                }
+            )
+    return {
+        "data": devices_data,
+        "location_id": location_id,
+        "bu": bu,
+        "location_name": location_name,
+    }
 
 
 class ThingsBoardInterface:
@@ -73,7 +87,7 @@ class ThingsBoardInterface:
         headers = {"Content-Type": "application/json"}
         payload = {
             "username": urdhva_base.settings.things_board_username,
-            "password": urdhva_base.settings.things_board_password
+            "password": urdhva_base.settings.things_board_password,
         }
 
         try:
@@ -105,7 +119,12 @@ class ThingsBoardInterface:
         # Initialize headers and add authorization and content-type headers
         if not headers:
             headers = {}
-        headers.update({"Content-Type": "application/json", "X-Authorization": f"Bearer {self._auth_token}"})
+        headers.update(
+            {
+                "Content-Type": "application/json",
+                "X-Authorization": f"Bearer {self._auth_token}",
+            }
+        )
 
         # Prepare the request data based on the HTTP method
         data = {"headers": headers}
@@ -115,9 +134,13 @@ class ThingsBoardInterface:
             data["json"] = payload  # Attach JSON payload for non-GET requests
 
         # Execute the request and handle errors
-        response = requests.request(method, f"{urdhva_base.settings.things_board_url}{url}", **data)
+        response = requests.request(
+            method, f"{urdhva_base.settings.things_board_url}{url}", **data
+        )
         if response.status_code // 100 != 2:  # Check for non-success HTTP status codes
-            print(f"API {url}, status_code {response.status_code}, response {response.text}")
+            print(
+                f"API {url}, status_code {response.status_code}, response {response.text}"
+            )
             print(f"{response.url}")
             return None
 
@@ -135,10 +158,14 @@ class ThingsBoardInterface:
             str or None: ID of the business unit if found or created; otherwise, None.
         """
         # Fetch existing business units with pagination
-        resp = self.api_handler("GET", "/api/customers", {}, {'pageSize': 100, 'page': 0})
+        resp = self.api_handler(
+            "GET", "/api/customers", {}, {"pageSize": 100, "page": 0}
+        )
         if resp:
-            for rec in resp['data']:
-                if rec['title'].lower() == bu.lower():  # Match BU name case-insensitively
+            for rec in resp["data"]:
+                if (
+                    rec["title"].lower() == bu.lower()
+                ):  # Match BU name case-insensitively
                     self.bu_id = rec["id"]["id"]
                     return self.bu_id
 
@@ -147,10 +174,10 @@ class ThingsBoardInterface:
             "additionalInfo": {
                 "description": f"BU: {bu}",
                 "homeDashboardHideToolbar": True,
-                "homeDashboardId": None
+                "homeDashboardId": None,
             },
             "country": "India",
-            "title": bu.upper()  # Store BU name in uppercase
+            "title": bu.upper(),  # Store BU name in uppercase
         }
         response = self.api_handler("POST", "/api/customer", {}, payload)
         if response and response.get("id"):
@@ -175,16 +202,24 @@ class ThingsBoardInterface:
         bu_id = self.get_bu(bu)
         page_size = 100
         page = 0
-        headers = {"Content-Type": "application/json", "X-Authorization": f"Bearer {self._auth_token}"}
+        headers = {
+            "Content-Type": "application/json",
+            "X-Authorization": f"Bearer {self._auth_token}",
+        }
 
         # Search for an existing location asset with pagination
         while True:
-            response = self.api_handler("GET", "/api/tenant/assets", headers, {
-                'pageSize': page_size, 'page': page, "type": "Location"
-            })
+            response = self.api_handler(
+                "GET",
+                "/api/tenant/assets",
+                headers,
+                {"pageSize": page_size, "page": page, "type": "Location"},
+            )
             if response:
                 for asset in response["data"]:
-                    if asset["name"].lower() == location_name.lower():  # Match location name case-insensitively
+                    if (
+                        asset["name"].lower() == location_name.lower()
+                    ):  # Match location name case-insensitively
                         return asset["id"]["id"]  # Return if location is found
                 if not response.get("hasNext"):  # Exit if no more pages
                     break
@@ -196,26 +231,32 @@ class ThingsBoardInterface:
         additional_info = {
             "description": f"Asset for {bu}",
             "homeDashboardHideToolbar": True,
-            "homeDashboardId": None
+            "homeDashboardId": None,
         }
         data = {
             "additionalInfo": additional_info,
             "customerId": {"id": bu_id, "entityType": "CUSTOMER"},
             "label": f"Asset-{bu}",
             "name": location_name,
-            "type": "Location"
+            "type": "Location",
         }
 
         print(data)
         response = self.api_handler("POST", "/api/asset", {}, data)
 
         # Add telemetry to the new asset
-        self.api_handler("POST", f"/api/plugins/telemetry/ASSET/{response['id']['id']}/SERVER_SCOPE", {},
-                         additional_info)
+        self.api_handler(
+            "POST",
+            f"/api/plugins/telemetry/ASSET/{response['id']['id']}/SERVER_SCOPE",
+            {},
+            additional_info,
+        )
         self.location = response
-        return response['id']['id']  # Return the newly created location asset details
+        return response["id"]["id"]  # Return the newly created location asset details
 
-    def create_device(self, bu, location_id, location_name, device_name, device_type=""):
+    def create_device(
+        self, bu, location_id, location_name, device_name, device_type=""
+    ):
         """
         Creates or updates a device in ThingsBoard under a specified business unit (BU) and location.
 
@@ -239,28 +280,41 @@ class ThingsBoardInterface:
             "location_id": f"{location_id}",
             "location_name": location_name,
             "bu_id": f"{bu_id}",
-            "bu": bu
+            "bu": bu,
         }
 
         # Check if the device already exists by querying the device info
-        device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},
-                                       {"textSearch": device_name, "pageSize": 100, "page": 0,
-                                        "sortProperty": "createdTime", "sortOrder": "DESC"})
+        device_data = self.api_handler(
+            "GET",
+            "/api/tenant/deviceInfos",
+            {},
+            {
+                "textSearch": device_name,
+                "pageSize": 100,
+                "page": 0,
+                "sortProperty": "createdTime",
+                "sortOrder": "DESC",
+            },
+        )
 
         if device_data and device_data.get("data"):
             # If the device exists, associate metadata (telemetry) and return its ID
             for record in device_data["data"]:
                 if record["name"] == device_name:
-                    self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
-                                     {}, device_scope)
-                    return record['id']['id']
+                    self.api_handler(
+                        "POST",
+                        f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
+                        {},
+                        device_scope,
+                    )
+                    return record["id"]["id"]
 
         # If the device does not exist, create a new device with the specified details
         data = {
             "additionalInfo": device_scope,
             "name": device_name,
             "label": device_name,
-            "customerId": {"entityType": "CUSTOMER", "id": bu_id}
+            "customerId": {"entityType": "CUSTOMER", "id": bu_id},
         }
         print("*" * 10)
         print(data)
@@ -269,26 +323,26 @@ class ThingsBoardInterface:
 
         if device:
             # Attach telemetry data to the newly created device
-            tele_device = self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{device['id']['id']}", {},
-                                           device_scope)
+            tele_device = self.api_handler(
+                "POST",
+                f"/api/plugins/telemetry/DEVICE/{device['id']['id']}",
+                {},
+                device_scope,
+            )
             if tele_device:
                 # Associate the device with the customer
                 data = {
                     "additionalInfo": device_scope,
-                    "customerId": {
-                        "entityType": "CUSTOMER",
-                        "id": bu_id
-                    },
-                    "id": {
-                        "entityType": "DEVICE",
-                        "id": device["id"]["id"]
-                    }
+                    "customerId": {"entityType": "CUSTOMER", "id": bu_id},
+                    "id": {"entityType": "DEVICE", "id": device["id"]["id"]},
                 }
                 print(data)
-                resp = self.api_handler("POST", f"/customer/{bu_id}/device/{device['id']['id']}", {}, data)
+                resp = self.api_handler(
+                    "POST", f"/customer/{bu_id}/device/{device['id']['id']}", {}, data
+                )
                 print(resp)
                 if resp:
-                    return resp['id']['id']
+                    return resp["id"]["id"]
 
         # Return None if the creation or association fails
         return None
@@ -311,22 +365,24 @@ class ThingsBoardInterface:
         bu_device_data = load_bu_asset_master(file_path, bu, location_id, location_name)
 
         # Get or create the location entity in ThingsBoard
-        entity_id = self.get_location(bu_device_data['bu'], bu_device_data['location_name'])
+        entity_id = self.get_location(
+            bu_device_data["bu"], bu_device_data["location_name"]
+        )
 
         # Iterate over each device and create/update it in ThingsBoard
         for device in bu_device_data["data"]:
             device_id = self.create_device(
-                bu_device_data['bu'],
-                bu_device_data['location_id'],
-                bu_device_data['location_name'],
+                bu_device_data["bu"],
+                bu_device_data["location_id"],
+                bu_device_data["location_name"],
                 device["device_name"],
-                device["device_type"]
+                device["device_type"],
             )
             if device_id:
                 # Update the device data with the created device ID
-                device['device_id'] = device_id
+                device["device_id"] = device_id
             # Add the location entity ID to the device data
-            device['entity_id'] = entity_id
+            device["entity_id"] = entity_id
 
         # Save the updated device data to a JSON file
         with open(f"{location_id}.json", "w+") as f:
@@ -336,5 +392,3 @@ class ThingsBoardInterface:
 if __name__ == "__main__":
     file_path = "/Users/venugopalnaidu/Downloads/OPC_Data_Collection_141124.xlsx"
     ThingsBoardInterface().create_bu_devices("TAS", "1234", "Wadala", file_path)
-
-

@@ -4,17 +4,17 @@ from orchestrator.dashboard.chart_factory import charts_functions
 
 
 class BignumberTrendlineChart:
-    async def get_data(self,metrics_data):
+    async def get_data(self, metrics_data):
         database = metrics_data.database
         async_session = await charts_functions.check_db(database)
         session = async_session()
         try:
             table_name, table_schema = metrics_data.table, metrics_data.schema
-            viztype = 'bignumber_trendline'
+            viztype = "bignumber_trendline"
             resp = dict()
-            resp['viztype'] = viztype
-            if metrics_data.type == 'Query':
-                resp['query'] = metrics_data.user_query
+            resp["viztype"] = viztype
+            if metrics_data.type == "Query":
+                resp["query"] = metrics_data.user_query
             else:
                 queries = metrics_data.params.queries
                 for q in queries:
@@ -26,7 +26,9 @@ class BignumberTrendlineChart:
 
                 # taking groupby columns and storing in list
 
-                grp_by_col = []  # groupby column details in dictionary {'name':'','label':''}
+                grp_by_col = (
+                    []
+                )  # groupby column details in dictionary {'name':'','label':''}
 
                 if metrics_data.params.form_data.groupby:
                     groupbyCol = metrics_data.params.form_data.groupby
@@ -41,46 +43,58 @@ class BignumberTrendlineChart:
 
                 time_grain = dict()
                 if metrics_data.params.form_data.time_grain:
-                    time_grain['column'] = metrics_data.params.form_data.x_axis.name
-                    time_grain['column_label'] = metrics_data.params.form_data.x_axis.label
-                    time_grain['granularity'] = metrics_data.params.form_data.time_grain
+                    time_grain["column"] = metrics_data.params.form_data.x_axis.name
+                    time_grain["column_label"] = (
+                        metrics_data.params.form_data.x_axis.label
+                    )
+                    time_grain["granularity"] = metrics_data.params.form_data.time_grain
 
                 if not time_grain:
                     grp_by_col.append(metrics_data.params.form_data.x_axis)
 
-                query_mode = 'aggregate'
+                query_mode = "aggregate"
                 if metrics_data.params.form_data.query_mode:
                     query_mode = metrics_data.params.form_data.query_mode
 
-
-
                 # taking orderby columns
-                orderbyColumn = {'data': [], "sortbydesc": False}
+                orderbyColumn = {"data": [], "sortbydesc": False}
                 if orderby:
-                    orderbyColumn['data'] = orderby
+                    orderbyColumn["data"] = orderby
                     if order_descending:
-                        orderbyColumn['sortbydesc'] = True
+                        orderbyColumn["sortbydesc"] = True
 
                 # getting the query
-                resp['query'] = await charts_functions.getQuery(
-                    viztype, table_name, table_schema, metrics, filters, grp_by_col, query_mode, orderbyColumn, time_grain=time_grain,
-                    rowlimit=row_limit
+                resp["query"] = await charts_functions.getQuery(
+                    viztype,
+                    table_name,
+                    table_schema,
+                    metrics,
+                    filters,
+                    grp_by_col,
+                    query_mode,
+                    orderbyColumn,
+                    time_grain=time_grain,
+                    rowlimit=row_limit,
                 )
 
             # keeping default status and data
-            resp['status'] = True
-            resp['data'] = []
+            resp["status"] = True
+            resp["data"] = []
 
             # query execution
-            query_ = resp['query']
+            query_ = resp["query"]
             print("query--> ", query_)
             start_time = datetime.datetime.now(datetime.timezone.utc)
             query_results = await session.execute(text(query_))
-            print("duration: ", datetime.datetime.now(datetime.timezone.utc) - start_time)
+            print(
+                "duration: ", datetime.datetime.now(datetime.timezone.utc) - start_time
+            )
             # final data preparation
             column_names = query_results.keys()
-            final_list = [dict(zip(column_names, row))  for row in query_results.fetchall()]
-            resp['data'] = final_list
+            final_list = [
+                dict(zip(column_names, row)) for row in query_results.fetchall()
+            ]
+            resp["data"] = final_list
             return resp
         except Exception as e:
             return {"status": False, "message": str(e), "data": []}

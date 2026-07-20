@@ -2,10 +2,8 @@ import re
 import calendar
 import parsedatetime
 import pandas as pd
-from fastapi import FastAPI, HTTPException
 from datetime import datetime, timedelta
 from holidays import country_holidays
-from typing import Optional
 from datetime import datetime, timedelta
 from functools import lru_cache
 from time import struct_time
@@ -17,7 +15,6 @@ from pyparsing import (
     Group,
     Optional as ppOptional,
     ParseException,
-    ParserElement,
     ParseResults,
     pyparsing_common,
     quotedString,
@@ -29,7 +26,10 @@ from orchestrator.dashboard.chart_factory.time_range_exceptions import (
     TimeRangeAmbiguousError,
     TimeRangeParseFailError,
 )
-from orchestrator.dashboard.chart_factory.time_range_helper import InstantTimeComparison, LRU_CACHE_MAX_SIZE, NO_TIME_RANGE
+from orchestrator.dashboard.chart_factory.time_range_helper import (
+    LRU_CACHE_MAX_SIZE,
+    NO_TIME_RANGE,
+)
 
 
 def parse_human_datetime(human_readable: str) -> datetime:
@@ -186,15 +186,15 @@ def get_since_until(  # pylint: disable=too-many-arguments,too-many-locals,too-m
     ):
         time_range = "DATETRUNC(DATEADD(DATETIME('today'), -1, YEAR), YEAR) : DATETRUNC(DATETIME('today'), YEAR)"  # pylint: disable=line-too-long,useless-suppression
     if (
-            time_range
-            and time_range.startswith("previous calendar quarter")
-            and separator not in time_range
+        time_range
+        and time_range.startswith("previous calendar quarter")
+        and separator not in time_range
     ):
         time_range = "DATETRUNC(DATEADD(DATETIME('today'), -1, QUARTER), QUARTER) : DATETRUNC(DATETIME('today'), QUARTER)"
     if (
-            time_range
-            and time_range.startswith("previous calendar day")
-            and separator not in time_range
+        time_range
+        and time_range.startswith("previous calendar day")
+        and separator not in time_range
     ):
         time_range = "DATETRUNC(DATEADD(DATETIME('today'), -1, DAY), DAY) : DATETRUNC(DATETIME('today'), DAY)"
     if (
@@ -236,13 +236,11 @@ def get_since_until(  # pylint: disable=too-many-arguments,too-many-locals,too-m
             ),
             (
                 r"^last\s+([0-9]+)\s+(second|minute|hour|day|week|month|year)s?$",
-                lambda delta,
-                unit: f"DATEADD(DATETIME('{_relative_start}'), -{int(delta)}, {unit})",  # pylint: disable=line-too-long,useless-suppression
+                lambda delta, unit: f"DATEADD(DATETIME('{_relative_start}'), -{int(delta)}, {unit})",  # pylint: disable=line-too-long,useless-suppression
             ),
             (
                 r"^next\s+([0-9]+)\s+(second|minute|hour|day|week|month|year)s?$",
-                lambda delta,
-                unit: f"DATEADD(DATETIME('{_relative_end}'), {int(delta)}, {unit})",  # pylint: disable=line-too-long,useless-suppression
+                lambda delta, unit: f"DATEADD(DATETIME('{_relative_end}'), {int(delta)}, {unit})",  # pylint: disable=line-too-long,useless-suppression
             ),
             (
                 r"^(DATETIME.*|DATEADD.*|DATETRUNC.*|LASTDAY.*|HOLIDAY.*)$",

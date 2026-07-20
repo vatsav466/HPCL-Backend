@@ -2,16 +2,15 @@ import asyncio
 import asyncpg
 import httpx
 import urdhva_base
-import os
 import sys
-import logging
 from typing import Optional
+
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 logger = urdhva_base.Logger.getInstance("device_installation_aot_status")
 
-creds_app = credential_loader.get_credentials('APP_DB')
+creds_app = credential_loader.get_credentials("APP_DB")
 
 
 HEADERS = {
@@ -20,10 +19,7 @@ HEADERS = {
 }
 
 
-async def call_hpcl_status_api(
-    client: httpx.AsyncClient,
-    request_id: int
-):
+async def call_hpcl_status_api(client: httpx.AsyncClient, request_id: int):
     """
     Call AOT Status API for a given request ID
     """
@@ -31,19 +27,21 @@ async def call_hpcl_status_api(
         response = await client.post(
             urdhva_base.settings.aot_status_url,
             json={"ID": str(request_id)},
-            headers=HEADERS
+            headers=HEADERS,
         )
-        
+
         print(f"API Response | ID={request_id} | Status={response.status_code}")
-        
+
         if response.status_code // 100 != 2:
-            print(f"API Error | ID={request_id} | Status={response.status_code} | Body={response.text}")
+            print(
+                f"API Error | ID={request_id} | Status={response.status_code} | Body={response.text}"
+            )
             return False, {
                 "status_code": response.status_code,
                 "body": response.text,
-                "message": "Error to get the link"
+                "message": "Error to get the link",
             }
-        
+
         return True, response.json()
 
     except httpx.TimeoutException:
@@ -73,20 +71,22 @@ async def process_record(
         return False
 
     data_list = response.get("data") or []
-    
+
     if not data_list or len(data_list) == 0:
         print(f"No data in response for ID={record_id}")
         return False
-    
+
     record = data_list[0]
     print(f"Record received | ID={record_id} | Data={record}")
-    
+
     sap_tt_no = record.get("SAP_TT_No")
     status = record.get("STATUS")
     request_type = record.get("REQUEST_TYPE")
-    
+
     if not sap_tt_no or not status:
-        print(f"Missing required fields | ID={record_id} | SAP_TT={sap_tt_no} | Status={status}")
+        print(
+            f"Missing required fields | ID={record_id} | SAP_TT={sap_tt_no} | Status={status}"
+        )
         return False
 
     await conn.execute(
@@ -121,16 +121,15 @@ async def run_aot_status_job():
     try:
         print("Connecting to database...")
         conn = await asyncpg.connect(
-            user=creds_app['user'],
-            password=creds_app['password'],
-            host=creds_app['host'],
-            port=creds_app['port'],
-            database=creds_app['database']
+            user=creds_app["user"],
+            password=creds_app["password"],
+            host=creds_app["host"],
+            port=creds_app["port"],
+            database=creds_app["database"],
         )
         print("Database connected")
 
-        rows = await conn.fetch(
-            """
+        rows = await conn.fetch("""
             SELECT id
             FROM device_installation
             WHERE commissioning_status = 'SUCCESS'
@@ -141,9 +140,8 @@ async def run_aot_status_job():
                 OR aot_status = 'PENDING' OR  aot_status = 'IN PROGRESS'
             )
             ORDER BY id desc
-            """
-        )
-        
+            """)
+
         print(f"Processing {len(rows)} records")
 
         success_count = 0
@@ -166,7 +164,7 @@ async def run_aot_status_job():
                 await asyncio.sleep(0.5)
 
         print(f"Job finished | Success={success_count} | Failed={failure_count}")
-        
+
     except Exception as e:
         logger.error(f"Unexpected error | {e}")
         raise
