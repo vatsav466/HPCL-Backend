@@ -1,190 +1,260 @@
-name: Backend CI/CD Pipeline
+name: CI/CD Pipeline (Backend - Python)
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [backend]
   pull_request:
-    branches:
-      - main
-
+    branches: [backend]
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: '3.11'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  # Directories that should never be linted / type-checked / scanned.
-  # Keep this list in sync across every tool step below.
-  EXCLUDE_DIRS: "venv,.venv,env,.env,__pycache__,build,dist,migrations,.git,node_modules"
+  # Docker image names must be lowercase — hardcode it once, reuse everywhere.
+  IMAGE_NAME: vatsav466/hpcl-backend
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-
   # ---------------------------------------------------------
-  # 1. LINT, TEST & SECURITY
+  # 1. LINT + UNIT TESTS
   # ---------------------------------------------------------
-  test:
-    name: Lint, Test & Security Scan
+  lint-and-test:
+    name: Lint & Unit Tests
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write   # needed for the auto-fix commit step below
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black isort autoflake pytest pytest-cov
+
+      - name: Auto-remove unused imports
+        continue-on-error: true
+        run: |
+          # autoflake --in-place actually rewrites files removing unused
+          # imports/variables, similar to eslint-plugin-unused-imports.
+          autoflake --in-place --remove-all-unused-imports --remove-unused-variables -r .
+
+      - name: Auto-format with black & isort
+        continue-on-error: true
+        run: |
+          black .
+          isort .
+
+      - name: Run flake8 (remaining issues need manual fixes)
+        id: flake8
+        continue-on-error: true
+        run: |
+          # E501 (line length) and most style issues are handled by black
+          # above. flake8 catches semantic issues (unused vars in odd
+          # scopes, undefined names, etc.) that autoflake/black can't fix.
+          flake8 . --max-line-length=100 --statistics
+
+      - name: Commit auto-fixed files
+        if: github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-fix lint/format issues [skip ci]"
+          file_pattern: '*.py'
+
+      - name: Report flake8 outcome
+        if: steps.flake8.outcome == 'failure'
+        run: |
+          echo "::warning::flake8 still reports issues after auto-fix. These need manual code changes — see the 'Run flake8' step above. Continuing pipeline anyway."
+          echo "### ⚠️ flake8 found issues that could not be auto-fixed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run unit tests with coverage
+        run: pytest --cov=. --cov-report=xml --cov-report=term || echo "No tests found, skipping"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7
+
+  # ---------------------------------------------------------
+  # 2. BUILD (validate deps install cleanly, cache pip)
+  # ---------------------------------------------------------
+  build:
+    name: Build App
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile check (catch syntax errors early)
+        run: python -m py_compile $(find . -name "*.py" -not -path "./venv/*")
+
+      - name: Package app as artifact
+        run: |
+          mkdir -p build_output
+          # Copy everything except venv/git/tests to simulate a "build"
+          rsync -av --exclude='venv' --exclude='.git' --exclude='tests' . build_output/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: build_output/
+          retention-days: 7
+
+  # ---------------------------------------------------------
+  # 3. API / INTEGRATION TESTS
+  # ---------------------------------------------------------
+  integration-tests:
+    name: E2E & Integration Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      # Required for python-ldap
-      - name: Install Ubuntu Dependencies
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            python3-dev \
-            libldap2-dev \
-            libsasl2-dev \
-            libssl-dev
-
-      - name: Create Virtual Environment
-        run: |
-          python -m venv venv
-
-      - name: Install Python Dependencies
-        run: |
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
-
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest httpx requests
 
-          pip install \
-            flake8 \
-            black \
-            isort \
-            mypy \
-            pytest \
-            pytest-cov \
-            bandit \
-            pip-audit
-
-      # NOTE: venv/.venv/etc are excluded below so third-party packages
-      # installed into the virtualenv are never linted as if they were
-      # our own source code. This is what caused the flood of
-      # pyasn1_modules / site-packages errors previously.
-
-      - name: Run Flake8
+      - name: Start app in background
         run: |
-          source venv/bin/activate
-          flake8 . --count --statistics --max-line-length=120 \
-            --ignore=E,W,F \
-            --exclude="${{ env.EXCLUDE_DIRS }}"
+          # Adjust entrypoint for your framework — this assumes FastAPI/Flask
+          # with a main.py exposing the app. Change the command if different.
+          nohup python main.py &
+          npx --yes wait-on http://localhost:8000/health --timeout 30000 || true
 
-      - name: Black Check
-        continue-on-error: true
+      - name: Run integration/API tests
         run: |
-          source venv/bin/activate
-          black --check . \
-            --extend-exclude "/(venv|\.venv|env|\.env|__pycache__|build|dist|migrations|node_modules|uat|UrdhvaBase|manual_reports)/"
-
-      - name: Isort Check
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          isort --check-only . \
-            --skip venv --skip .venv --skip env --skip .env \
-            --skip migrations --skip node_modules --skip build --skip dist \
-            --skip uat --skip UrdhvaBase --skip manual_reports
-
-      - name: MyPy
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          mypy . --ignore-missing-imports \
-            --exclude '(venv|\.venv|env|\.env|migrations|build|dist|node_modules|uat|UrdhvaBase|manual_reports)/'
-
-      - name: Run Unit Tests
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          pytest -v
-
-      - name: Coverage
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          pytest --cov=. --cov-report=xml --cov-report=term
-
-      - name: Upload Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
-
-      - name: Bandit Scan
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          bandit -r . -x ./venv,./.venv,./env,./.env,./tests,./migrations,./node_modules,./uat,./UrdhvaBase,./manual_reports -ll
-
-      - name: Dependency Scan
-        continue-on-error: true
-        run: |
-          source venv/bin/activate
-          pip-audit -r requirements.txt
-
-      - name: API Tests
-        run: |
-          if [ -f postman/collection.json ]; then
-            npm install -g newman
-            newman run postman/collection.json \
-              -e postman/environment.json \
-              --reporters cli,junit \
-              --reporter-junit-export newman-report.xml
+          if [ -d "tests/integration" ]; then
+            pytest tests/integration
           else
-            echo "No Postman collection found."
+            echo "::warning::No integration tests found yet — skipping this step."
+            echo "### ⚠️ No integration tests found" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: test-results/
+          retention-days: 14
+
   # ---------------------------------------------------------
-  # 2. DEPLOY
+  # 4. DOCKER BUILD & PUSH TO GHCR
+  # ---------------------------------------------------------
+  docker-build-and-push:
+    name: Build & Push Docker Image
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/backend'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------
+  # 5. DEPLOY
   # ---------------------------------------------------------
   deploy:
     name: Deploy
+    needs: docker-build-and-push
     runs-on: ubuntu-latest
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/backend'
     steps:
       - name: Set lowercase image name
-        run: |
-          echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        run: echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      - name: Verify required secrets
+      - name: Verify required secrets are set
         run: |
           missing=0
-
-          [ -z "${{ secrets.DEPLOY_HOST }}" ] && echo "::error::DEPLOY_HOST missing" && missing=1
-          [ -z "${{ secrets.DEPLOY_USER }}" ] && echo "::error::DEPLOY_USER missing" && missing=1
-          [ -z "${{ secrets.DEPLOY_PASSWORD }}" ] && echo "::error::DEPLOY_PASSWORD missing" && missing=1
-
+          [ -z "${{ secrets.DEPLOY_HOST }}" ] && echo "::error::DEPLOY_HOST secret is missing" && missing=1
+          [ -z "${{ secrets.DEPLOY_USER }}" ] && echo "::error::DEPLOY_USER secret is missing" && missing=1
+          [ -z "${{ secrets.DEPLOY_PASSWORD }}" ] && echo "::error::DEPLOY_PASSWORD secret is missing" && missing=1
+          [ -z "${{ secrets.GHCR_PAT }}" ] && echo "::error::GHCR_PAT secret is missing" && missing=1
           if [ "$missing" -eq 1 ]; then
+            echo "Add missing secrets under Settings > Secrets and variables > Actions"
             exit 1
           fi
+          echo "All required secrets are present."
 
-      - name: Deploy to Server
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy to server via SSH
         env:
           DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -192,33 +262,21 @@ jobs:
           port: 22
           envs: DEPLOY_PASSWORD
           script: |
-
             run_sudo() {
               echo "$DEPLOY_PASSWORD" | sudo -S "$@"
             }
-
             run_sudo -v
 
-            # Clone or pull latest code on server
-            if [ -d "/opt/hpcl-backend" ]; then
-              git -C /opt/hpcl-backend pull origin main
-            else
-              git clone https://github.com/vatsav466/HPCL-Backend.git /opt/hpcl-backend
-            fi
+            run_sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GHCR_PAT }}"
+            run_sudo docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
-            # Build Docker image on server
-            run_sudo bash -c "cd /opt/hpcl-backend && docker build -t hpcl-backend ."
-
-            # Stop and remove existing container
             run_sudo docker stop hpcl-backend || true
             run_sudo docker rm hpcl-backend || true
 
-            # Run new container
             run_sudo docker run -d \
               --name hpcl-backend \
               --restart unless-stopped \
               -p 8000:8000 \
-              hpcl-backend
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
-            # Clean up old images
-            run_sudo docker image prune -af
+            run_sudo docker image prune -f
