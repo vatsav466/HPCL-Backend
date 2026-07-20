@@ -27,9 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # version changes as Oracle updates the "latest" download. We get the actual
 # directory path and use it directly.
 RUN mkdir -p /opt/oracle && cd /opt/oracle \
-    && wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip \
-    && unzip -q instantclient-basiclite-linuxx64.zip \
-    && rm instantclient-basiclite-linuxx64.zip \
+    && wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-linuxx64.zip \
+    && unzip -q instantclient-linuxx64.zip \
+    && rm instantclient-linuxx64.zip \
     && INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1) \
     && cd "$INSTALL_DIR" \
     && rm -f libclntsh.so libocci.so \

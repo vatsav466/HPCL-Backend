@@ -48,9 +48,10 @@ jobs:
       - name: Install Oracle Instant Client (required to build cx_Oracle)
         run: |
           sudo mkdir -p /opt/oracle && cd /opt/oracle
-          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
-          sudo unzip -q instantclient-basiclite-linuxx64.zip
-          sudo rm instantclient-basiclite-linuxx64.zip
+          # Use full instantclient (not basiclite) which contains required libraries
+          sudo wget -q https://download.oracle.com/otn_software/linux/instantclient/instantclient-linuxx64.zip
+          sudo unzip -q instantclient-linuxx64.zip
+          sudo rm instantclient-linuxx64.zip
           # Get the actual extracted directory name (version may change)
           INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1)
           # Create symlinks for the library files inside the actual directory
