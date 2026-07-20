@@ -160,6 +160,7 @@ jobs:
   e2e-and-visual-regression:
     name: E2E & Visual Regression
     needs: build-app
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -210,7 +211,7 @@ jobs:
   build-and-push-docker-image:
     name: Build & Push Docker Image
     needs: e2e-and-visual-regression
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
@@ -247,6 +248,7 @@ jobs:
   deploy:
     name: Deploy
     needs: build-and-push-docker-image
+    if: always()
     runs-on: ubuntu-latest
     environment: production
     steps:
