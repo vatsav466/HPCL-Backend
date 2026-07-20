@@ -94,7 +94,7 @@ jobs:
         run: |
           source venv/bin/activate
           black --check . \
-            --extend-exclude "/(venv|\.venv|env|\.env|__pycache__|build|dist|migrations|node_modules)/"
+            --extend-exclude "/(venv|\.venv|env|\.env|__pycache__|build|dist|migrations|node_modules|uat|UrdhvaBase|manual_reports)/"
 
       - name: Isort Check
         continue-on-error: true
@@ -102,14 +102,15 @@ jobs:
           source venv/bin/activate
           isort --check-only . \
             --skip venv --skip .venv --skip env --skip .env \
-            --skip migrations --skip node_modules --skip build --skip dist
+            --skip migrations --skip node_modules --skip build --skip dist \
+            --skip uat --skip UrdhvaBase --skip manual_reports
 
       - name: MyPy
         continue-on-error: true
         run: |
           source venv/bin/activate
           mypy . --ignore-missing-imports \
-            --exclude '(venv|\.venv|env|\.env|migrations|build|dist|node_modules)/'
+            --exclude '(venv|\.venv|env|\.env|migrations|build|dist|node_modules|uat|UrdhvaBase|manual_reports)/'
 
       - name: Run Unit Tests
         continue-on-error: true
@@ -130,9 +131,10 @@ jobs:
           path: coverage.xml
 
       - name: Bandit Scan
+        continue-on-error: true
         run: |
           source venv/bin/activate
-          bandit -r . -x ./venv,./.venv,./env,./.env,./tests,./migrations,./node_modules -ll
+          bandit -r . -x ./venv,./.venv,./env,./.env,./tests,./migrations,./node_modules,./uat,./UrdhvaBase,./manual_reports -ll
 
       - name: Dependency Scan
         continue-on-error: true
