@@ -181,6 +181,7 @@ jobs:
           fi
 
       - name: Deploy to Server
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         env:
           DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
