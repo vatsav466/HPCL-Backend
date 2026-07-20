@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 100
+extend-ignore =
+    E203,   # whitespace before ':' (conflicts with black)
+    W503,   # line break before binary operator (conflicts with black)
+    F405,   # may be undefined from star imports (star-import pattern already in use)
+    W291,   # trailing whitespace — cosmetic, black will fix
+    W293,   # blank line contains whitespace — cosmetic
+    W391    # blank line at end of file — cosmetic
+exclude =
+    venv,
+    .git,
+    __pycache__,
+    build_output
