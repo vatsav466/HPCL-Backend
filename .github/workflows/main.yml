@@ -54,8 +54,11 @@ jobs:
           # Get the actual extracted directory name (version may change)
           INSTALL_DIR=$(ls -d /opt/oracle/instantclient_* | head -n1)
           # Create symlinks for the library files inside the actual directory
-          cd "$INSTALL_DIR" && sudo ln -sf libclntsh.so.* libclntsh.so
-          sudo ln -sf "$INSTALL_DIR/libocci.so.*" "$INSTALL_DIR/libocci.so" || true
+          # Remove existing files first to avoid "Not a directory" error
+          sudo rm -f "$INSTALL_DIR/libclntsh.so" "$INSTALL_DIR/libocci.so"
+          cd "$INSTALL_DIR"
+          sudo ln -sf libclntsh.so.* libclntsh.so
+          sudo ln -sf libocci.so.* libocci.so || true
           echo "LD_LIBRARY_PATH=$INSTALL_DIR:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "OCI_LIB_DIR=$INSTALL_DIR" >> $GITHUB_ENV
           echo "OCI_INC_DIR=$INSTALL_DIR/sdk/include" >> $GITHUB_ENV
