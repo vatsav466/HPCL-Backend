@@ -57,8 +57,13 @@ jobs:
           # Remove existing files first to avoid "Not a directory" error
           sudo rm -f "$INSTALL_DIR/libclntsh.so" "$INSTALL_DIR/libocci.so"
           cd "$INSTALL_DIR"
-          sudo ln -sf libclntsh.so.* libclntsh.so
-          sudo ln -sf libocci.so.* libocci.so || true
+          # Create symlinks only if the source files exist
+          if ls libclntsh.so.* 1> /dev/null 2>&1; then
+            sudo ln -sf libclntsh.so.* libclntsh.so
+          fi
+          if ls libocci.so.* 1> /dev/null 2>&1; then
+            sudo ln -sf libocci.so.* libocci.so
+          fi
           echo "LD_LIBRARY_PATH=$INSTALL_DIR:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "OCI_LIB_DIR=$INSTALL_DIR" >> $GITHUB_ENV
           echo "OCI_INC_DIR=$INSTALL_DIR/sdk/include" >> $GITHUB_ENV
