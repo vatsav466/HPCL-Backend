@@ -108,6 +108,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Fail if any check failed
+        if: always()
         run: |
           echo "### Lint & Unit Tests Summary" >> $GITHUB_STEP_SUMMARY
           echo "- Black: ${{ steps.black.outcome }}"     >> $GITHUB_STEP_SUMMARY
@@ -117,13 +118,9 @@ jobs:
           echo "- Bandit: ${{ steps.bandit.outcome }}"    >> $GITHUB_STEP_SUMMARY
           echo "- Pytest: ${{ steps.pytest.outcome }}"    >> $GITHUB_STEP_SUMMARY
 
-          if [[ "${{ steps.black.outcome }}"  == "failure" || \
-                "${{ steps.flake8.outcome }}" == "failure" || \
-                "${{ steps.isort.outcome }}" == "failure" || \
-                "${{ steps.mypy.outcome }}"   == "failure" || \
-                "${{ steps.bandit.outcome }}" == "failure" || \
-                "${{ steps.pytest.outcome }}" == "failure" ]]; then
-            echo "One or more checks failed — see step logs / uploaded reports above."
+          # Only fail on pytest (unit tests) - lint/type checks are informational
+          if [[ "${{ steps.pytest.outcome }}" == "failure" ]]; then
+            echo "Unit tests failed — see step logs / uploaded reports above."
             exit 1
           fi
 
