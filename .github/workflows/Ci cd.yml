@@ -192,12 +192,22 @@ jobs:
       - name: Bandit (static security scan)
         id: bandit
         continue-on-error: true
-        run: bandit -r . -x ./tests,./venv -f json -o bandit-report.json
+        run: |
+          bandit -r . -x ./tests,./venv -f json -o bandit-report.json
+
+      - name: Ensure Bandit report exists
+        if: always()
+        run: '[ -f bandit-report.json ] || echo "{\"results\": [], \"errors\": [\"bandit failed to run\"]}" > bandit-report.json'
 
       - name: pip-audit (dependency vulnerability scan)
         id: pip_audit
         continue-on-error: true
-        run: pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
+        run: |
+          pip-audit -r requirements.txt -f json -o pip-audit-report.json
+
+      - name: Ensure pip-audit report exists
+        if: always()
+        run: '[ -f pip-audit-report.json ] || echo "{\"dependencies\": [], \"errors\": [\"pip-audit failed to run\"]}" > pip-audit-report.json'
 
       - name: Upload Security Reports
         if: always()
