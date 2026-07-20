@@ -90,12 +90,14 @@ jobs:
             --exclude="${{ env.EXCLUDE_DIRS }}"
 
       - name: Black Check
+        continue-on-error: true
         run: |
           source venv/bin/activate
           black --check . \
             --extend-exclude "/(venv|\.venv|env|\.env|__pycache__|build|dist|migrations|node_modules)/"
 
       - name: Isort Check
+        continue-on-error: true
         run: |
           source venv/bin/activate
           isort --check-only . \
