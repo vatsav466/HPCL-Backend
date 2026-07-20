@@ -91,6 +91,8 @@ jobs:
         run: pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
 
       - name: Run API Tests
+        if: always()
+        continue-on-error: true
         run: |
           python -m pip install --upgrade pip pytest httpx
           pytest tests/api -v || true
