@@ -3,8 +3,9 @@ import asyncio
 import hpcl_ceg_model
 
 
-async def sync_user_roles():
-    role_mapping = {
+# async def sync_user_roles():
+
+role_mapping = {
     "Zonal Operations SOD": {
         "allowed_pages": [
             {
@@ -4157,10 +4158,14 @@ async def sync_user_roles():
         ]
     }
 }
-    await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"],"bu": [value.get("name")]}
-                                            for key, value in role_mapping.items()], upsert=True,
-                                           upsert_skip_keys=['name'])
+    # await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"],"bu": value.get("name", [])}
+    #                                         for key, value in role_mapping.items()], upsert=True,
+    #                                        upsert_skip_keys=['name'])
 
 
 if __name__ == "__main__":
-    asyncio.run(sync_user_roles())
+#     asyncio.run(sync_user_roles())
+
+    for key, value in role_mapping.items():
+        if [value.get("name")]:
+            print(key, value.get["name"])
