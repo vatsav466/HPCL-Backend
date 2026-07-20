@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.12'   # bumped from 3.11 — your code uses PEP 701 f-string syntax (nested same-quotes), only valid on 3.12+
+  PYTHON_VERSION: '3.12'
   REGISTRY: ghcr.io
   IMAGE_NAME: vatsav466/hpcl-backend
 
@@ -39,6 +39,15 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.txt'
 
+      # Same system libs needed here as in the Dockerfile, since this job
+      # also runs `pip install -r requirements.txt` (python-ldap compiles
+      # the same way on the runner as it does in the image).
+      - name: Install system build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc build-essential libldap2-dev libsasl2-dev libssl-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -60,7 +69,7 @@ jobs:
         id: flake8
         continue-on-error: true
         run: |
-          flake8 . --max-line-length=100 --statistics
+          flake8 . --statistics
 
       - name: Commit auto-fixed files
         if: github.event_name == 'push'
@@ -72,7 +81,7 @@ jobs:
       - name: Report flake8 outcome
         if: steps.flake8.outcome == 'failure'
         run: |
-          echo "::warning::flake8 still reports issues after auto-fix. See the 'Run flake8' step above."
+          echo "::warning::flake8 reported issues — see 'Run flake8' step above. Not blocking pipeline."
           echo "### ⚠️ flake8 found issues that could not be auto-fixed" >> $GITHUB_STEP_SUMMARY
 
       - name: Run unit tests with coverage
@@ -112,6 +121,12 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.txt'
 
+      - name: Install system build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc build-essential libldap2-dev libsasl2-dev libssl-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -121,7 +136,7 @@ jobs:
         continue-on-error: true
         run: |
           python -m py_compile $(find . -name "*.py" -not -path "./venv/*" -not -path "./.git/*") \
-            || echo "::warning::Some files failed py_compile — check above for details. Not blocking build."
+            || echo "::warning::Some files failed py_compile — see log above. Not blocking build."
 
       - name: Package app as artifact
         run: |
@@ -153,6 +168,12 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.txt'
 
+      - name: Install system build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc build-essential libldap2-dev libsasl2-dev libssl-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -161,14 +182,13 @@ jobs:
 
       - name: Start app in background
         run: |
-          # Adjust entrypoint (main.py / app.main:app etc.) to match your actual app
           nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
           npx --yes wait-on http://localhost:8000/health --timeout 30000 || echo "::warning::App did not become healthy in time — check app.log"
 
       - name: Run integration/E2E tests
         run: |
           if [ -d "tests/integration" ] || [ -d "tests/e2e" ]; then
-            pytest tests/integration tests/e2e --ignore-glob='*not_exists*' 2>/dev/null || pytest tests/integration 2>/dev/null || pytest tests/e2e 2>/dev/null
+            pytest tests/integration tests/e2e 2>/dev/null || pytest tests/integration 2>/dev/null || pytest tests/e2e 2>/dev/null
           else
             echo "::warning::No integration/e2e tests found yet — skipping."
           fi
