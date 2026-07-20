@@ -15,6 +15,9 @@ env:
   PYTHON_VERSION: "3.11"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Directories that should never be linted / type-checked / scanned.
+  # Keep this list in sync across every tool step below.
+  EXCLUDE_DIRS: "venv,.venv,env,.env,__pycache__,build,dist,migrations,.git,node_modules"
 
 jobs:
 
@@ -74,26 +77,36 @@ jobs:
             bandit \
             pip-audit
 
+      # NOTE: venv/.venv/etc are excluded below so third-party packages
+      # installed into the virtualenv are never linted as if they were
+      # our own source code. This is what caused the flood of
+      # pyasn1_modules / site-packages errors previously.
+
       - name: Run Flake8
         run: |
           source venv/bin/activate
-          flake8 . --count --statistics --max-line-length=120
+          flake8 . --count --statistics --max-line-length=120 \
+            --exclude="${{ env.EXCLUDE_DIRS }}"
 
       - name: Black Check
         run: |
           source venv/bin/activate
-          black --check .
+          black --check . \
+            --extend-exclude "/(venv|\.venv|env|\.env|__pycache__|build|dist|migrations|node_modules)/"
 
       - name: Isort Check
         run: |
           source venv/bin/activate
-          isort --check-only .
+          isort --check-only . \
+            --skip venv --skip .venv --skip env --skip .env \
+            --skip migrations --skip node_modules --skip build --skip dist
 
       - name: MyPy
         continue-on-error: true
         run: |
           source venv/bin/activate
-          mypy . --ignore-missing-imports
+          mypy . --ignore-missing-imports \
+            --exclude '(venv|\.venv|env|\.env|migrations|build|dist|node_modules)/'
 
       - name: Run Unit Tests
         run: |
@@ -114,7 +127,7 @@ jobs:
       - name: Bandit Scan
         run: |
           source venv/bin/activate
-          bandit -r . -x ./venv,./tests -ll
+          bandit -r . -x ./venv,./.venv,./env,./.env,./tests,./migrations,./node_modules -ll
 
       - name: Dependency Scan
         continue-on-error: true
