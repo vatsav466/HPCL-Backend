@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --upgrade pip \
+    # Pin setuptools below 82 — newer setuptools dropped pkg_resources,
+    # which breaks the legacy build of cx_Oracle 8.3.0 on Python 3.12.
+    && pip install --user "setuptools<82" \
     && pip install --user --no-cache-dir -r requirements.txt
 
 
