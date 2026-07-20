@@ -1,25 +1,28 @@
+import re
+
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
-import re
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
-router = fastapi.APIRouter(prefix='/dailyemailnotificationusers')
+router = fastapi.APIRouter(prefix="/dailyemailnotificationusers")
 
 
 # Action add_recipients
-@router.post('/add_recipients', tags=['DailyEmailNotificationUsers'])
-async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificationusers_Add_RecipientsParams):
-    existing_users = await DailyEmailNotificationUsers.get_all(resp_type='plain')
-    
+@router.post("/add_recipients", tags=["DailyEmailNotificationUsers"])
+async def dailyemailnotificationusers_add_recipients(
+    data: Dailyemailnotificationusers_Add_RecipientsParams,
+):
+    existing_users = await DailyEmailNotificationUsers.get_all(resp_type="plain")
+
     def normalize(value):
         if isinstance(value, list):
             return [x.strip() for x in value if x]
         elif isinstance(value, str):
             return [x.strip() for x in value.split(",") if x.strip()]
         return []
-    
+
     def get_invalid_emails(email_list):
         return [email for email in email_list if not EMAIL_REGEX.match(email)]
 
@@ -39,7 +42,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
     if invalid_emails:
         return {
             "status": "error",
-            "message": f"Invalid email addresses: {', '.join(invalid_emails)}"
+            "message": f"Invalid email addresses: {', '.join(invalid_emails)}",
         }
 
     # for user in existing_users["data"]:
@@ -54,9 +57,9 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 and user.get("audience") == audience
             )
         ),
-        None
+        None,
     )
-        # if user["email_type"] == email_type and bu == user["bu"]:
+    # if user["email_type"] == email_type and bu == user["bu"]:
     if matched_user:
 
         existing_subject = matched_user.get("subject")
@@ -66,7 +69,7 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             "Already_exists_emails": [],
             "Updated_to_recipients": [],
             "Updated_cc_recipients": [],
-            "Updated_bcc_recipients": []
+            "Updated_bcc_recipients": [],
         }
 
         to_set = set(normalize(matched_user.get("to_recipients")))
@@ -81,15 +84,17 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 changes_made = True
                 response_data["subject"] = {
                     "old": existing_subject,
-                    "new": data.subject
+                    "new": data.subject,
                 }
-                messages.append(f"Subject updated from '{existing_subject}' to '{data.subject}'")
-
+                messages.append(
+                    f"Subject updated from '{existing_subject}' to '{data.subject}'"
+                )
 
         # ------------------------
         # DELETE LOGIC
         # ------------------------
         if action == "delete":
+
             def remove_emails(target_set, remove_list, label):
                 removed = []
                 nonlocal changes_made
@@ -97,10 +102,12 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                     if email in target_set:
                         target_set.remove(email)
                         removed.append(email)
-                        changes_made = True  
+                        changes_made = True
                     else:
                         # messages.append(f"{email} not found in {label}")
-                        messages.append(f"The email address '{email}' was not found in the {label} Recipients list.")
+                        messages.append(
+                            f"The email address '{email}' was not found in the {label} Recipients list."
+                        )
                 return removed
 
             removed_to = remove_emails(to_set, to_list, "TO")
@@ -116,7 +123,6 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 msg_parts.append(f"Removed from BCC: {', '.join(removed_bcc)}")
 
             final_message = "; ".join(msg_parts + messages)
-
 
         # ------------------------
         # ADD LOGIC
@@ -139,13 +145,15 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                 for email in new_list:
                     if email in email_map:
                         # messages.append(f"{email} already exists in {email_map[email]}")
-                        messages.append(f"The email address '{email}' already exists in the {email_map[email]} Recipients list.")
+                        messages.append(
+                            f"The email address '{email}' already exists in the {email_map[email]} Recipients list."
+                        )
                         already_exists.append(email)
                     else:
                         target_set.add(email)
                         added_map[target_type].append(email)
                         email_map[email] = target_type
-                        changes_made = True 
+                        changes_made = True
 
             add_emails(to_list, to_set, "TO")
             add_emails(cc_list, cc_set, "CC")
@@ -167,13 +175,16 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             final_message = "; ".join(msg_parts + messages)
 
         else:
-            return {"status": "error", "message": "Invalid action. Use 'add' or 'delete'"}
+            return {
+                "status": "error",
+                "message": "Invalid action. Use 'add' or 'delete'",
+            }
 
         if not changes_made:
             return {
                 "status": "success",
                 "message": "; ".join(messages) if messages else "No changes made",
-                "data": response_data
+                "data": response_data,
             }
 
         # ---------------- DB UPDATE ----------------
@@ -182,17 +193,29 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
             email_type=email_type,
             bu=matched_user["bu"],
             name=data.name if data.name is not None else matched_user.get("name"),
-            subject=data.subject if data.subject is not None else matched_user.get("subject"),
-            description=data.description if data.description is not None else matched_user.get("description"),
-            enabled=data.enabled if data.enabled is not None else matched_user.get("enabled", True),
+            subject=(
+                data.subject
+                if data.subject is not None
+                else matched_user.get("subject")
+            ),
+            description=(
+                data.description
+                if data.description is not None
+                else matched_user.get("description")
+            ),
+            enabled=(
+                data.enabled
+                if data.enabled is not None
+                else matched_user.get("enabled", True)
+            ),
             audience=audience,
             to_recipients=list(to_set),
             cc_recipients=list(cc_set),
-            bcc_recipients=list(bcc_set)
+            bcc_recipients=list(bcc_set),
         ).modify()
         rpt = urdhva_base.context.context.get("rpt", {})
         if resp:
-            if action == 'add':
+            if action == "add":
                 await SystemAuditLogCreate(
                     **{
                         "employee_id": rpt.get("username"),
@@ -206,9 +229,15 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                         "raw_data": {
                             "old_data": {
                                 "email_type": email_type,
-                                "to_recipients": list(normalize(matched_user.get("to_recipients"))),
-                                "cc_recipients": list(normalize(matched_user.get("cc_recipients"))),
-                                "bcc_recipients": list(normalize(matched_user.get("bcc_recipients"))),
+                                "to_recipients": list(
+                                    normalize(matched_user.get("to_recipients"))
+                                ),
+                                "cc_recipients": list(
+                                    normalize(matched_user.get("cc_recipients"))
+                                ),
+                                "bcc_recipients": list(
+                                    normalize(matched_user.get("bcc_recipients"))
+                                ),
                                 "subject": matched_user.get("subject"),
                             },
                             "new_data": {
@@ -216,13 +245,17 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                                 "to_recipients": list(to_set),
                                 "cc_recipients": list(cc_set),
                                 "bcc_recipients": list(bcc_set),
-                                "subject": data.subject if getattr(data, "subject", None) is not None else matched_user.get("subject"),
-                            }
-                        }
+                                "subject": (
+                                    data.subject
+                                    if getattr(data, "subject", None) is not None
+                                    else matched_user.get("subject")
+                                ),
+                            },
+                        },
                     }
                 ).create()
 
-            if action == 'delete':
+            if action == "delete":
                 await SystemAuditLogCreate(
                     **{
                         "employee_id": rpt.get("username"),
@@ -236,9 +269,15 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                         "raw_data": {
                             "old_data": {
                                 "email_type": email_type,
-                                "to_recipients": list(normalize(matched_user.get("to_recipients"))),
-                                "cc_recipients": list(normalize(matched_user.get("cc_recipients"))),
-                                "bcc_recipients": list(normalize(matched_user.get("bcc_recipients"))),
+                                "to_recipients": list(
+                                    normalize(matched_user.get("to_recipients"))
+                                ),
+                                "cc_recipients": list(
+                                    normalize(matched_user.get("cc_recipients"))
+                                ),
+                                "bcc_recipients": list(
+                                    normalize(matched_user.get("bcc_recipients"))
+                                ),
                                 "subject": matched_user.get("subject"),
                             },
                             "new_data": {
@@ -246,15 +285,15 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
                                 "to_recipients": list(to_set),
                                 "cc_recipients": list(cc_set),
                                 "bcc_recipients": list(bcc_set),
-                                "subject": matched_user.get("subject"), 
-                            }
-                        }
+                                "subject": matched_user.get("subject"),
+                            },
+                        },
                     }
                 ).create()
         return {
             "status": "success",
             "message": final_message if final_message else "No changes made",
-            "data": response_data
+            "data": response_data,
         }
 
     # ------------------------
@@ -268,36 +307,27 @@ async def dailyemailnotificationusers_add_recipients(data: Dailyemailnotificatio
     #         "data": resp
     #     }
 
-    return {
-        "status": "error",
-        "message": "Record not found for delete operation"
-    }
-
-
+    return {"status": "error", "message": "Record not found for delete operation"}
 
 
 # Action get_email_audience
-@router.post('/get_email_audience', tags=['DailyEmailNotificationUsers'])
-async def dailyemailnotificationusers_get_email_audience(data: Dailyemailnotificationusers_Get_Email_AudienceParams):
+@router.post("/get_email_audience", tags=["DailyEmailNotificationUsers"])
+async def dailyemailnotificationusers_get_email_audience(
+    data: Dailyemailnotificationusers_Get_Email_AudienceParams,
+):
     if urdhva_base.context.context.exists():
-        rpt = urdhva_base.context.context.get('rpt', {})
+        rpt = urdhva_base.context.context.get("rpt", {})
     else:
         rpt = {}
 
     all_audiences = ["Scheduled Report", "Dev Testing", "Test Report"]
     limited_audiences = ["Scheduled Report", "Test Report"]
 
-    print(rpt.get('novex_role'))
-    user_roles = rpt.get('novex_role', [])
-    admin_roles = {'Admin', 'Super Admin'}
+    print(rpt.get("novex_role"))
+    user_roles = rpt.get("novex_role", [])
+    admin_roles = {"Admin", "Super Admin"}
 
     if any(role in admin_roles for role in user_roles):
-        return {
-            "status": "success",
-            "data": all_audiences
-        }
+        return {"status": "success", "data": all_audiences}
     else:
-        return {
-            "status": "success",
-            "data": limited_audiences
-        }
+        return {"status": "success", "data": limited_audiences}

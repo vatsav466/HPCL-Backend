@@ -1,28 +1,20 @@
-import urdhva_base
-import sys
 import asyncio
-import pandas as pd
-from datetime import datetime, date, timezone
+import sys
+from datetime import date, datetime, timezone
 from typing import List
+
 import dateutil.parser as dateutil_parser
+import pandas as pd
+import urdhva_base
+from sqlalchemy import (Boolean, Column, Date, DateTime, MetaData, Numeric,
+                        String, Table, text)
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
-from sqlalchemy import (
-    MetaData,
-    Table,
-    Column,
-    String,
-    Boolean,
-    DateTime,
-    Date,
-    text,
-    Numeric,
-)
-import orchestrator.reporting_services.reporting_helpers.retail_data as retail_data
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.reporting_services.reporting_helpers.retail_data as retail_data
 
 DATABASE_URL = str(urdhva_base.settings.db_urls["postgres_async"][0])
 SCHEMA_NAME = "HPCL_NOVEX"

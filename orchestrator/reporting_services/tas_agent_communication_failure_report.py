@@ -1,18 +1,20 @@
-import os
-import sys
 import asyncio
-import aiohttp
+import os
 import re
-from datetime import datetime, timedelta, timezone
+import sys
 from collections import defaultdict
-import urdhva_base
+from datetime import datetime, timedelta, timezone
+
+import aiohttp
 import hpcl_ceg_model
-import orchestrator.notification_manager.notification_factory as notification_factory
+import urdhva_base
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Inches, Pt, RGBColor
+
+import orchestrator.notification_manager.notification_factory as notification_factory
 
 IST = timezone(timedelta(hours=5, minutes=30))
 

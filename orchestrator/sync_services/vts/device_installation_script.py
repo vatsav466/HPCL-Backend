@@ -1,9 +1,10 @@
 import asyncio
+import sys
+from typing import Optional
+
 import asyncpg
 import httpx
 import urdhva_base
-import sys
-from typing import Optional
 
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader

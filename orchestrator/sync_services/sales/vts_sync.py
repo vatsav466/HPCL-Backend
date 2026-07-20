@@ -1,9 +1,10 @@
-import psycopg2
-import polars as pl
-import urdhva_base
 import sys
+
 import mysql.connector
 import pandas as pd
+import polars as pl
+import psycopg2
+import urdhva_base
 from psycopg2.extras import execute_values
 
 sys.path.append("/opt/ceg/algo")

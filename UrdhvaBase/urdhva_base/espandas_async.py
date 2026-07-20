@@ -1,9 +1,10 @@
 import re
 import warnings
+
 import numpy as np
 import pandas as pd
-from pandas.io import json
 from elasticsearch.helpers import async_streaming_bulk, scan
+from pandas.io import json
 
 
 class EsPandas(object):

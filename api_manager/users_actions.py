@@ -1,13 +1,15 @@
-from hpcl_ceg_enum import *
-from hpcl_ceg_model import *
 import json
-import fastapi
 import traceback
+
+import fastapi
+import urdhva_base.queryparams as queryparams
 import urdhva_base.settings
 from cryptography.fernet import Fernet
-import urdhva_base.queryparams as queryparams
-import authenticator.saml_validation as saml_validation
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
+
 import authenticator.authentication_manager_ad as auth_manager
+import authenticator.saml_validation as saml_validation
 
 router = fastapi.APIRouter(prefix="/users")
 

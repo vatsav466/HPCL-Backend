@@ -1,36 +1,38 @@
-import urdhva_base
+import json
+import warnings
+from datetime import timedelta
+
+import h3.api.basic_str as h3
 import numpy as np
 import pandas as pd
 import pyodbc
-import h3.api.basic_str as h3
-from datetime import datetime, timedelta
-from shapely.geometry import Point, Polygon
-from shapely.vectorized import contains
-from sqlalchemy import create_engine, text, Integer, Double, Boolean, DateTime, VARCHAR, Float
-import orchestrator.dbconnector.credential_loader as credential_loader
+from shapely.geometry import Point
 from sklearn.neighbors import BallTree
-import json
+from sqlalchemy import (VARCHAR, Boolean, DateTime, Double, Integer,
+                        create_engine, text)
 
+import orchestrator.dbconnector.credential_loader as credential_loader
 
-import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 # NORMALIZATION HELPER
+
 
 def normalization_min_max(series):
     max_v = series.max()
     # avoid division by zero
     if max_v == 0:
         return series * 0  # all zeros remain zeros
-    return (series / max_v)*100
+    return (series / max_v) * 100
+
 
 def normalize_code(code):
-
     """Normalize transporter code by stripping leading zeros to match master data format."""
 
     if pd.isna(code):
 
         return code
-    return str(code).lstrip('0') or '0'
+    return str(code).lstrip("0") or "0"
+
 
 # Load credentials from an external source
 def get_db_connection():
@@ -41,23 +43,24 @@ def get_db_connection():
     Returns:
         pyodbc connection
     """
-    creds = credential_loader.get_credentials('VTS_TRACK_DB')
+    creds = credential_loader.get_credentials("VTS_TRACK_DB")
     connection = pyodbc.connect(
-            'DRIVER={ODBC Driver 18 for SQL Server};'
-            f'Server={creds['host']},{creds['port']};'
-            f'Database={creds['database']};'
-            f'UID={creds['user']};'
-            f'PWD={creds['password']};'
-            'TrustServerCertificate=yes;MARS_Connection=yes;',
-        )
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        f"Server={creds['host']},{creds['port']};"
+        f"Database={creds['database']};"
+        f"UID={creds['user']};"
+        f"PWD={creds['password']};"
+        "TrustServerCertificate=yes;MARS_Connection=yes;",
+    )
     return connection
+
 
 vts_engine = get_db_connection()
 print("VTS_TRACK database connection for reading established successfully!")
 
 
 # Engine for writing data to APP_DB database
-creds_app = credential_loader.get_credentials('APP_DB')
+creds_app = credential_loader.get_credentials("APP_DB")
 app_db_engine = create_engine(
     f"postgresql://{creds_app['user']}:{creds_app['password']}@"
     f"{creds_app['host']}:{creds_app['port']}/{creds_app['database']}"
@@ -72,38 +75,44 @@ print("APP_DB database connection for writing established successfully!")
 
 
 RENAMES_alerts = {
-    
     "EVENT_DATE": "EVENT_DATETIME",
     "START_LATITUDE": "LAT",
     "START_LONGITUDE": "LON",
-    "STOPPAGE_LATITUDE":"LAT",
-    "STOPPAGE_LONGITUDE": "LON"
+    "STOPPAGE_LATITUDE": "LAT",
+    "STOPPAGE_LONGITUDE": "LON",
 }
 
 
 def load_alerts_data():
     """Load alert data from PostgreSQL database tables"""
-    
+
     # Load Route Deviation
-    rd = pd.read_sql_query("SELECT * FROM route_deviation where LOCATION_TYPE = 'TAS' ", vts_engine)
+    rd = pd.read_sql_query(
+        "SELECT * FROM route_deviation where LOCATION_TYPE = 'TAS' ", vts_engine
+    )
     print(f"Loaded {len(rd)} route_deviation records")
-   # print(rd.columns)
-    
+    # print(rd.columns)
+
     # Load Stoppage Violation
-    stp = pd.read_sql_query("SELECT * FROM stoppage_violation where LOCATION_TYPE = 'TAS' ", vts_engine)
+    stp = pd.read_sql_query(
+        "SELECT * FROM stoppage_violation where LOCATION_TYPE = 'TAS' ", vts_engine
+    )
     print(f"Loaded {len(stp)} stoppage_violation records")
-   # print(stp.columns)
+    # print(stp.columns)
 
     # Load Device Removed
-    dr = pd.read_sql_query("SELECT * FROM device_removed where LOCATION_TYPE = 'TAS' ", vts_engine)
+    dr = pd.read_sql_query(
+        "SELECT * FROM device_removed where LOCATION_TYPE = 'TAS' ", vts_engine
+    )
     print(f"Loaded {len(dr)} device_removed records")
-    #print(dr.columns)
+    # print(dr.columns)
 
     # Load Power Disconnect
-    pdw = pd.read_sql_query("SELECT * FROM power_disconnect where LOCATION_TYPE = 'TAS' ", vts_engine)
+    pdw = pd.read_sql_query(
+        "SELECT * FROM power_disconnect where LOCATION_TYPE = 'TAS' ", vts_engine
+    )
     print(f"Loaded {len(pdw)} power_disconnect records")
-    #print(pdw.columns)
-    
+    # print(pdw.columns)
 
     # Apply renames + timestamp conversion
     for df in [rd, stp, dr, pdw]:
@@ -117,15 +126,15 @@ def load_alerts_data():
     dr["ALERT_TYPE"] = "DEVICE_REMOVED"
     pdw["ALERT_TYPE"] = "POWER_DISCONNECT"
 
-    
-
     # Combine
     alerts = pd.concat([rd, stp, dr, pdw], ignore_index=True)
     alerts.sort_values("EVENT_DATETIME", inplace=True)
 
-
     if "LOCATION_TYPE" in alerts.columns and "TRIP_STATUS" in alerts.columns:
-        alerts = alerts[(alerts["LOCATION_TYPE"] == "TAS") & (alerts["TRIP_STATUS"].isin(["LOADED", "UN LOADED"]))]
+        alerts = alerts[
+            (alerts["LOCATION_TYPE"] == "TAS")
+            & (alerts["TRIP_STATUS"].isin(["LOADED", "UN LOADED"]))
+        ]
 
     return alerts
 
@@ -140,26 +149,89 @@ print(alerts.columns)
 # ============================
 
 
-trip_data = pd.read_sql_query('SELECT * FROM completed_trip', vts_engine)
+trip_data = pd.read_sql_query("SELECT * FROM completed_trip", vts_engine)
 print(f"Loaded {len(trip_data)} completed trip records")
 
 
+trip_data["SCHEDULED_TRIP_END_DATETIME"] = pd.to_datetime(
+    trip_data["SCHEDULED_TRIP_END_DATETIME"], errors="coerce"
+)
+trip_data["SCHEDULED_TRIP_START_DATETIME"] = pd.to_datetime(
+    trip_data["SCHEDULED_TRIP_START_DATETIME"], errors="coerce"
+)
 
-trip_data["SCHEDULED_TRIP_END_DATETIME"] = pd.to_datetime(trip_data["SCHEDULED_TRIP_END_DATETIME"], errors="coerce")
-trip_data["SCHEDULED_TRIP_START_DATETIME"] = pd.to_datetime(trip_data["SCHEDULED_TRIP_START_DATETIME"], errors="coerce")
+trip_df = trip_data.drop_duplicates(
+    subset=["CHALLAN_NO"], keep="first"
+)  # Remove duplicates based on specific column(s)
 
-trip_df = trip_data.drop_duplicates(subset=['CHALLAN_NO'], keep='first')# Remove duplicates based on specific column(s)
+completed_Trips_df = trip_df[
+    [
+        "ROW_NUMB",
+        "TOTALCOUNT",
+        "VEHICLE_RTO_NO",
+        "CHALLAN_NO",
+        "TRIP_NAME",
+        "DRIVER_NAME",
+        "DEPOT_NAME",
+        "CONSUMER_ERP_NAME",
+        "VENDOR_NAME",
+        "ROUTE_ID",
+        "SEC_ROUTE_ID",
+        "SCHEDULED_TRIP_START_DATETIME",
+        "SCHEDULED_TRIP_END_DATETIME",
+        "SCHEDULE_RTT",
+        "SCHEDULE_RTTD",
+        "TRIP_ID",
+        "DEPOT_OUT_TIME",
+        "CONSUMER_IN",
+        "LOADED_DURATION",
+        "LOADED_DISTANCE",
+        "CONSUMER_OUT",
+        "UNLOADING_DURATION",
+        "RET_DEPOT_IN",
+        "RET_DEPOT_ODO",
+        "UN_LOADED_DURATION",
+        "TOTAL_DISTANCE",
+        "TOTAL_DURATION",
+        "TRIP_STATUS",
+        "TRIP_CLOSED_BY_CLIENT_ID",
+        "TRIP_PERFORMANCE_STATUS",
+        "DEPOT_ERP_CODE",
+        "CONSUMER_ERP_CODE",
+        "ERP_TRANSPORTER_CODE",
+        "VEHICLE_ID",
+        "TRIP_STATUS_RIL",
+        "VEHICLE_LATITUDE",
+        "VEHICLE_LONGITUDE",
+        "TRIP_DISTANCE",
+        "VEHICLE_LOCATION",
+        "VEHICLE_SPEED",
+        "VEHICLE_GPS_DATETIME",
+        "TP_STATUS",
+        "TRIP_PERFORMANCE_MINUTES",
+        "LOADNO",
+        "ROUTE_NO",
+        "ZONE_NAME",
+        "AREA_NAME",
+        "TERITORY_NAME",
+    ]
+]
 
-completed_Trips_df=trip_df[['ROW_NUMB', 'TOTALCOUNT', 'VEHICLE_RTO_NO', 'CHALLAN_NO', 'TRIP_NAME', 'DRIVER_NAME', 'DEPOT_NAME', 'CONSUMER_ERP_NAME', 'VENDOR_NAME', 'ROUTE_ID', 'SEC_ROUTE_ID',
-       'SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME', 'SCHEDULE_RTT', 'SCHEDULE_RTTD', 'TRIP_ID', 'DEPOT_OUT_TIME', 'CONSUMER_IN', 'LOADED_DURATION', 'LOADED_DISTANCE',
-       'CONSUMER_OUT', 'UNLOADING_DURATION', 'RET_DEPOT_IN', 'RET_DEPOT_ODO', 'UN_LOADED_DURATION', 'TOTAL_DISTANCE', 'TOTAL_DURATION', 'TRIP_STATUS', 'TRIP_CLOSED_BY_CLIENT_ID',
-       'TRIP_PERFORMANCE_STATUS', "DEPOT_ERP_CODE", 'CONSUMER_ERP_CODE', 'ERP_TRANSPORTER_CODE', 'VEHICLE_ID', 'TRIP_STATUS_RIL', 'VEHICLE_LATITUDE', 'VEHICLE_LONGITUDE', 'TRIP_DISTANCE',
-       'VEHICLE_LOCATION', 'VEHICLE_SPEED', 'VEHICLE_GPS_DATETIME', 'TP_STATUS', 'TRIP_PERFORMANCE_MINUTES', 'LOADNO', 'ROUTE_NO', 'ZONE_NAME', 'AREA_NAME', 'TERITORY_NAME']]
+completed_Trips_df.rename(
+    columns={
+        "CHALLAN_NO": "INVOICE_NO",
+        "ERP_TRANSPORTER_CODE": "TRANSPORTER_CODE",
+        "VEHICLE_RTO_NO": "TT_NUMBER",
+        "ZONE_NAME": "ZONE",
+        "DEPOT_ERP_CODE": "LOCATION",
+    },
+    inplace=True,
+)
 
-completed_Trips_df.rename(columns={'CHALLAN_NO': 'INVOICE_NO', "ERP_TRANSPORTER_CODE":"TRANSPORTER_CODE","VEHICLE_RTO_NO":"TT_NUMBER", "ZONE_NAME":"ZONE", "DEPOT_ERP_CODE":"LOCATION"}, inplace=True)
 
-
-completed_Trips_df['TRANSPORTER_CODE'] = completed_Trips_df['TRANSPORTER_CODE'].apply(normalize_code)
+completed_Trips_df["TRANSPORTER_CODE"] = completed_Trips_df["TRANSPORTER_CODE"].apply(
+    normalize_code
+)
 
 # ===============================
 # LOAD MASTER MAPPING
@@ -172,20 +244,33 @@ VEHICLE_MASTER_RENAME_MAP = {
     "transporter_name": "Transporter Name",
     "transporter_code": "Transporter Code",
     "location_name": "Location Name",
-    "sap_id": "Location Code",   # extra in DB → kept as uppercase
-    
+    "sap_id": "Location Code",  # extra in DB → kept as uppercase
 }
 
 master_df = pd.read_sql_query("SELECT * FROM public.truck_m", app_db_engine)
 print(f"Loaded {len(master_df)} vehicle master records")
 master_df.rename(columns=VEHICLE_MASTER_RENAME_MAP, inplace=True)
-master_df.rename(columns={"Transporter Code":"TRANSPORTER_CODE","Transporter Name":"TRANSPORTER_NAME", 
-                          "TT No":"TT_NUMBER", "Location Code":"LOCATION_CODE", "Location Name":"LOCATION_NAME"}, inplace=True)
+master_df.rename(
+    columns={
+        "Transporter Code": "TRANSPORTER_CODE",
+        "Transporter Name": "TRANSPORTER_NAME",
+        "TT No": "TT_NUMBER",
+        "Location Code": "LOCATION_CODE",
+        "Location Name": "LOCATION_NAME",
+    },
+    inplace=True,
+)
 
-master_df['TRANSPORTER_CODE'] = master_df['TRANSPORTER_CODE'].apply(normalize_code)
+master_df["TRANSPORTER_CODE"] = master_df["TRANSPORTER_CODE"].apply(normalize_code)
 
 # Keep only the columns we need for mapping
-required_cols = ["TT_NUMBER", "TRANSPORTER_CODE", "TRANSPORTER_NAME", "LOCATION_NAME", "LOCATION_CODE"]
+required_cols = [
+    "TT_NUMBER",
+    "TRANSPORTER_CODE",
+    "TRANSPORTER_NAME",
+    "LOCATION_NAME",
+    "LOCATION_CODE",
+]
 available_cols = [col for col in required_cols if col in master_df.columns]
 master_df = master_df[available_cols].copy()
 
@@ -198,16 +283,25 @@ GEOFENCE_RENAME_MAP = {
     "latitude": "LATITUDE",
     "longitude": "LONGITUDE",
     "radius": "RADIUS",
-    "latlon": "latlon",              # already same in both
+    "latlon": "latlon",  # already same in both
     "geofence_type": "GEOFENCE_TYPE",
 }
 
-geofence_data = pd.read_sql_query('SELECT * FROM geofence_master', app_db_engine)
+geofence_data = pd.read_sql_query("SELECT * FROM geofence_master", app_db_engine)
 geofence_data.rename(columns=GEOFENCE_RENAME_MAP, inplace=True)
 print(f"Loaded {len(geofence_data)} geofence records")
-geofence_data.rename(columns={c: c.lower() for c in geofence_data.columns}, inplace=True)
-geofence_data.rename(columns={'geofence_type': 'GEOFENCE_TYPE', 'latitude': 'LATITUDE', 
-                               'longitude': 'LONGITUDE', 'radius': 'RADIUS'}, inplace=True)
+geofence_data.rename(
+    columns={c: c.lower() for c in geofence_data.columns}, inplace=True
+)
+geofence_data.rename(
+    columns={
+        "geofence_type": "GEOFENCE_TYPE",
+        "latitude": "LATITUDE",
+        "longitude": "LONGITUDE",
+        "radius": "RADIUS",
+    },
+    inplace=True,
+)
 
 
 # =====================================================
@@ -227,20 +321,20 @@ print(f"completed trips date range: {min_dt_ct} to {max_dt_ct}")
 
 # Split alerts data
 realtime_data = alerts
-realtime_data.rename(columns={'TRANSPORTER_ID': 'TRANSPORTER_CODE'}, inplace=True)
+realtime_data.rename(columns={"TRANSPORTER_ID": "TRANSPORTER_CODE"}, inplace=True)
 
-realtime_data['TRANSPORTER_CODE'] = realtime_data['TRANSPORTER_CODE'].apply(normalize_code)
+realtime_data["TRANSPORTER_CODE"] = realtime_data["TRANSPORTER_CODE"].apply(
+    normalize_code
+)
 
 train_data = alerts
-train_data.rename(columns={'TRANSPORTER_ID': 'TRANSPORTER_CODE'}, inplace=True)
+train_data.rename(columns={"TRANSPORTER_ID": "TRANSPORTER_CODE"}, inplace=True)
 
-train_data['TRANSPORTER_CODE'] = train_data['TRANSPORTER_CODE'].apply(normalize_code)
+train_data["TRANSPORTER_CODE"] = train_data["TRANSPORTER_CODE"].apply(normalize_code)
 
 # Split trip data
 trip_train_df = completed_Trips_df
 trip_Realtime_df = completed_Trips_df
-
-
 
 
 # ======================================
@@ -266,6 +360,7 @@ COMBO_RULES = {
     },
 }
 
+
 # ===============================
 # COMBO DETECTION
 # ===============================
@@ -284,29 +379,43 @@ def detect_combo_rules(df):
                         if (
                             past["ALERT_TYPE"] == seq[0]
                             and current["ALERT_TYPE"] == seq[1]
-                            and abs((current["EVENT_DATETIME"] - past["EVENT_DATETIME"]).total_seconds() / 60)
+                            and abs(
+                                (
+                                    current["EVENT_DATETIME"] - past["EVENT_DATETIME"]
+                                ).total_seconds()
+                                / 60
+                            )
                             <= within
                         ):
                             triggered = rule_name
                 else:
                     if current["ALERT_TYPE"] == seq[0]:
                         past_events = [
-                            p for p in group[:i]
-                            if (current["EVENT_DATETIME"] - p["EVENT_DATETIME"]).total_seconds() / 60 <= within
+                            p
+                            for p in group[:i]
+                            if (
+                                current["EVENT_DATETIME"] - p["EVENT_DATETIME"]
+                            ).total_seconds()
+                            / 60
+                            <= within
                             and p["ALERT_TYPE"] == seq[0]
                         ]
                         if len(past_events) >= rule.get("count_required", 2):
                             triggered = rule_name
             if triggered:
-                combos.append({
-                    "INVOICE_NO": inv,
-                    "Last_Combo_Rule": triggered,
-                    "Triggered_At": current["EVENT_DATETIME"],
-                })
+                combos.append(
+                    {
+                        "INVOICE_NO": inv,
+                        "Last_Combo_Rule": triggered,
+                        "Triggered_At": current["EVENT_DATETIME"],
+                    }
+                )
     return pd.DataFrame(combos)
+
 
 combo_df = detect_combo_rules(realtime_data)
 print(f"Detected {len(combo_df)} combo triggers")
+
 
 # ==================================================
 # Normalization (soft_robust_normalize)
@@ -333,18 +442,16 @@ def soft_robust_normalize(series, eps=5, clip_range=(-3, 3)):
     return normalized
 
 
-
 # ==================================================
 # TRANSPORTER RISK CALCULATION
 # ==================================================
 
 # STEP 1: TRIP COUNTS PER TRANSPORTER
-trip_counts = (
-    trip_train_df.groupby("TRANSPORTER_CODE", as_index=False)
-    .agg(total_trips=("INVOICE_NO", "count"))
+trip_counts = trip_train_df.groupby("TRANSPORTER_CODE", as_index=False).agg(
+    total_trips=("INVOICE_NO", "count")
 )
 
-trip_counts['TRANSPORTER_CODE'] = trip_counts['TRANSPORTER_CODE'].apply(normalize_code)
+trip_counts["TRANSPORTER_CODE"] = trip_counts["TRANSPORTER_CODE"].apply(normalize_code)
 
 # STEP 2: ALERT COUNTS PER TRANSPORTER
 alert_summary = (
@@ -354,19 +461,15 @@ alert_summary = (
 )
 
 # Pivot ALERT_TYPE horizontally
-alert_summary_pivot = (
-    alert_summary.pivot_table(
-        index="TRANSPORTER_CODE",
-        columns="ALERT_TYPE",
-        values="total_alerts",
-        fill_value=0
-    )
-    .reset_index()
-)
+alert_summary_pivot = alert_summary.pivot_table(
+    index="TRANSPORTER_CODE", columns="ALERT_TYPE", values="total_alerts", fill_value=0
+).reset_index()
 alert_summary_pivot.columns.name = None
 
 # STEP 3: MERGE TRIP & ALERT DATA
-final_alert_summary = trip_counts.merge(alert_summary_pivot, on="TRANSPORTER_CODE", how="right")
+final_alert_summary = trip_counts.merge(
+    alert_summary_pivot, on="TRANSPORTER_CODE", how="right"
+)
 final_alert_summary.fillna(0, inplace=True)
 
 # STEP 4: CONFIGURATION
@@ -384,8 +487,10 @@ for alert_type, weight in ALERT_WEIGHTS.items():
     if alert_type in final_alert_summary.columns:
         final_alert_summary[f"{alert_type}_per_trip"] = np.where(
             final_alert_summary["total_trips"] > 0,
-            (final_alert_summary[alert_type] / final_alert_summary["total_trips"]).round(3),
-            0
+            (
+                final_alert_summary[alert_type] / final_alert_summary["total_trips"]
+            ).round(3),
+            0,
         )
         final_alert_summary["entity_risk"] += (
             final_alert_summary[f"{alert_type}_per_trip"] * weight
@@ -395,8 +500,17 @@ final_alert_summary["entity_risk"] = final_alert_summary["entity_risk"].round(3)
 
 
 # STEP 6: FINAL OUTPUT
-entity_risk_summary = final_alert_summary[["TRANSPORTER_CODE", "total_trips", 'DEVICE_REMOVED', 'POWER_DISCONNECT', 
-                                           'ROUTE_DEVIATION', 'STOPPAGE_VIOLATION', "entity_risk"]].copy()
+entity_risk_summary = final_alert_summary[
+    [
+        "TRANSPORTER_CODE",
+        "total_trips",
+        "DEVICE_REMOVED",
+        "POWER_DISCONNECT",
+        "ROUTE_DEVIATION",
+        "STOPPAGE_VIOLATION",
+        "entity_risk",
+    ]
+].copy()
 
 # Create transporter name mapping
 transporter_name_map = (
@@ -406,16 +520,33 @@ transporter_name_map = (
 )
 
 # Soft Robust Normalize
-entity_risk_summary["soft_norm"] = soft_robust_normalize(entity_risk_summary["entity_risk"])
-entity_risk_summary['TRANSPORTER_CODE'] = entity_risk_summary['TRANSPORTER_CODE'].apply(normalize_code)
+entity_risk_summary["soft_norm"] = soft_robust_normalize(
+    entity_risk_summary["entity_risk"]
+)
+entity_risk_summary["TRANSPORTER_CODE"] = entity_risk_summary["TRANSPORTER_CODE"].apply(
+    normalize_code
+)
 
 # Convert soft robust range (-3 to 3) → to 0–100
 entity_risk_summary["RISK_SCORE"] = (
-    (entity_risk_summary["soft_norm"] + 3) / 6   # bring to 0–1
+    (entity_risk_summary["soft_norm"] + 3) / 6  # bring to 0–1
 ) * 100
 
-entity_risk_summary["TRANSPORTER_NAME"] = entity_risk_summary["TRANSPORTER_CODE"].map(transporter_name_map)
-Transporter_risk_summary = entity_risk_summary[['TRANSPORTER_CODE', 'TRANSPORTER_NAME', "total_trips", 'DEVICE_REMOVED', 'POWER_DISCONNECT', 'ROUTE_DEVIATION', 'STOPPAGE_VIOLATION', 'RISK_SCORE']].copy()
+entity_risk_summary["TRANSPORTER_NAME"] = entity_risk_summary["TRANSPORTER_CODE"].map(
+    transporter_name_map
+)
+Transporter_risk_summary = entity_risk_summary[
+    [
+        "TRANSPORTER_CODE",
+        "TRANSPORTER_NAME",
+        "total_trips",
+        "DEVICE_REMOVED",
+        "POWER_DISCONNECT",
+        "ROUTE_DEVIATION",
+        "STOPPAGE_VIOLATION",
+        "RISK_SCORE",
+    ]
+].copy()
 
 
 # ===============================
@@ -438,37 +569,36 @@ alert_summary_tt = (
 )
 
 # STEP 3: PIVOT ALERT_TYPE HORIZONTALLY (one column per alert type)
-alert_summary_pivot_tt = (
-    alert_summary_tt.pivot_table(
-        index="TT_NUMBER",
-        columns="ALERT_TYPE",
-        values="total_alerts",
-        fill_value=0
-    )
-    .reset_index()
-)
+alert_summary_pivot_tt = alert_summary_tt.pivot_table(
+    index="TT_NUMBER", columns="ALERT_TYPE", values="total_alerts", fill_value=0
+).reset_index()
 alert_summary_pivot_tt.columns.name = None
 
 # STEP 4: MERGE TRIP COUNTS WITH ALERTS
 final_alert_summary_tt = trip_counts_tt.merge(
-    alert_summary_pivot_tt, 
-    on="TT_NUMBER", 
-    how="inner"  # Use outer join to keep TTs with only trips OR only alerts
+    alert_summary_pivot_tt,
+    on="TT_NUMBER",
+    how="inner",  # Use outer join to keep TTs with only trips OR only alerts
 )
 
 # Fill NaN values
 final_alert_summary_tt["total_trips"] = final_alert_summary_tt["total_trips"].fillna(0)
 for alert_type in ALERT_WEIGHTS.keys():
     if alert_type in final_alert_summary_tt.columns:
-        final_alert_summary_tt[alert_type] = final_alert_summary_tt[alert_type].fillna(0)
+        final_alert_summary_tt[alert_type] = final_alert_summary_tt[alert_type].fillna(
+            0
+        )
 
 # STEP 5: CALCULATE ALERTS PER TRIP FOR EACH ALERT TYPE
 for alert_type in ALERT_WEIGHTS.keys():
     if alert_type in final_alert_summary_tt.columns:
         final_alert_summary_tt[f"{alert_type}_per_trip"] = np.where(
             final_alert_summary_tt["total_trips"] > 0,
-            (final_alert_summary_tt[alert_type] / final_alert_summary_tt["total_trips"]).round(3),
-            0
+            (
+                final_alert_summary_tt[alert_type]
+                / final_alert_summary_tt["total_trips"]
+            ).round(3),
+            0,
         )
     else:
         final_alert_summary_tt[f"{alert_type}_per_trip"] = 0
@@ -488,11 +618,13 @@ final_alert_summary_tt["entity_risk"] = final_alert_summary_tt["entity_risk"].ro
 # STEP 7: NORMALIZE TO 0-100 RISK SCORE (PERCENTILE-BASED)
 
 # Soft Robust Normalize
-final_alert_summary_tt["soft_norm"] = soft_robust_normalize(final_alert_summary_tt["entity_risk"])
+final_alert_summary_tt["soft_norm"] = soft_robust_normalize(
+    final_alert_summary_tt["entity_risk"]
+)
 
 # Convert soft robust range (-3 to 3) → to 0–100
 final_alert_summary_tt["RISK_SCORE"] = (
-    (final_alert_summary_tt["soft_norm"] + 3) / 6   # bring to 0–1
+    (final_alert_summary_tt["soft_norm"] + 3) / 6  # bring to 0–1
 ) * 100
 
 # STEP 8: ADD TRANSPORTER INFORMATION
@@ -508,58 +640,72 @@ transporter_name_map = (
     .to_dict()
 )
 
-final_alert_summary_tt["TRANSPORTER_CODE"] = final_alert_summary_tt["TT_NUMBER"].map(transporter_code_map)
-final_alert_summary_tt["TRANSPORTER_NAME"] = final_alert_summary_tt["TT_NUMBER"].map(transporter_name_map)
+final_alert_summary_tt["TRANSPORTER_CODE"] = final_alert_summary_tt["TT_NUMBER"].map(
+    transporter_code_map
+)
+final_alert_summary_tt["TRANSPORTER_NAME"] = final_alert_summary_tt["TT_NUMBER"].map(
+    transporter_name_map
+)
 print(final_alert_summary_tt.columns)
 # STEP 9: CREATE FINAL OUTPUT DATAFRAMES
 print(final_alert_summary_tt.columns)
 
 
-final_alert_summary_tt['TRANSPORTER_CODE'] = final_alert_summary_tt['TRANSPORTER_CODE'].apply(normalize_code)
+final_alert_summary_tt["TRANSPORTER_CODE"] = final_alert_summary_tt[
+    "TRANSPORTER_CODE"
+].apply(normalize_code)
 
 
 # Summary output (for display and API)
-TT_risk_summary = final_alert_summary_tt[[
-    "TT_NUMBER", 
-    "TRANSPORTER_CODE", 
-    "TRANSPORTER_NAME", 
-    "total_trips",
-    "RISK_SCORE",
-    'DEVICE_REMOVED',
-    'POWER_DISCONNECT',
-    'ROUTE_DEVIATION',
-    'STOPPAGE_VIOLATION'
-]].copy()
+TT_risk_summary = final_alert_summary_tt[
+    [
+        "TT_NUMBER",
+        "TRANSPORTER_CODE",
+        "TRANSPORTER_NAME",
+        "total_trips",
+        "RISK_SCORE",
+        "DEVICE_REMOVED",
+        "POWER_DISCONNECT",
+        "ROUTE_DEVIATION",
+        "STOPPAGE_VIOLATION",
+    ]
+].copy()
 
 print("TT_risk_summary columns1:", TT_risk_summary.columns)
 
 # Detailed output (for analysis - includes raw entity_risk)
-TT_entity_risk_summary = final_alert_summary_tt[[
-    "TT_NUMBER", 
-    "TRANSPORTER_CODE", 
-    "TRANSPORTER_NAME",
-    "total_trips",
-    "entity_risk",
-    "RISK_SCORE"
-]].copy()
+TT_entity_risk_summary = final_alert_summary_tt[
+    [
+        "TT_NUMBER",
+        "TRANSPORTER_CODE",
+        "TRANSPORTER_NAME",
+        "total_trips",
+        "entity_risk",
+        "RISK_SCORE",
+    ]
+].copy()
 
-#TT_risk_summary = TT_entity_risk_summary[["TT_NUMBER",'TRANSPORTER_CODE', 'TRANSPORTER_NAME', "total_trips", 'RISK_SCORE', 'DEVICE_REMOVED', 'POWER_DISCONNECT', 'ROUTE_DEVIATION', 'STOPPAGE_VIOLATION']].copy()
+# TT_risk_summary = TT_entity_risk_summary[["TT_NUMBER",'TRANSPORTER_CODE', 'TRANSPORTER_NAME', "total_trips", 'RISK_SCORE', 'DEVICE_REMOVED', 'POWER_DISCONNECT', 'ROUTE_DEVIATION', 'STOPPAGE_VIOLATION']].copy()
 
 # Sort by risk score (highest risk first)
-TT_risk_summary = TT_risk_summary.sort_values("RISK_SCORE", ascending=False).reset_index(drop=True)
-TT_entity_risk_summary = TT_entity_risk_summary.sort_values("RISK_SCORE", ascending=False).reset_index(drop=True)
+TT_risk_summary = TT_risk_summary.sort_values(
+    "RISK_SCORE", ascending=False
+).reset_index(drop=True)
+TT_entity_risk_summary = TT_entity_risk_summary.sort_values(
+    "RISK_SCORE", ascending=False
+).reset_index(drop=True)
 
 # STEP 10: PRINT SUMMARY STATISTICS
 print(f"Total TTs analyzed: {len(TT_risk_summary)}")
 print("TT_risk_summary columns2:", TT_risk_summary.columns)
-#==================================
+# ==================================
 # Location Risk Score
-#==================================
+# ==================================
 
 # ===========================
 # STEP 3: CALCULATE TRIP COUNTS
 # ===========================
-trip_date_df=trip_train_df["SCHEDULED_TRIP_START_DATETIME"].dt.date
+trip_date_df = trip_train_df["SCHEDULED_TRIP_START_DATETIME"].dt.date
 
 trip_counts = (
     trip_train_df.groupby(["SCHEDULED_TRIP_START_DATETIME", "LOCATION"])["INVOICE_NO"]
@@ -569,8 +715,15 @@ trip_counts = (
 )
 
 # Merge trip counts back
-merged = pd.merge(trip_train_df, trip_counts, on=["SCHEDULED_TRIP_START_DATETIME", "LOCATION"], how="left")
-merged = merged.sort_values(["SCHEDULED_TRIP_START_DATETIME", "LOCATION"]).reset_index(drop=True)
+merged = pd.merge(
+    trip_train_df,
+    trip_counts,
+    on=["SCHEDULED_TRIP_START_DATETIME", "LOCATION"],
+    how="left",
+)
+merged = merged.sort_values(["SCHEDULED_TRIP_START_DATETIME", "LOCATION"]).reset_index(
+    drop=True
+)
 
 # ===========================
 # STEP 4: ALERT SUMMARY PER INVOICE
@@ -583,10 +736,7 @@ alert_summary_tt = (
 
 # Pivot ALERT_TYPE as columns
 alert_pivot = alert_summary_tt.pivot_table(
-    index="INVOICE_NO",
-    columns="ALERT_TYPE",
-    values="total_alerts",
-    fill_value=0
+    index="INVOICE_NO", columns="ALERT_TYPE", values="total_alerts", fill_value=0
 ).reset_index()
 
 # Merge alerts into trip summary
@@ -614,8 +764,11 @@ for alert_type in ALERT_WEIGHTS.keys():
     if alert_type in final_alert_summary_loc.columns:
         final_alert_summary_loc[f"{alert_type}_per_trip"] = np.where(
             final_alert_summary_loc["total_trips"] > 0,
-            (final_alert_summary_loc[alert_type] / final_alert_summary_loc["total_trips"]).round(3),
-            0
+            (
+                final_alert_summary_loc[alert_type]
+                / final_alert_summary_loc["total_trips"]
+            ).round(3),
+            0,
         )
     else:
         final_alert_summary_loc[f"{alert_type}_per_trip"] = 0
@@ -636,11 +789,13 @@ final_alert_summary_loc["entity_risk"] = final_alert_summary_loc["entity_risk"].
 # STEP 8: NORMALIZE TO 0–100 RISK SCORE
 # ===========================
 # .Soft Robust Normalize
-final_alert_summary_loc["soft_norm"] = soft_robust_normalize(final_alert_summary_loc["entity_risk"])
+final_alert_summary_loc["soft_norm"] = soft_robust_normalize(
+    final_alert_summary_loc["entity_risk"]
+)
 
 # Convert soft robust range (-3 to 3) → to 0–100
 final_alert_summary_loc["RISK_SCORE"] = (
-    (final_alert_summary_loc["soft_norm"] + 3) / 6   # bring to 0–1
+    (final_alert_summary_loc["soft_norm"] + 3) / 6  # bring to 0–1
 ) * 100
 
 
@@ -655,18 +810,22 @@ Location_name_map = (
     .to_dict()
 )
 
-final_alert_summary_loc["LOCATION_NAME"] = final_alert_summary_loc["LOCATION"].map(Location_name_map)
+final_alert_summary_loc["LOCATION_NAME"] = final_alert_summary_loc["LOCATION"].map(
+    Location_name_map
+)
 
 # ===========================
 # STEP 10: CREATE FINAL OUTPUT
 # ===========================
-Location_risk_summary = final_alert_summary_loc[[
-    "SCHEDULED_TRIP_START_DATETIME",
-    "LOCATION",
-    "LOCATION_NAME",
-    "total_trips",
-    "RISK_SCORE"
-]].copy()
+Location_risk_summary = final_alert_summary_loc[
+    [
+        "SCHEDULED_TRIP_START_DATETIME",
+        "LOCATION",
+        "LOCATION_NAME",
+        "total_trips",
+        "RISK_SCORE",
+    ]
+].copy()
 
 # Format date
 Location_risk_summary["SCHEDULED_TRIP_START_DATETIME"] = pd.to_datetime(
@@ -682,7 +841,7 @@ Location_risk_summary = Location_risk_summary.sort_values(
 # STEP 11: SAVE TO CSV
 # ===========================
 
-#Location_risk_summary.to_csv("location_risk_summary.csv", index=False)
+# Location_risk_summary.to_csv("location_risk_summary.csv", index=False)
 print(f".Saved location_risk_summary")
 
 # ==================================================
@@ -699,52 +858,97 @@ INFLUENCE_RADIUS = 500
 
 # Alert-specific thresholds
 ALERT_THRESHOLDS = {
-    "STOPPAGE_VIOLATION": {"min_events": 75, "min_unique_vehicles": 5, "min_unique_days": 5},
-    "ROUTE_DEVIATION": {"min_events": 100, "min_unique_vehicles": 5, "min_unique_days": 5},
-    "POWER_DISCONNECT": {"min_events": 10, "min_unique_vehicles": 5, "min_unique_days": 5},
-    "DEVICE_REMOVED": {"min_events": 10, "min_unique_vehicles": 6, "min_unique_days": 5}
+    "STOPPAGE_VIOLATION": {
+        "min_events": 75,
+        "min_unique_vehicles": 5,
+        "min_unique_days": 5,
+    },
+    "ROUTE_DEVIATION": {
+        "min_events": 100,
+        "min_unique_vehicles": 5,
+        "min_unique_days": 5,
+    },
+    "POWER_DISCONNECT": {
+        "min_events": 10,
+        "min_unique_vehicles": 5,
+        "min_unique_days": 5,
+    },
+    "DEVICE_REMOVED": {
+        "min_events": 10,
+        "min_unique_vehicles": 6,
+        "min_unique_days": 5,
+    },
 }
 
 WEIGHTS = {"frequency": 0.5, "recency": 0.3, "diversity": 0.2}
 OVERLAP_THRESHOLD = 0.5
 
+
 # SCORING FUNCTIONS
 def freq_score(n):
-    if n <= 120: return 10
-    elif n <= 150: return 30
-    elif n <= 200: return 60
-    elif n <= 300: return 80
-    else: return 100
+    if n <= 120:
+        return 10
+    elif n <= 150:
+        return 30
+    elif n <= 200:
+        return 60
+    elif n <= 300:
+        return 80
+    else:
+        return 100
+
 
 def recency_score(days_ago):
-    if days_ago <= 3: return 100
-    elif days_ago <= 7: return 80
-    elif days_ago <= 14: return 60
-    elif days_ago <= 30: return 30
-    else: return 10
+    if days_ago <= 3:
+        return 100
+    elif days_ago <= 7:
+        return 80
+    elif days_ago <= 14:
+        return 60
+    elif days_ago <= 30:
+        return 30
+    else:
+        return 10
+
 
 def diversity_score(n):
-    if n <= 12: return 20
-    elif n <= 30: return 50
-    elif n <= 50: return 80
-    else: return 100
+    if n <= 12:
+        return 20
+    elif n <= 30:
+        return 50
+    elif n <= 50:
+        return 80
+    else:
+        return 100
+
 
 def classify_risk(score):
-    if score <= 40: return "Low"
-    elif score <= 70: return "Medium"
-    elif score <= 95: return "High"
-    else: return "Critical"
+    if score <= 40:
+        return "Low"
+    elif score <= 70:
+        return "Medium"
+    elif score <= 95:
+        return "High"
+    else:
+        return "Critical"
+
 
 # H3 ASSIGNMENT
 def assign_h3(df, resolution=H3_RESOLUTION):
     if df.empty:
         return df.copy()
     df = df.dropna(subset=["LAT", "LON"]).copy()
-    df["h3_index"] = df.apply(lambda r: h3.latlng_to_cell(float(r["LAT"]), float(r["LON"]), resolution), axis=1)
+    df["h3_index"] = df.apply(
+        lambda r: h3.latlng_to_cell(float(r["LAT"]), float(r["LON"]), resolution),
+        axis=1,
+    )
     return df
 
+
 # BUILD CANDIDATE CLUSTERS
-def build_candidate_clusters(train_df, lookback_days=LOOKBACK_DAYS, resolution=H3_RESOLUTION):
+def build_candidate_clusters(
+    train_df, lookback_days=LOOKBACK_DAYS, resolution=H3_RESOLUTION
+):
     if train_df.empty:
         return {}, None
     latest_time = train_df["EVENT_DATETIME"].max()
@@ -769,9 +973,8 @@ def build_candidate_clusters(train_df, lookback_days=LOOKBACK_DAYS, resolution=H
         seq += 1
         cid = f"{atype[:2]}-{seq}"
 
-         # Most frequent plant in this cluster
-        most_common_plant = g['LOCATION'].mode()[0] if not g['LOCATION'].empty else None
-
+        # Most frequent plant in this cluster
+        most_common_plant = g["LOCATION"].mode()[0] if not g["LOCATION"].empty else None
 
         clusters[cid] = {
             "cluster_id": cid,
@@ -781,14 +984,21 @@ def build_candidate_clusters(train_df, lookback_days=LOOKBACK_DAYS, resolution=H
             "centroid_lon": g["LON"].mean(),
             "first_seen": g["EVENT_DATETIME"].min(),
             "last_seen": g["EVENT_DATETIME"].max(),
-            "events_30d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=30))]),
-            "events_10d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=10))]),
-            "events_5d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=5))]),
+            "events_30d": len(
+                g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=30))]
+            ),
+            "events_10d": len(
+                g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=10))]
+            ),
+            "events_5d": len(
+                g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=5))]
+            ),
             "unique_trucks_30d": g["TT_NUMBER"].nunique(),
             "unique_days_30d": g["EVENT_DATETIME"].dt.date.nunique(),
-            "plant": most_common_plant
+            "plant": most_common_plant,
         }
     return clusters, latest_time
+
 
 # MERGE CLUSTERS
 def haversine_vectorized(lon1, lat1, lon2, lat2):
@@ -796,44 +1006,70 @@ def haversine_vectorized(lon1, lat1, lon2, lat2):
     phi1, phi2 = np.radians(lat1), np.radians(lat2)
     dphi = np.radians(lat2 - lat1)
     dlambda = np.radians(lon2 - lon1)
-    a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlambda/2)**2
-    return 2*R*np.arctan2(np.sqrt(a), np.sqrt(1-a))
+    a = np.sin(dphi / 2) ** 2 + np.cos(phi1) * np.cos(phi2) * np.sin(dlambda / 2) ** 2
+    return 2 * R * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
 
 def merge_clusters(clusters, merge_distance_m=MERGE_DISTANCE_M):
     ids = list(clusters.keys())
     merged, used = {}, set()
     for i, cid in enumerate(ids):
-        if cid in used: continue
+        if cid in used:
+            continue
         base = clusters[cid].copy()
         to_merge = [cid]
         for j in range(i + 1, len(ids)):
             cid2 = ids[j]
-            if cid2 in used: continue
+            if cid2 in used:
+                continue
             c2 = clusters[cid2]
-            if c2["alert_type"] != base["alert_type"]: continue
-            if not (base["first_seen"] <= c2["last_seen"] and c2["first_seen"] <= base["last_seen"]): continue
-            dist = haversine_vectorized(base["centroid_lon"], base["centroid_lat"], c2["centroid_lon"], c2["centroid_lat"])
+            if c2["alert_type"] != base["alert_type"]:
+                continue
+            if not (
+                base["first_seen"] <= c2["last_seen"]
+                and c2["first_seen"] <= base["last_seen"]
+            ):
+                continue
+            dist = haversine_vectorized(
+                base["centroid_lon"],
+                base["centroid_lat"],
+                c2["centroid_lon"],
+                c2["centroid_lat"],
+            )
             if dist <= merge_distance_m:
                 to_merge.append(cid2)
                 used.add(cid2)
         parent = max(to_merge, key=lambda x: clusters[x]["events_30d"])
         agg = clusters[parent].copy()
         if len(to_merge) > 1:
-            agg["centroid_lat"] = np.mean([clusters[t]["centroid_lat"] for t in to_merge])
-            agg["centroid_lon"] = np.mean([clusters[t]["centroid_lon"] for t in to_merge])
+            agg["centroid_lat"] = np.mean(
+                [clusters[t]["centroid_lat"] for t in to_merge]
+            )
+            agg["centroid_lon"] = np.mean(
+                [clusters[t]["centroid_lon"] for t in to_merge]
+            )
             agg["first_seen"] = min(clusters[t]["first_seen"] for t in to_merge)
             agg["last_seen"] = max(clusters[t]["last_seen"] for t in to_merge)
             agg["events_30d"] = sum(clusters[t]["events_30d"] for t in to_merge)
             agg["events_10d"] = sum(clusters[t]["events_10d"] for t in to_merge)
             agg["events_5d"] = sum(clusters[t]["events_5d"] for t in to_merge)
-            agg["unique_trucks_30d"] = max(clusters[t]["unique_trucks_30d"] for t in to_merge)
-            agg["unique_days_30d"] = max(clusters[t]["unique_days_30d"] for t in to_merge)
+            agg["unique_trucks_30d"] = max(
+                clusters[t]["unique_trucks_30d"] for t in to_merge
+            )
+            agg["unique_days_30d"] = max(
+                clusters[t]["unique_days_30d"] for t in to_merge
+            )
 
-            plants = [clusters[t]["plant"] for t in to_merge if clusters[t]["plant"] is not None]
+            plants = [
+                clusters[t]["plant"]
+                for t in to_merge
+                if clusters[t]["plant"] is not None
+            ]
             agg["plant"] = max(set(plants), key=plants.count) if plants else None
 
         merged[parent] = agg
     return merged
+
 
 # VALIDATE & SCORE CLUSTERS
 def validate_and_score(merged_clusters, latest_time):
@@ -847,20 +1083,31 @@ def validate_and_score(merged_clusters, latest_time):
         Uday = c.get("unique_days_30d", 0)
         recent_ok = c.get("events_5d", 0) >= 1
 
-        if (E >= thresholds["min_events"]) and (Uveh >= thresholds["min_unique_vehicles"]) and (Uday >= thresholds["min_unique_days"]) and recent_ok:
+        if (
+            (E >= thresholds["min_events"])
+            and (Uveh >= thresholds["min_unique_vehicles"])
+            and (Uday >= thresholds["min_unique_days"])
+            and recent_ok
+        ):
             status = "VALID"
-        elif c.get("events_10d", 0) >=10  and Uveh >= 2:
+        elif c.get("events_10d", 0) >= 10 and Uveh >= 2:
             status = "EMERGING"
         elif E >= 5:
             status = "PROVISIONAL"
         else:
             status = "NOISE"
 
-        days_since_last = (latest_time - c["last_seen"]).days if c.get("last_seen") else None
+        days_since_last = (
+            (latest_time - c["last_seen"]).days if c.get("last_seen") else None
+        )
         f_sub = freq_score(c.get("events_30d", 0))
         r_sub = recency_score(days_since_last if days_since_last is not None else 999)
         d_sub = diversity_score(Uveh)
-        risk = f_sub * WEIGHTS["frequency"] + r_sub * WEIGHTS["recency"] + d_sub * WEIGHTS["diversity"]
+        risk = (
+            f_sub * WEIGHTS["frequency"]
+            + r_sub * WEIGHTS["recency"]
+            + d_sub * WEIGHTS["diversity"]
+        )
         master[cid] = {
             **c,
             "status": status,
@@ -869,13 +1116,16 @@ def validate_and_score(merged_clusters, latest_time):
             "recency_subscore": r_sub,
             "diversity_subscore": d_sub,
             "risk_score": round(risk, 1),
-            #"risk_band": classify_risk(risk)
+            # "risk_band": classify_risk(risk)
         }
     return master
 
+
 # VECTORIZE GEOFENCE FILTERING
 def filter_clusters_geofence(CLUSTER_MASTER, geofence_data):
-    geofences = geofence_data[geofence_data["GEOFENCE_TYPE"].str.lower().str.strip() == "authorised"]
+    geofences = geofence_data[
+        geofence_data["GEOFENCE_TYPE"].str.lower().str.strip() == "authorised"
+    ]
     n_clusters = len(CLUSTER_MASTER)
     overlap_flags = np.zeros(n_clusters, dtype=bool)
 
@@ -892,13 +1142,14 @@ def filter_clusters_geofence(CLUSTER_MASTER, geofence_data):
                 continue
             cluster_point = Point(cluster_lons[i], cluster_lats[i])
             cluster_buffer = cluster_point.buffer(cluster_buffer_deg)
-            fraction_overlap = cluster_buffer.intersection(gf_buffer).area / cluster_buffer.area
+            fraction_overlap = (
+                cluster_buffer.intersection(gf_buffer).area / cluster_buffer.area
+            )
             if fraction_overlap >= OVERLAP_THRESHOLD:
                 overlap_flags[i] = True
 
     filtered_master = CLUSTER_MASTER[~overlap_flags].copy()
     return filtered_master
-
 
 
 # FULL PIPELINE
@@ -907,30 +1158,47 @@ def run_cluster_scoring_from_train(train_data, geofence_data=None):
     merged_clusters = merge_clusters(clusters)
     CLUSTER_MASTER = validate_and_score(merged_clusters, latest_time)
     CLUSTER_MASTER_DF = pd.DataFrame(CLUSTER_MASTER.values())
-    
+
     if geofence_data is not None:
-        FINAL_CLUSTER_MASTER = filter_clusters_geofence(CLUSTER_MASTER_DF, geofence_data)
+        FINAL_CLUSTER_MASTER = filter_clusters_geofence(
+            CLUSTER_MASTER_DF, geofence_data
+        )
     else:
         FINAL_CLUSTER_MASTER = CLUSTER_MASTER_DF.copy()
 
-    
     return FINAL_CLUSTER_MASTER
 
-    
 
 # RUN PIPELINE
 FINAL_CLUSTER_MASTER = run_cluster_scoring_from_train(train_data, geofence_data)
 
-FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER[[
-    'cluster_id', 'alert_type', 'risk_score','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
-    'events_30d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 'days_since_last' ,'plant'
-]].copy()
+FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER[
+    [
+        "cluster_id",
+        "alert_type",
+        "risk_score",
+        "centroid_lat",
+        "centroid_lon",
+        "first_seen",
+        "last_seen",
+        "events_30d",
+        "events_10d",
+        "events_5d",
+        "unique_trucks_30d",
+        "status",
+        "days_since_last",
+        "plant",
+    ]
+].copy()
 
 
-FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_df[FINAL_CLUSTER_MASTER_df["status"].isin(["VALID", "EMERGING"])].copy()
+FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_df[
+    FINAL_CLUSTER_MASTER_df["status"].isin(["VALID", "EMERGING"])
+].copy()
+
 
 def soft_robust_normalize(series, eps=5, clip_range=(-3, 3)):
-    
+
     median = series.median()
     q1 = series.quantile(0.25)
     q3 = series.quantile(0.75)
@@ -950,9 +1218,16 @@ def soft_robust_normalize(series, eps=5, clip_range=(-3, 3)):
     return normalized_0_100
 
 
-FINAL_CLUSTER_MASTER_VALID_EMRG['risk_score_normalized'] = soft_robust_normalize(FINAL_CLUSTER_MASTER_VALID_EMRG['risk_score'])
-FINAL_CLUSTER_MASTER_VALID_EMRG["risk_band"] = FINAL_CLUSTER_MASTER_VALID_EMRG["risk_score_normalized"].apply(classify_risk)
-FINAL_CLUSTER_MASTER_VALID_EMRG.rename(columns={'alert_type':'cluster_type', 'risk_score_normalized':'Risk_Score' }, inplace=True)
+FINAL_CLUSTER_MASTER_VALID_EMRG["risk_score_normalized"] = soft_robust_normalize(
+    FINAL_CLUSTER_MASTER_VALID_EMRG["risk_score"]
+)
+FINAL_CLUSTER_MASTER_VALID_EMRG["risk_band"] = FINAL_CLUSTER_MASTER_VALID_EMRG[
+    "risk_score_normalized"
+].apply(classify_risk)
+FINAL_CLUSTER_MASTER_VALID_EMRG.rename(
+    columns={"alert_type": "cluster_type", "risk_score_normalized": "Risk_Score"},
+    inplace=True,
+)
 
 Location_map = (
     master_df.drop_duplicates(subset=["LOCATION_CODE"])
@@ -960,16 +1235,36 @@ Location_map = (
     .to_dict()
 )
 
-FINAL_CLUSTER_MASTER_VALID_EMRG["plant_name"] = FINAL_CLUSTER_MASTER_VALID_EMRG["plant"].map(Location_map)
+FINAL_CLUSTER_MASTER_VALID_EMRG["plant_name"] = FINAL_CLUSTER_MASTER_VALID_EMRG[
+    "plant"
+].map(Location_map)
 
-FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_VALID_EMRG[[
-    'cluster_id', 'cluster_type', 'plant', 'plant_name','Risk_Score', 'risk_band','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen',
-    'events_30d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 'days_since_last',
-]].copy()
+FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_VALID_EMRG[
+    [
+        "cluster_id",
+        "cluster_type",
+        "plant",
+        "plant_name",
+        "Risk_Score",
+        "risk_band",
+        "centroid_lat",
+        "centroid_lon",
+        "first_seen",
+        "last_seen",
+        "events_30d",
+        "events_10d",
+        "events_5d",
+        "unique_trucks_30d",
+        "status",
+        "days_since_last",
+    ]
+].copy()
 
-FINAL_CLUSTER_MASTER_DISPLAY_df=FINAL_CLUSTER_MASTER_VALID_EMRG.copy()
+FINAL_CLUSTER_MASTER_DISPLAY_df = FINAL_CLUSTER_MASTER_VALID_EMRG.copy()
 
-FINAL_CLUSTER_MASTER_VALID=FINAL_CLUSTER_MASTER_VALID_EMRG[FINAL_CLUSTER_MASTER_VALID_EMRG["status"] == "VALID"]
+FINAL_CLUSTER_MASTER_VALID = FINAL_CLUSTER_MASTER_VALID_EMRG[
+    FINAL_CLUSTER_MASTER_VALID_EMRG["status"] == "VALID"
+]
 
 print("Cluster_Master saved successfully")
 
@@ -978,7 +1273,9 @@ print("Cluster_Master saved successfully")
 def build_cluster_weights(CLUSTER_MASTER):
     cluster_weights_per_alert = {}
     for alert_type, group in CLUSTER_MASTER.groupby("cluster_type"):
-        cluster_weights_per_alert[alert_type] = group[["centroid_lat", "centroid_lon", "Risk_Score"]].to_dict(orient="records")
+        cluster_weights_per_alert[alert_type] = group[
+            ["centroid_lat", "centroid_lon", "Risk_Score"]
+        ].to_dict(orient="records")
     return cluster_weights_per_alert
 
 
@@ -992,12 +1289,12 @@ print("cluster_weights_per_alert saved successfully")
 FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER_DISPLAY_df
 
 
-
 # ==================================================
 # LOCATION SENSITIVITY CALCULATION
 # ==================================================
 
 INFLUENCE_RADIUS = 800
+
 
 def compute_total_location_sensitivity_fast(
     realtime_data,
@@ -1009,7 +1306,9 @@ def compute_total_location_sensitivity_fast(
     total_scores = np.zeros(len(realtime_data), dtype=np.float32)
 
     # Convert realtime coordinates to radians once
-    realtime_coords = np.radians(realtime_data[["LAT", "LON"]].values.astype(np.float32))
+    realtime_coords = np.radians(
+        realtime_data[["LAT", "LON"]].values.astype(np.float32)
+    )
 
     for alert_type, type_weight in alert_type_weights.items():
         clusters = cluster_weights_per_alert.get(alert_type, [])
@@ -1018,7 +1317,10 @@ def compute_total_location_sensitivity_fast(
 
         # Extract cluster info
         cluster_coords = np.radians(
-            np.array([[c["centroid_lat"], c["centroid_lon"]] for c in clusters], dtype=np.float32)
+            np.array(
+                [[c["centroid_lat"], c["centroid_lon"]] for c in clusters],
+                dtype=np.float32,
+            )
         )
         cluster_risks = np.array([c["Risk_Score"] for c in clusters], dtype=np.float32)
 
@@ -1029,7 +1331,9 @@ def compute_total_location_sensitivity_fast(
         radius_radians = radius_m / R
 
         # Find clusters within influence radius for each realtime point
-        indices_array = tree.query_radius(realtime_coords, r=radius_radians, return_distance=True)
+        indices_array = tree.query_radius(
+            realtime_coords, r=radius_radians, return_distance=True
+        )
 
         for i, (cluster_idx, dist_radians) in enumerate(zip(*indices_array)):
             if len(cluster_idx) == 0:
@@ -1042,7 +1346,9 @@ def compute_total_location_sensitivity_fast(
             influence = np.clip(1 - dist_m / radius_m, 0, None)
 
             # Weighted sum for this point
-            total_scores[i] += np.sum(cluster_risks[cluster_idx] * influence) * type_weight
+            total_scores[i] += (
+                np.sum(cluster_risks[cluster_idx] * influence) * type_weight
+            )
 
     realtime_data["location_sensitivity"] = total_scores
     return realtime_data
@@ -1053,7 +1359,7 @@ alert_type_weights = {
     "ROUTE_DEVIATION": 0.4,
     "STOPPAGE_VIOLATION": 0.3,
     "POWER_DISCONNECT": 0.2,
-    "DEVICE_REMOVED": 0.1
+    "DEVICE_REMOVED": 0.1,
 }
 
 # Compute location sensitivity
@@ -1061,10 +1367,12 @@ realtime_data = compute_total_location_sensitivity_fast(
     realtime_data,
     cluster_weights_per_alert,
     alert_type_weights,
-    radius_m=INFLUENCE_RADIUS
+    radius_m=INFLUENCE_RADIUS,
 )
 
-Location_Sensitivity = realtime_data.groupby('INVOICE_NO')['location_sensitivity'].mean()
+Location_Sensitivity = realtime_data.groupby("INVOICE_NO")[
+    "location_sensitivity"
+].mean()
 
 print(".Location sensitivity computed successfully.")
 
@@ -1089,22 +1397,22 @@ if not combo_df.empty:
 else:
     realtime_data["combo_risk"] = 0
 
-combo_Risk_df = (
-    realtime_data.groupby('INVOICE_NO', as_index=False)['combo_risk'].mean()
-)
+combo_Risk_df = realtime_data.groupby("INVOICE_NO", as_index=False)["combo_risk"].mean()
 
 
 # COMBO TYPE COUNTS PER TRIP
 if not combo_df.empty:
     combo_type_counts = (
-        combo_df.groupby(['INVOICE_NO', 'Last_Combo_Rule'])
+        combo_df.groupby(["INVOICE_NO", "Last_Combo_Rule"])
         .size()
         .unstack(fill_value=0)
         .reset_index()
     )
 
     # .Add total combo count
-    combo_type_counts["Total_Combo_Count"] = combo_type_counts.drop(columns=["INVOICE_NO"]).sum(axis=1)
+    combo_type_counts["Total_Combo_Count"] = combo_type_counts.drop(
+        columns=["INVOICE_NO"]
+    ).sum(axis=1)
 
     # .Merge combo counts into realtime_data
     combo_Risk = combo_Risk_df.merge(combo_type_counts, on="INVOICE_NO", how="left")
@@ -1112,7 +1420,6 @@ if not combo_df.empty:
 
 print("combo_Risk :", combo_Risk.columns)
 print(".Combo Risk computed successfully.")
-
 
 
 # ==============================================
@@ -1127,7 +1434,7 @@ risk_map = {
 }
 
 realtime_data["atomic_risk"] = realtime_data["ALERT_TYPE"].map(risk_map)
-Atomic_Risk = realtime_data.groupby('INVOICE_NO')['atomic_risk'].mean()
+Atomic_Risk = realtime_data.groupby("INVOICE_NO")["atomic_risk"].mean()
 
 print(".Atomic Risk computed successfully.")
 
@@ -1137,42 +1444,55 @@ print(".Atomic Risk computed successfully.")
 # ==============================================
 
 
-
 Entity_Risk = TT_entity_risk_summary[["TT_NUMBER", "entity_risk"]].copy()
 
 print(".Atomic Risk computed successfully.")
 # ==============================================
 # MERGE ALL RISK COMPONENTS
 # ==============================================
-completed_Trips = trip_Realtime_df[[
-    'TRIP_NAME', 'TRIP_ID', 'SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME',
-    'INVOICE_NO', 'TT_NUMBER', 'TRANSPORTER_CODE', 'ROUTE_NO', 'ZONE', 'LOCATION'
-]].copy()
+completed_Trips = trip_Realtime_df[
+    [
+        "TRIP_NAME",
+        "TRIP_ID",
+        "SCHEDULED_TRIP_START_DATETIME",
+        "SCHEDULED_TRIP_END_DATETIME",
+        "INVOICE_NO",
+        "TT_NUMBER",
+        "TRANSPORTER_CODE",
+        "ROUTE_NO",
+        "ZONE",
+        "LOCATION",
+    ]
+].copy()
 
-completed_Trips['TRANSPORTER_CODE'] = completed_Trips['TRANSPORTER_CODE'].apply(normalize_code)
+completed_Trips["TRANSPORTER_CODE"] = completed_Trips["TRANSPORTER_CODE"].apply(
+    normalize_code
+)
 
 # Merge completed_Trips and Atomic_Risk
-merged_df_1_2 = pd.merge(completed_Trips, Atomic_Risk, on='INVOICE_NO', how='left')
+merged_df_1_2 = pd.merge(completed_Trips, Atomic_Risk, on="INVOICE_NO", how="left")
 
 # Merge with combo_Risk
-merged_df_1_2_3 = pd.merge(merged_df_1_2, combo_Risk, on='INVOICE_NO', how='left')
+merged_df_1_2_3 = pd.merge(merged_df_1_2, combo_Risk, on="INVOICE_NO", how="left")
 
 # Merge with Location_Sensitivity
-merged_df_1_2_3_4 = pd.merge(merged_df_1_2_3, Location_Sensitivity, on='INVOICE_NO', how='left')
+merged_df_1_2_3_4 = pd.merge(
+    merged_df_1_2_3, Location_Sensitivity, on="INVOICE_NO", how="left"
+)
 
 # Merge with Entity_Risk
-final_merged_df = pd.merge(merged_df_1_2_3_4, Entity_Risk, on='TT_NUMBER', how='left')
+final_merged_df = pd.merge(merged_df_1_2_3_4, Entity_Risk, on="TT_NUMBER", how="left")
 
 # Fill NaN values with 0
-final_merged_df['atomic_risk'].fillna(0, inplace=True)
-final_merged_df['combo_risk'].fillna(0, inplace=True)
-final_merged_df['location_sensitivity'].fillna(0, inplace=True)
-final_merged_df['entity_risk'].fillna(0, inplace=True)
-final_merged_df['Total_Combo_Count'].fillna(0, inplace=True)
+final_merged_df["atomic_risk"].fillna(0, inplace=True)
+final_merged_df["combo_risk"].fillna(0, inplace=True)
+final_merged_df["location_sensitivity"].fillna(0, inplace=True)
+final_merged_df["entity_risk"].fillna(0, inplace=True)
+final_merged_df["Total_Combo_Count"].fillna(0, inplace=True)
 
 
 # ==========================================
-# OVERALL RISK & CUMULATIVE RISK CALCULATION 
+# OVERALL RISK & CUMULATIVE RISK CALCULATION
 # ==========================================
 
 
@@ -1182,13 +1502,22 @@ def normalize(series):
         return series * 0
     return (series - series.min()) / (series.max() - series.min())
 
+
 # --- Normalize components ---
-final_merged_df["atomic_risk_norm"] = normalization_min_max(final_merged_df["atomic_risk"])
+final_merged_df["atomic_risk_norm"] = normalization_min_max(
+    final_merged_df["atomic_risk"]
+)
 
-final_merged_df["combo_risk_norm"] = normalization_min_max(final_merged_df["combo_risk"])
+final_merged_df["combo_risk_norm"] = normalization_min_max(
+    final_merged_df["combo_risk"]
+)
 
-final_merged_df["location_sensitivity_norm"] = normalization_min_max(final_merged_df["location_sensitivity"])
-final_merged_df["entity_risk_norm"] = soft_robust_normalize(final_merged_df["entity_risk"])
+final_merged_df["location_sensitivity_norm"] = normalization_min_max(
+    final_merged_df["location_sensitivity"]
+)
+final_merged_df["entity_risk_norm"] = soft_robust_normalize(
+    final_merged_df["entity_risk"]
+)
 
 
 # --- Weights ---
@@ -1217,18 +1546,25 @@ Location_name_map = (
 
 final_merged_df["LOCATION_NAME"] = final_merged_df["LOCATION"].map(Location_name_map)
 
+
 # Fallback: Extract location name from TRIP_NAME if LOCATION_NAME is null
 # TRIP_NAME format: "1528( RAIPUR IRD-II ) To 0041015826( THAKUR FUELS )"
 def extract_location_from_trip_name(trip_name):
     if pd.isna(trip_name):
         return None
     import re
-    match = re.search(r'\(\s*(.+?)\s*\)', str(trip_name))
+
+    match = re.search(r"\(\s*(.+?)\s*\)", str(trip_name))
     return match.group(1).strip() if match else None
 
+
 final_merged_df["LOCATION_NAME"] = final_merged_df.apply(
-    lambda row: extract_location_from_trip_name(row["TRIP_NAME"]) if pd.isna(row["LOCATION_NAME"]) else row["LOCATION_NAME"],
-    axis=1
+    lambda row: (
+        extract_location_from_trip_name(row["TRIP_NAME"])
+        if pd.isna(row["LOCATION_NAME"])
+        else row["LOCATION_NAME"]
+    ),
+    axis=1,
 )
 
 alert_count = (
@@ -1239,73 +1575,87 @@ alert_count = (
 
 # Pivot ALERT_TYPE as columns
 alert_count_pivot = alert_count.pivot_table(
-    index="INVOICE_NO",
-    columns="ALERT_TYPE",
-    values="total_alerts",
-    fill_value=0
+    index="INVOICE_NO", columns="ALERT_TYPE", values="total_alerts", fill_value=0
 ).reset_index()
 
 alert_count_pivot.columns.name = None
 
-final_merged_df = pd.merge(final_merged_df, alert_count_pivot, on="INVOICE_NO", how="left")
+final_merged_df = pd.merge(
+    final_merged_df, alert_count_pivot, on="INVOICE_NO", how="left"
+)
 
-final_merged = final_merged_df[[
-    'TRIP_NAME', 'TRIP_ID', 'Risk_Score','DEVICE_REMOVED', 'POWER_DISCONNECT', 'ROUTE_DEVIATION',
-       'STOPPAGE_VIOLATION','Total_Combo_Count','SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME', 
-    'INVOICE_NO', 'TT_NUMBER', 'TRANSPORTER_CODE', 'ROUTE_NO', 'ZONE', 'LOCATION_NAME'
-]].copy()
+final_merged = final_merged_df[
+    [
+        "TRIP_NAME",
+        "TRIP_ID",
+        "Risk_Score",
+        "DEVICE_REMOVED",
+        "POWER_DISCONNECT",
+        "ROUTE_DEVIATION",
+        "STOPPAGE_VIOLATION",
+        "Total_Combo_Count",
+        "SCHEDULED_TRIP_START_DATETIME",
+        "SCHEDULED_TRIP_END_DATETIME",
+        "INVOICE_NO",
+        "TT_NUMBER",
+        "TRANSPORTER_CODE",
+        "ROUTE_NO",
+        "ZONE",
+        "LOCATION_NAME",
+    ]
+].copy()
 
 print(final_merged_df.columns)
 # ----------------------------------------------------------------------
-# 1. Save Cluster master 
+# 1. Save Cluster master
 # ----------------------------------------------------------------------
 
 
-#FINAL_CLUSTER_MASTER_DISPLAY_df.to_csv("cluster_master.csv", index=False)
+# FINAL_CLUSTER_MASTER_DISPLAY_df.to_csv("cluster_master.csv", index=False)
 print(f".Cluster master data saved to cluster_master.csv")
 
 
 # ----------------------------------------------------------------------
-# 2. Save Combo Alerts 
+# 2. Save Combo Alerts
 # ----------------------------------------------------------------------
 
-#combo_df.to_csv("combo_alerts.csv", index=False)
+# combo_df.to_csv("combo_alerts.csv", index=False)
 print(f".Combo alerts data saved to combo_alerts.csv")
 
 
 # ----------------------------------------------------------------------
-# 3. Save Transporter Risk Score 
+# 3. Save Transporter Risk Score
 # ----------------------------------------------------------------------
-#Transporter_risk_summary.to_csv("transporter_risk_score.csv", index=False)
+# Transporter_risk_summary.to_csv("transporter_risk_score.csv", index=False)
 print(f".Transporter risk data saved to transporter_risk_score.csv")
 
 
 # ----------------------------------------------------------------------
-# 4. Save TT Risk Score 
+# 4. Save TT Risk Score
 # ----------------------------------------------------------------------
 
-#TT_risk_summary.to_csv("tt_risk_score.csv", index=False)
+# TT_risk_summary.to_csv("tt_risk_score.csv", index=False)
 print(f".TT risk data saved to tt_risk_score.csv")
 
 
 # ----------------------------------------------------------------------
-# 4. Save Location Risk Score 
+# 4. Save Location Risk Score
 # ----------------------------------------------------------------------
 
-#Location_risk_summary.to_csv("Location_risk_score.csv", index=False)
+# Location_risk_summary.to_csv("Location_risk_score.csv", index=False)
 print(f".location risk data saved to location_risk_score.csv")
 
 
 # ----------------------------------------------------------------------
-# 5. Save Completed Trips Risk Score 
+# 5. Save Completed Trips Risk Score
 # ----------------------------------------------------------------------
-#final_merged.to_csv("completed_trips_risk_score.csv", index=False)
+# final_merged.to_csv("completed_trips_risk_score.csv", index=False)
 print(f".Completed trips risk score data saved to completed_trips_risk_score.csv")
 
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("FINAL RISK SCORES")
-print("="*60)
+print("=" * 60)
 print(final_merged.head(20))
 print(f"\nTotal trips processed: {len(final_merged)}")
 print(f"Average Risk Score: {final_merged['Risk_Score'].mean():.2f}")
@@ -1316,18 +1666,19 @@ print(f"High Risk Trips (>70): {len(final_merged[final_merged['Risk_Score'] > 70
 # DATABASE INTEGRATION: SAVE OUTPUTS
 # =====================================================
 
+
 def pandas_to_pg_dtypes(df: pd.DataFrame) -> dict:
     """Return a dict {column: sqlalchemy type} that matches the pandas df."""
     pg_types = {}
     for col, dtype in df.dtypes.items():
         str_dtype = str(dtype)
-        if str_dtype.startswith('int'):
+        if str_dtype.startswith("int"):
             pg_types[col] = Integer
-        elif str_dtype.startswith('float'):
+        elif str_dtype.startswith("float"):
             pg_types[col] = Double
-        elif str_dtype == 'bool':
+        elif str_dtype == "bool":
             pg_types[col] = Boolean
-        elif str_dtype == 'datetime64[ns]':
+        elif str_dtype == "datetime64[ns]":
             pg_types[col] = DateTime
         else:
             # strings, categories, etc.
@@ -1345,7 +1696,9 @@ def upsert_df(engine, df: pd.DataFrame, table_name: str, pk_columns: list):
         return
 
     # Build WHERE clause for the DELETE
-    pk_placeholders = " AND ".join([f'"{c}" = :{c.replace(" ", "_")}' for c in pk_columns])
+    pk_placeholders = " AND ".join(
+        [f'"{c}" = :{c.replace(" ", "_")}' for c in pk_columns]
+    )
     delete_sql = f'DELETE FROM public."{table_name}" WHERE {pk_placeholders};'
 
     with engine.begin() as conn:
@@ -1358,11 +1711,12 @@ def upsert_df(engine, df: pd.DataFrame, table_name: str, pk_columns: list):
         df.to_sql(
             name=table_name,
             con=conn,
-            schema='public',
-            if_exists='append',
+            schema="public",
+            if_exists="append",
             index=False,
-            method='multi'
+            method="multi",
         )
+
 
 # ----------------------------------------------------------------------
 # 1. Save Cluster master to database
@@ -1376,15 +1730,16 @@ cluster_dtypes = pandas_to_pg_dtypes(cluster_df)
 cluster_df.to_sql(
     name=CLUSTER_TABLE,
     con=app_db_engine,
-    schema='public',
-    if_exists='replace',
+    schema="public",
+    if_exists="replace",
     index=False,
-    dtype=cluster_dtypes
+    dtype=cluster_dtypes,
 )
 
 upsert_df(app_db_engine, cluster_df, CLUSTER_TABLE, cluster_pk)
-print(f"\n.Cluster master data saved to public.{CLUSTER_TABLE} ({len(cluster_df)} rows)")
-
+print(
+    f"\n.Cluster master data saved to public.{CLUSTER_TABLE} ({len(cluster_df)} rows)"
+)
 
 
 # ----------------------------------------------------------------------
@@ -1396,8 +1751,12 @@ if not combo_df.empty:
     combo_df.columns = combo_df.columns.str.lower()  # Convert to lowercase
     combo_dtypes = pandas_to_pg_dtypes(combo_df)
     combo_df.to_sql(
-        name=COMBO_TABLE, con=app_db_engine, schema='public',
-        if_exists='replace', index=False, dtype=combo_dtypes
+        name=COMBO_TABLE,
+        con=app_db_engine,
+        schema="public",
+        if_exists="replace",
+        index=False,
+        dtype=combo_dtypes,
     )
     print(f".Combo alerts data saved to public.{COMBO_TABLE} ({len(combo_df)} rows)")
 
@@ -1410,14 +1769,21 @@ else:
 # ----------------------------------------------------------------------
 TRANSPORTER_TABLE = "transporter_risk_score"
 Transporter_risk_summary = Transporter_risk_summary.copy()
-Transporter_risk_summary.columns = Transporter_risk_summary.columns.str.lower()  # Convert to lowercase
+Transporter_risk_summary.columns = (
+    Transporter_risk_summary.columns.str.lower()
+)  # Convert to lowercase
 transporter_dtypes = pandas_to_pg_dtypes(Transporter_risk_summary)
 Transporter_risk_summary.to_sql(
-    name=TRANSPORTER_TABLE, con=app_db_engine, schema='public',
-    if_exists='replace', index=False, dtype=transporter_dtypes
+    name=TRANSPORTER_TABLE,
+    con=app_db_engine,
+    schema="public",
+    if_exists="replace",
+    index=False,
+    dtype=transporter_dtypes,
 )
-print(f".Transporter risk data saved to public.{TRANSPORTER_TABLE} ({len(Transporter_risk_summary)} rows)")
-
+print(
+    f".Transporter risk data saved to public.{TRANSPORTER_TABLE} ({len(Transporter_risk_summary)} rows)"
+)
 
 
 # ----------------------------------------------------------------------
@@ -1428,8 +1794,12 @@ TT_risk_summary = TT_risk_summary.copy()
 TT_risk_summary.columns = TT_risk_summary.columns.str.lower()  # Convert to lowercase
 tt_dtypes = pandas_to_pg_dtypes(TT_risk_summary)
 TT_risk_summary.to_sql(
-    name=TT_TABLE, con=app_db_engine, schema='public',
-    if_exists='replace', index=False, dtype=tt_dtypes
+    name=TT_TABLE,
+    con=app_db_engine,
+    schema="public",
+    if_exists="replace",
+    index=False,
+    dtype=tt_dtypes,
 )
 print(f".TT risk data saved to public.{TT_TABLE} ({len(TT_risk_summary)} rows)")
 
@@ -1439,13 +1809,21 @@ print(f".TT risk data saved to public.{TT_TABLE} ({len(TT_risk_summary)} rows)")
 # ----------------------------------------------------------------------
 location_TABLE = "location_risk_score"
 Location_risk_summary = Location_risk_summary.copy()
-Location_risk_summary.columns = Location_risk_summary.columns.str.lower()  # Convert to lowercase
+Location_risk_summary.columns = (
+    Location_risk_summary.columns.str.lower()
+)  # Convert to lowercase
 location_dtypes = pandas_to_pg_dtypes(Location_risk_summary)
 Location_risk_summary.to_sql(
-    name=location_TABLE, con=app_db_engine, schema='public',
-    if_exists='replace', index=False, dtype=location_dtypes
+    name=location_TABLE,
+    con=app_db_engine,
+    schema="public",
+    if_exists="replace",
+    index=False,
+    dtype=location_dtypes,
 )
-print(f".Location risk data saved to public.{location_TABLE} ({len(Location_risk_summary)} rows)")
+print(
+    f".Location risk data saved to public.{location_TABLE} ({len(Location_risk_summary)} rows)"
+)
 
 
 # ----------------------------------------------------------------------
@@ -1456,173 +1834,260 @@ final_merged = final_merged.copy()
 final_merged.columns = final_merged.columns.str.lower()  # Convert to lowercase
 df_dtypes = pandas_to_pg_dtypes(final_merged)
 final_merged.to_sql(
-    name=TABLE_NAME, con=app_db_engine, schema='public',
-    if_exists='replace', index=False, dtype=df_dtypes
+    name=TABLE_NAME,
+    con=app_db_engine,
+    schema="public",
+    if_exists="replace",
+    index=False,
+    dtype=df_dtypes,
 )
 
-print(f".Completed trips risk score data saved to public.{TABLE_NAME} ({len(final_merged)} rows)")
-
-
+print(
+    f".Completed trips risk score data saved to public.{TABLE_NAME} ({len(final_merged)} rows)"
+)
 
 
 # ================================== TT_After_Dr ============================================
 
-merge_df=alerts.copy()
+merge_df = alerts.copy()
 
 
 print(merge_df.columns)
 # Columns to keep in final result - adjust if needed
-info_cols = [ 'LOAD_NO', 'ROUTE_NO','LOCATION', 'DESTINATION',
-             'TRANSPORTER_CODE', 'TRANSPORTER_NAME']
+info_cols = [
+    "LOAD_NO",
+    "ROUTE_NO",
+    "LOCATION",
+    "DESTINATION",
+    "TRANSPORTER_CODE",
+    "TRANSPORTER_NAME",
+]
 
 # Get last DR datetime per  INVOICE_NO + TT_NUMBER
-dr_df = merge_df[merge_df['ALERT_TYPE'] == "DEVICE_REMOVED"]
-last_dr = dr_df.groupby(['TT_NUMBER', 'INVOICE_NO'])['EVENT_DATETIME'].max().reset_index()
-last_dr.rename(columns={'EVENT_DATETIME': 'last_dr_time'}, inplace=True)
+dr_df = merge_df[merge_df["ALERT_TYPE"] == "DEVICE_REMOVED"]
+last_dr = (
+    dr_df.groupby(["TT_NUMBER", "INVOICE_NO"])["EVENT_DATETIME"].max().reset_index()
+)
+last_dr.rename(columns={"EVENT_DATETIME": "last_dr_time"}, inplace=True)
 
 # Merge last DR datetime back to main DataFrame
-merge_df = merge_df.merge(last_dr, on=['TT_NUMBER', 'INVOICE_NO'], how='left')
+merge_df = merge_df.merge(last_dr, on=["TT_NUMBER", "INVOICE_NO"], how="left")
 
 # Filter events after last DR (excluding DR itself)
-after_dr_df = merge_df[(merge_df['EVENT_DATETIME'] > merge_df['last_dr_time']) & (merge_df['ALERT_TYPE'] != "DEVICE_REMOVED")]
+after_dr_df = merge_df[
+    (merge_df["EVENT_DATETIME"] > merge_df["last_dr_time"])
+    & (merge_df["ALERT_TYPE"] != "DEVICE_REMOVED")
+]
 
 # Total violations after DR per TT_NUMBER + INVOICE_NO
-total_violations = after_dr_df.groupby(['TT_NUMBER', 'INVOICE_NO'])['ALERT_TYPE'].count().reset_index()
-total_violations.rename(columns={'ALERT_TYPE': 'total_violations_after_dr'}, inplace=True)
+total_violations = (
+    after_dr_df.groupby(["TT_NUMBER", "INVOICE_NO"])["ALERT_TYPE"].count().reset_index()
+)
+total_violations.rename(
+    columns={"ALERT_TYPE": "total_violations_after_dr"}, inplace=True
+)
 
 # Specific alert counts per TT_NUMBER + INVOICE_NO
-specific_counts = after_dr_df.groupby(['TT_NUMBER', 'INVOICE_NO', 'ALERT_TYPE']).size().unstack(fill_value=0).reset_index()
+specific_counts = (
+    after_dr_df.groupby(["TT_NUMBER", "INVOICE_NO", "ALERT_TYPE"])
+    .size()
+    .unstack(fill_value=0)
+    .reset_index()
+)
 
 # Get info columns (take first row per TT_NUMBER + INVOICE_NO)
-info_df = merge_df.groupby(['INVOICE_NO','TT_NUMBER'])[info_cols].first().reset_index()
+info_df = merge_df.groupby(["INVOICE_NO", "TT_NUMBER"])[info_cols].first().reset_index()
 
 # Step 1: Merge everything, but do NOT fillna(0) yet
-final_summary = info_df.merge(last_dr, on=['TT_NUMBER', 'INVOICE_NO'], how='left') \
-                       .merge(total_violations, on=['TT_NUMBER', 'INVOICE_NO'], how='left') \
-                       .merge(specific_counts, on=['TT_NUMBER', 'INVOICE_NO'], how='left')
+final_summary = (
+    info_df.merge(last_dr, on=["TT_NUMBER", "INVOICE_NO"], how="left")
+    .merge(total_violations, on=["TT_NUMBER", "INVOICE_NO"], how="left")
+    .merge(specific_counts, on=["TT_NUMBER", "INVOICE_NO"], how="left")
+)
 
 # Step 2: Fill only numeric/count columns
-count_cols = ['total_violations_after_dr'] + [c for c in specific_counts.columns if c not in ['TT_NUMBER','INVOICE_NO']]
+count_cols = ["total_violations_after_dr"] + [
+    c for c in specific_counts.columns if c not in ["TT_NUMBER", "INVOICE_NO"]
+]
 count_cols = [c for c in count_cols if c in final_summary.columns]  # safe filter
 final_summary[count_cols] = final_summary[count_cols].fillna(0).astype(int)
 
 # Step 3 (optional): Create display column for last_dr_time
-final_summary['last_dr_time'] = final_summary['last_dr_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
-final_summary['last_dr_time'] = final_summary['last_dr_time'].fillna("DR event not found")
+final_summary["last_dr_time"] = final_summary["last_dr_time"].dt.strftime(
+    "%Y-%m-%d %H:%M:%S"
+)
+final_summary["last_dr_time"] = final_summary["last_dr_time"].fillna(
+    "DR event not found"
+)
 
-#VTS_TRIPS
+# VTS_TRIPS
 
-VTS_TRIPS_PATH = pd.read_sql_query( # type: ignore
-    'SELECT * FROM vts_alert_history', app_db_engine
-) # type: ignore
+VTS_TRIPS_PATH = pd.read_sql_query(  # type: ignore
+    "SELECT * FROM vts_alert_history", app_db_engine
+)  # type: ignore
 print(f"Loaded {len(VTS_TRIPS_PATH)} VTS trip records")
 
 
-
-
 # Subset required columns and make a copy to avoid SettingWithCopyWarning
-VTS_Trips = VTS_TRIPS_PATH[['vendor_id', 'location_id', 'location_type', 'tl_number',
-                            'vts_start_datetime', 'vts_end_datetime',
-                            'stoppage_violations_count', 'route_deviation_count',
-                            'speed_violation_count', 'main_supply_removal_count',
-                            'night_driving_count', 'no_halt_zone_count',
-                            'device_offline_count', 'device_tamper_count',
-                            'continuous_driving_count', 'invoice_number', 'tt_type']].copy()
+VTS_Trips = VTS_TRIPS_PATH[
+    [
+        "vendor_id",
+        "location_id",
+        "location_type",
+        "tl_number",
+        "vts_start_datetime",
+        "vts_end_datetime",
+        "stoppage_violations_count",
+        "route_deviation_count",
+        "speed_violation_count",
+        "main_supply_removal_count",
+        "night_driving_count",
+        "no_halt_zone_count",
+        "device_offline_count",
+        "device_tamper_count",
+        "continuous_driving_count",
+        "invoice_number",
+        "tt_type",
+    ]
+].copy()
 
 # # Convert datetime safely
-VTS_Trips.loc[:, 'vts_start_datetime'] = pd.to_datetime(VTS_Trips['vts_start_datetime'], errors='coerce')
-VTS_Trips.loc[:, 'vts_end_datetime'] = pd.to_datetime(VTS_Trips['vts_end_datetime'], errors='coerce')
+VTS_Trips.loc[:, "vts_start_datetime"] = pd.to_datetime(
+    VTS_Trips["vts_start_datetime"], errors="coerce"
+)
+VTS_Trips.loc[:, "vts_end_datetime"] = pd.to_datetime(
+    VTS_Trips["vts_end_datetime"], errors="coerce"
+)
 
 # Rename columns
-VTS_Trips = VTS_Trips.rename(columns={
-    "tl_number":"TT_NUMBER",
-    "invoice_number": "INVOICE_NO"
-})
+VTS_Trips = VTS_Trips.rename(
+    columns={"tl_number": "TT_NUMBER", "invoice_number": "INVOICE_NO"}
+)
 
-VTS_df=VTS_Trips[['TT_NUMBER', 'INVOICE_NO','vts_start_datetime', 'vts_end_datetime']].copy()
+VTS_df = VTS_Trips[
+    ["TT_NUMBER", "INVOICE_NO", "vts_start_datetime", "vts_end_datetime"]
+].copy()
 
-VTS_df['vts_start_datetime'] = pd.to_datetime(VTS_df['vts_start_datetime'], errors='coerce')
-VTS_df['vts_end_datetime'] = pd.to_datetime(VTS_df['vts_end_datetime'], errors='coerce')
-final_summary['last_dr_time'] = pd.to_datetime(final_summary['last_dr_time'], errors='coerce')
+VTS_df["vts_start_datetime"] = pd.to_datetime(
+    VTS_df["vts_start_datetime"], errors="coerce"
+)
+VTS_df["vts_end_datetime"] = pd.to_datetime(VTS_df["vts_end_datetime"], errors="coerce")
+final_summary["last_dr_time"] = pd.to_datetime(
+    final_summary["last_dr_time"], errors="coerce"
+)
 
 # -------------------------------
 # Total trips, first and last trip (memory-efficient)
 # -------------------------------
-trip_summary = VTS_df.groupby('TT_NUMBER').agg(
-    total_trips=('INVOICE_NO', 'count'),
-    first_trip_time=('vts_start_datetime', 'min'),
-    last_trip_time=('vts_end_datetime', 'max')
-).reset_index()
+trip_summary = (
+    VTS_df.groupby("TT_NUMBER")
+    .agg(
+        total_trips=("INVOICE_NO", "count"),
+        first_trip_time=("vts_start_datetime", "min"),
+        last_trip_time=("vts_end_datetime", "max"),
+    )
+    .reset_index()
+)
 
 # -------------------------------
 # Map last_dr_time to df (memory-efficient)
 # -------------------------------
-last_dr_map = final_summary.set_index('TT_NUMBER')['last_dr_time'].to_dict()
-VTS_df['last_dr_time'] = VTS_df['TT_NUMBER'].map(last_dr_map)
+last_dr_map = final_summary.set_index("TT_NUMBER")["last_dr_time"].to_dict()
+VTS_df["last_dr_time"] = VTS_df["TT_NUMBER"].map(last_dr_map)
 
 # -------------------------------
 # Flag trips after last DR
 # -------------------------------
-VTS_df['after_last_dr'] = VTS_df['vts_start_datetime'] > VTS_df['last_dr_time']
+VTS_df["after_last_dr"] = VTS_df["vts_start_datetime"] > VTS_df["last_dr_time"]
 
 # -------------------------------
 # Count trips after last DR per TT_NUMBER
 # -------------------------------
-trips_after_dr = VTS_df.groupby('TT_NUMBER')['after_last_dr'].sum().reset_index(name='total_trips_after_last_dr')
+trips_after_dr = (
+    VTS_df.groupby("TT_NUMBER")["after_last_dr"]
+    .sum()
+    .reset_index(name="total_trips_after_last_dr")
+)
 
 # -------------------------------
 # Merge all computed columns to final_summary
 # -------------------------------
 # Drop old column if exists to avoid MergeError
-if 'total_trips_after_last_dr' in final_summary.columns:
-    final_summary = final_summary.drop(columns=['total_trips_after_last_dr'])
+if "total_trips_after_last_dr" in final_summary.columns:
+    final_summary = final_summary.drop(columns=["total_trips_after_last_dr"])
 
 # Merge total trips first
-final_summary = final_summary.merge(trip_summary, on='TT_NUMBER', how='left')
+final_summary = final_summary.merge(trip_summary, on="TT_NUMBER", how="left")
 
 # Merge trips after last DR
-final_summary = final_summary.merge(trips_after_dr, on='TT_NUMBER', how='left')
+final_summary = final_summary.merge(trips_after_dr, on="TT_NUMBER", how="left")
 
 # Replace missing last_dr_time or trips_after_last_dr equal to total_trips
-final_summary['total_trips_after_last_dr'] = final_summary.apply(
-    lambda x: "DR event not found"
-              if pd.isna(x['last_dr_time']) 
-                 or pd.isna(x['total_trips_after_last_dr'])
-                 or x['total_trips'] == x['total_trips_after_last_dr']
-              else int(x['total_trips_after_last_dr']),
-    axis=1
+final_summary["total_trips_after_last_dr"] = final_summary.apply(
+    lambda x: (
+        "DR event not found"
+        if pd.isna(x["last_dr_time"])
+        or pd.isna(x["total_trips_after_last_dr"])
+        or x["total_trips"] == x["total_trips_after_last_dr"]
+        else int(x["total_trips_after_last_dr"])
+    ),
+    axis=1,
 )
 
 
 # Optionally, replace missing last_dr_time
-final_summary['last_dr_time'] = final_summary['last_dr_time'].fillna("DR event not found")
+final_summary["last_dr_time"] = final_summary["last_dr_time"].fillna(
+    "DR event not found"
+)
 
 # Fill any remaining NaNs with 0 if needed
 final_summary = final_summary.fillna(0)
-Location_m =( master_df.drop_duplicates(subset=["LOCATION_CODE"]).set_index("LOCATION_CODE")["LOCATION_NAME"].to_dict())
-final_summary["LOCATION_NAME"]=final_summary["LOCATION"].map(Location_m)
-final_TT_After_DR=final_summary[['INVOICE_NO', 'TT_NUMBER', 'LOAD_NO', 'ROUTE_NO', 'LOCATION','LOCATION_NAME', 'DESTINATION', 'TRANSPORTER_CODE', 'TRANSPORTER_NAME', 'last_dr_time',
-                                'total_trips_after_last_dr','total_violations_after_dr',"POWER_DISCONNECT", "ROUTE_DEVIATION", "STOPPAGE_VIOLATION"]]
+Location_m = (
+    master_df.drop_duplicates(subset=["LOCATION_CODE"])
+    .set_index("LOCATION_CODE")["LOCATION_NAME"]
+    .to_dict()
+)
+final_summary["LOCATION_NAME"] = final_summary["LOCATION"].map(Location_m)
+final_TT_After_DR = final_summary[
+    [
+        "INVOICE_NO",
+        "TT_NUMBER",
+        "LOAD_NO",
+        "ROUTE_NO",
+        "LOCATION",
+        "LOCATION_NAME",
+        "DESTINATION",
+        "TRANSPORTER_CODE",
+        "TRANSPORTER_NAME",
+        "last_dr_time",
+        "total_trips_after_last_dr",
+        "total_violations_after_dr",
+        "POWER_DISCONNECT",
+        "ROUTE_DEVIATION",
+        "STOPPAGE_VIOLATION",
+    ]
+]
 
-#final_TT_After_DR.to_csv("TT_After_DR.csv")
+# final_TT_After_DR.to_csv("TT_After_DR.csv")
 print("\n=== TT_After_DR csv Saved ===")
 
 # =====================================================
 # DATABASE INTEGRATION: SAVE OUTPUTS
 # =====================================================
 
+
 def pandas_to_pg_dtypes(df: pd.DataFrame) -> dict:
     """Return a dict {column: sqlalchemy type} that matches the pandas df."""
     pg_types = {}
     for col, dtype in df.dtypes.items():
         str_dtype = str(dtype)
-        if str_dtype.startswith('int'):
+        if str_dtype.startswith("int"):
             pg_types[col] = Integer
-        elif str_dtype.startswith('float'):
+        elif str_dtype.startswith("float"):
             pg_types[col] = Double
-        elif str_dtype == 'bool':
+        elif str_dtype == "bool":
             pg_types[col] = Boolean
-        elif str_dtype == 'datetime64[ns]':
+        elif str_dtype == "datetime64[ns]":
             pg_types[col] = DateTime
         else:
             # strings, categories, etc.
@@ -1640,7 +2105,9 @@ def upsert_df(engine, df: pd.DataFrame, table_name: str, pk_columns: list):
         return
 
     # Build WHERE clause for the DELETE
-    pk_placeholders = " AND ".join([f'"{c}" = :{c.replace(" ", "_")}' for c in pk_columns])
+    pk_placeholders = " AND ".join(
+        [f'"{c}" = :{c.replace(" ", "_")}' for c in pk_columns]
+    )
     delete_sql = f'DELETE FROM public."{table_name}" WHERE {pk_placeholders};'
 
     with engine.begin() as conn:
@@ -1653,26 +2120,27 @@ def upsert_df(engine, df: pd.DataFrame, table_name: str, pk_columns: list):
         df.to_sql(
             name=table_name,
             con=conn,
-            schema='public',
-            if_exists='append',
+            schema="public",
+            if_exists="append",
             index=False,
-            method='multi'
+            method="multi",
         )
+
 
 TABLE_NAME = "tt_after_dr"
 final_TT_After_DR = final_TT_After_DR.copy()
-final_TT_After_DR.columns = final_TT_After_DR.columns.str.lower() 
+final_TT_After_DR.columns = final_TT_After_DR.columns.str.lower()
 df_dtypes = pandas_to_pg_dtypes(final_TT_After_DR)
 
-pk_columns = ['invoice_no', 'tt_number']
+pk_columns = ["invoice_no", "tt_number"]
 
 final_TT_After_DR.to_sql(
     name=TABLE_NAME,
     con=app_db_engine,
-    schema='public',
-    if_exists='replace',
+    schema="public",
+    if_exists="replace",
     index=False,
-    dtype=df_dtypes
+    dtype=df_dtypes,
 )
 
 # Upsert to handle updates
@@ -1681,4 +2149,3 @@ print(f"TT After DR data saved to public.{TABLE_NAME} ({len(final_TT_After_DR)} 
 
 app_db_engine.dispose()
 print("DATABASE CONNECTION CLOSED")
-

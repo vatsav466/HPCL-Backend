@@ -1,9 +1,11 @@
-import orchestrator.analytics.industry_data_normalize as ind
-import os
-import psycopg2
 import datetime
+import os
+
 import pandas as pd
 import polars as pl
+import psycopg2
+
+import orchestrator.analytics.industry_data_normalize as ind
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 

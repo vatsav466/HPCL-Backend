@@ -1,11 +1,13 @@
-import urdhva_base
-import polars as pl
-import numpy as np
 import os
-import utilities.connection_mapping as connection_mapping
+
+import matplotlib.pyplot as plt
+import numpy as np
+import polars as pl
+import urdhva_base
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
-import matplotlib.pyplot as plt
+
+import utilities.connection_mapping as connection_mapping
 
 
 async def plot_ms_sales_trend(

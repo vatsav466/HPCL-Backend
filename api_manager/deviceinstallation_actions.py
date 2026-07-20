@@ -1,13 +1,15 @@
+import datetime
 import os
+
+import fastapi
 import httpx
 import urdhva_base
+from fastapi import Depends, File, UploadFile
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-from fastapi import UploadFile, File, Depends
+
 import utilities.minio_connector as minio_connector
 import utilities.zone_code_mapping as zone_code_mapping
-import fastapi
-import datetime
 
 router = fastapi.APIRouter(prefix="/deviceinstallation", tags=["DeviceInstallation"])
 

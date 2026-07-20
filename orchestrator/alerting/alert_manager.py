@@ -1,35 +1,33 @@
-import urdhva_base
-import re
-import json
-import httpx
 import datetime
 import importlib
+import json
+import re
+import traceback
+
 import aiofiles
 import hpcl_ceg_model
-import traceback
+import httpx
 import pandas as pd
+import urdhva_base
 from jinja2 import Template
 from weasyprint import HTML
-import utilities.helpers as helpers
 
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+import orchestrator.analytics.emlock_analysis as emlock_analysis
 # import orchestrator.alerting.ro_alert as ro_alert
 # import orchestrator.alerting.va_alert as va_alert
 # import orchestrator.alerting.vts_alert as vts_alert
 # import orchestrator.alerting.tas_alert as tas_alert
 # import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.analytics.va_analysis as va_analysis
-import utilities.connection_mapping as connection_mapping
-
 # import orchestrator.alerting.emlock_alert as emlock_alert
 import orchestrator.analytics.vts_analysis as vts_analysis
-from orchestrator.notification_manager.notify_email import *
-import orchestrator.analytics.emlock_analysis as emlock_analysis
-import orchestrator.analytics.dry_out_analysis as dry_out_analysis
-from utilities.interlock_template_mapping import (
-    InterlockTemplateMapping,
-    TemplateMapping,
-)
+import utilities.connection_mapping as connection_mapping
+import utilities.helpers as helpers
 import utilities.minio_connector as minio_connector
+from orchestrator.notification_manager.notify_email import *
+from utilities.interlock_template_mapping import (InterlockTemplateMapping,
+                                                  TemplateMapping)
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):

@@ -3,8 +3,9 @@ Loyalty - Field Force orchestrator.
 Functional schema placeholder for loyalty-related APIs. No implementation.
 """
 
-import field_force_model
 from typing import Any, Optional
+
+import field_force_model
 
 
 async def loyalty_placeholder(

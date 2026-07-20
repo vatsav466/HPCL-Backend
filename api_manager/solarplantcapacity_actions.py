@@ -1,6 +1,6 @@
+import fastapi
 from dashboard_studio_enum import *
 from dashboard_studio_model import *
-import fastapi
 
 router = fastapi.APIRouter(prefix="/solarplantcapacity")
 

@@ -1,4 +1,5 @@
 import typing
+
 import pydantic
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams

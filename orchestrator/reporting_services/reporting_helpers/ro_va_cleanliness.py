@@ -1,8 +1,9 @@
-import requests
 import json
+from datetime import datetime, timedelta, timezone
+
 import polars as pl
-from datetime import datetime, timezone, timedelta
 import pytz
+import requests
 
 
 def fetch_va_cleanliness_data():

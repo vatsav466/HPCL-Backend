@@ -1,9 +1,11 @@
-import urdhva_base
 import asyncio
 import traceback
-import polars as pl
+
 import charts_actions
 import dashboard_studio_model
+import polars as pl
+import urdhva_base
+
 import utilities.connection_mapping as connection_mapping
 
 logger = urdhva_base.logger.Logger.getInstance("ims_truck_details_sync")

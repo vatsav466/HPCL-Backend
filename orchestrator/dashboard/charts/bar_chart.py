@@ -1,4 +1,5 @@
 from sqlalchemy import text
+
 from orchestrator.dashboard.chart_factory import charts_functions
 
 

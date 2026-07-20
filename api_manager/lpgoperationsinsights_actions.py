@@ -1,6 +1,7 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+
 import orchestrator.analytics.lpg_plant_analysis as lpg_plant_analysis
 
 router = fastapi.APIRouter(prefix="/lpgoperationsinsights")

@@ -1,7 +1,9 @@
 import datetime
+
 import hpcl_ceg_model
-import utilities.connection_mapping as connection_mapping
+
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+import utilities.connection_mapping as connection_mapping
 
 
 async def get_where_clause_condition(filters):

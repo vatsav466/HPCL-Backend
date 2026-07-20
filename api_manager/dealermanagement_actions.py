@@ -1,6 +1,6 @@
+import fastapi
 from field_force_enum import *
 from field_force_model import *
-import fastapi
 
 router = fastapi.APIRouter(prefix="/dealermanagement")
 

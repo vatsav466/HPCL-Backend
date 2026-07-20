@@ -1,7 +1,8 @@
 import asyncio
+
+import hpcl_ceg_model
 import numpy as np
 import pandas as pd
-import hpcl_ceg_model
 
 
 async def sync_dry_out_ro_loss():

@@ -1,6 +1,7 @@
+import fastapi
 from dashboard_studio_enum import *
 from dashboard_studio_model import *
-import fastapi
+
 from orchestrator.dashboard.chart_factory import charts_functions
 
 router = fastapi.APIRouter(prefix="/dashboardgroups")

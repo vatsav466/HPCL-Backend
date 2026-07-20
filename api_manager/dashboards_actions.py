@@ -1,7 +1,8 @@
-from dashboard_studio_enum import *
-from dashboard_studio_model import *
 import fastapi
 import urdhva_base
+from dashboard_studio_enum import *
+from dashboard_studio_model import *
+
 from orchestrator.dashboard.chart_factory import charts_functions
 
 router = fastapi.APIRouter(prefix="/dashboards")

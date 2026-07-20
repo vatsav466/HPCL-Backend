@@ -12,9 +12,10 @@ import os
 import statistics
 from typing import Any, Dict, List, Optional, Tuple
 
-import hpcl_ceg_model
 import charts_actions
 import dashboard_studio_model
+import hpcl_ceg_model
+
 import orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
 import orchestrator.analytics.performance_score.performance_score_insights as psi
 import utilities.connection_mapping as connection_mapping

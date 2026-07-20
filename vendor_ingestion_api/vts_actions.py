@@ -1,13 +1,15 @@
+import datetime
+import json
+import traceback
+
+import fastapi
+import hpcl_ceg_model
 import urdhva_base
+from fastapi.encoders import jsonable_encoder
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import json
-import fastapi
-import datetime
-import traceback
-import hpcl_ceg_model
+
 import orchestrator.analytics.vts_analysis as vts_analysis
-from fastapi.encoders import jsonable_encoder
 
 router = fastapi.APIRouter(prefix="/vts")
 
@@ -147,7 +149,7 @@ async def vts_ingest_event_data(data: Vts_Ingest_Event_DataParams):
     try:
         logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
         if isinstance(data.data, list) and len(data.data) > 0:
-            enriched_data = [{**entry.dict()} for entry in data.data]
+            [{**entry.dict()} for entry in data.data]
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
@@ -166,7 +168,7 @@ async def vts_ingest_trip_data(data: Vts_Ingest_Trip_DataParams):
     try:
         logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
         if isinstance(data.data, list) and len(data.data) > 0:
-            enriched_data = [{**entry.dict()} for entry in data.data]
+            [{**entry.dict()} for entry in data.data]
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}

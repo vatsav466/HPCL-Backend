@@ -1,9 +1,9 @@
+import fastapi
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 from AlgoCharts_enum import *
 from AlgoCharts_model import *
-import fastapi
 
 router = fastapi.APIRouter()
 

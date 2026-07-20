@@ -1,10 +1,12 @@
+import json
+import traceback
+from pathlib import Path
+
+import fastapi
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import json
-import fastapi
-import traceback
-from pathlib import Path
+
 import utilities.minio_connector as minio_connector
 
 router = fastapi.APIRouter(prefix="/usermaster")

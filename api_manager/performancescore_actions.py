@@ -1,22 +1,17 @@
-from hpcl_ceg_enum import *
-from hpcl_ceg_model import *
-import fastapi
-import pandas as pd
-from orchestrator.dbconnector.widget_actions import widget_actions
-import pandas as pd
-from fastapi.responses import FileResponse
+import os
 
+import fastapi
 # Import required libraries
 import pandas as pd
-import os
-import fastapi
-from starlette.responses import FileResponse
-from orchestrator.analytics.performance_score.performance_score_daywise import (
-    performance_score_daywise_action,
-)
-
-
 import xlsxwriter  # Required for manual formatting
+from fastapi.responses import FileResponse
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
+from starlette.responses import FileResponse
+
+from orchestrator.analytics.performance_score.performance_score_daywise import \
+    performance_score_daywise_action
+from orchestrator.dbconnector.widget_actions import widget_actions
 
 # Assuming PerformanceScore, PerformanceScoreHistory, and widget_actions are imported elsewhere.
 # NOTE: Ensure these imports are available in your environment for the code to run

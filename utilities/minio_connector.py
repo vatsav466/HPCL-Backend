@@ -1,7 +1,8 @@
 import os
+
 import urdhva_base
 from minio import Minio
-from minio.error import S3Error, InvalidResponseError
+from minio.error import InvalidResponseError, S3Error
 
 
 def get_minio_client():

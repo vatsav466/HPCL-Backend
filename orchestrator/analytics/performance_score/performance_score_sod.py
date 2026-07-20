@@ -1,16 +1,17 @@
-import os
-import json
 import datetime
+import json
+import os
 import traceback
-import pandas as pd
-import hpcl_ceg_model
 from collections import defaultdict
+
+import hpcl_ceg_model
+import pandas as pd
+
 import orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
-from utilities.helpers import fetch_oi_devices, fetch_device_data, fetch_alarm_data
 from orchestrator.analytics.performance_score.performance_score_insights import (
-    enhance_result_with_insights,
-    generate_summary_insights,
-)
+    enhance_result_with_insights, generate_summary_insights)
+from utilities.helpers import (fetch_alarm_data, fetch_device_data,
+                               fetch_oi_devices)
 
 
 class SODPerformanceScore(performance_score_factory.PerformanceIndex):

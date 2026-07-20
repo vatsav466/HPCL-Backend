@@ -1,6 +1,7 @@
 import mysql.connector
-import psycopg2
 import polars as pl
+import psycopg2
+
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 TARGET_TABLE = "pm_orders"

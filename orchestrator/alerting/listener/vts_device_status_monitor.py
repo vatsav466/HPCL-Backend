@@ -1,20 +1,19 @@
-import urdhva_base
-import httpx
-import pyodbc
 import asyncio
 import datetime
-import psycopg2
-import traceback
-import pandas as pd
+
 import hpcl_ceg_model
+import httpx
+import pandas as pd
+import psycopg2
+import pyodbc
+import urdhva_base
+
 import cache_gateway.cache_api_actions as cache_api_actions
-from orchestrator.alerting.alert_manager import create_alert
 import orchestrator.dbconnector.credential_loader as credential_loader
 
-class VtsDeviceStatusMonitor:
-    def __init__(self) -> None:
-        ...
 
+class VtsDeviceStatusMonitor:
+    def __init__(self) -> None: ...
 
     def get_db_connection(self):
         """
@@ -24,17 +23,16 @@ class VtsDeviceStatusMonitor:
         Returns:
             pyodbc connection
         """
-        creds = credential_loader.get_credentials('VTS_TRACK_DB')
+        creds = credential_loader.get_credentials("VTS_TRACK_DB")
         connection = pyodbc.connect(
-                'DRIVER={ODBC Driver 18 for SQL Server};'
-                f'Server={creds['host']},{creds['port']};'
-                f'Database={creds['database']};'
-                f'UID={creds['user']};'
-                f'PWD={creds['password']};'
-                'TrustServerCertificate=yes;MARS_Connection=yes;',
-            )
+            "DRIVER={ODBC Driver 18 for SQL Server};"
+            f"Server={creds['host']},{creds['port']};"
+            f"Database={creds['database']};"
+            f"UID={creds['user']};"
+            f"PWD={creds['password']};"
+            "TrustServerCertificate=yes;MARS_Connection=yes;",
+        )
         return connection
-    
 
     def fetch_data(self, cursor, query, getData=False, params=None):
         """
@@ -47,14 +45,14 @@ class VtsDeviceStatusMonitor:
         """
         if params:
             pg_conn = psycopg2.connect(
-                    host=params["host"],
-                    database=params["database"],
-                    user=params["user"],
-                    password=params["password"],
-                    port=params["port"]
-                )
+                host=params["host"],
+                database=params["database"],
+                user=params["user"],
+                password=params["password"],
+                port=params["port"],
+            )
             cursor = pg_conn.cursor()
-            
+
         print("-" * 50)
         print("query -->", query)
         print("-" * 50)
@@ -62,7 +60,7 @@ class VtsDeviceStatusMonitor:
         cursor.execute(query)
         if getData:
             data = cursor.fetchall()
-            print('Total Records :', len(data))
+            print("Total Records :", len(data))
             columns = [column[0] for column in cursor.description]
             data = pd.DataFrame.from_records(data, columns=columns)
             return data
@@ -71,44 +69,60 @@ class VtsDeviceStatusMonitor:
             cursor.close()
             pg_conn.close()
 
-
     async def create_device_alert(self):
         connection = self.get_db_connection()
         cursor = connection.cursor()
         query = """ SELECT * FROM VTS_DEVICE_STATUS_HIST """
         vts_data = self.fetch_data(cursor, query, getData=True)
 
-        print("-"*50)
+        print("-" * 50)
         print("----- vts status data -----")
         print(vts_data)
-        print("-"*50)
+        print("-" * 50)
 
         alert_query = """ SELECT id as alert_id, vehicle_number FROM alerts where alert_section='VTS' and alert_status='Open' and violation_type='NRD' """
-        
-        creds = credential_loader.get_credentials('APP_DB')
-        params={
-                "host": creds["host"],
-                "database": creds["database"],
-                "user": creds["user"],
-                "password": creds["password"],
-                "port": creds["port"]
-                }
-        alert_data = self.fetch_data(cursor=None, query=alert_query, getData=True, params=params)
-        print("-"*50)
+
+        creds = credential_loader.get_credentials("APP_DB")
+        params = {
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"],
+        }
+        alert_data = self.fetch_data(
+            cursor=None, query=alert_query, getData=True, params=params
+        )
+        print("-" * 50)
         print("-------- alert_data --------")
         print(alert_data)
-        print("-"*50)
+        print("-" * 50)
 
-        print("Before Merge :",len(vts_data))
-        vts_data = pd.merge(vts_data, alert_data, left_on=["TRUCK_REGNO"], right_on=["vehicle_number"], how="left", indicator=True)
-        print("After Merge :",len(vts_data))
+        print("Before Merge :", len(vts_data))
+        vts_data = pd.merge(
+            vts_data,
+            alert_data,
+            left_on=["TRUCK_REGNO"],
+            right_on=["vehicle_number"],
+            how="left",
+            indicator=True,
+        )
+        print("After Merge :", len(vts_data))
 
         vts_data["alert_closure"] = False
         vts_data["alert_creation"] = False
 
-        vts_data.loc[(vts_data["_merge"] == "both") & (vts_data["DEVICE_WORKING"].fillna("") == "Y"), "alert_closure"] = True
-        vts_data.loc[(vts_data["_merge"] != "both") & (vts_data["DEVICE_WORKING"].fillna("") == "N"), "alert_creation"] = True
-        
+        vts_data.loc[
+            (vts_data["_merge"] == "both")
+            & (vts_data["DEVICE_WORKING"].fillna("") == "Y"),
+            "alert_closure",
+        ] = True
+        vts_data.loc[
+            (vts_data["_merge"] != "both")
+            & (vts_data["DEVICE_WORKING"].fillna("") == "N"),
+            "alert_creation",
+        ] = True
+
         for data in vts_data.to_dict(orient="records"):
             if data.get("alert_closure"):
                 alert_data = {}
@@ -120,23 +134,25 @@ class VtsDeviceStatusMonitor:
                     {
                         "action_msg": "Device is being connected. Closing the Alert",
                         "action_type": "Resolved",
-                        "processed_time": datetime.datetime.now()
+                        "processed_time": datetime.datetime.now(),
                     }
                 )
                 alert_object = hpcl_ceg_model.Alerts(**alert_data)
                 await alert_object.modify()
             elif data.get("alert_creation"):
                 truck_details = f"SELECT sap_id, bu FROM vts_truck_details WHERE truck_regno='{data.get('TRUCK_REGNO')}'"
-                truck_details = self.fetch_data(cursor=None, query=truck_details, getData=True, params=params)
+                truck_details = self.fetch_data(
+                    cursor=None, query=truck_details, getData=True, params=params
+                )
                 if not truck_details.empty:
-                    truck_details = truck_details.iloc[0].to_dict() 
+                    truck_details = truck_details.iloc[0].to_dict()
                 else:
                     truck_details = {}
 
                 _, location_data = await cache_api_actions.get_location_data(
                     bu=truck_details.get("bu", ""),
-                    location_id=truck_details.get("sap_id", "")
-                    )
+                    location_id=truck_details.get("sap_id", ""),
+                )
                 alert_data = {}
                 alert_data["violation_type"] = "NRD"
                 alert_data["bu"] = truck_details.get("bu", "")
@@ -157,18 +173,19 @@ class VtsDeviceStatusMonitor:
                     {
                         "action_msg": "Device is not being connected. Creating the Alert",
                         "action_type": "Created",
-                        "processed_time": datetime.datetime.now()
+                        "processed_time": datetime.datetime.now(),
                     }
                 ]
                 async with httpx.AsyncClient(verify=False) as client:
                     base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
                     resp = await client.get(
-                        f"{base_url}/api_cache/v1/get_unique_alert_id", 
+                        f"{base_url}/api_cache/v1/get_unique_alert_id",
                         params={
-                            "bu": alert_data["bu"], 
-                            "sap_id": alert_data["sap_id"], 
-                            "sop_id": alert_data["sop_id"]
-                            })
+                            "bu": alert_data["bu"],
+                            "sap_id": alert_data["sap_id"],
+                            "sop_id": alert_data["sop_id"],
+                        },
+                    )
 
                     if resp.status_code // 100 == 2:
                         unique_id = resp.text.strip('"')

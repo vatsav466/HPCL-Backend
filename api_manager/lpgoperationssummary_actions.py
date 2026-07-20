@@ -1,6 +1,6 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
 
 router = fastapi.APIRouter(prefix="/lpgoperationssummary")
 

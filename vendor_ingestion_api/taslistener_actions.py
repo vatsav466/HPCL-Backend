@@ -1,6 +1,7 @@
+import fastapi
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
+
 from orchestrator.alerting.listener.tas_listener import tas_listener
 
 router = fastapi.APIRouter(prefix="/taslistener")

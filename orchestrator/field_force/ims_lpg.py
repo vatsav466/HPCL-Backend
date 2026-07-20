@@ -15,12 +15,13 @@ Request fields: ``page``, ``page_size``, ``include_total`` on ``Indentmanagement
 from __future__ import annotations
 
 import re
+from typing import Any, Callable, Dict, List, Optional
 
 import charts_actions
 import field_force_model
-from typing import Any, Callable, Dict, List, Optional
-import utilities.connection_mapping as connection_mapping
+
 import orchestrator.field_force.utils as field_force_utils
+import utilities.connection_mapping as connection_mapping
 
 
 def _widget_filters_to_dicts(

@@ -1,6 +1,7 @@
+import asyncio
 import os
 import sys
-import asyncio
+
 import hpcl_ceg_model
 import pandas as pd
 

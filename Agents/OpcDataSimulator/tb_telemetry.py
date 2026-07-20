@@ -1,9 +1,10 @@
+import json
 import os
 import time
-import json
+
 import requests
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 FILE_TO_WATCH = "/opt/ceg/algo/Agents/OpcDataSimulator/data.json"
 SITE_ID = "1999"

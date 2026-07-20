@@ -1,15 +1,18 @@
-import urdhva_base
-import os
-import ssl
-import smtplib
 import mimetypes
+import os
+import smtplib
+import ssl
 from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
-from orchestrator.notification_manager.notification_manager import NotificationManager
+from email.mime.text import MIMEText
+
+import urdhva_base
+
+from orchestrator.notification_manager.notification_manager import \
+    NotificationManager
 
 
 class NotifyEMail(NotificationManager):

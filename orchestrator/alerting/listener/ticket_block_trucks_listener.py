@@ -1,12 +1,14 @@
-import urdhva_base
-import json
-import time
 import asyncio
-import traceback
+import json
 import sys
-import urdhva_base.redispool
-import hpcl_ceg_model
+import time
+import traceback
+
 import hpcl_ceg_enum
+import hpcl_ceg_model
+import urdhva_base
+import urdhva_base.redispool
+
 import api_manager.alerts_actions
 
 logger = urdhva_base.Logger.getInstance("ticket_block_trucks_listener")

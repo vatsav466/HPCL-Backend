@@ -2,17 +2,20 @@
 CRIS (Tank Inventory + Nozzle Sales) - Field Force orchestrator.
 Functional schema for TankInventory and NozzleSales APIs. No implementation.
 """
-import hpcl_ceg_model
-import field_force_model
-import polars as pl
+
 import datetime
-import traceback
 import os
-from typing import List, Optional
-import orchestrator.field_force.utils as field_force_utils
-import utilities.connection_mapping as connection_mapping
+import traceback
+from typing import Optional
+
+import field_force_model
+import hpcl_ceg_model
+import polars as pl
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+
+import orchestrator.field_force.utils as field_force_utils
+import utilities.connection_mapping as connection_mapping
 
 
 # -------- Session-based filter generation --------
@@ -27,7 +30,9 @@ def generate_session_filters(query_filters=None, model: str = "CRIS"):
     :param model: "CRIS" or "NOVEX". CRIS uses rosapcode/SALES_AREA; NOVEX uses sap_id/sales_area/region/zone.
     :return: List of condition strings (e.g. "SALES_AREA='MUMBAI DS SA'").
     """
-    return field_force_utils.generate_session_filters(vendor="CRIS", model=model, query_filters=query_filters)
+    return field_force_utils.generate_session_filters(
+        vendor="CRIS", model=model, query_filters=query_filters
+    )
 
 
 async def stock_availability(
@@ -45,7 +50,9 @@ async def stock_availability(
          "drill_down": [{"dealer_id", "dealer_name", "tank_id", "product_code", "quantity", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -65,7 +72,9 @@ async def tank_utilization(
          "drill_down": [{"dealer_id", "tank_id", "capacity", "quantity", "utilization_pct", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -88,7 +97,9 @@ async def get_nozzle_sales_by_product(
          "drill_down": [{"outlet_id", "outlet_name", "dealer_id", "product_code", "volume", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -107,7 +118,9 @@ async def get_nozzle_sales_day_comparison(
          "comparison": [{"product_code", "current_volume", "previous_volume", "pct_change", ...}],
          "period_current": "today", "period_previous": "yesterday"}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -124,7 +137,9 @@ async def get_product_performance(
         {"summary": [{"product_code", "product_name", "volume", "pct_share", "rank", "period", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -144,7 +159,9 @@ async def get_degrading_outlets(
          "drill_down": [{"outlet_id", "outlet_name", "product_code", "current_volume", "previous_volume", "pct_change", ...}] or None,
          "total": int?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -165,7 +182,9 @@ async def get_top_degrading_dealers(
         {"summary": [{"dealer_id", "dealer_name", "degrading_pct", "volume_drop", "product_code"?, ...}],
          "drill_down": None,          "total": int?, "top_count": int}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -182,7 +201,9 @@ async def get_high_risk_outlets(
         {"summary": [{"outlet_id", "outlet_name", "dealer_id", "sales_drop_pct", "current_volume", "previous_volume", "risk_level", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -204,7 +225,9 @@ async def get_zero_sales_outlets(
          "drill_down": [{"outlet_id", "outlet_name", "dealer_id", "last_sale_date", "days_zero", ...}] or None,
          "total": int?, "period": str?, "drill_to": str?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -221,7 +244,9 @@ async def get_outlets_by_degrowth_group(
         {"summary": [{"degrowth_bucket": str, "outlet_count": int, "min_pct", "max_pct", "total_volume_drop", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -243,7 +268,9 @@ async def get_power_sales_growth_locations(
          "drill_down": [{"location_id", "location_name", "product_breakdown", ...}] or None,
          "total": int?, "drill_to": str?, "top_count": int}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -260,7 +287,9 @@ async def nozzle_sales_analysis(
         {"summary": [{"product_code", "today_volume", "mtd_volume", "period", ...}],
          "drill_down": None, "total": int?}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -279,7 +308,9 @@ async def nozzle_sales_comparison(
          "comparison": [{"product_code", "current_volume", "previous_volume", "pct_change", ...}],
          "period_current": str, "period_previous": str}
     """
-    effective_filters = await field_force_utils.get_input_filters(data or [], vendor="CRIS", merge_session=True)
+    effective_filters = await field_force_utils.get_input_filters(
+        data or [], vendor="CRIS", merge_session=True
+    )
     session_conditions = field_force_utils.generate_session_filters(vendor="CRIS")
     pass  # TODO: use effective_filters and session_conditions in implementation
 
@@ -350,18 +381,30 @@ def _nozzle_sales_parse_date_spec(date_spec, reference_date=None):
         end_date = date_spec[1]
         if isinstance(start_date, str):
             try:
-                start_date = datetime.datetime.strptime(start_date.strip()[:10], "%Y-%m-%d").date()
+                start_date = datetime.datetime.strptime(
+                    start_date.strip()[:10], "%Y-%m-%d"
+                ).date()
             except ValueError:
                 start_date = yesterday
         if isinstance(end_date, str):
             try:
-                end_date = datetime.datetime.strptime(end_date.strip()[:10], "%Y-%m-%d").date()
+                end_date = datetime.datetime.strptime(
+                    end_date.strip()[:10], "%Y-%m-%d"
+                ).date()
             except ValueError:
                 end_date = yesterday
         if start_date > end_date:
             start_date, end_date = end_date, start_date
-        start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
-        end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+        start_date = (
+            start_date.strftime("%Y-%m-%d")
+            if hasattr(start_date, "strftime")
+            else to_str(start_date)
+        )
+        end_date = (
+            end_date.strftime("%Y-%m-%d")
+            if hasattr(end_date, "strftime")
+            else to_str(end_date)
+        )
         return start_date, end_date
     elif isinstance(date_spec, (datetime.date, datetime.datetime)):
         d = date_spec.date() if isinstance(date_spec, datetime.datetime) else date_spec
@@ -370,8 +413,16 @@ def _nozzle_sales_parse_date_spec(date_spec, reference_date=None):
     else:
         start_date = end_date = yesterday
 
-    start_date = start_date.strftime("%Y-%m-%d") if hasattr(start_date, "strftime") else to_str(start_date)
-    end_date = end_date.strftime("%Y-%m-%d") if hasattr(end_date, "strftime") else to_str(end_date)
+    start_date = (
+        start_date.strftime("%Y-%m-%d")
+        if hasattr(start_date, "strftime")
+        else to_str(start_date)
+    )
+    end_date = (
+        end_date.strftime("%Y-%m-%d")
+        if hasattr(end_date, "strftime")
+        else to_str(end_date)
+    )
     return start_date, end_date
 
 
@@ -400,7 +451,7 @@ def _nozzle_sales_build_tmt_expr(products: tuple, divisor: float, alias: str) ->
         f"ELSE 0 END) "
         f") / 1000.0 ) / {NOZZLE_SALES_VOLUME_FACTOR}, 2) AS {alias}"
     )
-    
+
 
 def _nozzle_sales_build_filter_conditions(filters):
     """
@@ -425,7 +476,7 @@ def _nozzle_sales_build_filter_conditions(filters):
         "state": ("lm", "state"),
         "sales_area": ("lm", "sales_area"),
         "product": ("ns", "product_grp"),
-        "location_name": ("ns", "location_name")
+        "location_name": ("ns", "location_name"),
     }
     for f in filters:
         if not isinstance(f, dict):
@@ -438,7 +489,9 @@ def _nozzle_sales_build_filter_conditions(filters):
             continue
         tbl, col = key_to_col[key]
         qual = f"{tbl}.{col}"
-        if values is not None and (isinstance(values, (list, tuple)) and len(values) > 0):
+        if values is not None and (
+            isinstance(values, (list, tuple)) and len(values) > 0
+        ):
             vals = [str(v).strip() for v in values if v is not None]
             if not vals:
                 continue
@@ -497,7 +550,15 @@ async def nozzle_sales(
 
     segregation = [s.strip().lower() for s in segregation]
 
-    valid_segs = ("zone", "sales_area", "state", "sap_id", "product", "location_name", "monthly")
+    valid_segs = (
+        "zone",
+        "sales_area",
+        "state",
+        "sap_id",
+        "product",
+        "location_name",
+        "monthly",
+    )
     segregation = [s for s in segregation if s in valid_segs]
     if not segregation:
         segregation = ["global"]
@@ -510,18 +571,19 @@ async def nozzle_sales(
         all_products.extend(hsd_products)
 
     sales_volume = _nozzle_sales_build_tmt_expr(
-        tuple(all_products) if all_products else list(NOZZLE_SALES_MS_PRODUCTS_DEFAULT) + list(NOZZLE_SALES_HSD_PRODUCTS_DEFAULT),    
-        None,                
-        "sales_volume"
+        (
+            tuple(all_products)
+            if all_products
+            else list(NOZZLE_SALES_MS_PRODUCTS_DEFAULT)
+            + list(NOZZLE_SALES_HSD_PRODUCTS_DEFAULT)
+        ),
+        None,
+        "sales_volume",
     )
 
     filters = filters if filters is not None else []
     if all_products:
-        filters.append({
-            "key": "product",
-            "cond": "in",
-            "values": all_products
-        })
+        filters.append({"key": "product", "cond": "in", "values": all_products})
     filter_conditions = _nozzle_sales_build_filter_conditions(filters)
 
     need_lm_for_filters = any("lm." in c for c in filter_conditions)
@@ -531,7 +593,9 @@ async def nozzle_sales(
         start_str, end_str = date_spec[0].split(",", 1)
         date_spec = [start_str.strip(), end_str.strip()]
 
-    start_d, end_d = _nozzle_sales_parse_date_spec(date_spec, reference_date=reference_date)
+    start_d, end_d = _nozzle_sales_parse_date_spec(
+        date_spec, reference_date=reference_date
+    )
     if start_d == end_d:
         date_filter = f"ns.transaction_date::DATE = '{start_d}'"
     else:
@@ -542,7 +606,6 @@ async def nozzle_sales(
     where_clause = " AND ".join(where_parts)
 
     group_cols = []
-    dim_col = None
     if "global" in segregation:
         join_lm = need_lm_for_filters
         from_join = "FROM public.nozzle_sales ns"
@@ -559,7 +622,6 @@ async def nozzle_sales(
             ORDER BY ns.transaction_date::DATE
         """
         group_cols = []
-        dim_col = None
         print("nozzle sales query global ---->\n", nozzle_sales_query)
 
     elif "monthly" in segregation:
@@ -569,17 +631,18 @@ async def nozzle_sales(
         has_filters = any(f.get("key") for f in (filters or []))
         level = (level_filter or {}).get("level", "").lower()
 
-
         select_columns = [
-                "DATE_TRUNC('month', ns.transaction_date)::DATE AS month",
-                "COALESCE(ns.zone, lm.zone) AS zone", "ns.product_grp"
-            ]
+            "DATE_TRUNC('month', ns.transaction_date)::DATE AS month",
+            "COALESCE(ns.zone, lm.zone) AS zone",
+            "ns.product_grp",
+        ]
 
         group_by_parts = [
-                "DATE_TRUNC('month', ns.transaction_date)::DATE",
-                "COALESCE(ns.zone, lm.zone)", "ns.product_grp"
-            ]
-        #default query 
+            "DATE_TRUNC('month', ns.transaction_date)::DATE",
+            "COALESCE(ns.zone, lm.zone)",
+            "ns.product_grp",
+        ]
+        # default query
         if not has_filters and not level:
             select_sql = ",\n        ".join(select_columns)
             group_by_sql = ", ".join(group_by_parts)
@@ -597,7 +660,8 @@ async def nozzle_sales(
         else:
 
             filter_conditions = [
-                cond for cond in filter_conditions
+                cond
+                for cond in filter_conditions
                 if "ns.transaction_date" not in cond.lower()
             ]
             filter_conditions_monthly = []
@@ -616,7 +680,9 @@ async def nozzle_sales(
 
             where_clause_monthly = ""
             if filter_conditions_monthly:
-                where_clause_monthly = "WHERE " + " AND ".join(filter_conditions_monthly)
+                where_clause_monthly = "WHERE " + " AND ".join(
+                    filter_conditions_monthly
+                )
 
             if all_products:
                 where_clause_monthly = f"WHERE ns.product_grp IN ({','.join([f"'{p}'" for p in all_products])})"
@@ -661,7 +727,6 @@ async def nozzle_sales(
         select_columns = ["ns.transaction_date::DATE AS transaction_date"]
         group_by_parts = ["ns.transaction_date::DATE"]
         group_cols = []
-        dim_col = None 
 
         for seg in segregation:
             if seg == "sap_id":
@@ -671,7 +736,9 @@ async def nozzle_sales(
                 group_by_parts.append("COALESCE(lm.name, ns.location_name)")
                 group_cols.extend(["sap_id", "name"])
             elif seg == "sales_area":
-                select_columns.append("COALESCE(ns.sales_area, lm.sales_area) AS sales_area")
+                select_columns.append(
+                    "COALESCE(ns.sales_area, lm.sales_area) AS sales_area"
+                )
                 group_by_parts.append("COALESCE(ns.sales_area, lm.sales_area)")
             elif seg == "state":
                 select_columns.append("lm.state AS state")
@@ -703,66 +770,72 @@ async def nozzle_sales(
         GROUP BY {group_by_sql}
         ORDER BY {group_by_sql}
         """
-        print("nozzle sales query ---->\n",nozzle_sales_query)
+        print("nozzle sales query ---->\n", nozzle_sales_query)
 
-
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
     Charts_Connection_Vault_RoutingParams.action = "execute_query"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
     rows = await function(query=nozzle_sales_query)
     nozzle_sales_df = pl.DataFrame(rows)
 
     if nozzle_sales_df.is_empty():
-            return {
-                "status": True,
-                "message": "success",
-                "data": []
-            }
+        return {"status": True, "message": "success", "data": []}
 
     for col in group_cols:
         if col in nozzle_sales_df.columns:
             nozzle_sales_df = nozzle_sales_df.filter(pl.col(col).is_not_null())
 
-
     if (ms_products or hsd_products) and ("product", "zone") in segregation:
         nozzle_sales_df = nozzle_sales_df.with_columns(
             pl.when(pl.col("product").is_in(ms_products))
-                .then(pl.lit("MS"))
-                .when(pl.col("product").is_in(hsd_products))
-                .then(pl.lit("HSD"))
-                .otherwise(pl.col("product"))
-                .alias("product")
+            .then(pl.lit("MS"))
+            .when(pl.col("product").is_in(hsd_products))
+            .then(pl.lit("HSD"))
+            .otherwise(pl.col("product"))
+            .alias("product")
         )
 
-        nozzle_sales_df = nozzle_sales_df.group_by(["transaction_date", "zone", "product"]).agg(
-            pl.col("connected_sites").sum().alias("connected_sites"),
-            pl.col("sales_volume").sum().alias("sales_volume")
-        ).sort("transaction_date")
+        nozzle_sales_df = (
+            nozzle_sales_df.group_by(["transaction_date", "zone", "product"])
+            .agg(
+                pl.col("connected_sites").sum().alias("connected_sites"),
+                pl.col("sales_volume").sum().alias("sales_volume"),
+            )
+            .sort("transaction_date")
+        )
+
+    return {"daily_zone_product_nozzle_sales": nozzle_sales_df.to_dicts()}
 
 
-    return {
-        "daily_zone_product_nozzle_sales": nozzle_sales_df.to_dicts()
-    }
-
-
-
-async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None, segregation=None, ms_products=None, hsd_products=None, action: str= ""):
+async def nozzle_sales_tmt(
+    filters=None,
+    cross_filters=None,
+    level_filter=None,
+    segregation=None,
+    ms_products=None,
+    hsd_products=None,
+    action: str = "",
+):
     """
     this function used for nozzle sales tmt where user gives the filters like zone , product and date range
-    and based on that the data will be fetched from the database and return the response to the user 
+    and based on that the data will be fetched from the database and return the response to the user
     """
     raw_filters = filters or []
     cross_filters = cross_filters or []
     date_range = []
-    segregation =segregation or []
+    segregation = segregation or []
     ms_products = ms_products or []
     hsd_products = hsd_products or []
 
     for fc in cross_filters:
-        key = fc.get("key", "").lower() 
+        key = fc.get("key", "").lower()
         if key == "date" and (fc.get("value") or fc.get("values")):
             if fc.get("values"):
-                date_range.extend(fc["values"])  
+                date_range.extend(fc["values"])
             elif fc.get("value"):
                 if "," in fc["value"]:
                     date_range.extend([d.strip() for d in fc["value"].split(",")])
@@ -780,7 +853,9 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
             print("date range before normalization:", date_range)
             for d in date_range:
                 try:
-                    parsed = datetime.datetime.strptime(d.strip()[:10], "%Y-%m-%d").date()
+                    parsed = datetime.datetime.strptime(
+                        d.strip()[:10], "%Y-%m-%d"
+                    ).date()
                     if parsed == today:
                         parsed = yesterday
                     normalized.append(parsed.strftime("%Y-%m-%d"))
@@ -795,7 +870,7 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
             date_spec=date_range,
             ms_products=ms_products,
             hsd_products=hsd_products,
-            level_filter=level_filter
+            level_filter=level_filter,
         )
         return result
 
@@ -803,20 +878,20 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
         if cross_filters:
             cross_filters = cross_filters
         else:
-            cross_filters= None
+            cross_filters = None
 
         seg = ["monthly"]
         if segregation:
             seg.extend(segregation)
 
         df = await nozzle_sales(
-            segregation= seg,
-            filters= combined_filters,
-            ms_products= ms_products,
-            hsd_products= hsd_products,
-            level_filter= level_filter
+            segregation=seg,
+            filters=combined_filters,
+            ms_products=ms_products,
+            hsd_products=hsd_products,
+            level_filter=level_filter,
         )
-        
+
         df = pl.DataFrame(df["daily_zone_product_nozzle_sales"])
 
         overall = None
@@ -828,19 +903,29 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
 
         if not raw_filters:
             zone = df.select(["month", "zone", "sales_volume", "product_grp"])
-            overall = df.group_by("month", "product_grp").agg([
-                pl.sum("sales_volume").alias("sales_volume"),
-                pl.sum("connected_sites").alias("connected_sites")
-            ]).sort("month")
+            overall = (
+                df.group_by("month", "product_grp")
+                .agg(
+                    [
+                        pl.sum("sales_volume").alias("sales_volume"),
+                        pl.sum("connected_sites").alias("connected_sites"),
+                    ]
+                )
+                .sort("month")
+            )
 
         if "zone" == level:
             region = df.select(["month", "region", "sales_volume", "product_grp"])
 
         if "region" == level:
-            sales_area = df.select(["month", "sales_area", "sales_volume", "product_grp"])
+            sales_area = df.select(
+                ["month", "sales_area", "sales_volume", "product_grp"]
+            )
 
         if "sales_area" == level:
-            location = df.select(["month", "location_name", "sales_volume", "product_grp"])
+            location = df.select(
+                ["month", "location_name", "sales_volume", "product_grp"]
+            )
 
         return {
             "overall": overall.to_dicts() if overall is not None else [],
@@ -848,15 +933,17 @@ async def nozzle_sales_tmt(filters= None, cross_filters=None, level_filter=None,
             "zone": zone.to_dicts() if zone is not None else [],
             "region": region.to_dicts() if region is not None else [],
             "sales_area": sales_area.to_dicts() if sales_area is not None else [],
-            "location": location.to_dicts() if location is not None else []
+            "location": location.to_dicts() if location is not None else [],
         }
-    
+
     return {}
-    
+
 
 def get_plant_id(folder_path=None):
     if not folder_path:
-        folder_path = os.path.join(os.path.dirname(os.path.dirname(hpcl_ceg_model.__file__)), "prod")
+        folder_path = os.path.join(
+            os.path.dirname(os.path.dirname(hpcl_ceg_model.__file__)), "prod"
+        )
     try:
         names = []
         for file in os.listdir(folder_path):
@@ -867,11 +954,11 @@ def get_plant_id(folder_path=None):
         formatted = "(" + ",".join([f"'{x}'" for x in names]) + ")"
 
         return formatted
-    
+
     except Exception as e:
         print("Error:", str(e))
         return []
-    
+
 
 async def get_product_availability(data):
     try:
@@ -885,10 +972,10 @@ async def get_product_availability(data):
         # -------------------------
         if data.cross_filters:
             for f in data.cross_filters:
-                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                if "sap_id" in f.key and f.value and f.cond in ["equals", "="]:
                     if f.value in terminal_plant_id:
                         required_plant_ids.add(f.value)
-                elif 'zone' in f.key and f.value:
+                elif "zone" in f.key and f.value:
                     if f.cond in ["equals", "="]:
                         conditions.append(f"lm.zone = '{f.value}'")
         # -------------------------
@@ -896,10 +983,10 @@ async def get_product_availability(data):
         # -------------------------
         if data.filters:
             for f in data.filters:
-                if 'sap_id' in f.key and f.value and f.cond in ["equals", "="]:
+                if "sap_id" in f.key and f.value and f.cond in ["equals", "="]:
                     if f.value in terminal_plant_id:
                         required_plant_ids.add(f.value)
-                elif 'zone' in f.key and f.value:
+                elif "zone" in f.key and f.value:
                     if f.cond in ["equals", "="]:
                         conditions.append(f"lm.zone = '{f.value}'")
 
@@ -912,7 +999,7 @@ async def get_product_availability(data):
                     AND ns.product_grp IN ({",".join([f"'{p}'" for p in product_values])})
                     """
 
-                elif f.cond in ['=', 'equals'] and f.key != "product_grp":
+                elif f.cond in ["=", "equals"] and f.key != "product_grp":
                     conditions.append(f"{f.key} = '{f.value}'")
 
         # -------------------------
@@ -927,7 +1014,6 @@ async def get_product_availability(data):
         if conditions:
             where_clause += " AND " + " AND ".join(conditions)
 
-
         ro_data_query = f"""
                             SELECT 
                                 lm.terminal_plant_id,
@@ -941,7 +1027,7 @@ async def get_product_availability(data):
                             {ro_product_filter}
                             GROUP BY lm.terminal_plant_id, ns.sap_id, ns.product_grp, lm.zone
                         """
-        
+
         ro_names_query = f""" SELECT 
                                 lm_tas.sap_id, 
                                 lm_tas.name AS tas_name
@@ -976,10 +1062,14 @@ async def get_product_availability(data):
                             WHERE sch.volume > 0 {product_filter}
                             GROUP BY rosapcode,product_grp, product_no, item_name
                         """
-        
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        Charts_Connection_Vault_RoutingParams.connection_id = (
+            connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        )
+        Charts_Connection_Vault_RoutingParams.action = "execute_query"
+        function = await charts_connection_vault_routing(
+            Charts_Connection_Vault_RoutingParams
+        )
 
         ro_data = await function(query=ro_data_query)
         ro_df = pl.DataFrame(ro_data)
@@ -991,54 +1081,63 @@ async def get_product_availability(data):
         stock_df = pl.DataFrame(stock_data)
         stock_df = stock_df.drop_nulls()
 
-        ro_merged = ro_df.join(ro_names_df, left_on="terminal_plant_id", right_on="sap_id", how="left")
+        ro_merged = ro_df.join(
+            ro_names_df, left_on="terminal_plant_id", right_on="sap_id", how="left"
+        )
 
         stock_df = (
-            stock_df
-            .with_columns([
-                pl.col("available_stock").cast(pl.Float64, strict=False),
-                pl.col("daily_sales").cast(pl.Float64, strict=False),
-                pl.col("total_capacity").cast(pl.Float64, strict=False),
-                pl.col("available_ullage").cast(pl.Float64, strict=False)
-            ])
+            stock_df.with_columns(
+                [
+                    pl.col("available_stock").cast(pl.Float64, strict=False),
+                    pl.col("daily_sales").cast(pl.Float64, strict=False),
+                    pl.col("total_capacity").cast(pl.Float64, strict=False),
+                    pl.col("available_ullage").cast(pl.Float64, strict=False),
+                ]
+            )
             .drop_nulls(["available_stock", "daily_sales"])
             .group_by(["rosapcode", "product_grp"])
-            .agg([
-                pl.sum("available_stock").alias("available_stock"),
-                pl.sum("daily_sales").alias("daily_sales"),
-                pl.sum("total_capacity").alias("total_capacity"),
-                pl.sum("available_ullage").alias("available_ullage")
-            ])
+            .agg(
+                [
+                    pl.sum("available_stock").alias("available_stock"),
+                    pl.sum("daily_sales").alias("daily_sales"),
+                    pl.sum("total_capacity").alias("total_capacity"),
+                    pl.sum("available_ullage").alias("available_ullage"),
+                ]
+            )
             .with_columns(
                 pl.when(pl.col("daily_sales") == 0)
                 .then(0)
-                .otherwise(
-                    (pl.col("available_stock") / pl.col("daily_sales")).round(0)
-                )
+                .otherwise((pl.col("available_stock") / pl.col("daily_sales")).round(0))
                 .alias("stock_days")
             )
         )
 
         final_merge = ro_merged.join(
-            stock_df,left_on=["sap_id", "product_grp"],
+            stock_df,
+            left_on=["sap_id", "product_grp"],
             right_on=["rosapcode", "product_grp"],
-            how="left", suffix="_right"
+            how="left",
+            suffix="_right",
         )
 
         if data.action == "ro_count":
 
-            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id", "zone"]).agg(
-                [
-                    (pl.col("stock_days") > 0).any().alias("has_stock"),
-                    (pl.col("stock_days") == 0).any().alias("has_zero")
-                ]
-            ).with_columns(
-                pl.when(pl.col("has_stock") & pl.col("has_zero"))
-                .then(pl.lit("Mixed"))
-                .when(pl.col("has_stock"))
-                .then(pl.lit("Active"))
-                .otherwise(pl.lit("Inactive"))
-                .alias("status")
+            ro_status = (
+                final_merge.group_by(["terminal_plant_id", "sap_id", "zone"])
+                .agg(
+                    [
+                        (pl.col("stock_days") > 0).any().alias("has_stock"),
+                        (pl.col("stock_days") == 0).any().alias("has_zero"),
+                    ]
+                )
+                .with_columns(
+                    pl.when(pl.col("has_stock") & pl.col("has_zero"))
+                    .then(pl.lit("Mixed"))
+                    .when(pl.col("has_stock"))
+                    .then(pl.lit("Active"))
+                    .otherwise(pl.lit("Inactive"))
+                    .alias("status")
+                )
             )
 
             summary = ro_status.group_by("status").agg(pl.count())
@@ -1049,23 +1148,24 @@ async def get_product_availability(data):
                 "total_ro": ro_status.height,
                 "active_ro": result.get("Active", 0),
                 "inactive_ro": result.get("Inactive", 0),
-                "mixed_ro": result.get("Mixed", 0)
+                "mixed_ro": result.get("Mixed", 0),
             }
 
         if data.action == "ro_details":
 
-        # -------------------------
-        # 1. PIVOT: STOCK DAYS
-        # -------------------------
+            # -------------------------
+            # 1. PIVOT: STOCK DAYS
+            # -------------------------
             pivot_stock_days = final_merge.pivot(
                 values="stock_days",
                 index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
-                aggregate_function="max"
+                aggregate_function="max",
             )
 
             product_cols = [
-                col for col in pivot_stock_days.columns
+                col
+                for col in pivot_stock_days.columns
                 if col not in ["terminal_plant_id", "sap_id", "zone"]
             ]
 
@@ -1076,14 +1176,16 @@ async def get_product_availability(data):
                 values="total_capacity",
                 index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
-                aggregate_function="sum"
+                aggregate_function="sum",
             )
 
-            pivot_capacity = pivot_capacity.rename({
-                col: f"{col}_total_capacity"
-                for col in pivot_capacity.columns
-                if col not in ["terminal_plant_id", "sap_id", "zone"]
-            })
+            pivot_capacity = pivot_capacity.rename(
+                {
+                    col: f"{col}_total_capacity"
+                    for col in pivot_capacity.columns
+                    if col not in ["terminal_plant_id", "sap_id", "zone"]
+                }
+            )
 
             # -------------------------
             # 3. PIVOT: AVAILABLE ULLAGE
@@ -1092,14 +1194,16 @@ async def get_product_availability(data):
                 values="available_ullage",
                 index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
-                aggregate_function="sum"
+                aggregate_function="sum",
             )
 
-            pivot_ullage = pivot_ullage.rename({
-                col: f"{col}_available_ullage"
-                for col in pivot_ullage.columns
-                if col not in ["terminal_plant_id", "sap_id", "zone"]
-            })
+            pivot_ullage = pivot_ullage.rename(
+                {
+                    col: f"{col}_available_ullage"
+                    for col in pivot_ullage.columns
+                    if col not in ["terminal_plant_id", "sap_id", "zone"]
+                }
+            )
 
             # -------------------------
             # 4. PIVOT: AVAILABLE STOCK
@@ -1108,23 +1212,32 @@ async def get_product_availability(data):
                 values="available_stock",
                 index=["terminal_plant_id", "sap_id", "zone"],
                 columns="product_grp",
-                aggregate_function="sum"
+                aggregate_function="sum",
             )
 
-            pivot_stock = pivot_stock.rename({
-                col: f"{col}_available_stock"
-                for col in pivot_stock.columns
-                if col not in ["terminal_plant_id", "sap_id", "zone"]
-            })
+            pivot_stock = pivot_stock.rename(
+                {
+                    col: f"{col}_available_stock"
+                    for col in pivot_stock.columns
+                    if col not in ["terminal_plant_id", "sap_id", "zone"]
+                }
+            )
 
             # -------------------------
             # 5. MERGE ALL PIVOTS
             # -------------------------
             pivot_all = (
-                pivot_stock_days
-                .join(pivot_capacity, on=["terminal_plant_id", "sap_id", "zone"], how="left")
-                .join(pivot_ullage, on=["terminal_plant_id", "sap_id", "zone"], how="left")
-                .join(pivot_stock, on=["terminal_plant_id", "sap_id", "zone"], how="left")
+                pivot_stock_days.join(
+                    pivot_capacity,
+                    on=["terminal_plant_id", "sap_id", "zone"],
+                    how="left",
+                )
+                .join(
+                    pivot_ullage, on=["terminal_plant_id", "sap_id", "zone"], how="left"
+                )
+                .join(
+                    pivot_stock, on=["terminal_plant_id", "sap_id", "zone"], how="left"
+                )
             )
 
             # -------------------------
@@ -1145,18 +1258,22 @@ async def get_product_availability(data):
             # -------------------------
             # 7. RO STATUS (overall)
             # -------------------------
-            ro_status = final_merge.group_by(["terminal_plant_id", "sap_id", "zone"]).agg(
-                [
-                    (pl.col("stock_days") > 0).any().alias("has_stock"),
-                    (pl.col("stock_days") == 0).any().alias("has_zero")
-                ]
-            ).with_columns(
-                pl.when(pl.col("has_stock") & pl.col("has_zero"))
-                .then(pl.lit("Mixed"))
-                .when(pl.col("has_stock"))
-                .then(pl.lit("Active"))
-                .otherwise(pl.lit("Inactive"))
-                .alias("status")
+            ro_status = (
+                final_merge.group_by(["terminal_plant_id", "sap_id", "zone"])
+                .agg(
+                    [
+                        (pl.col("stock_days") > 0).any().alias("has_stock"),
+                        (pl.col("stock_days") == 0).any().alias("has_zero"),
+                    ]
+                )
+                .with_columns(
+                    pl.when(pl.col("has_stock") & pl.col("has_zero"))
+                    .then(pl.lit("Mixed"))
+                    .when(pl.col("has_stock"))
+                    .then(pl.lit("Active"))
+                    .otherwise(pl.lit("Inactive"))
+                    .alias("status")
+                )
             )
 
             # -------------------------
@@ -1165,7 +1282,7 @@ async def get_product_availability(data):
             pivot_with_status = pivot_labeled.join(
                 ro_status.select(["terminal_plant_id", "sap_id", "zone", "status"]),
                 on=["terminal_plant_id", "sap_id", "zone"],
-                how="left"
+                how="left",
             )
 
             # -------------------------
@@ -1182,30 +1299,32 @@ async def get_product_availability(data):
                 "full_details": pivot_with_status.to_dicts(),
                 "in_stock": in_stock.to_dicts(),
                 "out_of_stock": out_of_stock.to_dicts(),
-                "mixed_ro": mixed_ro.to_dicts()
+                "mixed_ro": mixed_ro.to_dicts(),
             }
-        
+
         # ----------------
         # zone wise count
         # ----------------
         if data.action == "zone_wise_count":
-            ro_status = final_merge.group_by(["sap_id", "zone"]).agg(
-                [
-                    (pl.col("stock_days") > 0).any().alias("has_stock"),
-                    (pl.col("stock_days") == 0).any().alias("has_zero")
-                ]
-            ).with_columns(
-                pl.when(pl.col("has_stock") & pl.col("has_zero"))
-                .then(pl.lit("Mixed"))
-                .when(pl.col("has_stock"))
-                .then(pl.lit("Active"))
-                .otherwise(pl.lit("Inactive"))
-                .alias("status")
+            ro_status = (
+                final_merge.group_by(["sap_id", "zone"])
+                .agg(
+                    [
+                        (pl.col("stock_days") > 0).any().alias("has_stock"),
+                        (pl.col("stock_days") == 0).any().alias("has_zero"),
+                    ]
+                )
+                .with_columns(
+                    pl.when(pl.col("has_stock") & pl.col("has_zero"))
+                    .then(pl.lit("Mixed"))
+                    .when(pl.col("has_stock"))
+                    .then(pl.lit("Active"))
+                    .otherwise(pl.lit("Inactive"))
+                    .alias("status")
+                )
             )
-            zone_summary = (
-                ro_status
-                .group_by(["zone", "status"])
-                .agg(pl.count().alias("count"))
+            zone_summary = ro_status.group_by(["zone", "status"]).agg(
+                pl.count().alias("count")
             )
             result = {}
 
@@ -1215,11 +1334,7 @@ async def get_product_availability(data):
                 count = row["count"]
 
                 if zone not in result:
-                    result[zone] = {
-                        "active": 0,
-                        "inactive": 0,
-                        "mixed": 0
-                    }
+                    result[zone] = {"active": 0, "inactive": 0, "mixed": 0}
 
                 if status == "Active":
                     result[zone]["active"] = count
@@ -1227,11 +1342,9 @@ async def get_product_availability(data):
                     result[zone]["inactive"] = count
                 elif status == "Mixed":
                     result[zone]["mixed"] = count
-                    
+
         return result
 
-    
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": str(e)}
-   

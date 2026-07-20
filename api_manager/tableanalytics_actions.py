@@ -1,6 +1,8 @@
-from hpcl_ceg_model import *
-import fastapi
 import ast
+
+import fastapi
+from hpcl_ceg_model import *
+
 import orchestrator.analytics.aggregate_query_gateway as query_aggregate_gateway
 import orchestrator.analytics.date_bounds as date_bounds
 import orchestrator.analytics.session_filters as session_filters

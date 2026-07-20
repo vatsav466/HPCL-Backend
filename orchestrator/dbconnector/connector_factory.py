@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
+import psycopg2
 # import pyodbc
 import pymysql
-import psycopg2
+
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 

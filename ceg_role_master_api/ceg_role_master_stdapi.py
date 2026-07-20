@@ -1,9 +1,9 @@
+import fastapi
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 from ceg_role_master_enum import *
 from ceg_role_master_model import *
-import fastapi
 
 router = fastapi.APIRouter()
 

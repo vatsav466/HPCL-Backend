@@ -1,12 +1,15 @@
-from dashboard_studio_enum import *
-from dashboard_studio_model import *
-from dashboard_studio_model import HistoricSolarPanelWetDryCleaningCreateCreate
-from dashboard_studio_model import HistoricSolarPanelWetDryCleaningCreate
-import fastapi
-from dateutil import parser as date_parser
-import urdhva_base
 import json
 from datetime import date
+
+import fastapi
+import urdhva_base
+from dashboard_studio_enum import *
+from dashboard_studio_model import *
+from dashboard_studio_model import (
+    HistoricSolarPanelWetDryCleaningCreate,
+    HistoricSolarPanelWetDryCleaningCreateCreate)
+from dateutil import parser as date_parser
+
 from orchestrator.dbconnector.widget_actions import widget_actions
 
 router = fastapi.APIRouter(prefix="/solarpanelwetdrycleaning")

@@ -1,9 +1,10 @@
-import urdhva_base
+import traceback
+
+import fastapi
 import hpcl_ceg_model
+import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
-import traceback
 
 router = fastapi.APIRouter(prefix="/hyperlocal")
 

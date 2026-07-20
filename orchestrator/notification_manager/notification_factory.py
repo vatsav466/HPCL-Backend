@@ -1,5 +1,5 @@
-import orchestrator.notification_manager.notify_sms as notify_sms
 import orchestrator.notification_manager.notify_email as notify_email
+import orchestrator.notification_manager.notify_sms as notify_sms
 import orchestrator.notification_manager.notify_whatsapp as notify_whatsapp
 
 

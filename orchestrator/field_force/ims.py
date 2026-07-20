@@ -3,10 +3,12 @@ IMS (Indent Management System) - Field Force orchestrator.
 Functional schema for IndentManagement APIs. No implementation.
 """
 
-import charts_actions
-import field_force_model
-import dashboard_studio_model
 from typing import List, Optional
+
+import charts_actions
+import dashboard_studio_model
+import field_force_model
+
 import orchestrator.field_force.ims_query as ims_query
 import orchestrator.field_force.utils as field_force_utils
 

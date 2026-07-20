@@ -1,7 +1,9 @@
+from pathlib import Path
+
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
-from pathlib import Path
+
 import orchestrator.natural_gas.natural_gas_data_sync as natural_gas_data_sync
 
 router = fastapi.APIRouter(prefix="/naturalgasgvconnections")

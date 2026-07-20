@@ -1,6 +1,7 @@
+import os
+
 import jinja2
 import pkg_resources
-import os
 import urdhva_base.utilities
 
 

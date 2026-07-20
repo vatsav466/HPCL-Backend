@@ -1,5 +1,5 @@
-import time
 import threading
+import time
 import traceback
 from typing import Callable
 

@@ -1,5 +1,6 @@
-import fastapi
 import os
+
+import fastapi
 
 router = fastapi.APIRouter(prefix="/hostsicktts")
 

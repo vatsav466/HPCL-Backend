@@ -5,7 +5,8 @@ This module provides helper functions to generate insights, reasons, and actiona
 for performance score results.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 
 

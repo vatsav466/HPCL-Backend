@@ -1,10 +1,11 @@
 import sys
-import typing
-import cx_Oracle
 import traceback
+import typing
+
+import cx_Oracle
+import hpcl_ceg_model
 import pandas as pd
 import polars as pl
-import hpcl_ceg_model
 from sshtunnel import SSHTunnelForwarder
 
 dtype_map = {

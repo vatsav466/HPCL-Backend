@@ -1,9 +1,9 @@
+import fastapi
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 from hpcl_ceg_ticketing_enum import *
 from hpcl_ceg_ticketing_model import *
-import fastapi
 
 router = fastapi.APIRouter()
 

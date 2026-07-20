@@ -1,23 +1,22 @@
-import json
-import uuid
-import typing
 import importlib
-import traceback
+import json
 import locale
-import utilities.helpers
 import re
-from decimal import Decimal
+import traceback
+import typing
+import uuid
 from datetime import datetime, timedelta
+from decimal import Decimal
+
 from sqlalchemy import text
-from api_manager.hpcl_ceg_enum import *
-from orchestrator.dashboard.charts import *
 from sqlalchemy.ext.asyncio import AsyncSession
-from orchestrator.dashboard.chart_factory import database
-from orchestrator.dashboard.chart_factory import query_context
+
+import utilities.helpers
+from api_manager.hpcl_ceg_enum import *
+from orchestrator.dashboard.chart_factory import database, query_context
 from orchestrator.dashboard.chart_factory.charts_helpers import (
-    quick_columns,
-    unsupported_tables,
-)
+    quick_columns, unsupported_tables)
+from orchestrator.dashboard.charts import *
 
 
 async def check_db(db):

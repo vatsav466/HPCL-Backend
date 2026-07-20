@@ -1,56 +1,51 @@
-import urdhva_base
-from hpcl_ceg_ticketing_enum import *
-from typing import Optional
-from fastapi.responses import FileResponse
-from fastapi import Form, File, UploadFile
-from hpcl_ceg_ticketing_model import (
-    Ticketing,
-    TicketUserMails,
-    TicketingCreate,
-    Ticketing_Get_TicketParams,
-    Ticketing_Create_TicketParams,
-    Ticketing_Delete_TicketParams,
-    Ticketing_Close_TicketParams,
-    Ticketing_Update_TicketParams,
-    Ticketing_Delete_CommentParams,
-    Ticketing_Edit_DescriptionParams,
-    Ticketing_Edit_CommentParams,
-    Ticketing_Update_PriorityParams,
-    Ticketing_Update_ReporterParams,
-    Ticketing_Update_AssigneeParams,
-    Ticketing_Delete_File_AttachmentParams,
-    Ticketing_Merge_TicketParams,
-    Ticketing_Download_File_AttachmentParams,
-    Ticketing_Add_Comment_To_TicketParams,
-    Ticketing_Delete_DescriptionParams,
-    Ticketing_Delete_File_From_CommentParams,
-    Ticketing_Get_Location_DataParams,
-    Ticketing_Vts_Block_TrucksParams,
-    Ticketing_Pm_OrdersParams,
-    Ticketing_Pm_Orders_WeeklyParams,
-    Ticketing_Run_Alert_CloserParams,
-)
-import os, uuid
-import fastapi
-import logging
-import traceback
-import urdhva_base
-import hpcl_ceg_model
-from datetime import datetime, timezone
-from hpcl_ceg_enum import AlertActionType
-from fastapi import UploadFile, File
-from orchestrator.alerting import alert_helper
-from fastapi import HTTPException
-from urdhva_base.queryparams import QueryParams
-from fastapi import UploadFile, File, Form
-import utilities.minio_connector as minio_connector
 import json
-import api_manager_ticketing.api_helpers as api_helpers
-from typing import List, Dict
+import logging
+import os
+import traceback
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
+
+import fastapi
+import hpcl_ceg_model
+import urdhva_base
+from fastapi import File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from hpcl_ceg_enum import AlertActionType
+from hpcl_ceg_ticketing_enum import *
+from hpcl_ceg_ticketing_model import (Ticketing,
+                                      Ticketing_Add_Comment_To_TicketParams,
+                                      Ticketing_Close_TicketParams,
+                                      Ticketing_Create_TicketParams,
+                                      Ticketing_Delete_CommentParams,
+                                      Ticketing_Delete_DescriptionParams,
+                                      Ticketing_Delete_File_AttachmentParams,
+                                      Ticketing_Delete_File_From_CommentParams,
+                                      Ticketing_Delete_TicketParams,
+                                      Ticketing_Download_File_AttachmentParams,
+                                      Ticketing_Edit_CommentParams,
+                                      Ticketing_Edit_DescriptionParams,
+                                      Ticketing_Get_Location_DataParams,
+                                      Ticketing_Get_TicketParams,
+                                      Ticketing_Merge_TicketParams,
+                                      Ticketing_Pm_Orders_WeeklyParams,
+                                      Ticketing_Pm_OrdersParams,
+                                      Ticketing_Run_Alert_CloserParams,
+                                      Ticketing_Update_AssigneeParams,
+                                      Ticketing_Update_PriorityParams,
+                                      Ticketing_Update_ReporterParams,
+                                      Ticketing_Update_TicketParams,
+                                      Ticketing_Vts_Block_TrucksParams,
+                                      TicketingCreate, TicketUserMails)
+from urdhva_base.queryparams import QueryParams
+
+import api_manager_ticketing.api_helpers as api_helpers
 import orchestrator.alerting.alert_manager as alert_manager
-import orchestrator.notification_manager.notify_email as notify_email
 import orchestrator.alerting.alert_ticket_close as alert_ticket_close
+import orchestrator.notification_manager.notify_email as notify_email
+import utilities.minio_connector as minio_connector
+from orchestrator.alerting import alert_helper
 
 router = fastapi.APIRouter(prefix="/ticketing")
 logger = logging.getLogger(__name__)

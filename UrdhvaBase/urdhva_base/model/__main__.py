@@ -1,10 +1,12 @@
+import argparse
+import importlib
+import json
+
+import pkg_resources
 import textx
 import textx.scoping.providers
-import importlib
-import pkg_resources
-import argparse
+
 from . import helpers
-import json
 
 parser = argparse.ArgumentParser(
     description="Parse Model & generate code for a target language."

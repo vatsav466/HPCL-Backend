@@ -1,14 +1,12 @@
 import re
+
 import polars as pl
 
 pl.Config(set_fmt_float="full")
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import (
-    lpg_plant,
-    lpg_cdcms,
-    vts_analytics,
-    lpg_plant_operations,
-)
+from orchestrator.dbconnector.widget_actions import (lpg_cdcms, lpg_plant,
+                                                     lpg_plant_operations,
+                                                     vts_analytics)
 
 lpg_dashboard_actions = [
     "get_production_details",

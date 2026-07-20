@@ -1,11 +1,12 @@
-import urdhva_base
-import sys
-import json
-import time
 import asyncio
-import hpcl_ceg_model
-import hpcl_ceg_enum
+import json
+import sys
+import time
 import traceback
+
+import hpcl_ceg_enum
+import hpcl_ceg_model
+import urdhva_base
 import urdhva_base.redispool
 
 logger = urdhva_base.Logger.getInstance("vts_ongoing_trips_listener")

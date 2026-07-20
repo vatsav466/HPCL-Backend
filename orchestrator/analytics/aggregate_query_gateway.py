@@ -12,8 +12,8 @@ Execution uses :meth:`urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data`
 
 from __future__ import annotations
 
-import datetime
 import ast
+import datetime
 import re
 import typing
 

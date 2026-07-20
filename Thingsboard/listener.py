@@ -1,10 +1,11 @@
-import os
-import json
-import aio_pika
-import aiohttp
 import asyncio
-import urdhva_base
+import json
+import os
+
+import aio_pika
 import aiofiles
+import aiohttp
+import urdhva_base
 
 # Configuration
 RABBITMQ_HOST = urdhva_base.settings.rabbitmq_host

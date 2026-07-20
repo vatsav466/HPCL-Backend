@@ -1,6 +1,6 @@
+import fastapi
 from ceg_role_master_enum import *
 from ceg_role_master_model import *
-import fastapi
 
 router = fastapi.APIRouter(prefix="/cegrolemaster")
 

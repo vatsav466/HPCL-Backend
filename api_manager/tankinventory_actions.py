@@ -1,6 +1,6 @@
+import fastapi
 from field_force_enum import *
 from field_force_model import *
-import fastapi
 
 import orchestrator.field_force.cris as field_force_cris
 

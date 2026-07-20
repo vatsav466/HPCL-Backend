@@ -1,13 +1,13 @@
-import os
 import json
-import pandas as pd
-import hpcl_ceg_model
+import os
 from collections import defaultdict
+
+import hpcl_ceg_model
+import pandas as pd
+
 import orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
 from orchestrator.analytics.performance_score.performance_score_insights import (
-    enhance_result_with_insights,
-    generate_summary_insights,
-)
+    enhance_result_with_insights, generate_summary_insights)
 
 
 class LPGPerformanceScore(performance_score_factory.PerformanceIndex):

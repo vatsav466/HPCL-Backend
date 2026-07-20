@@ -1,6 +1,8 @@
 import traceback
+
 import tas_duplicate_alert_check as duplicates_check
-from orchestrator.alerting.alert_manager import create_alert, close_alert
+
+from orchestrator.alerting.alert_manager import close_alert, create_alert
 from orchestrator.alerting.listener.tas_listener import fix_additional_info
 
 

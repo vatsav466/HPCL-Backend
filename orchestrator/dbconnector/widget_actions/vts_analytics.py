@@ -1,26 +1,27 @@
-import urdhva_base
+import asyncio
 import io
 import json
-import asyncio
+import math
 import traceback
+from collections import defaultdict
+from datetime import datetime
+
+import charts_actions
+import dashboard_studio_model
+import hpcl_ceg_model
+import mysql.connector
 import numpy as np
 import pandas as pd
 import polars as pl
-import hpcl_ceg_model
-import mysql.connector
-import dashboard_studio_model
-from datetime import datetime
 import polars.selectors as cs
-from collections import defaultdict
-from fastapi.responses import StreamingResponse
-from fastapi.responses import JSONResponse
 import pytz
-import math
-import charts_actions
-from orchestrator.dbconnector.widget_actions import widget_actions
-import orchestrator.dbconnector.widget_actions.vts_query as vts_query
+import urdhva_base
+from fastapi.responses import JSONResponse, StreamingResponse
+
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import utilities.connection_mapping as connection_mapping
+from orchestrator.dbconnector.widget_actions import widget_actions
 
 
 async def generate_cross_filter(cross_filters):
@@ -4862,8 +4863,8 @@ class VTSAnalyticsActions:
                 # Each row is yielded immediately - nginx never idles → no 60s timeout.
                 elif table_name == "completed_trips_risk_score":
                     print(f"[download] Streaming {table_name} natively as CSV...")
-                    from sqlalchemy import text
                     import urdhva_base.postgresmodel as pm
+                    from sqlalchemy import text
 
                     async def stream_csv():
                         import csv

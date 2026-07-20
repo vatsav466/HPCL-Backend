@@ -8,11 +8,13 @@ region, zone) into the correct filter values per data source.
 
 from __future__ import annotations
 
-import urdhva_base
 from typing import Optional
-import orchestrator.field_force.territory_mapping.zone_mapping as zone_mapping
+
+import urdhva_base
+
 import orchestrator.field_force.territory_mapping.region_mapping as region_mapping
 import orchestrator.field_force.territory_mapping.sales_area_mapping as sales_area_mapping
+import orchestrator.field_force.territory_mapping.zone_mapping as zone_mapping
 
 # ---------------------------------------------------------------------------
 # Sales area: key = normalized name (lowercase), value = per-vendor display name

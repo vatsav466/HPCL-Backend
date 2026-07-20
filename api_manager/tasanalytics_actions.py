@@ -1,6 +1,7 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+
 import orchestrator.tas_analytics.tas_analytics as tas_analytics
 
 router = fastapi.APIRouter(prefix="/tasanalytics")

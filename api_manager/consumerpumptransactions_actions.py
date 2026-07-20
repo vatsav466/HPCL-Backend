@@ -1,6 +1,7 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+
 from orchestrator.sync_services.consumer_pump import generate_token
 
 router = fastapi.APIRouter(prefix="/consumerpumptransactions")

@@ -1,7 +1,8 @@
-import urdhva_base
-import traceback
-import aio_pika
 import json
+import traceback
+
+import aio_pika
+import urdhva_base
 
 
 async def send_command_rabbitmq(message, queue_name):

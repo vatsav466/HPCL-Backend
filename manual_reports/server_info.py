@@ -1,8 +1,9 @@
 import json
+from copy import copy
+
 import paramiko
 from openpyxl import load_workbook
 from openpyxl.cell.cell import MergedCell
-from copy import copy
 
 # ======================================================
 # CONFIG

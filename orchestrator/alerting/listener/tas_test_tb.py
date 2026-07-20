@@ -30,8 +30,9 @@
 #     print("Failed to send telemetry data. Status code:", response.status_code)
 
 
-import requests
 import json
+
+import requests
 
 # Base URL
 base_url = "https://dev4.rulechain.test"

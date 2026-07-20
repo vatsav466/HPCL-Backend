@@ -1,9 +1,10 @@
-from multiprocessing.connection import Client
-import json
 import asyncio
-import requests
-import pika
+import json
+from multiprocessing.connection import Client
 from pathlib import Path
+
+import pika
+import requests
 
 
 class ConnectionConfig:

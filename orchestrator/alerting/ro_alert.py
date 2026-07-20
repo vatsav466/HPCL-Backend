@@ -1,7 +1,9 @@
-import urdhva_base
 import traceback
-import orchestrator.alerting.alert_helper as alert_helper
+
+import urdhva_base
+
 import orchestrator.alerting.alert_factory as alert_factory
+import orchestrator.alerting.alert_helper as alert_helper
 
 logger = urdhva_base.logger.Logger.getInstance("ro_alert_processing")
 

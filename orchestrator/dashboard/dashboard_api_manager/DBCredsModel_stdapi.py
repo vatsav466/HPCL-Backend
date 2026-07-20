@@ -1,9 +1,9 @@
+import fastapi
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 from DBCredsModel_enum import *
 from DBCredsModel_model import *
-import fastapi
 
 router = fastapi.APIRouter()
 

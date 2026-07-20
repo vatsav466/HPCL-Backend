@@ -1,28 +1,31 @@
-import urdhva_base
-import time
-import httpx
+import asyncio
 import base64
-import asyncio
-import string
-import asyncio
-import hashlib
 import datetime
+import hashlib
+import string
+import time
 import traceback
-import pandas as pd
+from calendar import monthrange
+
+import httpx
 import numpy as np
+import pandas as pd
+import urdhva_base
 import urdhva_base.redispool
 from openpyxl import Workbook
-from calendar import monthrange
 
 try:
     from secrets import choice
 except ImportError:
     from random import choice
+
 from collections import defaultdict
+
 from dateutil.relativedelta import relativedelta
-import utilities
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
 import Thingsboard.bu_asset_master_new as tb_master
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import utilities
 import utilities.sales_mapping as sales_mapping
 
 

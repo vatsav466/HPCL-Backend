@@ -1,10 +1,11 @@
-import re
+import pathlib
 import pickle
 import random
-import pathlib
+import re
+from datetime import datetime, timezone
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timezone
 
 df = pd.read_csv(
     f"{pathlib.Path(__file__).parent.resolve()}/oil_gas_industry_500_queries.csv"

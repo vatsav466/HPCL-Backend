@@ -1,6 +1,8 @@
-import fastapi
 import traceback
+
+import fastapi
 import polars as pl
+
 import orchestrator.masterdata.geo_master_upload as geo_master_upload
 
 router = fastapi.APIRouter(prefix="/bulevelgeocoordinates")

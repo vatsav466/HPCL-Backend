@@ -1,5 +1,7 @@
 import urdhva_base
-from orchestrator.notification_manager.notification_manager import NotificationManager
+
+from orchestrator.notification_manager.notification_manager import \
+    NotificationManager
 
 
 class NotifyWhatsApp(NotificationManager):

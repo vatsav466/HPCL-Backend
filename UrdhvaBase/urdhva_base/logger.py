@@ -2,10 +2,11 @@
 Application logger generation
 """
 
-import os
 import logging
-import urdhva_base
 import logging.handlers
+import os
+
+import urdhva_base
 
 
 class Logger(object):

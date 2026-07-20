@@ -1,9 +1,8 @@
 import asyncio
+
 from orchestrator.dashboard.chart_factory.date_parser import *
 from orchestrator.dashboard.chart_factory.time_range_exceptions import (
-    TimeRangeAmbiguousError,
-    TimeRangeParseFailError,
-)
+    TimeRangeAmbiguousError, TimeRangeParseFailError)
 
 
 async def time_range(**kwargs):

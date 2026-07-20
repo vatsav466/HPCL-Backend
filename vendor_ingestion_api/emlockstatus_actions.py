@@ -1,8 +1,9 @@
+import traceback
+
+import fastapi
+import hpcl_ceg_model
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
-import traceback
-import hpcl_ceg_model
 
 router = fastapi.APIRouter(prefix="/emlockstatus")
 

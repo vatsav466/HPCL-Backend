@@ -1,8 +1,10 @@
-import urdhva_base
 import uuid
+
 import hpcl_ceg_model
+import urdhva_base
+from fastapi.responses import JSONResponse, RedirectResponse
 from msal import ConfidentialClientApplication
-from fastapi.responses import RedirectResponse, JSONResponse
+
 import authenticator.authentication_manager_ad as authentication_manager_ad
 
 BaseUrl = "https://login.microsoftonline.com"

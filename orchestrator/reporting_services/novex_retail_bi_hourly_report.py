@@ -6,16 +6,18 @@ fetches latest intra-dryout and indent data, merges the current slot into that
 record, sends the email from the updated record, then saves the record back to Redis.
 """
 
-import urdhva_base
-import os
-import json
-import jinja2
 import asyncio
+import json
+import os
+from types import SimpleNamespace
+
 import api_helpers
 import hpcl_ceg_model
-import urdhva_base.utilities
+import jinja2
+import urdhva_base
 import urdhva_base.redispool
-from types import SimpleNamespace
+import urdhva_base.utilities
+
 import orchestrator.notification_manager.notification_factory as notification_factory
 from orchestrator.reporting_services.reporting_helpers import retail_data
 

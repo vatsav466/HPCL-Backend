@@ -1,35 +1,23 @@
-import re
 import calendar
-import parsedatetime
-import pandas as pd
-from datetime import datetime, timedelta
-from holidays import country_holidays
+import re
 from datetime import datetime, timedelta
 from functools import lru_cache
 from time import struct_time
+
+import pandas as pd
+import parsedatetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
-from pyparsing import (
-    CaselessKeyword,
-    Forward,
-    Group,
-    Optional as ppOptional,
-    ParseException,
-    ParseResults,
-    pyparsing_common,
-    quotedString,
-    Suppress,
-)
+from holidays import country_holidays
+from pyparsing import CaselessKeyword, Forward, Group
+from pyparsing import Optional as ppOptional
+from pyparsing import (ParseException, ParseResults, Suppress,
+                       pyparsing_common, quotedString)
 
 from orchestrator.dashboard.chart_factory.time_range_exceptions import (
-    TimeDeltaAmbiguousError,
-    TimeRangeAmbiguousError,
-    TimeRangeParseFailError,
-)
+    TimeDeltaAmbiguousError, TimeRangeAmbiguousError, TimeRangeParseFailError)
 from orchestrator.dashboard.chart_factory.time_range_helper import (
-    LRU_CACHE_MAX_SIZE,
-    NO_TIME_RANGE,
-)
+    LRU_CACHE_MAX_SIZE, NO_TIME_RANGE)
 
 
 def parse_human_datetime(human_readable: str) -> datetime:

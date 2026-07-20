@@ -1,10 +1,12 @@
+import traceback
+from datetime import datetime
+
+import fastapi
+import pandas as pd
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
-import traceback
+
 from orchestrator.dbconnector.widget_actions import widget_actions
-import pandas as pd
-from datetime import datetime
 
 router = fastapi.APIRouter(prefix="/performanceindex")
 

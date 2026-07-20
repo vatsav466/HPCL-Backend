@@ -1,6 +1,7 @@
-import urdhva_base
 import json
 from decimal import Decimal
+
+import urdhva_base
 
 TAS_CATEGORIES = {
     "Safety_Interlocks",

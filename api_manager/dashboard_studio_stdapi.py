@@ -1,9 +1,9 @@
+import fastapi
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
 from dashboard_studio_enum import *
 from dashboard_studio_model import *
-import fastapi
 
 router = fastapi.APIRouter()
 

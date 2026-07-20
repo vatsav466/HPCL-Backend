@@ -1,9 +1,10 @@
-from ingestion_api_enum import *
-from ingestion_api_model import *
-import fastapi
 import json
 import traceback
+
+import fastapi
 from fastapi.encoders import jsonable_encoder
+from ingestion_api_enum import *
+from ingestion_api_model import *
 
 router = fastapi.APIRouter(prefix="/ongoingtripsvts")
 

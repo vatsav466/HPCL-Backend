@@ -1,22 +1,18 @@
-import urdhva_base
+import asyncio
 import os
 import sys
-import jinja2
-import asyncio
-import hpcl_ceg_model
-import urdhva_base.utilities
 from types import SimpleNamespace
-import utilities.helpers as helpers
+
+import hpcl_ceg_model
+import jinja2
+import urdhva_base
+import urdhva_base.utilities
+
 import orchestrator.notification_manager.notification_factory as notification_factory
+import utilities.helpers as helpers
 from orchestrator.reporting_services.reporting_helpers import (
-    get_alert_data,
-    lpg_data,
-    retail_data,
-    sales_data,
-    sod_data,
-    ro_va_cleanliness,
-    nozzle_sales_trend,
-)
+    get_alert_data, lpg_data, nozzle_sales_trend, retail_data,
+    ro_va_cleanliness, sales_data, sod_data)
 
 WRITE_TO_DB = False
 

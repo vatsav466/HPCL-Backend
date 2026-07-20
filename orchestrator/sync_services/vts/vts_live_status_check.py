@@ -1,17 +1,19 @@
-import urdhva_base
 import asyncio
-import traceback
 import datetime
+import traceback
+
 import charts_actions
 import dashboard_studio_model
-import utilities.connection_mapping as connection_mapping
-import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
 import hpcl_ceg_enum
-import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 import polars as pl
-import orchestrator.dbconnector.credential_loader as credential_loader
 import psycopg2
 import psycopg2.extras
+import urdhva_base
+
+import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
+import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
+import utilities.connection_mapping as connection_mapping
 
 logger = urdhva_base.Logger.getInstance("vts_live_trips_check")
 

@@ -1,6 +1,6 @@
+import fastapi
 from DBCredsModel_enum import *
 from DBCredsModel_model import *
-import fastapi
 
 router = fastapi.APIRouter(prefix="/dbcredsmodel")
 

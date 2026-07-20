@@ -1,18 +1,20 @@
-import urdhva_base
-from hpcl_ceg_enum import *
-from hpcl_ceg_model import *
-import os
 import json
-import fastapi
+import os
 import traceback
+from collections import defaultdict
+
+import fastapi
 import pandas as pd
 import polars as pl
-from collections import defaultdict
-import utilities.connection_mapping as connection_mapping
+import urdhva_base
 from charts_actions import charts_connection_vault_routing
-from utilities.analog_data_mapping import Maintenance, Fault
-from utilities.device_data_mapping import system_classification
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
+
+import utilities.connection_mapping as connection_mapping
+from utilities.analog_data_mapping import Fault, Maintenance
+from utilities.device_data_mapping import system_classification
 
 router = fastapi.APIRouter(prefix="/tagsdata")
 

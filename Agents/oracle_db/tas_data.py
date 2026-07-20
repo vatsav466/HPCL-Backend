@@ -1,9 +1,10 @@
-import os
 import asyncio
 import datetime
+import os
 import random
+from typing import Any, Dict, List
+
 import pandas as pd
-from typing import Dict, List, Any
 from rabbitmq_producer import RabbitMQProducer
 
 

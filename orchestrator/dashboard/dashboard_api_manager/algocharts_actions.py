@@ -1,8 +1,9 @@
+import json
+
+import charts_functions
+import fastapi
 from AlgoCharts_enum import *
 from AlgoCharts_model import *
-import fastapi
-import json
-import charts_functions
 
 router = fastapi.APIRouter(prefix="/algocharts")
 

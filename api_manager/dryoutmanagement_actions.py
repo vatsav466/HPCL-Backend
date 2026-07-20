@@ -1,6 +1,6 @@
+import fastapi
 from field_force_enum import *
 from field_force_model import *
-import fastapi
 
 import orchestrator.field_force.novex as field_force_novex
 

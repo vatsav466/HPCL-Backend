@@ -3,8 +3,9 @@ Retail Sales (Single Store, including Lubes) - Field Force orchestrator.
 Functional schema for RetailSales APIs. No implementation.
 """
 
-import field_force_model
 from typing import Optional
+
+import field_force_model
 
 # comparison_type: yesterday | mtd | ytd | historical
 

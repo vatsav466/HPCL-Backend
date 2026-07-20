@@ -4,6 +4,7 @@ Functional schema for DealerManagement APIs. No implementation.
 """
 
 from typing import Optional
+
 import field_force_model
 
 

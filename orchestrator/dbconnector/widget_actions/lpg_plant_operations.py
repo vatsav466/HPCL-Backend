@@ -1,22 +1,17 @@
-import urdhva_base
-import math
-import sys
-import asyncio
-import numpy as np
+import glob
+import os
+import re
 import traceback
-import pandas as pd
+from collections import defaultdict
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import urdhva_base
+
 from orchestrator.dbconnector.widget_actions import lpg_config
 from utilities.helpers import calculate_productivity
-import math
-import glob
-import re
-import numpy as np
-import traceback
-import polars as pl
-import os
-from collections import defaultdict
 
 
 def build_plant_monthly_aggregated(data):
@@ -46,11 +41,13 @@ def build_plant_monthly_aggregated(data):
             if m in month_data:
                 ordered_months.append(month_data[m])
 
-        result.append({
-            "plant": plant,
-            "zone": ordered_months[0]["Zone"] if ordered_months else None,
-            "months": ordered_months
-        })
+        result.append(
+            {
+                "plant": plant,
+                "zone": ordered_months[0]["Zone"] if ordered_months else None,
+                "months": ordered_months,
+            }
+        )
 
     return result
 
@@ -88,17 +85,12 @@ def build_zone_monthly_aggregated(data):
                 if m in month_data:
                     ordered_months.append(month_data[m])
 
-            plant_list.append({
-                "plant": plant,
-                "months": ordered_months
-            })
+            plant_list.append({"plant": plant, "months": ordered_months})
 
-        result.append({
-            "zone": zone,
-            "plants": plant_list
-        })
+        result.append({"zone": zone, "plants": plant_list})
 
     return result
+
 
 class LPGOperationsActions:
     # async def plants_dropdown(data: dict):
@@ -164,7 +156,7 @@ class LPGOperationsActions:
                 for f in filters:
 
                     # Now filters are dictionaries
-                    key = f.get("key", "").replace('"', '').strip()
+                    key = f.get("key", "").replace('"', "").strip()
                     value = f.get("value")
 
                     if key.lower() == "zone" and value:
@@ -187,10 +179,9 @@ class LPGOperationsActions:
 
             if result and "data" in result and result["data"]:
                 for row in result["data"]:
-                    plants.append({
-                        "sap_id": str(row["sap_id"]),
-                        "plant": row["plant_name"]
-                    })
+                    plants.append(
+                        {"sap_id": str(row["sap_id"]), "plant": row["plant_name"]}
+                    )
 
                     if row.get("zone"):
                         zones.add(row["zone"])
@@ -205,28 +196,24 @@ class LPGOperationsActions:
                     "plant": plants,
                     "zone": sorted(list(zones)),
                     "region": sorted(list(regions)),
-                    "carousel_type": ["12H", "24H", "48H", "72H"]
-                }
+                    "carousel_type": ["12H", "24H", "48H", "72H"],
+                },
             }
 
         except Exception as e:
             print("Exception in plants_dropdown:", str(e))
             raise
 
-
     async def get_breaks(plant_id, carousal_id):
         query = f"""SELECT start_time, stop_time FROM public.breaks WHERE plant_id = {plant_id} AND carousal_id = {carousal_id}"""
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if result['data']:
-            result = result['data']
+        if result["data"]:
+            result = result["data"]
         else:
             return False
         breaks = []
         for row in result:
-            breaks.append({
-                "from": row['start_time'],
-                "to": row['stop_time']
-            })
+            breaks.append({"from": row["start_time"], "to": row["stop_time"]})
         return breaks
 
     async def get_plant_short_name(sap_id):
@@ -239,9 +226,9 @@ class LPGOperationsActions:
     async def get_plant_id_by_short_name(plantShortName):
         query = f""" SELECT MAX(id) as id from public.plants where short_name = '{plantShortName}' """
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if result['data']:
-            plant_id = result['data']
-            return plant_id[0]['id']
+        if result["data"]:
+            plant_id = result["data"]
+            return plant_id[0]["id"]
         else:
             return 0
 
@@ -266,13 +253,9 @@ class LPGOperationsActions:
                     "start": shift["start_time"],
                     "end": shift["stop_time"],
                     "breaks": [
-                        {
-                            "from": b["start_time"],
-                            "to": b["stop_time"]
-                        }
-                        for b in breaks
-                    ]
-                }
+                        {"from": b["start_time"], "to": b["stop_time"]} for b in breaks
+                    ],
+                },
             }
         return config
 
@@ -280,13 +263,13 @@ class LPGOperationsActions:
         # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=sap_id)
         # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
         print(f"Fetching carousal config for sap_id: {sap_id}")
-        carousal_config = await LPGOperationsActions.get_carousals_config(sap_id= sap_id)
+        carousal_config = await LPGOperationsActions.get_carousals_config(sap_id=sap_id)
         keys = list(carousal_config.keys())
-        if type == 'string':
+        if type == "string":
             return ", ".join(map(str, keys))
-        if type == 'array':
+        if type == "array":
             return keys
-        if type == 'full':
+        if type == "full":
             return carousal_config
         else:
             return ", ".join(map(str, list(carousal_config.keys())))
@@ -294,12 +277,18 @@ class LPGOperationsActions:
     @staticmethod
     async def get_gd_rejection(data: dict):
         try:
-            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            to_date = datetime.strptime(f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
+            )
 
             if not data.get("carousal", None):
-                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-                processId = '3,23'
+                carousal = await LPGOperationsActions.get_carousals(
+                    "string", data.get("sap_id")
+                )
+                processId = "3,23"
 
             query = f"""SELECT
                             system_id,
@@ -313,8 +302,8 @@ class LPGOperationsActions:
                         GROUP BY  process_status, system_id """
 
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
 
@@ -322,24 +311,22 @@ class LPGOperationsActions:
                 carousal_wise_data = {}
 
                 for row in results:
-                    sys_id = row['system_id']
+                    sys_id = row["system_id"]
                     if sys_id not in carousal_wise_data:
-                        carousal_wise_data[sys_id] = {
-                            'handled': 0,
-                            'sortout': 0
-                        }
+                        carousal_wise_data[sys_id] = {"handled": 0, "sortout": 0}
 
-                    carousal_wise_data[sys_id]['handled'] += row['count']
-                    if row['process_status'] != 0:
-                        carousal_wise_data[sys_id]['sortout'] += row['count']
+                    carousal_wise_data[sys_id]["handled"] += row["count"]
+                    if row["process_status"] != 0:
+                        carousal_wise_data[sys_id]["sortout"] += row["count"]
 
                 # compute rejection_rate per system_id
                 for sys_id, stats in carousal_wise_data.items():
-                    if stats['handled'] > 0:
-                        stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100,
-                                                        4)
+                    if stats["handled"] > 0:
+                        stats["rejection_rate"] = round(
+                            (stats["sortout"] / stats["handled"]) * 100, 4
+                        )
                     else:
-                        stats['rejection_rate'] = 0.0
+                        stats["rejection_rate"] = 0.0
 
                 return carousal_wise_data
             return False, "No data found"
@@ -359,8 +346,10 @@ class LPGOperationsActions:
             )
 
             if not data.get("carousal", None):
-                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-            processId = '4,24'
+                carousal = await LPGOperationsActions.get_carousals(
+                    "string", data.get("sap_id")
+                )
+            processId = "4,24"
 
             query = f"""SELECT
                             system_id,
@@ -374,8 +363,8 @@ class LPGOperationsActions:
                         GROUP BY  process_status, system_id"""
 
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
 
@@ -383,24 +372,22 @@ class LPGOperationsActions:
                 carousal_wise_data = {}
 
                 for row in results:
-                    sys_id = row['system_id']
+                    sys_id = row["system_id"]
                     if sys_id not in carousal_wise_data:
-                        carousal_wise_data[sys_id] = {
-                            'handled': 0,
-                            'sortout': 0
-                        }
+                        carousal_wise_data[sys_id] = {"handled": 0, "sortout": 0}
 
-                    carousal_wise_data[sys_id]['handled'] += row['count']
-                    if row['process_status'] != 0:
-                        carousal_wise_data[sys_id]['sortout'] += row['count']
+                    carousal_wise_data[sys_id]["handled"] += row["count"]
+                    if row["process_status"] != 0:
+                        carousal_wise_data[sys_id]["sortout"] += row["count"]
 
                 # compute rejection_rate per system_id
                 for sys_id, stats in carousal_wise_data.items():
-                    if stats['handled'] > 0:
-                        stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100,
-                                                        4)
+                    if stats["handled"] > 0:
+                        stats["rejection_rate"] = round(
+                            (stats["sortout"] / stats["handled"]) * 100, 4
+                        )
                     else:
-                        stats['rejection_rate'] = 0.0
+                        stats["rejection_rate"] = 0.0
 
                 return carousal_wise_data
             return False, "No data found"
@@ -418,8 +405,12 @@ class LPGOperationsActions:
                 f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
             )
 
-            carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-            carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
+            carousals = await LPGOperationsActions.get_carousals(
+                "string", data.get("sap_id")
+            )
+            carousal_array = await LPGOperationsActions.get_carousals(
+                "array", data.get("sap_id")
+            )
 
             query = f"""SELECT
                             system_id,
@@ -433,8 +424,8 @@ class LPGOperationsActions:
                         GROUP BY  process_status, system_id"""
 
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
             data = {}
@@ -451,35 +442,41 @@ class LPGOperationsActions:
             sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
             otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
             for row in results:
-                carID = row['system_id']
-                processID = row['process_status']
+                carID = row["system_id"]
+                processID = row["process_status"]
                 if carID not in data:
                     data[carID] = {}
-                data[carID][processID] = row['count']
-                total[carID] += row['count']
-                if row['process_status'] in otherErrorStatuses:
-                    otherErrors[carID] += row['count']
-                if row['process_status'] in sortoutStatuses + otherErrorStatuses:
-                    totalSortout[carID] += row['count']
-                if row['process_status'] < 0 or row['process_status'] == 4096:
-                    commErrorSortout[carID] += row['count']
+                data[carID][processID] = row["count"]
+                total[carID] += row["count"]
+                if row["process_status"] in otherErrorStatuses:
+                    otherErrors[carID] += row["count"]
+                if row["process_status"] in sortoutStatuses + otherErrorStatuses:
+                    totalSortout[carID] += row["count"]
+                if row["process_status"] < 0 or row["process_status"] == 4096:
+                    commErrorSortout[carID] += row["count"]
 
             refData = {}
             for id in carousal_array:
                 refData[id] = {
-                    'handled': int(total[id]),
-                    'cylinder_filled': int(total[id] - totalSortout[id]),
-                    'underfilled': int(data.get(id, {}).get(1040, 0)),
-                    'overfilled': int(data.get(id, {}).get(2064, 0)),
-                    'negative_tare': int(
-                        data.get(id, {}).get(1296, 0) + (data.get(id, {}).get(5392, 0))),
-                    'positive_tare': int(data.get(id, {}).get(17424, 0)),
-                    'timeout': int(data.get(id, {}).get(1048, 0) + data.get(id, {}).get(4120, 0)),
-                    'other_errors': int(otherErrors[id]),
-                    'sortout': int(totalSortout[id]),
-                    'commErrorSortout': int(commErrorSortout[id]),
-                    'rejection_rate': round((int(totalSortout[id]) / int(total[id])) * 100,
-                                            4) if int(total[id]) > 0 else 0.0
+                    "handled": int(total[id]),
+                    "cylinder_filled": int(total[id] - totalSortout[id]),
+                    "underfilled": int(data.get(id, {}).get(1040, 0)),
+                    "overfilled": int(data.get(id, {}).get(2064, 0)),
+                    "negative_tare": int(
+                        data.get(id, {}).get(1296, 0) + (data.get(id, {}).get(5392, 0))
+                    ),
+                    "positive_tare": int(data.get(id, {}).get(17424, 0)),
+                    "timeout": int(
+                        data.get(id, {}).get(1048, 0) + data.get(id, {}).get(4120, 0)
+                    ),
+                    "other_errors": int(otherErrors[id]),
+                    "sortout": int(totalSortout[id]),
+                    "commErrorSortout": int(commErrorSortout[id]),
+                    "rejection_rate": (
+                        round((int(totalSortout[id]) / int(total[id])) * 100, 4)
+                        if int(total[id]) > 0
+                        else 0.0
+                    ),
                 }
 
             return refData
@@ -497,8 +494,12 @@ class LPGOperationsActions:
                 f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
             )
 
-            carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-            carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
+            carousals = await LPGOperationsActions.get_carousals(
+                "string", data.get("sap_id")
+            )
+            carousal_array = await LPGOperationsActions.get_carousals(
+                "array", data.get("sap_id")
+            )
 
             query = f"""SELECT
                             system_id,
@@ -512,8 +513,8 @@ class LPGOperationsActions:
                         GROUP BY  process_status, system_id"""
 
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
             data = {}
@@ -530,28 +531,26 @@ class LPGOperationsActions:
             sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
             otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
             for row in results:
-                carID = row['system_id']
-                processID = row['process_status']
+                carID = row["system_id"]
+                processID = row["process_status"]
                 if carID not in data:
                     data[carID] = {}
-                data[carID][processID] = row['count']
-                total[carID] += row['count']
-                if row['process_status'] in otherErrorStatuses:
-                    otherErrors[carID] += row['count']
-                if row['process_status'] in sortoutStatuses + otherErrorStatuses:
-                    totalSortout[carID] += row['count']
-                if row['process_status'] < 0 or row['process_status'] == 4096:
-                    commErrorSortout[carID] += row['count']
+                data[carID][processID] = row["count"]
+                total[carID] += row["count"]
+                if row["process_status"] in otherErrorStatuses:
+                    otherErrors[carID] += row["count"]
+                if row["process_status"] in sortoutStatuses + otherErrorStatuses:
+                    totalSortout[carID] += row["count"]
+                if row["process_status"] < 0 or row["process_status"] == 4096:
+                    commErrorSortout[carID] += row["count"]
 
-            refData = {
-                "handled": 0,
-                "sortout": 0
-            }
+            refData = {"handled": 0, "sortout": 0}
             for id in carousal_array:
                 refData["handled"] += int(total[id])
                 refData["sortout"] += int(totalSortout[id])
             refData["rejection_rate"] = round(
-                (int(refData["sortout"]) / int(refData["handled"])) * 100, 4)
+                (int(refData["sortout"]) / int(refData["handled"])) * 100, 4
+            )
             return refData
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
@@ -562,12 +561,14 @@ class LPGOperationsActions:
     async def get_start_end_times(carousal, data):
         # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
         # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
-        carousal_config = await LPGOperationsActions.get_carousals_config(data["sap_id"])
+        carousal_config = await LPGOperationsActions.get_carousals_config(
+            data["sap_id"]
+        )
         if carousal_config is None:
             raise Exception("Error Processing Request", 1)
         return {
-            'start': carousal_config[carousal]['times']['start'],
-            'end': carousal_config[carousal]['times']['end']
+            "start": carousal_config[carousal]["times"]["start"],
+            "end": carousal_config[carousal]["times"]["end"],
         }
 
     async def build_ot_production_period_query(carousal, data):
@@ -575,8 +576,8 @@ class LPGOperationsActions:
         to_date = datetime.strptime(f"{data['to_date']}", "%Y-%m-%d").date()
 
         startEndTimes = await LPGOperationsActions.get_start_end_times(carousal, data)
-        startTime = startEndTimes['start']
-        endTime = startEndTimes['end']
+        startTime = startEndTimes["start"]
+        endTime = startEndTimes["end"]
         queryString = f"""WITH day_wise_data as (
                 select
                     process_date::date as process_day,
@@ -619,37 +620,42 @@ class LPGOperationsActions:
 
         normalGapStringArray = []
         normalGapString = ""
-        for working_phase in phases['working']:
+        for working_phase in phases["working"]:
             normalGapStringArray.append(
-                f"""getGapBetweenTimes(process_time, prev_process_time, '{working_phase['from']}'::text, '{working_phase['to']}'::text)""")
+                f"""getGapBetweenTimes(process_time, prev_process_time, '{working_phase['from']}'::text, '{working_phase['to']}'::text)"""
+            )
         normalGapString = " + ".join(normalGapStringArray)
 
         breakGapStringArray = []
         breakGapString = ""
-        for break_phase in phases['breaks']:
+        for break_phase in phases["breaks"]:
             breakGapStringArray.append(
-                f"""getGapBetweenTimes(process_time, prev_process_time, '{break_phase['from']}'::text, '{break_phase['to']}'::text)""")
+                f"""getGapBetweenTimes(process_time, prev_process_time, '{break_phase['from']}'::text, '{break_phase['to']}'::text)"""
+            )
         breakGapString = " + ".join(breakGapStringArray)
 
         overtimeGapStringArray = []
         overtimeGapString = ""
-        for over_time_phase in phases['overtime']:
+        for over_time_phase in phases["overtime"]:
             overtimeGapStringArray.append(
-                f"""(process_time::time between '{over_time_phase['from']}'::time and '{over_time_phase['to']}'::time and prev_process_time:: time between '{over_time_phase['from']}'::time and '{over_time_phase['to']}'::time )""")
+                f"""(process_time::time between '{over_time_phase['from']}'::time and '{over_time_phase['to']}'::time and prev_process_time:: time between '{over_time_phase['from']}'::time and '{over_time_phase['to']}'::time )"""
+            )
         overtimeGapString = " or ".join(overtimeGapStringArray)
 
         normalEndGapStringArray = []
         normalEndGapString = ""
-        for normal_end_phase in phases['working']:
+        for normal_end_phase in phases["working"]:
             normalEndGapStringArray.append(
-                f"""getEndGapForPhase(last_cyl_time, '{normal_end_phase['from']}', '{normal_end_phase['to']}')""")
+                f"""getEndGapForPhase(last_cyl_time, '{normal_end_phase['from']}', '{normal_end_phase['to']}')"""
+            )
         normalEndGapString = " + ".join(normalEndGapStringArray)
 
         breakEndGapStringArray = []
         breakEndGapString = ""
-        for break_end_phase in phases['breaks']:
+        for break_end_phase in phases["breaks"]:
             breakEndGapStringArray.append(
-                f"""getEndGapForPhase(last_cyl_time, '{break_end_phase['from']}', '{break_end_phase['to']}')""")
+                f"""getEndGapForPhase(last_cyl_time, '{break_end_phase['from']}', '{break_end_phase['to']}')"""
+            )
         breakEndGapString = " + ".join(breakEndGapStringArray)
 
         queryString = f"""WITH day_wise_data as (
@@ -743,7 +749,7 @@ class LPGOperationsActions:
     async def get_non_operating_days(carousal, data):
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}", "%Y-%m-%d").date()
-        queryString = F"""WITH all_dates AS (
+        queryString = f"""WITH all_dates AS (
                       SELECT generate_series('{from_date}'::date, '{to_date}'::date, '1 day'::interval) AS process_day),
                         row_counts AS (
                             SELECT
@@ -773,24 +779,23 @@ class LPGOperationsActions:
                         )
                         select count(days) from empty_days;"""
         data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if data['data']:
-            data = data['data']
+        if data["data"]:
+            data = data["data"]
 
-        if (data and len(data) > 0):
-            return data[0]['count']
+        if data and len(data) > 0:
+            return data[0]["count"]
         return 0
 
     async def get_production_gaps(carousal, data):
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}", "%Y-%m-%d").date()
         phases = await LPGOperationsActions.get_phases(data)
-        queryString = await LPGOperationsActions.build_production_gap_query(carousal,
-                                                                            phases[carousal],
-                                                                            from_date, to_date,
-                                                                            data["sap_id"])
+        queryString = await LPGOperationsActions.build_production_gap_query(
+            carousal, phases[carousal], from_date, to_date, data["sap_id"]
+        )
         query3 = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if query3['data']:
-            query3 = query3['data']
+        if query3["data"]:
+            query3 = query3["data"]
         return query3[0]
 
     async def get_daily_operating_hours(data):
@@ -801,16 +806,16 @@ class LPGOperationsActions:
             totalWorkingSeconds = 0
             totalBreakSeconds = 0
 
-            for working_period in value['working']:
-                from_date = datetime.strptime(f'{working_period['from']}', "%H:%M:%S")
-                to_date = datetime.strptime(f'{working_period['to']}', "%H:%M:%S")
+            for working_period in value["working"]:
+                from_date = datetime.strptime(f"{working_period['from']}", "%H:%M:%S")
+                to_date = datetime.strptime(f"{working_period['to']}", "%H:%M:%S")
                 interval = to_date - from_date
                 interval = interval.total_seconds()
                 totalWorkingSeconds += interval
 
-            for break_period in value['breaks']:
-                from_date = datetime.strptime(f'{break_period['from']}', "%H:%M:%S")
-                to_date = datetime.strptime(f'{break_period['to']}', "%H:%M:%S")
+            for break_period in value["breaks"]:
+                from_date = datetime.strptime(f"{break_period['from']}", "%H:%M:%S")
+                to_date = datetime.strptime(f"{break_period['to']}", "%H:%M:%S")
                 interval = to_date - from_date
                 interval = interval.total_seconds()
                 totalBreakSeconds += interval
@@ -818,17 +823,17 @@ class LPGOperationsActions:
             totalWorkingHours = totalWorkingSeconds / 3600
             totalBreakHours = totalBreakSeconds / 3600
             operating_time[key] = {
-                'normal': totalWorkingHours,
-                'break': totalBreakHours,
+                "normal": totalWorkingHours,
+                "break": totalBreakHours,
             }
         return operating_time
 
     async def config_to_phases(config):
         phases = {}
         for key, value in config.items():
-            start = value['times']['start']
-            end = value['times']['end']
-            breaks = value['times']['breaks']
+            start = value["times"]["start"]
+            end = value["times"]["end"]
+            breaks = value["times"]["breaks"]
 
             working_periods = []
             break_periods = []
@@ -837,35 +842,23 @@ class LPGOperationsActions:
             current_start = start
 
             for b in breaks:
-                break_start = b['from']
-                break_end = b['to']
+                break_start = b["from"]
+                break_end = b["to"]
                 if current_start < break_start:
-                    working_periods.append({
-                        'from': current_start,
-                        'to': break_start
-                    })
+                    working_periods.append({"from": current_start, "to": break_start})
                 break_periods.append(b)
                 current_start = break_end
 
             if current_start < end:
-                working_periods.append({
-                    'from': current_start,
-                    'to': end
-                })
+                working_periods.append({"from": current_start, "to": end})
 
-            overtime_periods.append({
-                'from': '00:00:00',
-                'to': start
-            })
-            overtime_periods.append({
-                'from': end,
-                'to': '23:59:59'
-            })
+            overtime_periods.append({"from": "00:00:00", "to": start})
+            overtime_periods.append({"from": end, "to": "23:59:59"})
 
             phases[key] = {
-                'working': working_periods,
-                'breaks': break_periods,
-                'overtime': overtime_periods
+                "working": working_periods,
+                "breaks": break_periods,
+                "overtime": overtime_periods,
             }
 
         return phases
@@ -873,7 +866,9 @@ class LPGOperationsActions:
     async def get_phases(data):
         # plant_short_name = await LPGOperationsActions.get_plant_short_name(sap_id=data["sap_id"])
         # carousal_config = await LPGOperationsActions.get_carousals_config(plant_short_name)
-        carousal_config = await LPGOperationsActions.get_carousals_config(data["sap_id"])
+        carousal_config = await LPGOperationsActions.get_carousals_config(
+            data["sap_id"]
+        )
         if carousal_config is None:
             raise Exception("Error Processing Request")
         phases = await LPGOperationsActions.config_to_phases(carousal_config)
@@ -883,21 +878,28 @@ class LPGOperationsActions:
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}", "%Y-%m-%d").date()
 
-        excludedStatuses = ", ".join(map(str, lpg_config.process_statuses['negativeTare'] +
-                                         lpg_config.process_statuses['positiveTare']))
+        excludedStatuses = ", ".join(
+            map(
+                str,
+                lpg_config.process_statuses["negativeTare"]
+                + lpg_config.process_statuses["positiveTare"],
+            )
+        )
         phases = await LPGOperationsActions.get_phases(data)
         normalPhaseStringArray = []
         normalPhaseString = ""
-        for working_phase in phases[carousal]['working']:
+        for working_phase in phases[carousal]["working"]:
             normalPhaseStringArray.append(
-                f"""process_date::time between '{working_phase['from']}'::time and '{working_phase['to']}'::time""")
+                f"""process_date::time between '{working_phase['from']}'::time and '{working_phase['to']}'::time"""
+            )
         normalPhaseString = " or ".join(normalPhaseStringArray)
 
         breakPhaseStringArray = []
         breakPhaseString = ""
-        for break_phase in phases[carousal]['breaks']:
+        for break_phase in phases[carousal]["breaks"]:
             breakPhaseStringArray.append(
-                f""" process_date::time between '{break_phase['from']}'::time and '{break_phase['to']}'::time """)
+                f""" process_date::time between '{break_phase['from']}'::time and '{break_phase['to']}'::time """
+            )
         breakPhaseString = " or ".join(breakPhaseStringArray)
 
         queryString = f"""WITH phased_data as (
@@ -937,31 +939,35 @@ class LPGOperationsActions:
         return queryString
 
     async def get_phase_wise_production(carousal, data):
-        queryString = await LPGOperationsActions.get_phased_production_data_query_string(carousal,
-                                                                                         data)
+        queryString = (
+            await LPGOperationsActions.get_phased_production_data_query_string(
+                carousal, data
+            )
+        )
         data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
 
-        blankProdData = {
-            'prod_14_2': 0,
-            'prod_19': 0
-        }
+        blankProdData = {"prod_14_2": 0, "prod_19": 0}
 
         returnData = {
-            'normal': blankProdData,
-            'break': blankProdData,
-            'overtime': blankProdData
+            "normal": blankProdData,
+            "break": blankProdData,
+            "overtime": blankProdData,
         }
-        if data['data']:
-            for phase_data in data['data']:
-                returnData[phase_data['phase']] = phase_data
+        if data["data"]:
+            for phase_data in data["data"]:
+                returnData[phase_data["phase"]] = phase_data
 
         return returnData
 
     async def bottling_data(data: dict):
-        carousalsArray = await LPGOperationsActions.get_carousals("array", data["sap_id"])
+        carousalsArray = await LPGOperationsActions.get_carousals(
+            "array", data["sap_id"]
+        )
         bottling = {}
         for carousal in carousalsArray:
-            prodData = await LPGOperationsActions.get_phase_wise_production(carousal, data)
+            prodData = await LPGOperationsActions.get_phase_wise_production(
+                carousal, data
+            )
             bottling[carousal] = prodData
         return bottling
 
@@ -980,52 +986,64 @@ class LPGOperationsActions:
             return False
         interval_days = (to_date - from_date).days
         total_intervening_days = interval_days + 1
-        carousalsArray = await LPGOperationsActions.get_carousals("array", data["sap_id"])
+        carousalsArray = await LPGOperationsActions.get_carousals(
+            "array", data["sap_id"]
+        )
         dailyOperatingHours = await LPGOperationsActions.get_daily_operating_hours(data)
 
         production_hours = {}
         for carousal in carousalsArray:
-            production_hours[carousal] = await LPGOperationsActions.get_production_gaps(carousal,
-                                                                                        data)
+            production_hours[carousal] = await LPGOperationsActions.get_production_gaps(
+                carousal, data
+            )
             production_hours = {k: none_to_zero(v) for k, v in production_hours.items()}
-            production_hours[carousal]['carousal'] = carousal
-            production_hours[carousal]['intervening_days'] = total_intervening_days
-            production_hours[carousal][
-                'non_op_days'] = await LPGOperationsActions.get_non_operating_days(carousal, data)
-            production_hours[carousal]['net_op_days'] = total_intervening_days - \
-                                                        production_hours[carousal]['non_op_days']
-            production_hours[carousal]['daily_op_hours'] = dailyOperatingHours[carousal]
-            production_hours[carousal]['max_op_hours'] = {}
-            production_hours[carousal]['max_op_hours']['normal'] = dailyOperatingHours[carousal][
-                                                                       'normal'] * \
-                                                                   production_hours[carousal][
-                                                                       'net_op_days']
-            production_hours[carousal]['max_op_hours']['break'] = dailyOperatingHours[carousal][
-                                                                      'break'] * \
-                                                                  production_hours[carousal][
-                                                                      'net_op_days']
-            production_hours[carousal]['net_op_hours'] = {}
-            production_hours[carousal]['net_op_hours']['normal'] = float(
-                (production_hours[carousal]['max_op_hours']['normal']) - float(
-                    production_hours[carousal]['total_normal_gap']))
-            production_hours[carousal]['net_op_hours']['break'] = float(
-                (production_hours[carousal]['max_op_hours']['break']) - float(
-                    production_hours[carousal]['total_break_gap']))
+            production_hours[carousal]["carousal"] = carousal
+            production_hours[carousal]["intervening_days"] = total_intervening_days
+            production_hours[carousal]["non_op_days"] = (
+                await LPGOperationsActions.get_non_operating_days(carousal, data)
+            )
+            production_hours[carousal]["net_op_days"] = (
+                total_intervening_days - production_hours[carousal]["non_op_days"]
+            )
+            production_hours[carousal]["daily_op_hours"] = dailyOperatingHours[carousal]
+            production_hours[carousal]["max_op_hours"] = {}
+            production_hours[carousal]["max_op_hours"]["normal"] = (
+                dailyOperatingHours[carousal]["normal"]
+                * production_hours[carousal]["net_op_days"]
+            )
+            production_hours[carousal]["max_op_hours"]["break"] = (
+                dailyOperatingHours[carousal]["break"]
+                * production_hours[carousal]["net_op_days"]
+            )
+            production_hours[carousal]["net_op_hours"] = {}
+            production_hours[carousal]["net_op_hours"]["normal"] = float(
+                (production_hours[carousal]["max_op_hours"]["normal"])
+                - float(production_hours[carousal]["total_normal_gap"])
+            )
+            production_hours[carousal]["net_op_hours"]["break"] = float(
+                (production_hours[carousal]["max_op_hours"]["break"])
+                - float(production_hours[carousal]["total_break_gap"])
+            )
         return production_hours
 
     async def get_ot_production_period(carousal, data):
-        queryString = await LPGOperationsActions.build_ot_production_period_query(carousal, data)
+        queryString = await LPGOperationsActions.build_ot_production_period_query(
+            carousal, data
+        )
         data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if data['data']:
-            data = data['data']
+        if data["data"]:
+            data = data["data"]
         return data[0]
 
     async def ot_production_time(data: dict):
-        carousalsArray = await LPGOperationsActions.get_carousals("array", data["sap_id"])
+        carousalsArray = await LPGOperationsActions.get_carousals(
+            "array", data["sap_id"]
+        )
         ot_production = {}
         for carousal in carousalsArray:
-            ot_production[carousal] = await LPGOperationsActions.get_ot_production_period(carousal,
-                                                                                          data)
+            ot_production[carousal] = (
+                await LPGOperationsActions.get_ot_production_period(carousal, data)
+            )
         return ot_production
 
     async def get_prodash_hours(carousal, data):
@@ -1112,9 +1130,11 @@ class LPGOperationsActions:
 
         if result["data"]:
             row = result["data"][0]
-            row["bottling_hours"] = round(float(row["bottling_hours"] or 0),4)
-            row["stoppage_hours"] = round(float(row["stoppage_hours"] or 0),4)
-            row["net_bottling_hours"] = round(row["bottling_hours"] - row["stoppage_hours"], 4)
+            row["bottling_hours"] = round(float(row["bottling_hours"] or 0), 4)
+            row["stoppage_hours"] = round(float(row["stoppage_hours"] or 0), 4)
+            row["net_bottling_hours"] = round(
+                row["bottling_hours"] - row["stoppage_hours"], 4
+            )
             return row
 
         return {
@@ -1122,60 +1142,93 @@ class LPGOperationsActions:
             "last_cylinder": None,
             "bottling_hours": 0,
             "stoppage_hours": 0,
-            "net_bottling_hours": 0
+            "net_bottling_hours": 0,
         }
 
     async def get_productivity(data: dict):
         try:
             bottling_data = await LPGOperationsActions.bottling_data(data)
-            production_hours_data = await LPGOperationsActions.production_hours_data(data)
+            production_hours_data = await LPGOperationsActions.production_hours_data(
+                data
+            )
             ot_production_time = await LPGOperationsActions.ot_production_time(data)
-            phases = ['normal', 'break', 'overtime']
+            phases = ["normal", "break", "overtime"]
             productivityData = {}
             for key, value in bottling_data.items():
                 prodash_hours = await LPGOperationsActions.get_prodash_hours(key, data)
                 if not prodash_hours:
-                    prodash_hours = {"first_cylinder": None, "last_cylinder": None, "bottling_hours": 0, "stoppage_hours": 0, "net_bottling_hours": 0}
+                    prodash_hours = {
+                        "first_cylinder": None,
+                        "last_cylinder": None,
+                        "bottling_hours": 0,
+                        "stoppage_hours": 0,
+                        "net_bottling_hours": 0,
+                    }
 
                 productivityData[key] = {}
                 # Prodash Metrics
-                productivityData[key]["first_cylinder"] = prodash_hours["first_cylinder"]
+                productivityData[key]["first_cylinder"] = prodash_hours[
+                    "first_cylinder"
+                ]
                 productivityData[key]["last_cylinder"] = prodash_hours["last_cylinder"]
-                productivityData[key]["bottling_hours"] = float(prodash_hours["bottling_hours"] or 0)
-                productivityData[key]["stoppage_hours"] = float(prodash_hours["stoppage_hours"] or 0)
-                productivityData[key]["net_bottling_hours"] = float(prodash_hours["net_bottling_hours"] or 0)
+                productivityData[key]["bottling_hours"] = float(
+                    prodash_hours["bottling_hours"] or 0
+                )
+                productivityData[key]["stoppage_hours"] = float(
+                    prodash_hours["stoppage_hours"] or 0
+                )
+                productivityData[key]["net_bottling_hours"] = float(
+                    prodash_hours["net_bottling_hours"] or 0
+                )
 
                 for phase in phases:
-                    totalProduction = bottling_data[key][phase]['prod_14_2'] + 1.25 * \
-                                      bottling_data[key][phase]['prod_19']
+                    totalProduction = (
+                        bottling_data[key][phase]["prod_14_2"]
+                        + 1.25 * bottling_data[key][phase]["prod_19"]
+                    )
                     gapHours = production_hours_data[key]["total_" + phase + "_gap"]
-                    
+
                     # No Production => Net Hours = 0
                     if totalProduction == 0:
-                        productivityData[key][phase] = {"net_hours": 0, "total_production": 0, "gaps": float(gapHours or 0), "productivity": 0}
+                        productivityData[key][phase] = {
+                            "net_hours": 0,
+                            "total_production": 0,
+                            "gaps": float(gapHours or 0),
+                            "productivity": 0,
+                        }
                         continue
                     productivityData[key][phase] = {}
-                    if phase != 'overtime':
-                        maxHours = production_hours_data[key]['max_op_hours'][phase]
-                        productivityData[key][phase]['net_hours'] = abs(
-                            float(maxHours) - float(gapHours))
+                    if phase != "overtime":
+                        maxHours = production_hours_data[key]["max_op_hours"][phase]
+                        productivityData[key][phase]["net_hours"] = abs(
+                            float(maxHours) - float(gapHours)
+                        )
                     else:
-                        total_pre_shift_time = ot_production_time[key]['total_pre_shift_time']
-                        total_post_shift_time = ot_production_time[key]['total_post_shift_time']
+                        total_pre_shift_time = ot_production_time[key][
+                            "total_pre_shift_time"
+                        ]
+                        total_post_shift_time = ot_production_time[key][
+                            "total_post_shift_time"
+                        ]
                         if total_pre_shift_time is None:
                             total_pre_shift_time = 0
                         if total_post_shift_time is None:
                             total_post_shift_time = 0
-                        productivityData[key][phase]['net_hours'] = abs(
-                            total_pre_shift_time + total_post_shift_time - gapHours)
-                    productivityData[key][phase]['total_production'] = totalProduction
-                    productivityData[key][phase]['gaps'] = float(gapHours or 0)
-                    if not (productivityData[key][phase]['net_hours']):
-                        productivityData[key][phase]['productivity'] = 0
+                        productivityData[key][phase]["net_hours"] = abs(
+                            total_pre_shift_time + total_post_shift_time - gapHours
+                        )
+                    productivityData[key][phase]["total_production"] = totalProduction
+                    productivityData[key][phase]["gaps"] = float(gapHours or 0)
+                    if not (productivityData[key][phase]["net_hours"]):
+                        productivityData[key][phase]["productivity"] = 0
                     else:
-                        productivityData[key][phase]['productivity'] = abs(round(
-                            float(totalProduction) / float(
-                                productivityData[key][phase]['net_hours']), 4))
+                        productivityData[key][phase]["productivity"] = abs(
+                            round(
+                                float(totalProduction)
+                                / float(productivityData[key][phase]["net_hours"]),
+                                4,
+                            )
+                        )
             print("Productivity Data :", productivityData)
             return productivityData
         except Exception as e:
@@ -1187,9 +1240,15 @@ class LPGOperationsActions:
     async def get_filling_accuracy(data: dict):
         try:
             cyl_types = ",".join(map(str, lpg_config.cyl_types))
-            carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
-            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            to_date = datetime.strptime(f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            carousal = await LPGOperationsActions.get_carousals(
+                "string", data["sap_id"]
+            )
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
+            )
             query = f"""
                 SELECT
                 system_id,
@@ -1254,8 +1313,8 @@ class LPGOperationsActions:
                     ORDER BY system_id ASC
                     """
             stats = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-            if stats['data']:
-                return stats['data']
+            if stats["data"]:
+                return stats["data"]
             return False, "No data found"
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
@@ -1265,13 +1324,22 @@ class LPGOperationsActions:
     async def get_bottling_summary(data: dict):
         try:
             excludedStatuses = ", ".join(
-                map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses[
-                    'positiveTare'])
+                map(
+                    str,
+                    lpg_config.process_statuses["negativeTare"]
+                    + lpg_config.process_statuses["positiveTare"],
+                )
             )
-            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            to_date = datetime.strptime(f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
+            )
 
-            carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+            carousal = await LPGOperationsActions.get_carousals(
+                "string", data["sap_id"]
+            )
             queryString = f"""SELECT
                     system_id as carousal,
                     SUM(CASE
@@ -1294,16 +1362,22 @@ class LPGOperationsActions:
                     GROUP BY system_id 
                     ORDER BY system_id;"""
 
-            bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-            if bottling_data['data']:
-                bottling_data = bottling_data['data']
+            bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(
+                queryString, limit=0
+            )
+            if bottling_data["data"]:
+                bottling_data = bottling_data["data"]
             else:
                 return {}
-            carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
+            carousals = await LPGOperationsActions.get_carousals(
+                "array", data["sap_id"]
+            )
             result = {}
 
-            if (bottling_data and (bottling_data[0]["production_14_2"] > 0 or bottling_data[0][
-                "production_19"] > 0)):
+            if bottling_data and (
+                bottling_data[0]["production_14_2"] > 0
+                or bottling_data[0]["production_19"] > 0
+            ):
                 for d in bottling_data:
                     for c in carousals:
                         if c == d["carousal"]:
@@ -1323,10 +1397,15 @@ class LPGOperationsActions:
         to_date = datetime.now().strftime("%Y-%m-%d") + " 23:59:59"
 
         cyl_type = ", ".join(map(str, lpg_config.cyl_types))
-        carousal = await LPGOperationsActions.get_carousals('string', data['sap_id'])
+        carousal = await LPGOperationsActions.get_carousals("string", data["sap_id"])
 
-        excludedStatuses = ", ".join(map(str, lpg_config.process_statuses['negativeTare'] +
-                                         lpg_config.process_statuses['positiveTare']))
+        excludedStatuses = ", ".join(
+            map(
+                str,
+                lpg_config.process_statuses["negativeTare"]
+                + lpg_config.process_statuses["positiveTare"],
+            )
+        )
         queryString = f"""
         SELECT
             DATE_TRUNC('hour', process_date) as hour,
@@ -1345,21 +1424,15 @@ class LPGOperationsActions:
         ORDER BY hour ASC;
         """
         stats = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if stats['data']:
-            return stats['data']
+        if stats["data"]:
+            return stats["data"]
         return False
 
     async def get_hourly_production(data: dict):
         try:
             rawData = await LPGOperationsActions.hourly_production_data(data=data)
             print("rawData :", rawData)
-            data = {
-                1: [],
-                2: [],
-                'labels': [],
-                'total1': 0,
-                'total2': 0
-            }
+            data = {1: [], 2: [], "labels": [], "total1": 0, "total2": 0}
             if len(rawData) == 0:
                 return data
             labels = []
@@ -1369,14 +1442,16 @@ class LPGOperationsActions:
             total2 = 0
 
             for row in rawData:
-                timeLow = row['hour']
-                timeHigh = row['hour'] + timedelta(hours=1)
+                timeLow = row["hour"]
+                timeHigh = row["hour"] + timedelta(hours=1)
 
-                label = timeLow.strftime('%H') + '00 - ' + timeHigh.strftime('%H') + '00'
+                label = (
+                    timeLow.strftime("%H") + "00 - " + timeHigh.strftime("%H") + "00"
+                )
                 labels.append(label)
 
-                count1 = row['c1_t1'] + row['c1_t2']
-                count2 = row['c2_t1'] + row['c2_t2']
+                count1 = row["c1_t1"] + row["c1_t2"]
+                count2 = row["c2_t1"] + row["c2_t2"]
 
                 total1 += count1
                 total2 += count2
@@ -1384,9 +1459,9 @@ class LPGOperationsActions:
                 car1Data.append(count1)
                 car2Data.append(count2)
 
-            data['labels'] = labels
-            data['total1'] = total1
-            data['total2'] = total2
+            data["labels"] = labels
+            data["total1"] = total1
+            data["total2"] = total2
             data[1] = car1Data
             data[2] = car2Data
 
@@ -1410,7 +1485,7 @@ class LPGOperationsActions:
         yesterday_payload = {
             "sap_id": data["sap_id"],
             "from_date": yesterday_date.strftime("%Y-%m-%d"),
-            "to_date": yesterday_date.strftime("%Y-%m-%d")
+            "to_date": yesterday_date.strftime("%Y-%m-%d"),
         }
 
         yesterday_data = await LPGOperationsActions.get_productivity(yesterday_payload)
@@ -1421,15 +1496,18 @@ class LPGOperationsActions:
         else:
             yesterday_total = 0
 
-        change_percent = round(((total_production / yesterday_total) - 1) * 100,
-                               4) if yesterday_total > 0 else 0
+        change_percent = (
+            round(((total_production / yesterday_total) - 1) * 100, 4)
+            if yesterday_total > 0
+            else 0
+        )
 
         print("Production:", total_production)
 
         return {
             "Total Production": total_production,
             "Yesterday Production": yesterday_total,
-            "Change (%)": change_percent
+            "Change (%)": change_percent,
         }
 
     async def get_total_productivity_today_data(data: dict):
@@ -1441,7 +1519,9 @@ class LPGOperationsActions:
 
         total_production = production_data["total_production"].sum()
         total_hours = production_data["total_net_hours"].sum()
-        total_productivity = round(total_production / total_hours, 4) if total_hours > 0 else 0
+        total_productivity = (
+            round(total_production / total_hours, 4) if total_hours > 0 else 0
+        )
 
         today_date = datetime.strptime(data["from_date"], "%Y-%m-%d")
         yesterday_date = today_date - timedelta(days=1)
@@ -1449,7 +1529,7 @@ class LPGOperationsActions:
         yesterday_payload = {
             "sap_id": data["sap_id"],
             "from_date": yesterday_date.strftime("%Y-%m-%d"),
-            "to_date": yesterday_date.strftime("%Y-%m-%d")
+            "to_date": yesterday_date.strftime("%Y-%m-%d"),
         }
 
         yesterday_data = await LPGOperationsActions.get_productivity(yesterday_payload)
@@ -1458,20 +1538,24 @@ class LPGOperationsActions:
             yesterday_data = await calculate_productivity(yesterday_data)
             y_total_prod = yesterday_data["total_production"].sum()
             y_total_hours = yesterday_data["total_net_hours"].sum()
-            yesterday_productivity = round(y_total_prod / y_total_hours,
-                                           4) if y_total_hours > 0 else 0
+            yesterday_productivity = (
+                round(y_total_prod / y_total_hours, 4) if y_total_hours > 0 else 0
+            )
         else:
             yesterday_productivity = 0
 
-        change_percent = round(((total_productivity / yesterday_productivity) - 1) * 100,
-                               4) if yesterday_productivity > 0 else 0
+        change_percent = (
+            round(((total_productivity / yesterday_productivity) - 1) * 100, 4)
+            if yesterday_productivity > 0
+            else 0
+        )
 
         print("Productivity:", total_productivity)
 
         return {
             "Productivity": total_productivity,
             "Yesterday Productivity": yesterday_productivity,
-            "Change (%)": change_percent
+            "Change (%)": change_percent,
         }
 
     async def get_productivity_raw_data(data: dict):
@@ -1482,9 +1566,7 @@ class LPGOperationsActions:
             sap_id = data["sap_id"]
 
             # Get carousals dynamically
-            carousal = await LPGOperationsActions.get_carousals(
-                'string', sap_id
-            )
+            carousal = await LPGOperationsActions.get_carousals("string", sap_id)
 
             if not carousal:
                 return []
@@ -1542,8 +1624,9 @@ class LPGOperationsActions:
 
     async def get_productivity_moving_average(data: dict):
         try:
-            raw_data, avg_duration, carousal_string = await LPGOperationsActions.get_productivity_raw_data(
-                data)
+            raw_data, avg_duration, carousal_string = (
+                await LPGOperationsActions.get_productivity_raw_data(data)
+            )
 
             if not raw_data:
                 return False, "No data found"
@@ -1561,10 +1644,7 @@ class LPGOperationsActions:
 
             carousals = [c.strip() for c in carousal_string.split(",")]
 
-            output = {
-                "labels": [],
-                "overall": {}
-            }
+            output = {"labels": [], "overall": {}}
 
             for cid in carousals:
                 output[f"c{cid}_rate"] = []
@@ -1574,9 +1654,9 @@ class LPGOperationsActions:
                 current_ts = row["period_end"]
 
                 window_df = df[
-                    (df["period_end"] >= current_ts - avg_duration_secs) &
-                    (df["period_end"] < current_ts)
-                    ]
+                    (df["period_end"] >= current_ts - avg_duration_secs)
+                    & (df["period_end"] < current_ts)
+                ]
 
                 output["labels"].append(
                     datetime.fromtimestamp(current_ts).strftime("%H:%M")
@@ -1593,8 +1673,7 @@ class LPGOperationsActions:
                 rates = [r for r in output[f"c{cid}_rate"] if r > 0]
                 if rates:
                     output["overall"][f"c{cid}"] = round(
-                        (sum(rates) / len(rates)) * adjustment_factor,
-                        4
+                        (sum(rates) / len(rates)) * adjustment_factor, 4
                     )
 
             print("*" * 40)
@@ -1617,18 +1696,24 @@ class LPGOperationsActions:
         old_data = old_data if old_data else {}
 
         output = {}
-        output['ELD'] = eld_data
-        output['OLD'] = old_data
+        output["ELD"] = eld_data
+        output["OLD"] = old_data
 
         return output
 
     async def get_eld_drill_down(data: dict):
         try:
-            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            to_date = datetime.strptime(f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
+            )
             if not data.get("carousal", None):
-                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-                processId = '3,23'
+                carousal = await LPGOperationsActions.get_carousals(
+                    "string", data.get("sap_id")
+                )
+                processId = "3,23"
 
             query = f"""SELECT
                         system_id,
@@ -1644,8 +1729,8 @@ class LPGOperationsActions:
             print(query)
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             print(results)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
 
@@ -1653,8 +1738,8 @@ class LPGOperationsActions:
                 carousal_wise_data = {}
 
                 for row in results:
-                    sys_id = row['system_id']
-                    device_id = row['device_id']
+                    sys_id = row["system_id"]
+                    device_id = row["device_id"]
 
                     # initialize system_id dict
                     if sys_id not in carousal_wise_data:
@@ -1663,16 +1748,16 @@ class LPGOperationsActions:
                     # initialize device_id dict
                     if device_id not in carousal_wise_data[sys_id]:
                         carousal_wise_data[sys_id][device_id] = {
-                            'handled': 0,
-                            'sortout': 0
+                            "handled": 0,
+                            "sortout": 0,
                         }
 
                     # update handled
-                    carousal_wise_data[sys_id][device_id]['handled'] += row['count']
+                    carousal_wise_data[sys_id][device_id]["handled"] += row["count"]
 
                     # update sortout
-                    if row['process_status'] != 0:
-                        carousal_wise_data[sys_id][device_id]['sortout'] += row['count']
+                    if row["process_status"] != 0:
+                        carousal_wise_data[sys_id][device_id]["sortout"] += row["count"]
 
                 return carousal_wise_data
             return False, "No data found"
@@ -1684,13 +1769,19 @@ class LPGOperationsActions:
 
     async def get_old_drill_down(data: dict):
         try:
-            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            to_date = datetime.strptime(f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59", "%Y-%m-%d %H:%M:%S"
+            )
             if not data.get("carousal", None):
-                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-                processId = '4,24'
+                carousal = await LPGOperationsActions.get_carousals(
+                    "string", data.get("sap_id")
+                )
+                processId = "4,24"
             else:
-                carousal = '1,2'
+                carousal = "1,2"
             query = f"""SELECT
                         system_id,
                         process_status,
@@ -1705,8 +1796,8 @@ class LPGOperationsActions:
             print(query)
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             print(results)
-            if results['data']:
-                results = results['data']
+            if results["data"]:
+                results = results["data"]
             else:
                 return {}
 
@@ -1714,8 +1805,8 @@ class LPGOperationsActions:
                 carousal_wise_data = {}
 
                 for row in results:
-                    sys_id = row['system_id']
-                    device_id = row['device_id']
+                    sys_id = row["system_id"]
+                    device_id = row["device_id"]
 
                     # initialize system_id dict
                     if sys_id not in carousal_wise_data:
@@ -1724,16 +1815,16 @@ class LPGOperationsActions:
                     # initialize device_id dict
                     if device_id not in carousal_wise_data[sys_id]:
                         carousal_wise_data[sys_id][device_id] = {
-                            'handled': 0,
-                            'sortout': 0
+                            "handled": 0,
+                            "sortout": 0,
                         }
 
                     # update handled
-                    carousal_wise_data[sys_id][device_id]['handled'] += row['count']
+                    carousal_wise_data[sys_id][device_id]["handled"] += row["count"]
 
                     # update sortout
-                    if row['process_status'] != 0:
-                        carousal_wise_data[sys_id][device_id]['sortout'] += row['count']
+                    if row["process_status"] != 0:
+                        carousal_wise_data[sys_id][device_id]["sortout"] += row["count"]
 
                 return carousal_wise_data
             return False, "No data found"
@@ -1776,32 +1867,32 @@ class LPGOperationsActions:
         raw_data = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
 
         meta_data = {}
-        if raw_data and raw_data.get('data'):
-            for row in raw_data['data']:
+        if raw_data and raw_data.get("data"):
+            for row in raw_data["data"]:
                 s_id = row["system_id"]
                 if s_id not in meta_data:
                     meta_data[s_id] = {
                         "first_cyl_time": row["first_cyl_time_overall"],
                         "last_cyl_time": row["last_cyl_time_overall"],
                     }
-            return {"rows": raw_data['data'], "metaData": meta_data}
+            return {"rows": raw_data["data"], "metaData": meta_data}
         return False
 
     async def under_performance_scales(data: dict):
 
-        if not data.get('time'):
+        if not data.get("time"):
             today = datetime.now().date()
             from_date = datetime.combine(today, datetime.min.time())
             to_date = datetime.combine(today, datetime.max.time())
         else:
             now = datetime.now()
-            tg = data['time'].lower()
+            tg = data["time"].lower()
 
-            if tg.endswith('m'):  # minutes
+            if tg.endswith("m"):  # minutes
                 delta = timedelta(minutes=int(tg[:-1]))
-            elif tg.endswith('h'):  # hours
+            elif tg.endswith("h"):  # hours
                 delta = timedelta(hours=int(tg[:-1]))
-            elif tg.endswith('d'):  # days
+            elif tg.endswith("d"):  # days
                 delta = timedelta(days=int(tg[:-1]))
             else:
                 raise ValueError("Invalid time_grain format")
@@ -1811,12 +1902,13 @@ class LPGOperationsActions:
         print(from_date, to_date)
         sap_id = data.get("sap_id")
 
-        carousals_data = await LPGOperationsActions.get_carousals('full', sap_id)
+        carousals_data = await LPGOperationsActions.get_carousals("full", sap_id)
         c_ids = list(carousals_data.keys())
         carousal_list = ", ".join(map(str, c_ids))
 
-        scales_count = await LPGOperationsActions.get_scales_efficiency_data(sap_id, carousal_list,
-                                                                             from_date, to_date)
+        scales_count = await LPGOperationsActions.get_scales_efficiency_data(
+            sap_id, carousal_list, from_date, to_date
+        )
 
         if not scales_count:
             return {"rows": [], "meta": {f"car{c}Eff": "0%" for c in c_ids}}
@@ -1847,8 +1939,9 @@ class LPGOperationsActions:
 
             interval = intervals[c_id]
             if c_id in carousals_data and interval > 0:
-                std_output_per_head[c_id] = (carousals_data[c_id]["stdOutput"] * (
-                            interval / 3600)) / carousals_data[c_id]["heads"]
+                std_output_per_head[c_id] = (
+                    carousals_data[c_id]["stdOutput"] * (interval / 3600)
+                ) / carousals_data[c_id]["heads"]
             elif c_id in car_speeds and interval > 0:
                 std_output_per_head[c_id] = (1 / car_speeds[c_id]) * interval
             else:
@@ -1867,14 +1960,16 @@ class LPGOperationsActions:
             elif eff <= 1.0:
                 tag = "average"
 
-            processed_rows.append({
-                "scale": await LPGOperationsActions.get_scale_id(row),
-                "carousal": s_id,
-                "efficiency": eff,
-                "efficiency_display": f"{round(eff * 100)}%",
-                "tag": tag,
-                "count": row["scale_count"]
-            })
+            processed_rows.append(
+                {
+                    "scale": await LPGOperationsActions.get_scale_id(row),
+                    "carousal": s_id,
+                    "efficiency": eff,
+                    "efficiency_display": f"{round(eff * 100)}%",
+                    "tag": tag,
+                    "count": row["scale_count"],
+                }
+            )
             overall_count[s_id] += row["scale_count"]
 
         meta = {}
@@ -1882,7 +1977,9 @@ class LPGOperationsActions:
             key = f"car{c_id}Eff"
             heads = carousals_data.get(c_id, {}).get("heads", 24)
             total_std_output = std_output_per_head.get(c_id, 0) * heads
-            overall_eff = overall_count[c_id] / total_std_output if total_std_output > 0 else 0.0
+            overall_eff = (
+                overall_count[c_id] / total_std_output if total_std_output > 0 else 0.0
+            )
             meta[key] = f"{round(overall_eff * 100)}%"
 
         processed_rows.sort(key=lambda x: x["efficiency"])
@@ -1890,19 +1987,19 @@ class LPGOperationsActions:
 
     async def underfill_overfill_scales(data: dict):
 
-        if not data.get('time'):
+        if not data.get("time"):
             today = datetime.now().date()
             from_date = datetime.combine(today, datetime.min.time())
             to_date = datetime.combine(today, datetime.max.time())
         else:
             now = datetime.now()
-            tg = data['time'].lower()
+            tg = data["time"].lower()
 
-            if tg.endswith('m'):  # minutes
+            if tg.endswith("m"):  # minutes
                 delta = timedelta(minutes=int(tg[:-1]))
-            elif tg.endswith('h'):  # hours
+            elif tg.endswith("h"):  # hours
                 delta = timedelta(hours=int(tg[:-1]))
-            elif tg.endswith('d'):  # days
+            elif tg.endswith("d"):  # days
                 delta = timedelta(days=int(tg[:-1]))
             else:
                 raise ValueError("Invalid time_grain format")
@@ -1911,7 +2008,7 @@ class LPGOperationsActions:
             to_date = now
         print(from_date, to_date)
         sap_id = data.get("sap_id")
-        carousals_data = await LPGOperationsActions.get_carousals('full', sap_id)
+        carousals_data = await LPGOperationsActions.get_carousals("full", sap_id)
         c_ids = list(carousals_data.keys())
         c_list = ", ".join(map(str, c_ids))
 
@@ -1932,7 +2029,7 @@ class LPGOperationsActions:
         """
         print("query:", query)
         res = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        rows = res.get('data', [])
+        rows = res.get("data", [])
         print(len(rows))
         overall = {c_id: {"total": 0, "h_plus": 0} for c_id in c_ids}
         processed_rows = []
@@ -1948,14 +2045,16 @@ class LPGOperationsActions:
             elif acc <= 1.0:
                 tag = "average"
 
-            processed_rows.append({
-                "scale": await LPGOperationsActions.get_scale_id(row),
-                "carousal": s_id,
-                "accuracy": acc,
-                "accuracy_display": f"{round(acc * 100)}%",
-                "tag": tag,
-                "total": row["total"]
-            })
+            processed_rows.append(
+                {
+                    "scale": await LPGOperationsActions.get_scale_id(row),
+                    "carousal": s_id,
+                    "accuracy": acc,
+                    "accuracy_display": f"{round(acc * 100)}%",
+                    "tag": tag,
+                    "total": row["total"],
+                }
+            )
 
             if s_id in overall:
                 overall[s_id]["total"] += row["total"]
@@ -1978,10 +2077,18 @@ class LPGOperationsActions:
         MASTER_PATH = os.path.join(BASE_DIR, "masters", "lpg_production_cost")
 
         MONTH_ORDER = [
-            "April", "May", "June", "July",
-            "August", "September", "October",
-            "November", "December",
-            "January", "February", "March"
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+            "January",
+            "February",
+            "March",
         ]
 
         MONTH_FILE_PREFIX = {
@@ -1996,7 +2103,7 @@ class LPGOperationsActions:
             "September": "Sep",
             "October": "Oct",
             "November": "Nov",
-            "December": "Dec"
+            "December": "Dec",
         }
 
         #  Define once (fixes COLUMNS error)
@@ -2010,16 +2117,16 @@ class LPGOperationsActions:
             "M&R CVR Expenses (CY)",
             "M&R CVR Expenses (LY)",
             "Depreciation Expenses (CY)",
-            "Depreciation Expenses (LY)"
+            "Depreciation Expenses (LY)",
         ]
 
-        requested_sap_id = str(data.get("sap_id")).strip() if data.get("sap_id") else None
+        requested_sap_id = (
+            str(data.get("sap_id")).strip() if data.get("sap_id") else None
+        )
         requested_zone = str(data.get("zone")).strip() if data.get("zone") else None
 
         months_to_process = (
-            [data.get("month").capitalize()]
-            if data.get("month")
-            else MONTH_ORDER
+            [data.get("month").capitalize()] if data.get("month") else MONTH_ORDER
         )
 
         # ===============================
@@ -2058,48 +2165,65 @@ class LPGOperationsActions:
                     .alias("sap_id")
                 ).join(db_df, on="sap_id", how="inner")
 
-            april_df = april_df.with_columns([
-                (
-                        (pl.col("Manpower Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("Other OPEX Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("M&R CVR Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("Depreciation Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0)
-                ).alias("Base Total Cost (CY)"),
-
-                (
-                        (pl.col("Manpower Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("Other OPEX Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("M&R CVR Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("Depreciation Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0)
-                ).alias("Base Total Cost (LY)")
-            ])
-            april_df = april_df.with_columns([
-
-                (
-                        pl.col("Base Total Cost (CY)") *
-                        pl.col("Production (MT) - CY")
-                ).alias("Base Total Prod Cost (CY)"),
-
-                (
-                        pl.col("Base Total Cost (LY)") *
-                        pl.col("Production (MT) - LY")
-                ).alias("Base Total Prod Cost (LY)")
-            ])
-            april_base_cost_df = april_df.select([
-                "sap_id",
-                "Base Total Cost (CY)",
-                "Base Total Cost (LY)",
-                "Base Total Prod Cost (CY)",
-                "Base Total Prod Cost (LY)"
-            ])
+            april_df = april_df.with_columns(
+                [
+                    (
+                        (
+                            pl.col("Manpower Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Other OPEX Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("M&R CVR Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Depreciation Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                    ).alias("Base Total Cost (CY)"),
+                    (
+                        (
+                            pl.col("Manpower Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Other OPEX Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("M&R CVR Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Depreciation Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                    ).alias("Base Total Cost (LY)"),
+                ]
+            )
+            april_df = april_df.with_columns(
+                [
+                    (
+                        pl.col("Base Total Cost (CY)") * pl.col("Production (MT) - CY")
+                    ).alias("Base Total Prod Cost (CY)"),
+                    (
+                        pl.col("Base Total Cost (LY)") * pl.col("Production (MT) - LY")
+                    ).alias("Base Total Prod Cost (LY)"),
+                ]
+            )
+            april_base_cost_df = april_df.select(
+                [
+                    "sap_id",
+                    "Base Total Cost (CY)",
+                    "Base Total Cost (LY)",
+                    "Base Total Prod Cost (CY)",
+                    "Base Total Prod Cost (LY)",
+                ]
+            )
 
         # =====================================
         # PRELOAD AUGUST BASE (Always Load)
@@ -2119,48 +2243,65 @@ class LPGOperationsActions:
                     .alias("sap_id")
                 ).join(db_df, on="sap_id", how="inner")
 
-            aug_df = aug_df.with_columns([
-                (
-                        (pl.col("Manpower Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("Other OPEX Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("M&R CVR Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0) +
-                        (pl.col("Depreciation Expenses (CY)") / pl.col(
-                            "Production (MT) - CY")).fill_null(0)
-                ).alias("Base Total Cost (CY)"),
-
-                (
-                        (pl.col("Manpower Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("Other OPEX Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("M&R CVR Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0) +
-                        (pl.col("Depreciation Expenses (LY)") / pl.col(
-                            "Production (MT) - LY")).fill_null(0)
-                ).alias("Base Total Cost (LY)")
-            ])
-            aug_df = aug_df.with_columns([
-
-                (
-                        pl.col("Base Total Cost (CY)") *
-                        pl.col("Production (MT) - CY")
-                ).alias("Base Total Prod Cost (CY)"),
-
-                (
-                        pl.col("Base Total Cost (LY)") *
-                        pl.col("Production (MT) - LY")
-                ).alias("Base Total Prod Cost (LY)")
-            ])
-            august_base_cost_df = aug_df.select([
-                "sap_id",
-                "Base Total Cost (CY)",
-                "Base Total Cost (LY)",
-                "Base Total Prod Cost (CY)",
-                "Base Total Prod Cost (LY)"
-            ])
+            aug_df = aug_df.with_columns(
+                [
+                    (
+                        (
+                            pl.col("Manpower Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Other OPEX Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("M&R CVR Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Depreciation Expenses (CY)")
+                            / pl.col("Production (MT) - CY")
+                        ).fill_null(0)
+                    ).alias("Base Total Cost (CY)"),
+                    (
+                        (
+                            pl.col("Manpower Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Other OPEX Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("M&R CVR Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                        + (
+                            pl.col("Depreciation Expenses (LY)")
+                            / pl.col("Production (MT) - LY")
+                        ).fill_null(0)
+                    ).alias("Base Total Cost (LY)"),
+                ]
+            )
+            aug_df = aug_df.with_columns(
+                [
+                    (
+                        pl.col("Base Total Cost (CY)") * pl.col("Production (MT) - CY")
+                    ).alias("Base Total Prod Cost (CY)"),
+                    (
+                        pl.col("Base Total Cost (LY)") * pl.col("Production (MT) - LY")
+                    ).alias("Base Total Prod Cost (LY)"),
+                ]
+            )
+            august_base_cost_df = aug_df.select(
+                [
+                    "sap_id",
+                    "Base Total Cost (CY)",
+                    "Base Total Cost (LY)",
+                    "Base Total Prod Cost (CY)",
+                    "Base Total Prod Cost (LY)",
+                ]
+            )
 
         # ==========================================================
         # LOOP THROUGH MONTHS
@@ -2207,10 +2348,12 @@ class LPGOperationsActions:
             # ===============================
             if month == "April":
                 merged = current_df
-                merged = merged.with_columns([
-                    pl.lit(0).alias("Manpower Expenses (LY)"),
-                    pl.lit(0).alias("Manpower Expenses (CY)")
-                ])
+                merged = merged.with_columns(
+                    [
+                        pl.lit(0).alias("Manpower Expenses (LY)"),
+                        pl.lit(0).alias("Manpower Expenses (CY)"),
+                    ]
+                )
 
             else:
                 month_index = MONTH_ORDER.index(month)
@@ -2218,7 +2361,9 @@ class LPGOperationsActions:
                 prev_year = current_year - 1 if month == "January" else current_year
 
                 prev_prefix = MONTH_FILE_PREFIX[prev_month]
-                prev_pattern = os.path.join(MASTER_PATH, f"{prev_prefix}-{prev_year}.xlsx")
+                prev_pattern = os.path.join(
+                    MASTER_PATH, f"{prev_prefix}-{prev_year}.xlsx"
+                )
 
                 if os.path.exists(prev_pattern):
 
@@ -2237,12 +2382,14 @@ class LPGOperationsActions:
                         prev_df,
                         on=["SBU", "Zone", "Regional Office", "Plant", "sap_id"],
                         how="left",
-                        suffix="_prev"
+                        suffix="_prev",
                     )
-                    merged = merged.with_columns([
-                        pl.lit(0).alias("Manpower Expenses (LY)"),
-                        pl.lit(0).alias("Manpower Expenses (CY)")
-                    ])
+                    merged = merged.with_columns(
+                        [
+                            pl.lit(0).alias("Manpower Expenses (LY)"),
+                            pl.lit(0).alias("Manpower Expenses (CY)"),
+                        ]
+                    )
 
                     for col in COLUMNS:
                         prev_col = f"{col}_prev"
@@ -2251,17 +2398,21 @@ class LPGOperationsActions:
                                 (pl.col(col) - pl.col(prev_col).fill_null(0)).alias(col)
                             )
                         # FORCE MANPOWER TO ZERO AFTER SUBTRACTION
-                        merged = merged.with_columns([
-                            pl.lit(0).alias("Manpower Expenses (CY)"),
-                            pl.lit(0).alias("Manpower Expenses (LY)")
-                        ])
+                        merged = merged.with_columns(
+                            [
+                                pl.lit(0).alias("Manpower Expenses (CY)"),
+                                pl.lit(0).alias("Manpower Expenses (LY)"),
+                            ]
+                        )
 
                 else:
                     merged = current_df
-                    merged = merged.with_columns([
-                        pl.lit(0).alias("Manpower Expenses (LY)"),
-                        pl.lit(0).alias("Manpower Expenses (CY)")
-                    ])
+                    merged = merged.with_columns(
+                        [
+                            pl.lit(0).alias("Manpower Expenses (LY)"),
+                            pl.lit(0).alias("Manpower Expenses (CY)"),
+                        ]
+                    )
 
             # ===============================
             # Inject missing columns (SAFE)
@@ -2273,147 +2424,182 @@ class LPGOperationsActions:
             # ===============================
             # COST CALCULATION
             # ===============================
-            merged = merged.with_columns([
-
-                (pl.col("Manpower Expenses (CY)") / pl.col("Production (MT) - CY"))
-                .fill_nan(0).fill_null(0).alias("Manpower Cost (CY)"),
-
-                (pl.col("Other OPEX Expenses (CY)") / pl.col("Production (MT) - CY"))
-                .fill_nan(0).fill_null(0).alias("Other OPEX Cost (CY)"),
-
-                (pl.col("M&R CVR Expenses (CY)") / pl.col("Production (MT) - CY"))
-                .fill_nan(0).fill_null(0).alias("M&R CVR Cost (CY)"),
-
-                (pl.col("Depreciation Expenses (CY)") / pl.col("Production (MT) - CY"))
-                .fill_nan(0).fill_null(0).alias("Depreciation Cost (CY)"),
-
-                (pl.col("Manpower Expenses (LY)") / pl.col("Production (MT) - LY"))
-                .fill_nan(0).fill_null(0).alias("Manpower Cost (LY)"),
-
-                (pl.col("Other OPEX Expenses (LY)") / pl.col("Production (MT) - LY"))
-                .fill_nan(0).fill_null(0).alias("Other OPEX Cost (LY)"),
-
-                (pl.col("M&R CVR Expenses (LY)") / pl.col("Production (MT) - LY"))
-                .fill_nan(0).fill_null(0).alias("M&R CVR Cost (LY)"),
-
-                (pl.col("Depreciation Expenses (LY)") / pl.col("Production (MT) - LY"))
-                .fill_nan(0).fill_null(0).alias("Depreciation Cost (LY)")
-            ])
+            merged = merged.with_columns(
+                [
+                    (pl.col("Manpower Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Manpower Cost (CY)"),
+                    (
+                        pl.col("Other OPEX Expenses (CY)")
+                        / pl.col("Production (MT) - CY")
+                    )
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Other OPEX Cost (CY)"),
+                    (pl.col("M&R CVR Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("M&R CVR Cost (CY)"),
+                    (
+                        pl.col("Depreciation Expenses (CY)")
+                        / pl.col("Production (MT) - CY")
+                    )
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Depreciation Cost (CY)"),
+                    (pl.col("Manpower Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Manpower Cost (LY)"),
+                    (
+                        pl.col("Other OPEX Expenses (LY)")
+                        / pl.col("Production (MT) - LY")
+                    )
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Other OPEX Cost (LY)"),
+                    (pl.col("M&R CVR Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("M&R CVR Cost (LY)"),
+                    (
+                        pl.col("Depreciation Expenses (LY)")
+                        / pl.col("Production (MT) - LY")
+                    )
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("Depreciation Cost (LY)"),
+                ]
+            )
             # ===============================
             # FORCE OTHER OPEX COST = 0
             # # ===============================
 
-            merged = merged.with_columns([
-
-                (
-                        pl.col("Manpower Cost (CY)") +
-                        pl.col("Other OPEX Cost (CY)") +
-                        pl.col("M&R CVR Cost (CY)") +
-                        pl.col("Depreciation Cost (CY)")
-                ).alias("Total Cost (CY)"),
-
-                (
-                        pl.col("Manpower Cost (LY)") +
-                        pl.col("Other OPEX Cost (LY)") +
-                        pl.col("M&R CVR Cost (LY)") +
-                        pl.col("Depreciation Cost (LY)")
-                ).alias("Total Cost (LY)")
-            ])
+            merged = merged.with_columns(
+                [
+                    (
+                        pl.col("Manpower Cost (CY)")
+                        + pl.col("Other OPEX Cost (CY)")
+                        + pl.col("M&R CVR Cost (CY)")
+                        + pl.col("Depreciation Cost (CY)")
+                    ).alias("Total Cost (CY)"),
+                    (
+                        pl.col("Manpower Cost (LY)")
+                        + pl.col("Other OPEX Cost (LY)")
+                        + pl.col("M&R CVR Cost (LY)")
+                        + pl.col("Depreciation Cost (LY)")
+                    ).alias("Total Cost (LY)"),
+                ]
+            )
 
             # ===============================
             # SAVINGS (Dynamic Base Logic)
             # ===============================
 
-            if month in ["April", "May", "June", "July"] and april_base_cost_df is not None:
+            if (
+                month in ["April", "May", "June", "July"]
+                and april_base_cost_df is not None
+            ):
 
-                merged = merged.join(
-                    april_base_cost_df,
-                    on="sap_id",
-                    how="left"
+                merged = merged.join(april_base_cost_df, on="sap_id", how="left")
+
+            elif (
+                month
+                in [
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                    "January",
+                    "February",
+                    "March",
+                ]
+                and august_base_cost_df is not None
+            ):
+
+                merged = merged.join(august_base_cost_df, on="sap_id", how="left")
+                merged = merged.with_columns(
+                    [
+                        pl.lit(0).alias("Manpower Expenses (LY)"),
+                        pl.lit(0).alias("Manpower Expenses (CY)"),
+                    ]
                 )
-
-            elif month in ["August", "September", "October", "November", "December", "January",
-                           "February", "March"] and august_base_cost_df is not None:
-
-                merged = merged.join(
-                    august_base_cost_df,
-                    on="sap_id",
-                    how="left"
-                )
-                merged = merged.with_columns([
-                    pl.lit(0).alias("Manpower Expenses (LY)"),
-                    pl.lit(0).alias("Manpower Expenses (CY)")
-                ])
 
             # Force April & August savings = 0
             if month in ["April", "August"]:
 
-                merged = merged.with_columns([
-                    pl.lit(0).alias("Savings (CY)"),
-                    pl.lit(0).alias("Savings (LY)")
-                ])
+                merged = merged.with_columns(
+                    [pl.lit(0).alias("Savings (CY)"), pl.lit(0).alias("Savings (LY)")]
+                )
             else:
-                merged = merged.with_columns([
-                    (
-                        (pl.col("Base Total Cost (CY)") - pl.col("Total Cost (CY)"))
-                    ).fill_null(0).alias("Savings (CY)"),
-                    (
-                        (pl.col("Base Total Cost (LY)") - pl.col("Total Cost (LY)"))
-                    ).fill_null(0).alias("Savings (LY)")
-                ])
+                merged = merged.with_columns(
+                    [
+                        ((pl.col("Base Total Cost (CY)") - pl.col("Total Cost (CY)")))
+                        .fill_null(0)
+                        .alias("Savings (CY)"),
+                        ((pl.col("Base Total Cost (LY)") - pl.col("Total Cost (LY)")))
+                        .fill_null(0)
+                        .alias("Savings (LY)"),
+                    ]
+                )
             # ===============================
             # TOTAL PROD COST
             # ===============================
-            merged = merged.with_columns([
-
-                (pl.col("Total Cost (CY)") *
-                 pl.col("Production (MT) - CY"))
-                .alias("Total Prod Cost (CY)"),
-
-                (pl.col("Total Cost (LY)") *
-                 pl.col("Production (MT) - LY"))
-                .alias("Total Prod Cost (LY)")
-            ])
+            merged = merged.with_columns(
+                [
+                    (pl.col("Total Cost (CY)") * pl.col("Production (MT) - CY")).alias(
+                        "Total Prod Cost (CY)"
+                    ),
+                    (pl.col("Total Cost (LY)") * pl.col("Production (MT) - LY")).alias(
+                        "Total Prod Cost (LY)"
+                    ),
+                ]
+            )
             # ===============================
             # NEW SAVINGS BASED ON TOTAL PROD COST
             # ===============================
 
             if month in ["April", "August"]:
 
-                merged = merged.with_columns([
-                    pl.lit(0).alias("savings_cy"),
-                    pl.lit(0).alias("savings_ly")
-                ])
+                merged = merged.with_columns(
+                    [pl.lit(0).alias("savings_cy"), pl.lit(0).alias("savings_ly")]
+                )
 
             else:
 
-                merged = merged.with_columns([
-
-                    (
-                            pl.col("Base Total Prod Cost (CY)") -
-                            pl.col("Total Prod Cost (CY)")
-                    ).fill_null(0).alias("savings_cy"),
-                    (
-                            pl.col("Base Total Prod Cost (LY)") -
-                            pl.col("Total Prod Cost (LY)")
-                    ).fill_null(0).alias("savings_ly")
-                ])
+                merged = merged.with_columns(
+                    [
+                        (
+                            pl.col("Base Total Prod Cost (CY)")
+                            - pl.col("Total Prod Cost (CY)")
+                        )
+                        .fill_null(0)
+                        .alias("savings_cy"),
+                        (
+                            pl.col("Base Total Prod Cost (LY)")
+                            - pl.col("Total Prod Cost (LY)")
+                        )
+                        .fill_null(0)
+                        .alias("savings_ly"),
+                    ]
+                )
             # Store for next month
-            prev_month_cost_df = merged.select([
-                "sap_id",
-                "Total Cost (CY)",
-                "Total Cost (LY)"
-            ])
+            prev_month_cost_df = merged.select(
+                ["sap_id", "Total Cost (CY)", "Total Cost (LY)"]
+            )
 
             merged = merged.with_columns(pl.lit(month).alias("Month"))
             float_cols = [
-                col for col, dtype in zip(merged.columns, merged.dtypes)
+                col
+                for col, dtype in zip(merged.columns, merged.dtypes)
                 if dtype in (pl.Float32, pl.Float64)
             ]
 
-            merged = merged.with_columns([
-                pl.col(col).round(0).cast(pl.Int64) for col in float_cols
-            ])
+            merged = merged.with_columns(
+                [pl.col(col).round(0).cast(pl.Int64) for col in float_cols]
+            )
             # Apply filters
             if requested_sap_id:
                 merged = merged.filter(pl.col("sap_id") == requested_sap_id)
@@ -2422,37 +2608,38 @@ class LPGOperationsActions:
                 merged = merged.filter(pl.col("Zone") == requested_zone)
 
             final_results.extend(
-                merged.select([
-                    "Month",
-                    "SBU",
-                    "Zone",
-                    "Regional Office",
-                    "Plant",
-                    "sap_id",
-                    pl.col("Production (MT) - LY").alias("production_mt_ly"),
-                    pl.col("Production (MT) - CY").alias("production_mt_cy"),
-
-                    pl.col("Manpower Cost (CY)").alias("manpower_cost_mt_cy"),
-                    pl.col("Other OPEX Cost (CY)").alias("other_opex_cost_mt_cy"),
-                    pl.col("M&R CVR Cost (CY)").alias("mr_cvr_cost_mt_cy"),
-                    pl.col("Depreciation Cost (CY)").alias("depreciation_cost_mt_cy"),
-
-                    pl.col("Manpower Cost (LY)").alias("manpower_cost_mt_ly"),
-                    pl.col("Other OPEX Cost (LY)").alias("other_opex_cost_mt_ly"),
-                    pl.col("M&R CVR Cost (LY)").alias("mr_cvr_cost_mt_ly"),
-                    pl.col("Depreciation Cost (LY)").alias("depreciation_cost_mt_ly"),
-
-                    pl.col("Total Cost (CY)").alias("total_cost_mt_cy"),
-                    pl.col("Total Cost (LY)").alias("total_cost_mt_ly"),
-
-                    pl.col("Total Prod Cost (CY)").alias("total_prod_cost_cy"),
-                    pl.col("Total Prod Cost (LY)").alias("total_prod_cost_ly"),
-
-                    pl.col("Savings (CY)").alias("savings_mt_cy"),
-                    pl.col("Savings (LY)").alias("savings_mt_ly"),
-                    pl.col("savings_cy"),
-                    pl.col("savings_ly")
-                ]).to_dicts()
+                merged.select(
+                    [
+                        "Month",
+                        "SBU",
+                        "Zone",
+                        "Regional Office",
+                        "Plant",
+                        "sap_id",
+                        pl.col("Production (MT) - LY").alias("production_mt_ly"),
+                        pl.col("Production (MT) - CY").alias("production_mt_cy"),
+                        pl.col("Manpower Cost (CY)").alias("manpower_cost_mt_cy"),
+                        pl.col("Other OPEX Cost (CY)").alias("other_opex_cost_mt_cy"),
+                        pl.col("M&R CVR Cost (CY)").alias("mr_cvr_cost_mt_cy"),
+                        pl.col("Depreciation Cost (CY)").alias(
+                            "depreciation_cost_mt_cy"
+                        ),
+                        pl.col("Manpower Cost (LY)").alias("manpower_cost_mt_ly"),
+                        pl.col("Other OPEX Cost (LY)").alias("other_opex_cost_mt_ly"),
+                        pl.col("M&R CVR Cost (LY)").alias("mr_cvr_cost_mt_ly"),
+                        pl.col("Depreciation Cost (LY)").alias(
+                            "depreciation_cost_mt_ly"
+                        ),
+                        pl.col("Total Cost (CY)").alias("total_cost_mt_cy"),
+                        pl.col("Total Cost (LY)").alias("total_cost_mt_ly"),
+                        pl.col("Total Prod Cost (CY)").alias("total_prod_cost_cy"),
+                        pl.col("Total Prod Cost (LY)").alias("total_prod_cost_ly"),
+                        pl.col("Savings (CY)").alias("savings_mt_cy"),
+                        pl.col("Savings (LY)").alias("savings_mt_ly"),
+                        pl.col("savings_cy"),
+                        pl.col("savings_ly"),
+                    ]
+                ).to_dicts()
             )
 
         overall_row = {}
@@ -2466,12 +2653,10 @@ class LPGOperationsActions:
             sum_columns = [
                 "production_mt_ly",
                 "production_mt_cy",
-
                 "total_prod_cost_cy",
                 "total_prod_cost_ly",
-
                 "savings_cy",
-                "savings_ly"
+                "savings_ly",
             ]
 
             avg_columns = [
@@ -2479,79 +2664,94 @@ class LPGOperationsActions:
                 "other_opex_cost_mt_cy",
                 "mr_cvr_cost_mt_cy",
                 "depreciation_cost_mt_cy",
-
                 "manpower_cost_mt_ly",
                 "other_opex_cost_mt_ly",
                 "mr_cvr_cost_mt_ly",
                 "depreciation_cost_mt_ly",
-
                 "total_cost_mt_cy",
                 "total_cost_mt_ly",
-
                 "savings_mt_cy",
                 "savings_mt_ly",
             ]
 
-            overall_row = final_df.select([
-                                              pl.sum(col).round(0).alias(col) for col in sum_columns
-                                          ] + [pl.mean(col).round(0).alias(col) for col in
-                                               avg_columns
-                                               ])
-
-            overall_row = overall_row.with_columns([
-                (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
-                .fill_nan(0).fill_null(0).alias("total_cost_mt_cy"),
-                (pl.col("total_prod_cost_ly") / pl.col("production_mt_ly"))
-                .fill_nan(0).fill_null(0).alias("total_cost_mt_ly")
-            ]).to_dicts()[0]
-
-            monthly_aggregated = final_df.group_by("Month").agg(
-                [pl.sum(col).round(0).alias(col) for col in sum_columns] +
-                [pl.mean(col).round(0).alias(col) for col in avg_columns]
+            overall_row = final_df.select(
+                [pl.sum(col).round(0).alias(col) for col in sum_columns]
+                + [pl.mean(col).round(0).alias(col) for col in avg_columns]
             )
 
-            monthly_aggregated = monthly_aggregated.with_columns([
-                (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
-                .fill_nan(0).fill_null(0).alias("total_cost_mt_cy"),
-                (pl.col("total_prod_cost_ly") / pl.col("production_mt_cy"))
-                .fill_nan(0).fill_null(0).alias("total_cost_mt_ly")
-            ]).to_dicts()
+            overall_row = overall_row.with_columns(
+                [
+                    (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("total_cost_mt_cy"),
+                    (pl.col("total_prod_cost_ly") / pl.col("production_mt_ly"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("total_cost_mt_ly"),
+                ]
+            ).to_dicts()[0]
+
+            monthly_aggregated = final_df.group_by("Month").agg(
+                [pl.sum(col).round(0).alias(col) for col in sum_columns]
+                + [pl.mean(col).round(0).alias(col) for col in avg_columns]
+            )
+
+            monthly_aggregated = monthly_aggregated.with_columns(
+                [
+                    (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("total_cost_mt_cy"),
+                    (pl.col("total_prod_cost_ly") / pl.col("production_mt_cy"))
+                    .fill_nan(0)
+                    .fill_null(0)
+                    .alias("total_cost_mt_ly"),
+                ]
+            ).to_dicts()
 
             # If sap_id filter applied
             if requested_sap_id:
-                overall_row.update({
-
-                    "SBU": final_results[0]["SBU"],
-                    "Zone": final_results[0]["Zone"],
-                    "Regional Office": final_results[0]["Regional Office"],
-                    "Plant": final_results[0]["Plant"],
-                    "sap_id": final_results[0]["sap_id"]
-                })
-                for rec in monthly_aggregated:
-                    rec.update({
+                overall_row.update(
+                    {
                         "SBU": final_results[0]["SBU"],
                         "Zone": final_results[0]["Zone"],
                         "Regional Office": final_results[0]["Regional Office"],
                         "Plant": final_results[0]["Plant"],
-                        "sap_id": final_results[0]["sap_id"]
-                    })
+                        "sap_id": final_results[0]["sap_id"],
+                    }
+                )
+                for rec in monthly_aggregated:
+                    rec.update(
+                        {
+                            "SBU": final_results[0]["SBU"],
+                            "Zone": final_results[0]["Zone"],
+                            "Regional Office": final_results[0]["Regional Office"],
+                            "Plant": final_results[0]["Plant"],
+                            "sap_id": final_results[0]["sap_id"],
+                        }
+                    )
             else:
                 # No sap_id filter → sum of all plants
-                overall_row.update({
-                    "SBU": "All",
-                    "Zone": "All",
-                    "Regional Office": "All",
-                    "Plant": "All Plants",
-                    "sap_id": "All"
-                })
-                for rec in monthly_aggregated:
-                    rec.update({
+                overall_row.update(
+                    {
                         "SBU": "All",
                         "Zone": "All",
                         "Regional Office": "All",
                         "Plant": "All Plants",
-                        "sap_id": "All"
-                    })
+                        "sap_id": "All",
+                    }
+                )
+                for rec in monthly_aggregated:
+                    rec.update(
+                        {
+                            "SBU": "All",
+                            "Zone": "All",
+                            "Regional Office": "All",
+                            "Plant": "All Plants",
+                            "sap_id": "All",
+                        }
+                    )
 
         # return {
         #     "data": final_results,
@@ -2566,5 +2766,5 @@ class LPGOperationsActions:
             "overall": overall_row,
             "monthly_aggregated": monthly_aggregated,
             "plant_monthly_aggregated": plant_monthly_aggregated,
-            "zone_monthly_aggregated": zone_monthly_aggregated
+            "zone_monthly_aggregated": zone_monthly_aggregated,
         }

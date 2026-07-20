@@ -1,6 +1,7 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+
 import orchestrator.tank_analytics.tank_analytics as tank
 
 router = fastapi.APIRouter(prefix="/tankdetails")

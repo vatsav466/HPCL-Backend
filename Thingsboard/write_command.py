@@ -1,6 +1,7 @@
-import aio_pika
-import json
 import asyncio
+import json
+
+import aio_pika
 from pika.credentials import PlainCredentials
 
 

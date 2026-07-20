@@ -1,5 +1,7 @@
-from sqlalchemy import text
 import datetime
+
+from sqlalchemy import text
+
 from orchestrator.dashboard.chart_factory import charts_functions
 
 

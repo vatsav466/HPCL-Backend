@@ -1,7 +1,9 @@
+import traceback
+
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
-import traceback
+
 import orchestrator.alerting.alert_manager as alert_manager
 import utilities.connection_mapping as connection_mapping
 

@@ -1,14 +1,16 @@
-import urdhva_base
-from hpcl_ceg_ticketing_enum import *
-from hpcl_ceg_ticketing_model import *
-from fastapi.responses import FileResponse
-from fastapi import HTTPException
-import uuid
 import datetime
 import json
+import uuid
 from pathlib import Path
-import utilities.minio_connector as minio_connector
 from typing import List
+
+import urdhva_base
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from hpcl_ceg_ticketing_enum import *
+from hpcl_ceg_ticketing_model import *
+
+import utilities.minio_connector as minio_connector
 
 
 async def attach_file_common(

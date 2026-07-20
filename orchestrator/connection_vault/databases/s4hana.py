@@ -1,11 +1,11 @@
 import sys
-import typing
 import traceback
+import typing
+
+import hpcl_ceg_model
 import pandas as pd
 import polars as pl
-import hpcl_ceg_model
-from hana_ml import dataframe
-from hana_ml import ConnectionContext
+from hana_ml import ConnectionContext, dataframe
 
 dtype_map = {
     "int64": "bigint",

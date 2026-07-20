@@ -1,7 +1,8 @@
-import json
-import aio_pika
 import asyncio
+import json
 import traceback
+
+import aio_pika
 
 
 class RabbitMQProducer:

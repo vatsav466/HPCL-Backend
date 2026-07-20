@@ -1,9 +1,10 @@
+import dashboard_studio_model
+import hpcl_ceg_model
+import psycopg2
+
 import orchestrator.dbconnector.connector_factory as connector_factory
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from orchestrator.dbconnector.widget_actions import widget_actions
-import hpcl_ceg_model
-import dashboard_studio_model
-import psycopg2
 
 
 class LPGPlantActions:

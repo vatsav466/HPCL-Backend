@@ -1,6 +1,7 @@
+import fastapi
 from dashboard_studio_enum import *
 from dashboard_studio_model import *
-import fastapi
+
 import orchestrator.analytics.solar_capacity as solar_capacity
 
 router = fastapi.APIRouter(prefix="/solarpanelcleaning")

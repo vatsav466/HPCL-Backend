@@ -1,10 +1,10 @@
 import asyncio
+import sys
+from datetime import datetime
+from typing import Dict, List, Optional
+
 import asyncpg
 import mysql.connector
-from datetime import datetime
-from typing import List, Dict, Optional
-
-import sys
 
 sys.path.append("/opt/ceg/algo")
 

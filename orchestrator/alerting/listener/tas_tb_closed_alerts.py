@@ -1,13 +1,13 @@
-import urdhva_base
-from datetime import datetime, timezone
-import traceback
-import hpcl_ceg_model
 import asyncio
+import traceback
+from datetime import datetime, timezone
+
+import hpcl_ceg_model
+import urdhva_base
+
 from orchestrator.alerting.alert_manager import close_alert
 from orchestrator.alerting.listener.tas_duplicate_alert_check import (
-    get_thingsboard_jwt,
-    check_tb_alert_status,
-)
+    check_tb_alert_status, get_thingsboard_jwt)
 
 THINGSBOARD_URL = urdhva_base.settings.things_board_url
 THINGSBOARD_USERNAME = urdhva_base.settings.things_board_username

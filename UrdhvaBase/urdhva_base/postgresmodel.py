@@ -1,50 +1,34 @@
-import re
-import json
-import time
-import typing
 import asyncio
-import pydantic
-import datetime
-import traceback
 import collections
+import datetime
+import json
+import re
+import traceback
+import typing
+
+import pydantic
 import urdhva_base
-import urdhva_base.settings
-import urdhva_base.redispool
 import urdhva_base.queryparams
+import urdhva_base.redispool
+import urdhva_base.settings
 import urdhva_base.utilities as utils
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import (TIMESTAMP, BigInteger, Identity, String, func, select,
+                        text)
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import (DeclarativeBase, Mapped, MappedAsDataclass,
+                            mapped_column)
 from sqlalchemy.pool import NullPool
 from starlette.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncSession,
-    async_sessionmaker,
-)
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.pool import NullPool
-
-from sqlalchemy import (
-    BigInteger,
-    TIMESTAMP,
-    DateTime,
-    func,
-    Identity,
-    select,
-    String,
-    text
-)
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    Mapped,
-    MappedAsDataclass,
-    mapped_column,
-    undefer
-)
 
 
 # Define Base class for declarative base
-class Base(MappedAsDataclass, DeclarativeBase, dataclass_callable=pydantic.dataclasses.dataclass):
+class Base(
+    MappedAsDataclass,
+    DeclarativeBase,
+    dataclass_callable=pydantic.dataclasses.dataclass,
+):
     class Config:
         orm_mode = True
 
@@ -53,14 +37,28 @@ class Base(MappedAsDataclass, DeclarativeBase, dataclass_callable=pydantic.datac
 class UrdhvaPostgresBase(Base):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column("id", BigInteger, autoincrement=True, primary_key=True,
-                                                     init=False, server_default=Identity(minvalue=1), unique=True)
-    created_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_at", TIMESTAMP,
-                                                                           server_default=func.now(), init=False)
-    updated_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("updated_at", TIMESTAMP,
-                                                                           server_default=func.now(),
-                                                                           onupdate=func.now(), init=False)
-    entity_id: Mapped[typing.Optional[str]] = mapped_column("entity_id", String, index=True)
+    id: Mapped[int] = mapped_column(
+        "id",
+        BigInteger,
+        autoincrement=True,
+        primary_key=True,
+        init=False,
+        server_default=Identity(minvalue=1),
+        unique=True,
+    )
+    created_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "created_at", TIMESTAMP, server_default=func.now(), init=False
+    )
+    updated_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column(
+        "updated_at",
+        TIMESTAMP,
+        server_default=func.now(),
+        onupdate=func.now(),
+        init=False,
+    )
+    entity_id: Mapped[typing.Optional[str]] = mapped_column(
+        "entity_id", String, index=True
+    )
 
 
 class DatabaseManager:
@@ -104,21 +102,32 @@ class BasePostgresModel(pydantic.BaseModel):
             ...
 
     @classmethod
-    async def _apply_acls(cls):
-        ...
+    async def _apply_acls(cls): ...
 
     @classmethod
-    async def get_clause_conditions(cls, formated=False, extra_key_mapping=None, default_mapping=None):
+    async def get_clause_conditions(
+        cls, formated=False, extra_key_mapping=None, default_mapping=None
+    ):
         where_clause = []
         if urdhva_base.ctx.exists() and hasattr(cls.Config, "access_key_mapping"):
             key_mapping = cls.Config.access_key_mapping
             mapped_data = {
-                key.split(":")[0].strip(): key.split(":")[1].strip() if ":" in key else key.split(":")[0].strip()
+                key.split(":")[0].strip(): (
+                    key.split(":")[1].strip()
+                    if ":" in key
+                    else key.split(":")[0].strip()
+                )
                 for key in key_mapping
             }
             # Generating OR Conditions for mapped keys
             or_condition_keys = {}
-            for key in [item for item, count in collections.Counter(list(mapped_data.values())).items() if count > 1]:
+            for key in [
+                item
+                for item, count in collections.Counter(
+                    list(mapped_data.values())
+                ).items()
+                if count > 1
+            ]:
                 for key_, value in mapped_data.items():
                     if value == key:
                         if key not in or_condition_keys:
@@ -129,12 +138,12 @@ class BasePostgresModel(pydantic.BaseModel):
                 for mapped_key in mapped_keys:
                     if mapped_key != base_key and mapped_key in mapped_data:
                         del mapped_data[mapped_key]
-            rpt = urdhva_base.context.context.get('rpt', {})
+            rpt = urdhva_base.context.context.get("rpt", {})
             # Removing BU incase if SAP_ID was available and restricted
             # Todo:- Need to verify in multiple conditions
-            if 'bu' in mapped_data and 'sap_id' in mapped_data:
-                if rpt.get('bu') and rpt.get('sap_id'):
-                    del mapped_data['bu']
+            if "bu" in mapped_data and "sap_id" in mapped_data:
+                if rpt.get("bu") and rpt.get("sap_id"):
+                    del mapped_data["bu"]
             # Generating query Conditions
             for key, value in mapped_data.items():
                 if extra_key_mapping and key in extra_key_mapping:
@@ -146,31 +155,50 @@ class BasePostgresModel(pydantic.BaseModel):
                     if isinstance(rpt[value], list):
                         if len(rpt[value]) == 1:
                             if formated:
-                                where_clause.append({'key': key, "cond": 'equals', "value": rpt[value][0]})
+                                where_clause.append(
+                                    {
+                                        "key": key,
+                                        "cond": "equals",
+                                        "value": rpt[value][0],
+                                    }
+                                )
                             else:
                                 if key in or_condition_keys:
                                     # conditions = [f"{k}='{rpt[value][0]}'" for k in or_condition_keys[key]]
                                     conditions = [
-                                            f"{k} IN ({', '.join([f"'{v}'" for v in rpt[value]])})"
-                                            for k in or_condition_keys[key]
-                                    ]                                    
+                                        f"{k} IN ({', '.join([f"'{v}'" for v in rpt[value]])})"
+                                        for k in or_condition_keys[key]
+                                    ]
                                     where_clause.append(f"({' OR '.join(conditions)})")
                                 else:
                                     # where_clause.append(f"{key}='{rpt[value][0]}'")
-                                    where_clause.append(f"{key} IN ({', '.join([f"'{v}'" for v in rpt[value]])})")
+                                    where_clause.append(
+                                        f"{key} IN ({', '.join([f"'{v}'" for v in rpt[value]])})"
+                                    )
                         else:
                             if formated:
                                 # where_clause.append({'key': key, "cond": ' ', "value": rpt[value]})
-                                where_clause.append({'key': key, "cond": ' ', "value": ",".join(rpt[value])})
+                                where_clause.append(
+                                    {
+                                        "key": key,
+                                        "cond": " ",
+                                        "value": ",".join(rpt[value]),
+                                    }
+                                )
                             else:
                                 if key in or_condition_keys:
-                                    conditions = [f"{k} in {tuple(rpt[value])}" for k in or_condition_keys[key]]
+                                    conditions = [
+                                        f"{k} in {tuple(rpt[value])}"
+                                        for k in or_condition_keys[key]
+                                    ]
                                     where_clause.append(f"({' OR '.join(conditions)})")
                                 else:
                                     where_clause.append(f"{key} in {tuple(rpt[value])}")
                     else:
                         if formated:
-                            where_clause.append({'key': key, "cond": 'equals', "value": rpt[value]})
+                            where_clause.append(
+                                {"key": key, "cond": "equals", "value": rpt[value]}
+                            )
                         else:
                             where_clause.append(f"{key}='{rpt[value]}'")
         return where_clause
@@ -178,7 +206,7 @@ class BasePostgresModel(pydantic.BaseModel):
     @classmethod
     async def _get_entity_id(cls, entity_id=None):
         if urdhva_base.ctx.exists():
-            return urdhva_base.ctx['entity_id']
+            return urdhva_base.ctx["entity_id"]
         return entity_id
 
     @classmethod
@@ -194,14 +222,21 @@ class BasePostgresModel(pydantic.BaseModel):
         #     raise "missing context information"
         session = await manager.get_session()
         result = await session.execute(
-            select(cls.Config.schema_class).where(cls.Config.schema_class.id == int(row_id))
+            select(cls.Config.schema_class).where(
+                cls.Config.schema_class.id == int(row_id)
+            )
         )
         resp = result.scalars().first()
         await asyncio.shield(session.close())
         return resp
 
     @classmethod
-    async def count(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None, count_query=None):
+    async def count(
+        cls,
+        params: urdhva_base.queryparams.QueryParams = None,
+        entity_id=None,
+        count_query=None,
+    ):
         """
 
         :param params:
@@ -213,25 +248,31 @@ class BasePostgresModel(pydantic.BaseModel):
         #     raise "missing context information"
         query = [f"select count('*') from {cls.__tablename__}"]
         if not count_query or not isinstance(count_query, list):
-            query_params = [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
+            query_params = (
+                [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
+            )
             # todo:- need to implement this for all keys, both permitted and prohibited
-            if urdhva_base.ctx.exists() and urdhva_base.context.context.get('rpt', {}):
-                rpt = urdhva_base.context.context.get('rpt', {})
+            if urdhva_base.ctx.exists() and urdhva_base.context.context.get("rpt", {}):
+                rpt = urdhva_base.context.context.get("rpt", {})
                 key = f"access_restrictions_{urdhva_base.ctx['entity_id']}"
                 redis_client = await urdhva_base.redispool.get_redis_connection()
-                if await redis_client.hexists(key, rpt['email']):
-                    data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
-                                                              rpt['email']))
+                if await redis_client.hexists(key, rpt["email"]):
+                    data = json.loads(
+                        await redis_client.hget(
+                            f"access_restrictions_{urdhva_base.ctx['entity_id']}",
+                            rpt["email"],
+                        )
+                    )
                     # todo:- Temporary fix for ACL'S
                     if data.get("organizations_permitted"):
-                        permitted_org = data['organizations_permitted'].split(",")
+                        permitted_org = data["organizations_permitted"].split(",")
                         if len(permitted_org) == 1:
                             permitted_org = f"('{permitted_org[0]}')"
                         if cls.__tablename__ == "organization":
                             query_params.append(f"id in {permitted_org}")
                         else:
                             query_params.append(f"organization_id in {permitted_org}")
-            if hasattr(cls.Config, 'standard_query'):
+            if hasattr(cls.Config, "standard_query"):
                 query_params.append(cls.Config.standard_query)
             query_params.extend(await cls.get_clause_conditions())
             if params and params.q and len(params.q) > 0:
@@ -268,7 +309,10 @@ class BasePostgresModel(pydantic.BaseModel):
 
             return {"status": True, "message": f"{query} Executed successfully"}
         except Exception as e:
-            return {"status": False, "message": f"Failed to {query}, Exception: {str(e)}"}
+            return {
+                "status": False,
+                "message": f"Failed to {query}, Exception: {str(e)}",
+            }
         finally:
             await asyncio.shield(session.close())
 
@@ -292,18 +336,25 @@ class BasePostgresModel(pydantic.BaseModel):
                 query_ = f"{query} LIMIT {limit} OFFSET {limit * skip}"
             else:
                 query_ = f"{query}"
-            if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT"):
+            if not query_.strip().upper().startswith(
+                "WITH "
+            ) and not query_.strip().upper().startswith("SELECT"):
                 query_ = f"select {query_}"
             result = await session.execute(text(query_))
             resp = result.all()
             # Getting key columns from reults
             columns = [key for key in result.keys()]
-            results = [{columns[index]: value for index, value in enumerate(row)} for row in resp]
+            results = [
+                {columns[index]: value for index, value in enumerate(row)}
+                for row in resp
+            ]
             # Fetching total available records for the given query
             total = len(results)
             if not skip_total:
                 try:
-                    total = await session.scalar(text(f"select COUNT(*) FROM(SELECT {query}) AS subquery"))
+                    total = await session.scalar(
+                        text(f"select COUNT(*) FROM(SELECT {query}) AS subquery")
+                    )
                 except:
                     ...
             results_data = {"data": results, "count": len(results), "total": total}
@@ -314,14 +365,18 @@ class BasePostgresModel(pydantic.BaseModel):
         finally:
             await asyncio.shield(session.close())
 
-
     @classmethod
     async def create_database_table(cls):
         await manager.create_all()
 
     @classmethod
-    async def get_all(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None, resp_type="encoded",
-                      skip_secrets=False):
+    async def get_all(
+        cls,
+        params: urdhva_base.queryparams.QueryParams = None,
+        entity_id=None,
+        resp_type="encoded",
+        skip_secrets=False,
+    ):
         """
         @Description: For getting aggregated data, Join queries
         :param params: Query Params
@@ -335,7 +390,9 @@ class BasePostgresModel(pydantic.BaseModel):
 
         # If empty params, configuring default params.
         if not params:
-            params = urdhva_base.queryparams.QueryParams(q="", fields='["*"]', skip=0, limit=100)
+            params = urdhva_base.queryparams.QueryParams(
+                q="", fields='["*"]', skip=0, limit=100
+            )
         # Generating Postgres query from QueryParams
 
         # ******************** For Specific Fields Start ******************** #
@@ -350,23 +407,29 @@ class BasePostgresModel(pydantic.BaseModel):
         # Removing duplicate fields from fields
         if fields and isinstance(fields, list):
             fields = list(set(fields))
-            
+
         # ******************** For Specific Fields End ******************** #
 
         query = [f"select {','.join(fields)} from {cls.__tablename__}"]
-        query_params = [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
+        query_params = (
+            [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
+        )
 
         # todo:- need to implement this for all keys, both permitted and prohibited
-        if urdhva_base.ctx.exists() and urdhva_base.context.context.get('rpt', {}):
-            rpt = urdhva_base.context.context.get('rpt', {})
+        if urdhva_base.ctx.exists() and urdhva_base.context.context.get("rpt", {}):
+            rpt = urdhva_base.context.context.get("rpt", {})
             key = f"access_restrictions_{urdhva_base.ctx['entity_id']}"
             redis_client = await urdhva_base.redispool.get_redis_connection()
-            if await redis_client.hexists(key, rpt['email']):
-                data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
-                                                          rpt['email']))
-                #todo:- Temporary fix for ACL'S
+            if await redis_client.hexists(key, rpt["email"]):
+                data = json.loads(
+                    await redis_client.hget(
+                        f"access_restrictions_{urdhva_base.ctx['entity_id']}",
+                        rpt["email"],
+                    )
+                )
+                # todo:- Temporary fix for ACL'S
                 if data.get("organizations_permitted"):
-                    permitted_org = data['organizations_permitted'].split(",")
+                    permitted_org = data["organizations_permitted"].split(",")
                     if len(permitted_org) == 1:
                         permitted_org = f"('{permitted_org[0]}')"
                     if cls.__tablename__ == "organization":
@@ -376,7 +439,7 @@ class BasePostgresModel(pydantic.BaseModel):
         # Incase if there was a standard_query, appending it to the base query(Queries which are mandated in
         # Specific class)
 
-        if hasattr(cls.Config, 'standard_query'):
+        if hasattr(cls.Config, "standard_query"):
             query_params.append(cls.Config.standard_query)
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
@@ -386,23 +449,32 @@ class BasePostgresModel(pydantic.BaseModel):
         #         for field in cls.Config.search_fields:
         #             if params.search_text:
         #                 search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
-                
+
         #         if search_conditions:
         #             print("search_conditions --> ", search_conditions)
         #             query_params.append(f"({' OR '.join(search_conditions)})")
-        
-        if params and params.search_text and isinstance(params.search_text, str) and params.search_text.strip():
+
+        if (
+            params
+            and params.search_text
+            and isinstance(params.search_text, str)
+            and params.search_text.strip()
+        ):
             search_conditions = []
-            if hasattr(cls.Config, 'search_fields') and cls.Config.search_fields:
+            if hasattr(cls.Config, "search_fields") and cls.Config.search_fields:
                 for field in cls.Config.search_fields:
-                    search_text = params.search_text.strip()  # Strip leading/trailing whitespace
+                    search_text = (
+                        params.search_text.strip()
+                    )  # Strip leading/trailing whitespace
                     # print("search text --> ", search_text)
-                    search_conditions.append(f"{cls.__tablename__}.{field}::text ILIKE '%{search_text}%'")
+                    search_conditions.append(
+                        f"{cls.__tablename__}.{field}::text ILIKE '%{search_text}%'"
+                    )
 
             if search_conditions:
                 # print("search_conditions --> ", search_conditions)
-                query_params.append(f"({' OR '.join(search_conditions)})")        
-        
+                query_params.append(f"({' OR '.join(search_conditions)})")
+
         # Commented by Shrihari
         # query_params.extend(await cls.get_clause_conditions())
         # Added to remove the duplicate condition of bu
@@ -410,7 +482,7 @@ class BasePostgresModel(pydantic.BaseModel):
         pattern = r"\s*bu\s*=\s*'[^']+'\s*(\s*)?"
         cleaned_conditions = []
         for cond in _extra_condition:
-            new_cond = re.sub(pattern, '', cond).strip()
+            new_cond = re.sub(pattern, "", cond).strip()
             if new_cond:
                 cleaned_conditions.append(new_cond.rstrip("AND").rstrip("and"))
         query_params.extend(cleaned_conditions)
@@ -421,9 +493,13 @@ class BasePostgresModel(pydantic.BaseModel):
         # ******************** For Data Sorting Params Start ******************** #
         if params.sort:
             try:
-                order_by = json.loads(params.sort) if isinstance(params.sort, str) else params.sort
+                order_by = (
+                    json.loads(params.sort)
+                    if isinstance(params.sort, str)
+                    else params.sort
+                )
                 for key, value in order_by.items():
-                    order = 'ASC' if 'asc' in value.lower() else 'DESC'  
+                    order = "ASC" if "asc" in value.lower() else "DESC"
                     query.append(f"ORDER BY {key} {order}")
                     break
             except Exception as e:
@@ -438,10 +514,23 @@ class BasePostgresModel(pydantic.BaseModel):
             query.append(f"OFFSET {params.skip * params.limit}")
         session = await manager.get_session()
         try:
-            result = await session.scalars(select(cls.Config.schema_class).from_statement(text(" ".join(query))))
+            result = await session.scalars(
+                select(cls.Config.schema_class).from_statement(text(" ".join(query)))
+            )
             resp = result.all()
-            results = [{key: value for key, value in row.__dict__.items() if not key.startswith("_")} for row in resp]
-            total = await cls.count(params, entity_id, count_query) if len(results) > 0 else 0
+            results = [
+                {
+                    key: value
+                    for key, value in row.__dict__.items()
+                    if not key.startswith("_")
+                }
+                for row in resp
+            ]
+            total = (
+                await cls.count(params, entity_id, count_query)
+                if len(results) > 0
+                else 0
+            )
             results_data = {"data": results, "count": len(results), "total": total}
             if resp_type == "encoded":
                 return JSONResponse(content=jsonable_encoder(results_data))
@@ -455,7 +544,11 @@ class BasePostgresModel(pydantic.BaseModel):
 
     @classmethod
     def convert_to_dict(cls, input_data):
-        return {key: value for key, value in input_data.__dict__.items() if not key.startswith("_")}
+        return {
+            key: value
+            for key, value in input_data.__dict__.items()
+            if not key.startswith("_")
+        }
 
     @classmethod
     async def delete(cls, row_id, entity_id=None):
@@ -470,14 +563,18 @@ class BasePostgresModel(pydantic.BaseModel):
         #     raise "missing context information"
         session = await manager.get_session()
         result = await session.execute(
-            select(cls.Config.schema_class).where(cls.Config.schema_class.id == int(row_id))
+            select(cls.Config.schema_class).where(
+                cls.Config.schema_class.id == int(row_id)
+            )
         )
 
         if result.scalars().first() is not None:
             status = await session.execute(
-                cls.Config.schema_class.__table__.delete().where(cls.Config.schema_class.id == int(row_id))
+                cls.Config.schema_class.__table__.delete().where(
+                    cls.Config.schema_class.id == int(row_id)
+                )
             )
-            
+
             await session.commit()
             await asyncio.shield(session.close())
             return True, "Success"
@@ -496,27 +593,50 @@ class BasePostgresModel(pydantic.BaseModel):
         if not upsert_skip_keys:
             upsert_skip_keys = ["id", "entity_id", "created_at", "updated_at"]
         else:
-            upsert_skip_keys = list(set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"]))
+            upsert_skip_keys = list(
+                set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"])
+            )
 
         # await manager.create_all()
         session = await manager.get_session()
         try:
             if not upsert:
-                schema_class = self.Config.schema_class(**{**json.loads(self.model_dump_json()), "entity_id": entity_id})
+                schema_class = self.Config.schema_class(
+                    **{**json.loads(self.model_dump_json()), "entity_id": entity_id}
+                )
                 session.add(schema_class)
                 await session.commit()
                 await session.refresh(schema_class)
-                return {"id": schema_class.id, **{key: value for key, value in schema_class.__dict__.items() if not key.startswith("_")}}
+                return {
+                    "id": schema_class.id,
+                    **{
+                        key: value
+                        for key, value in schema_class.__dict__.items()
+                        if not key.startswith("_")
+                    },
+                }
             else:
-                ins_resp = insert(self.Config.schema_class).values([{**json.loads(self.model_dump_json()),
-                                                                     "entity_id": entity_id}])
-                conflict_dict = {exc.key: exc for exc in ins_resp.excluded if exc.key not in upsert_skip_keys}
+                ins_resp = insert(self.Config.schema_class).values(
+                    [{**json.loads(self.model_dump_json()), "entity_id": entity_id}]
+                )
+                conflict_dict = {
+                    exc.key: exc
+                    for exc in ins_resp.excluded
+                    if exc.key not in upsert_skip_keys
+                }
                 ins_resp = ins_resp.on_conflict_do_update(
                     index_elements=self.Config.upsert_keys, set_=conflict_dict
                 )
                 resp = await session.execute(ins_resp)
                 id = resp.scalar()
-                return {"id": id, **{key: value for key, value in resp.__dict__.items() if not key.startswith("_")}}
+                return {
+                    "id": id,
+                    **{
+                        key: value
+                        for key, value in resp.__dict__.items()
+                        if not key.startswith("_")
+                    },
+                }
         except Exception as e:
             print(f"Exception in {'create' if not upsert else 'upsert'} {e}")
             return None
@@ -536,12 +656,16 @@ class BasePostgresModel(pydantic.BaseModel):
         #     raise "missing context information"
         session = await manager.get_session()
         result = await session.execute(
-            select(self.Config.schema_class).where(self.Config.schema_class.id == int(self.id))
+            select(self.Config.schema_class).where(
+                self.Config.schema_class.id == int(self.id)
+            )
         )
         record = result.one()
         if len(record):
-            for key, value in self.model_dump(exclude_none=True, exclude_unset=True).items():
-                if key == 'updated_at':
+            for key, value in self.model_dump(
+                exclude_none=True, exclude_unset=True
+            ).items():
+                if key == "updated_at":
                     continue
                 setattr(record[0], key, value)
             await session.commit()
@@ -552,7 +676,9 @@ class BasePostgresModel(pydantic.BaseModel):
         # print(record)
 
     @classmethod
-    async def bulk_update(cls, records, entity_id=None, upsert=False, upsert_skip_keys = []):
+    async def bulk_update(
+        cls, records, entity_id=None, upsert=False, upsert_skip_keys=[]
+    ):
         """
 
         :param records: list of records to insert as bulk into database
@@ -566,15 +692,25 @@ class BasePostgresModel(pydantic.BaseModel):
         if not upsert_skip_keys:
             upsert_skip_keys = ["id", "entity_id", "created_at", "updated_at"]
         else:
-            upsert_skip_keys = list(set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"]))
+            upsert_skip_keys = list(
+                set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"])
+            )
 
         # await manager.create_all()
         session = await manager.get_session()
         try:
             if not upsert:
-                tasks = [cls.Config.schema_class(**{**json.loads(json.dumps(rec,
-                                                                            default=utils.datetime_serializer)),
-                                                    "entity_id": entity_id}) for rec in records]
+                tasks = [
+                    cls.Config.schema_class(
+                        **{
+                            **json.loads(
+                                json.dumps(rec, default=utils.datetime_serializer)
+                            ),
+                            "entity_id": entity_id,
+                        }
+                    )
+                    for rec in records
+                ]
                 session.add_all(tasks)
                 await session.commit()  # Commit the transaction
                 try:
@@ -586,17 +722,26 @@ class BasePostgresModel(pydantic.BaseModel):
                 # Calculating max records to send for upsert operation by considering max columns limit 32767
                 max_limit = int(32767 / (len(records[0]) + 1)) - 1
                 for index in range(0, len(records), max_limit):
-                    ins_resp = insert(cls.Config.schema_class).values([{**rec, "entity_id": entity_id}
-                                                                       for rec in records[index:index+max_limit]])
-                    conflict_dict = {exc.key: exc for exc in ins_resp.excluded if exc.key not in upsert_skip_keys}
+                    ins_resp = insert(cls.Config.schema_class).values(
+                        [
+                            {**rec, "entity_id": entity_id}
+                            for rec in records[index : index + max_limit]
+                        ]
+                    )
+                    conflict_dict = {
+                        exc.key: exc
+                        for exc in ins_resp.excluded
+                        if exc.key not in upsert_skip_keys
+                    }
                     ins_resp = ins_resp.on_conflict_do_update(
                         index_elements=cls.Config.upsert_keys, set_=conflict_dict
                     )
                     await session.execute(ins_resp)
                     await session.commit()  # Commit the transaction
                     try:
-                        schema_class = cls.Config.schema_class(**{**records[0],
-                                                                  "entity_id": entity_id})
+                        schema_class = cls.Config.schema_class(
+                            **{**records[0], "entity_id": entity_id}
+                        )
                         await session.refresh(schema_class)
                     except:
                         ...
@@ -617,8 +762,7 @@ class BasePostgresModel(pydantic.BaseModel):
 
     class Config:
         populate_by_name = True
-        json_encoders = {
-        }
+        json_encoders = {}
         from_attributes = True
         collection_name: urdhva_base.settings.default_index
         schema_class: Base

@@ -1,6 +1,7 @@
+import fastapi
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+
 import orchestrator.gen_ai.industry_generative_ai as industry_generative_ai
 
 router = fastapi.APIRouter(prefix="/industryperformance")

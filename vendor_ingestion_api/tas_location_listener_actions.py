@@ -1,17 +1,17 @@
 import json
+import traceback
+import uuid
 
+import fastapi
+import hpcl_ceg_model
+import httpx
+import pytz
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
-import uuid
+
 from orchestrator.alerting.alert_manager import create_alert
-import hpcl_ceg_model
-import traceback
-import pytz
-import httpx
-from orchestrator.alerting.listener.tas_duplicate_alert_check import (
-    duplicate_loss_of_comm_check,
-)
+from orchestrator.alerting.listener.tas_duplicate_alert_check import \
+    duplicate_loss_of_comm_check
 
 router = fastapi.APIRouter(prefix="/tas_location_listener")
 
