@@ -6,6 +6,8 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 
 # System deps needed to build some Python wheels (psycopg2, cx_Oracle etc.)
+# Note: python:3.12-slim is based on Debian, where the package is still
+# named libaio1 (unlike Ubuntu 24.04 runners, which renamed it libaio1t64).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -39,10 +41,14 @@ ENV LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH \
     OCI_INC_DIR=/opt/oracle/instantclient/sdk/include
 
 COPY requirements.txt .
+# Pin setuptools below 81 — newer setuptools dropped pkg_resources, which
+# breaks the legacy build of cx_Oracle 8.3.0 on Python 3.12. Crucially,
+# cx_Oracle must be installed with --no-build-isolation, otherwise pip
+# builds it in a throwaway isolated env that ignores this pin entirely
+# and pulls in a fresh (broken) setuptools anyway.
 RUN pip install --upgrade pip \
-    # Pin setuptools below 82 — newer setuptools dropped pkg_resources,
-    # which breaks the legacy build of cx_Oracle 8.3.0 on Python 3.12.
-    && pip install --user "setuptools<82" \
+    && pip install --user "setuptools<81" wheel \
+    && pip install --user --no-build-isolation cx_Oracle==8.3.0 \
     && pip install --user --no-cache-dir -r requirements.txt
 
 
