@@ -5,12 +5,15 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# System deps needed to build some Python wheels (psycopg2, etc.)
+# System deps needed to build some Python wheels (psycopg2, python-ldap, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     libpq-dev \
     unixodbc-dev \
+    libldap2-dev \
+    libsasl2-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -29,6 +32,8 @@ RUN useradd --create-home --shell /bin/bash appuser
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     unixodbc \
+    libldap-2.4-2 \
+    libsasl2-3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Bring in the packages installed in the builder stage
