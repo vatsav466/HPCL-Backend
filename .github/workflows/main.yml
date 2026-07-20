@@ -2,9 +2,13 @@ name: Backend CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+
   workflow_dispatch:
 
 env:
@@ -13,26 +17,24 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ──────────────────────────────────────────────
-  # 1. CODE QUALITY & TESTS
-  # ──────────────────────────────────────────────
+
+  # ---------------------------------------------------------
+  # 1. LINT, TEST & SECURITY
+  # ---------------------------------------------------------
   test:
-    name: Lint, Test & Scan
+    name: Lint, Test & Security Scan
     runs-on: ubuntu-latest
 
     steps:
-      # ---- Checkout Code ----
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ---- Setup Python ----
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # ---- Cache pip Packages ----
-      - name: Cache pip Packages
+      - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -40,147 +42,200 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # ---- Create Virtual Environment ----
+      # Required for python-ldap
+      - name: Install Ubuntu Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            python3-dev \
+            libldap2-dev \
+            libsasl2-dev \
+            libssl-dev
+
       - name: Create Virtual Environment
         run: |
           python -m venv venv
-          echo "$PWD/venv/bin" >> $GITHUB_PATH
 
-      # ---- Install Dependencies ----
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: |
-          pip install --upgrade pip
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+
           pip install -r requirements.txt
-          pip install flake8 black isort mypy pytest pytest-cov bandit pip-audit
 
-      # ---- Lint ----
-      - name: Lint (flake8)
-        run: flake8 . --count --statistics --max-line-length=120
+          pip install \
+            flake8 \
+            black \
+            isort \
+            mypy \
+            pytest \
+            pytest-cov \
+            bandit \
+            pip-audit
 
-      # ---- Format Check ----
-      - name: Format Check (black)
-        run: black --check .
+      - name: Run Flake8
+        run: |
+          source venv/bin/activate
+          flake8 . --count --statistics --max-line-length=120
 
-      # ---- Import Sorting Check ----
-      - name: Import Sorting Check (isort)
-        run: isort --check-only .
+      - name: Black Check
+        run: |
+          source venv/bin/activate
+          black --check .
 
-      # ---- Type Checking ----
-      - name: Type Checking (mypy)
-        run: mypy . --ignore-missing-imports
-        continue-on-error: true   # remove once codebase is fully typed
+      - name: Isort Check
+        run: |
+          source venv/bin/activate
+          isort --check-only .
 
-      # ---- Unit Tests ----
-      - name: Unit Tests (pytest)
-        run: pytest -v
+      - name: MyPy
+        continue-on-error: true
+        run: |
+          source venv/bin/activate
+          mypy . --ignore-missing-imports
 
-      # ---- Code Coverage ----
-      - name: Code Coverage
-        run: pytest --cov=. --cov-report=xml --cov-report=term
+      - name: Run Unit Tests
+        run: |
+          source venv/bin/activate
+          pytest -v
 
-      - name: Upload Coverage Report
+      - name: Coverage
+        run: |
+          source venv/bin/activate
+          pytest --cov=. --cov-report=xml --cov-report=term
+
+      - name: Upload Coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
 
-      # ---- Security Scan ----
-      - name: Security Scan (bandit)
-        run: bandit -r . -x ./venv,./tests -ll
+      - name: Bandit Scan
+        run: |
+          source venv/bin/activate
+          bandit -r . -x ./venv,./tests -ll
 
-      # ---- Dependency Vulnerability Scan ----
-      - name: Dependency Vulnerability Scan (pip-audit)
-        run: pip-audit -r requirements.txt
-        continue-on-error: true   # flip to false once known CVEs are cleared
+      - name: Dependency Scan
+        continue-on-error: true
+        run: |
+          source venv/bin/activate
+          pip-audit -r requirements.txt
 
-      # ---- API Tests ----
-      - name: API Tests (Postman/Newman)
+      - name: API Tests
         run: |
           if [ -f postman/collection.json ]; then
             npm install -g newman
-            newman run postman/collection.json -e postman/environment.json --reporters cli,junit --reporter-junit-export newman-report.xml
+            newman run postman/collection.json \
+              -e postman/environment.json \
+              --reporters cli,junit \
+              --reporter-junit-export newman-report.xml
           else
-            echo "No Postman collection found, skipping."
+            echo "No Postman collection found."
           fi
 
-  # ──────────────────────────────────────────────
+  # ---------------------------------------------------------
   # 2. BUILD & PUSH DOCKER IMAGE
-  # ──────────────────────────────────────────────
-  build-and-push:
-    name: Build & Push Docker Image
+  # ---------------------------------------------------------
+  docker-build-and-push:
+    name: Docker Build & Push
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     permissions:
       contents: read
       packages: write
 
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tag }}
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set Image Tag
-        id: meta
-        run: echo "tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Convert Image Name to Lowercase
+        run: |
+          echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}
 
-      - name: Set up Docker Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker Image
+      - name: Build & Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
-          push: false
-          load: true
+          file: Dockerfile
+          push: true
           tags: |
-            ${{ steps.meta.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ env.IMAGE_NAME_LOWER }}:latest
+            ghcr.io/${{ env.IMAGE_NAME_LOWER }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Push Docker Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ steps.meta.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-
-  # ──────────────────────────────────────────────
-  # 3. DEPLOY VIA SSH
-  # ──────────────────────────────────────────────
+  # ---------------------------------------------------------
+  # 3. DEPLOY
+  # ---------------------------------------------------------
   deploy:
-    name: SSH Deploy to Server
-    needs: build-and-push
+    name: Deploy
+    needs: docker-build-and-push
     runs-on: ubuntu-latest
-    environment: production
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
-      - name: SSH into Server & Deploy
+      - name: Set lowercase image name
+        run: |
+          echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Verify required secrets
+        run: |
+          missing=0
+
+          [ -z "${{ secrets.DEPLOY_HOST }}" ] && echo "::error::DEPLOY_HOST missing" && missing=1
+          [ -z "${{ secrets.DEPLOY_USER }}" ] && echo "::error::DEPLOY_USER missing" && missing=1
+          [ -z "${{ secrets.DEPLOY_PASSWORD }}" ] && echo "::error::DEPLOY_PASSWORD missing" && missing=1
+          [ -z "${{ secrets.GHCR_PAT }}" ] && echo "::error::GHCR_PAT missing" && missing=1
+
+          if [ "$missing" -eq 1 ]; then
+            exit 1
+          fi
+
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: 22
+          envs: DEPLOY_PASSWORD
           script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ needs.build-and-push.outputs.image_tag }}
-            docker compose -f /opt/hpcl-backend/docker-compose.yml down
-            docker compose -f /opt/hpcl-backend/docker-compose.yml up -d
-            docker image prune -f
+
+            run_sudo() {
+              echo "$DEPLOY_PASSWORD" | sudo -S "$@"
+            }
+
+            run_sudo -v
+
+            run_sudo docker login ghcr.io \
+              -u ${{ github.actor }} \
+              --password-stdin <<< "${{ secrets.GHCR_PAT }}"
+
+            run_sudo docker pull ghcr.io/${{ env.IMAGE_NAME_LOWER }}:latest
+
+            run_sudo docker stop hpcl-backend || true
+            run_sudo docker rm hpcl-backend || true
+
+            run_sudo docker run -d \
+              --name hpcl-backend \
+              --restart unless-stopped \
+              -p 8000:8000 \
+              ghcr.io/${{ env.IMAGE_NAME_LOWER }}:latest
+
+            run_sudo docker image prune -af
