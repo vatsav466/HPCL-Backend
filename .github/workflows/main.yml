@@ -289,12 +289,29 @@ jobs:
               fi
             fi
 
-            # Start the new container with the same port mapping
-            run_sudo docker run -d \
+            # Quick architecture sanity check — a container that gets
+            # "created" but never starts (instead of crashing/exiting) is
+            # the classic symptom of an amd64/arm64 mismatch between the
+            # GitHub Actions runner that built the image and this server.
+            HOST_ARCH=$(uname -m)
+            IMAGE_ARCH=$(run_sudo docker inspect -f '{{.Architecture}}' ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest 2>/dev/null || echo "unknown")
+            echo "Host architecture: $HOST_ARCH | Image architecture: $IMAGE_ARCH"
+
+            # Start the new container with the same port mapping. Capture
+            # its own output/exit code instead of discarding it — the real
+            # root cause (e.g. "exec format error", "no such file or
+            # directory", OCI runtime create failed) prints here, not in
+            # docker logs, whenever the container never leaves "created".
+            set +e
+            RUN_OUTPUT=$(run_sudo docker run -d \
               --name pipeline-ui \
               --restart unless-stopped \
               -p 8000:8000 \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest 2>&1)
+            RUN_EXIT=$?
+            set -e
+            echo "docker run exit code: $RUN_EXIT"
+            echo "docker run output: $RUN_OUTPUT"
 
             # Wait for the container to actually reach "running" instead of
             # trusting that `docker run -d` returning means it's up. If it
@@ -313,7 +330,12 @@ jobs:
             done
 
             if [ "$RUNNING" -ne 1 ]; then
-              echo "::error::Container never reached 'running' state. Recent logs:"
+              echo "::error::Container never reached 'running' state."
+              echo "--- docker start (surfaces the real OCI runtime error) ---"
+              run_sudo docker start pipeline-ui || true
+              echo "--- docker inspect State ---"
+              run_sudo docker inspect -f '{{json .State}}' pipeline-ui || true
+              echo "--- docker logs ---"
               run_sudo docker logs --tail 100 pipeline-ui || true
               exit 1
             fi
