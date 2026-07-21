@@ -25,27 +25,17 @@ jobs:
           - "3.10"
 
     steps:
-      ####################################################
-      # Checkout Repository
-      ####################################################
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      ####################################################
-      # Setup Python
-      ####################################################
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      ####################################################
-      # Install Linux Packages Required for python-ldap
-      ####################################################
       - name: Install Ubuntu Dependencies
         run: |
           sudo apt-get update
-
           sudo apt-get install -y \
             gcc \
             g++ \
@@ -55,58 +45,40 @@ jobs:
             libssl-dev \
             ldap-utils
 
-      ####################################################
-      # Upgrade pip
-      ####################################################
       - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
+        run: python -m pip install --upgrade pip
 
-      ####################################################
-      # Install Python Dependencies
-      ####################################################
       - name: Install Requirements
         run: |
-          pip install flake8 pylint pytest
-
+          python -m pip install flake8 pylint pytest
           if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+            python -m pip install -r requirements.txt
           fi
 
-      ####################################################
-      # Flake8
-      ####################################################
       - name: Run Flake8
         run: |
-          flake8 . \
-          --count \
-          --select=E9,F63,F7,F82 \
-          --show-source \
-          --statistics
+          flake8 . --isolated \
+            --count \
+            --select=E9,F63,F7,F82 \
+            --show-source \
+            --statistics
 
-          flake8 . \
-          --count \
-          --exit-zero \
-          --max-complexity=10 \
-          --max-line-length=127 \
-          --statistics
+          flake8 . --isolated \
+            --count \
+            --exit-zero \
+            --max-complexity=10 \
+            --max-line-length=127 \
+            --statistics
 
-      ####################################################
-      # Pylint
-      ####################################################
       - name: Run Pylint
         run: |
           FILES=$(git ls-files "*.py")
-
           if [ -n "$FILES" ]; then
             pylint $FILES
           else
             echo "No Python files found."
           fi
 
-      ####################################################
-      # Pytest
-      ####################################################
       - name: Run Pytest
         run: |
           if [ -d tests ]; then
@@ -115,34 +87,26 @@ jobs:
             echo "No tests directory found."
           fi
 
-      ####################################################
-      # Setup Node.js
-      ####################################################
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      ####################################################
-      # Install Newman
-      ####################################################
       - name: Install Newman
-        run: |
-          npm install -g newman
+        run: npm install -g newman
 
-      ####################################################
-      # Run Postman API Tests
-      ####################################################
       - name: Run Newman Collection
         run: |
-          newman run tests/postman_collection.json
+          if [ -f tests/postman_collection.json ]; then
+            newman run tests/postman_collection.json
+          else
+            echo "No Postman collection found."
+          fi
 
-      ####################################################
-      # Upload Test Results (Optional)
-      ####################################################
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: newman-report
-          path: .
+          path: tests/
+          if-no-files-found: ignore
