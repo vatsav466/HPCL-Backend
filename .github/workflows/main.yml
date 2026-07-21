@@ -209,16 +209,23 @@ jobs:
           # is empty on the remote side, so every sudo -S call gets a blank
           # password — exactly the "no password was provided" loop you saw.
           DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: 22
-          # Pass the password in as a real remote env var instead of
-          # interpolating it into the script text — avoids quoting/escaping
-          # bugs if the password ever contains $, ", `, etc.
-          envs: DEPLOY_PASSWORD
+          # Pass secrets in as real remote env vars instead of interpolating
+          # them into the script text — avoids quoting/escaping bugs if
+          # either value ever contains $, ", `, etc.
+          envs: DEPLOY_PASSWORD,GHCR_PAT
+          # docker pull + login + health-check can run past the 10m default
+          # on a slow link; give it more room so the connection doesn't get
+          # cut mid-script (which is what left the last container stuck in
+          # "Created" — the run command started but the session died before
+          # the daemon finished bringing it up).
+          command_timeout: 20m
           script: |
             # PREFERRED FIX (do this once, then delete every "sudo"/"run_sudo"
             # below and the DEPLOY_PASSWORD sudo dance entirely):
@@ -234,11 +241,26 @@ jobs:
               echo "$DEPLOY_PASSWORD" | sudo -S "$@"
             }
 
+            # Same idea as run_sudo, but for commands that themselves need
+            # to read something from stdin (e.g. `docker login --password-stdin`).
+            # sudo -S eats the FIRST line of stdin for its own password
+            # prompt, so anything the wrapped command needs to read must be
+            # queued up AFTER that line, in the same stream — not fed in via
+            # a separate `<<<` on the outer call, which was the actual bug:
+            # sudo -S was silently consuming DEPLOY_PASSWORD as if it were
+            # the GHCR PAT, so the real PAT never reached `docker login` and
+            # the login step failed every time without ever raising an error.
+            run_sudo_with_stdin() {
+              local payload="$1"
+              shift
+              { echo "$DEPLOY_PASSWORD"; printf '%s' "$payload"; } | sudo -S "$@"
+            }
+
             # Sanity-check sudo works before doing anything else.
             run_sudo -v
 
             # Log in to GHCR on the server (needed if the package is private)
-            run_sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GHCR_PAT }}"
+            run_sudo_with_stdin "$GHCR_PAT" docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Pull the freshly built image
             run_sudo docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
@@ -247,22 +269,6 @@ jobs:
             run_sudo docker stop pipeline-ui || true
             run_sudo docker rm pipeline-ui || true
 
-            # --- NEW: free up host port 8000 before starting -------------
-            # A container that gets stuck in "Created" (never "Up", never
-            # "Exited") almost always means `docker run -d` failed at the
-            # *start* step — most commonly because something else on the
-            # host already has port 8000 bound, so Docker can't program the
-            # port mapping. Removing our own named container above isn't
-            # enough if a *different* container (or a previous crashed
-            # attempt with a different name) is still holding the port.
-            # This finds and removes ANY container publishing 8000 first.
-            STALE=$(run_sudo docker ps -a --filter "publish=8000" -q)
-            if [ -n "$STALE" ]; then
-              echo "Found container(s) already using port 8000, removing: $STALE"
-              run_sudo docker stop $STALE || true
-              run_sudo docker rm $STALE || true
-            fi
-
             # Start the new container with the same port mapping
             run_sudo docker run -d \
               --name pipeline-ui \
@@ -270,18 +276,49 @@ jobs:
               -p 8000:8000 \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
-            # --- NEW: verify it actually started, and show why if not ----
-            sleep 5
-            RUNNING=$(run_sudo docker inspect -f '{{.State.Running}}' pipeline-ui 2>/dev/null || echo "false")
-            if [ "$RUNNING" != "true" ]; then
-              echo "::error::pipeline-ui did not reach a running state."
-              echo "----- docker inspect state -----"
-              run_sudo docker inspect -f 'Status={{.State.Status}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' pipeline-ui || true
-              echo "----- container logs -----"
-              run_sudo docker logs pipeline-ui || true
+            # Wait for the container to actually reach "running" instead of
+            # trusting that `docker run -d` returning means it's up. If it
+            # crashes or never leaves "created", fail loudly with logs
+            # instead of silently leaving a dead container behind.
+            echo "Waiting for container to become healthy..."
+            RUNNING=0
+            for i in $(seq 1 15); do
+              STATUS=$(run_sudo docker inspect -f '{{.State.Status}}' pipeline-ui 2>/dev/null || echo "unknown")
+              echo "Attempt $i: container status = $STATUS"
+              if [ "$STATUS" = "running" ]; then
+                RUNNING=1
+                break
+              fi
+              sleep 2
+            done
+
+            if [ "$RUNNING" -ne 1 ]; then
+              echo "::error::Container never reached 'running' state. Recent logs:"
+              run_sudo docker logs --tail 100 pipeline-ui || true
               exit 1
             fi
-            echo "pipeline-ui is running."
+
+            # Confirm the API is actually answering on port 8000 before
+            # declaring success (catches crash-loops that briefly show
+            # "running" then die).
+            echo "Verifying FastAPI is responding on :8000/docs ..."
+            API_UP=0
+            for i in $(seq 1 15); do
+              if run_sudo curl -sf -o /dev/null http://localhost:8000/docs; then
+                API_UP=1
+                break
+              fi
+              echo "API not ready yet (attempt $i)..."
+              sleep 2
+            done
+
+            if [ "$API_UP" -ne 1 ]; then
+              echo "::error::Container is running but /docs never responded. Recent logs:"
+              run_sudo docker logs --tail 100 pipeline-ui || true
+              exit 1
+            fi
+
+            echo "Deployment successful — FastAPI is live on :8000/docs"
 
             # Clean up old dangling images to save disk space
             run_sudo docker image prune -f
