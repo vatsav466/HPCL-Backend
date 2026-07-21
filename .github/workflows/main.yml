@@ -66,7 +66,11 @@ jobs:
         id: flake8
         continue-on-error: true
         run: |
-          flake8 . --statistics
+          # --isolated: ignore any setup.cfg/tox.ini/.flake8 in the repo.
+          # A malformed 'extend-ignore' line (with an inline '#' comment) in one
+          # of those files was crashing flake8 before it could even run.
+          # Fix that config file when you can; this just unblocks CI for now.
+          flake8 --isolated . --statistics
 
       - name: Commit auto-fixed files
         if: github.event_name == 'push'
@@ -296,13 +300,13 @@ jobs:
             }
             run_sudo -v
 
-            # FIX: docker login is wrapped in its own `bash -c` subshell so its
-            # internal `echo GHCR_PAT | docker login --password-stdin` pipe is
-            # self-contained. Previously the outer `<<<` redirection never
-            # reached docker login because run_sudo's own `echo | sudo -S`
-            # pipe consumed/ate the stdin stream first, leaving docker login
-            # with an empty password -> "denied: denied".
-            run_sudo bash -c "echo \"\$GHCR_PAT\" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin"
+            # FIX: piping the GHCR_PAT into `run_sudo ... <<< "$GHCR_PAT"` was silently
+            # discarded, because run_sudo's own `echo "$DEPLOY_PASSWORD" | sudo -S "$@"`
+            # pipe replaced stdin before docker login's --password-stdin ever saw it.
+            # That's why login was failing with "denied: denied" even with a valid PAT.
+            # `sudo -S` only consumes the FIRST line of stdin for its own prompt and
+            # passes the rest through, so feed both secrets through one stream in order:
+            (echo "$DEPLOY_PASSWORD"; echo "$GHCR_PAT") | sudo -S docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
             run_sudo docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
