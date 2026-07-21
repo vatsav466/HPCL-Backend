@@ -6,7 +6,6 @@ on:
       - main
       - backend
       - pipeline
-
   pull_request:
     branches:
       - main
@@ -15,34 +14,16 @@ on:
 permissions:
   contents: read
 
+env:
+  REGISTRY: ghcr.io
+  # Adjust if your GHCR image name should be different — must be all lowercase.
+  IMAGE_NAME: vatsav466/hpcl-backend
+
 jobs:
   backend-ci:
     runs-on: ubuntu-latest
-
     env:
-      PYTHONPATH: >-
-        .:
-        ./utilities:
-        ./cache_gateway:
-        ./services:
-        ./services/base_configuration:
-        ./RuleChain:
-        ./vendor_ingestion_api:
-        ./things_board:
-        ./orchestrator:
-        ./UrdhvaBase:
-        ./prod:
-        ./api_manager_ticketing:
-        ./workflows:
-        ./SOD:
-        ./uat:
-        ./Agents:
-        ./manual_reports:
-        ./Thingsboard:
-        ./authenticator:
-        ./api_manager:
-        ./ceg_role_master_api
-
+      PYTHONPATH: ".:./utilities:./cache_gateway:./services:./services/base_configuration:./RuleChain:./vendor_ingestion_api:./things_board:./orchestrator:./UrdhvaBase:./prod:./api_manager_ticketing:./workflows:./SOD:./uat:./Agents:./manual_reports:./Thingsboard:./authenticator:./api_manager:./ceg_role_master_api"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -68,7 +49,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install flake8 pylint pytest
-
           if [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
           fi
@@ -128,3 +108,151 @@ jobs:
           else
             echo "No Postman collection found."
           fi
+
+  # ---------------------------------------------------------
+  # DOCKER BUILD & PUSH TO CONTAINER REGISTRY (GHCR)
+  # ---------------------------------------------------------
+  docker-build-and-push:
+    name: Build & Push Docker Image
+    needs: backend-ci
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          # Using GHCR_PAT (a personal access token with the write:packages
+          # scope) instead of the default GITHUB_TOKEN. GITHUB_TOKEN's
+          # package-write access depends on the repo's default workflow
+          # permissions (Settings > Actions > General > Workflow permissions)
+          # — if that's set to "Read repository contents permission" the
+          # push fails with "denied: permission_denied: write_package" even
+          # though this job already requests packages: write above. A PAT
+          # sidesteps that setting entirely. You already have GHCR_PAT saved
+          # as a secret for the deploy job, so it's reused here.
+          password: ${{ secrets.GHCR_PAT }}
+
+      # Docker image names must be all lowercase — GitHub repo names can have
+      # capital letters, so we normalize it here once and reuse it in every
+      # step below instead of github.repository directly.
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------
+  # DEPLOY — actually connects to your server and redeploys
+  # ---------------------------------------------------------
+  deploy:
+    name: Deploy
+    needs: docker-build-and-push
+    runs-on: ubuntu-latest
+    # If DEPLOY_HOST etc. were added under Settings > Environments > <name>
+    # instead of the plain repo Secrets tab, uncomment the next line and
+    # put that environment's exact name here, or the job can't see them.
+    # environment: production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      # Same lowercasing as the build job — env vars set via GITHUB_ENV
+      # don't carry over between jobs, so this must be repeated here.
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Verify required secrets are set
+        run: |
+          missing=0
+          [ -z "${{ secrets.DEPLOY_HOST }}" ] && echo "::error::DEPLOY_HOST secret is missing or empty" && missing=1
+          [ -z "${{ secrets.DEPLOY_USER }}" ] && echo "::error::DEPLOY_USER secret is missing or empty" && missing=1
+          [ -z "${{ secrets.DEPLOY_PASSWORD }}" ] && echo "::error::DEPLOY_PASSWORD secret is missing or empty" && missing=1
+          [ -z "${{ secrets.GHCR_PAT }}" ] && echo "::error::GHCR_PAT secret is missing or empty" && missing=1
+          if [ "$missing" -eq 1 ]; then
+            echo "Add the missing secret(s) under Settings > Secrets and variables > Actions > Secrets tab (repository secrets)."
+            echo "If they already exist there but this still fails, they may have been added under Settings > Environments instead — uncomment the 'environment:' line above this step and set it to that environment's name."
+            exit 1
+          fi
+          echo "All required secrets are present."
+
+      - name: Deploy to server via SSH
+        env:
+          # This is what actually makes ssh-action's `envs:` list below work —
+          # "envs: DEPLOY_PASSWORD" only forwards a variable of that name if
+          # one exists in the step's env. Without this block $DEPLOY_PASSWORD
+          # is empty on the remote side, so every sudo -S call gets a blank
+          # password — exactly the "no password was provided" loop you saw.
+          DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: 22
+          # Pass the password in as a real remote env var instead of
+          # interpolating it into the script text — avoids quoting/escaping
+          # bugs if the password ever contains $, ", `, etc.
+          envs: DEPLOY_PASSWORD
+          script: |
+            # PREFERRED FIX (do this once, then delete every "sudo"/"run_sudo"
+            # below and the DEPLOY_PASSWORD sudo dance entirely):
+            #   ssh in and run: sudo usermod -aG docker $USER
+            #   then log out/in once so the group membership takes effect.
+            # Until then, this helper re-authenticates sudo on EVERY call
+            # instead of relying on sudo's cached timestamp — that cache
+            # was the actual bug: it expires (often in under 5 min) while
+            # `docker pull` is still downloading layers, so the LAST sudo
+            # command in the script (image prune) had no valid credential
+            # left and no TTY to prompt for one.
+            run_sudo() {
+              echo "$DEPLOY_PASSWORD" | sudo -S "$@"
+            }
+
+            # Sanity-check sudo works before doing anything else.
+            run_sudo -v
+
+            # Log in to GHCR on the server (needed if the package is private)
+            run_sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GHCR_PAT }}"
+
+            # Pull the freshly built image
+            run_sudo docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
+
+            # Remove the old container if it exists
+            run_sudo docker stop pipeline-ui || true
+            run_sudo docker rm pipeline-ui || true
+
+            # Start the new container with the same port mapping
+            run_sudo docker run -d \
+              --name pipeline-ui \
+              --restart unless-stopped \
+              -p 8000:8000 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
+
+            # Clean up old dangling images to save disk space
+            run_sudo docker image prune -f
