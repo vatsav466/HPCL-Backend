@@ -39,9 +39,6 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.txt'
 
-      # Same system libs needed here as in the Dockerfile, since this job
-      # also runs `pip install -r requirements.txt` (python-ldap compiles
-      # the same way on the runner as it does in the image).
       - name: Install system build dependencies
         run: |
           sudo apt-get update
@@ -289,7 +286,10 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: 22
           envs: DEPLOY_PASSWORD
+          # Bump this if your app takes longer than ~60s to boot (e.g. DB migrations on startup)
+          command_timeout: 5m
           script: |
+            set -e
             run_sudo() {
               echo "$DEPLOY_PASSWORD" | sudo -S "$@"
             }
@@ -301,10 +301,37 @@ jobs:
             run_sudo docker stop hpcl-backend || true
             run_sudo docker rm hpcl-backend || true
 
+            # NOTE: add every env var your app actually needs here (DB URL, secret keys,
+            # LDAP settings, etc). If these are missing the app can crash on startup and
+            # docker run -d will still "succeed" while the container silently dies.
             run_sudo docker run -d \
               --name hpcl-backend \
               --restart unless-stopped \
               -p 8000:8000 \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
+
+            echo "Waiting for container to stabilize..."
+            sleep 5
+
+            # Fail loudly instead of pretending this succeeded
+            if [ "$(run_sudo docker inspect -f '{{.State.Running}}' hpcl-backend)" != "true" ]; then
+              echo "::error::Container hpcl-backend is not running after startup"
+              run_sudo docker logs hpcl-backend || true
+              exit 1
+            fi
+
+            echo "Checking API is actually reachable on port 8000..."
+            for i in {1..10}; do
+              if curl -sf http://localhost:8000/docs > /dev/null; then
+                echo "API is up and responding on /docs"
+                break
+              fi
+              if [ "$i" -eq 10 ]; then
+                echo "::error::API did not respond on /docs after 10 attempts"
+                run_sudo docker logs --tail 100 hpcl-backend || true
+                exit 1
+              fi
+              sleep 3
+            done
 
             run_sudo docker image prune -f
