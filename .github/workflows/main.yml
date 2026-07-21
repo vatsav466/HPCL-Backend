@@ -269,6 +269,26 @@ jobs:
             run_sudo docker stop pipeline-ui || true
             run_sudo docker rm pipeline-ui || true
 
+            # Make sure the server's OWN firewall isn't silently dropping
+            # inbound traffic on 8000 — this is the #1 cause of the
+            # container running fine (curl works from inside the server)
+            # while the outside world gets ERR_CONNECTION_TIMED_OUT.
+            # Handles the two most common Linux firewalls; harmless no-op
+            # if neither is installed/active.
+            if run_sudo bash -c 'command -v ufw' >/dev/null 2>&1; then
+              if run_sudo bash -c 'ufw status' | grep -q "Status: active"; then
+                echo "ufw is active — opening 8000/tcp"
+                run_sudo ufw allow 8000/tcp || true
+              fi
+            fi
+            if run_sudo bash -c 'command -v firewall-cmd' >/dev/null 2>&1; then
+              if run_sudo bash -c 'firewall-cmd --state' 2>/dev/null | grep -q "running"; then
+                echo "firewalld is active — opening 8000/tcp"
+                run_sudo firewall-cmd --permanent --add-port=8000/tcp || true
+                run_sudo firewall-cmd --reload || true
+              fi
+            fi
+
             # Start the new container with the same port mapping
             run_sudo docker run -d \
               --name pipeline-ui \
@@ -318,7 +338,11 @@ jobs:
               exit 1
             fi
 
-            echo "Deployment successful — FastAPI is live on :8000/docs"
+            echo "Deployment successful — FastAPI is confirmed reachable on localhost:8000/docs"
+            echo "NOTE: if http://${{ secrets.DEPLOY_HOST }}:8000/docs still times out from your"
+            echo "browser, the server-side firewall has just been opened above, but a cloud"
+            echo "provider's security group / NSG (AWS/Azure/GCP/etc.) must also allow inbound"
+            echo "TCP 8000 from the internet — that setting lives in the cloud console, not here."
 
             # Clean up old dangling images to save disk space
             run_sudo docker image prune -f
