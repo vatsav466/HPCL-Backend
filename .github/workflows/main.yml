@@ -279,13 +279,14 @@ jobs:
       - name: Deploy to server via SSH
         env:
           DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: 22
-          envs: DEPLOY_PASSWORD
+          envs: DEPLOY_PASSWORD,GHCR_PAT
           # Bump this if your app takes longer than ~60s to boot (e.g. DB migrations on startup)
           command_timeout: 5m
           script: |
@@ -295,7 +296,14 @@ jobs:
             }
             run_sudo -v
 
-            run_sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GHCR_PAT }}"
+            # FIX: docker login is wrapped in its own `bash -c` subshell so its
+            # internal `echo GHCR_PAT | docker login --password-stdin` pipe is
+            # self-contained. Previously the outer `<<<` redirection never
+            # reached docker login because run_sudo's own `echo | sudo -S`
+            # pipe consumed/ate the stdin stream first, leaving docker login
+            # with an empty password -> "denied: denied".
+            run_sudo bash -c "echo \"\$GHCR_PAT\" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin"
+
             run_sudo docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
             run_sudo docker stop hpcl-backend || true
