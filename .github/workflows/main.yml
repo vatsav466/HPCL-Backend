@@ -39,49 +39,61 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          # flake8/pytest may not be pinned in requirements.txt — install if missing
           pip install flake8 pytest pytest-cov
+
+      - name: Sanitize .flake8 config
+        run: |
+          if [ -f ".flake8" ]; then
+            # flake8's config parser breaks on inline "# comment" text after a
+            # value on the same line (e.g. "extend-ignore = E203  # note")
+            # -- it tries to parse the comment as part of the value and raises
+            # ValueError. This strips any trailing "# ..." from every line in
+            # .flake8 before flake8 reads it, without touching the real values.
+            sed -i -E 's/#.*$//' .flake8
+            # Remove now-empty trailing whitespace on each line
+            sed -i -E 's/[[:space:]]+$//' .flake8
+            echo "Sanitized .flake8:"
+            cat .flake8
+          else
+            echo "No .flake8 file found, skipping sanitize step."
+          fi
 
       - name: Run flake8
         id: flake8
         continue-on-error: true
         run: |
-          # Uses the .flake8 config already in your repo root.
-          # NOTE: your current .flake8 has an inline "# comment" on an
-          # extend-ignore line, which flake8's config parser can't handle —
-          # it will error out until that comment is moved to its own line
-          # or removed. This step is non-blocking either way (continue-on-error),
-          # but fixing .flake8 itself is the only way to get real lint results.
-          flake8 . --statistics --tee --output-file=flake8-report.txt
+          flake8 . --count --statistics
 
       - name: Report flake8 outcome
         if: steps.flake8.outcome == 'failure'
         run: |
-          echo "::warning::flake8 reported issues (or failed to run — check for a config parsing error in .flake8). See the 'Run flake8' step above."
-          echo "### ⚠️ flake8 found issues or failed to run" >> $GITHUB_STEP_SUMMARY
-          echo "Check the 'Run flake8' step logs. If you see a ValueError about 'extend-ignore', your .flake8 file has an inline # comment on a value line that needs to be removed." >> $GITHUB_STEP_SUMMARY
+          echo "::warning::flake8 found style/lint issues. See the 'Run flake8' step above for details."
+          echo "### ⚠️ flake8 found issues" >> $GITHUB_STEP_SUMMARY
+          echo "See the 'Run flake8' step logs for the full list. Continuing pipeline anyway." >> $GITHUB_STEP_SUMMARY
 
-      - name: Run pytest with coverage
+      - name: Run pytest
         id: pytest
-        continue-on-error: true
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=term \
-            --junitxml=pytest-results.xml
-
-      - name: Report pytest outcome
-        if: steps.pytest.outcome == 'failure'
-        run: |
-          echo "::warning::pytest reported failures or collection errors — see logs above. Continuing pipeline anyway."
-          echo "### ⚠️ pytest found failures" >> $GITHUB_STEP_SUMMARY
-          echo "Some test files import sibling modules (e.g. 'hpcl_ceg_model', 'charts_actions') that only resolve when run from inside their own folder. These need either an __init__.py + proper package-relative imports, or a conftest.py per service folder that adds itself to sys.path." >> $GITHUB_STEP_SUMMARY
+          # Sibling-module imports (e.g. "import hpcl_ceg_model") only resolve
+          # when a test is run from inside its own service folder, because
+          # Python adds the current working directory to sys.path — that dir
+          # is never on sys.path when pytest runs from the repo root instead.
+          # Fix: add every subfolder (depth 1-2) to PYTHONPATH up front, so
+          # every service's local imports resolve regardless of pytest's cwd.
+          EXTRA_PATHS=$(find . -mindepth 1 -maxdepth 2 -type d \
+            ! -path '*/.git*' ! -path '*/node_modules/*' ! -path '*/venv/*' ! -path '*/.venv/*' \
+            | tr '\n' ':')
+          export PYTHONPATH="${EXTRA_PATHS}${PYTHONPATH}"
+          echo "PYTHONPATH=$PYTHONPATH"
+          pytest --cov=. --cov-report=xml --cov-report=term -v
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: |
-            coverage.xml
-            pytest-results.xml
+          path: coverage.xml
           retention-days: 7
 
   # ---------------------------------------------------------
@@ -107,9 +119,6 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          # Same PAT as the frontend pipeline, reused here — sidesteps the
-          # default GITHUB_TOKEN's package-write permission depending on the
-          # repo's "Workflow permissions" setting.
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Extract Docker metadata
@@ -139,10 +148,6 @@ jobs:
     name: Deploy
     needs: docker-build-and-push
     runs-on: ubuntu-latest
-    # If DEPLOY_HOST etc. live under Settings > Environments > <name>
-    # instead of the plain repo Secrets tab, uncomment this and set the
-    # exact environment name, or this job can't see them.
-    # environment: production
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Verify required secrets are set
@@ -169,9 +174,6 @@ jobs:
           port: 22
           envs: DEPLOY_PASSWORD
           script: |
-            # PREFERRED FIX (do this once, then delete every "sudo"/"run_sudo"
-            # below): ssh in and run `sudo usermod -aG docker $USER`, then
-            # log out/in once so group membership takes effect.
             run_sudo() {
               echo "$DEPLOY_PASSWORD" | sudo -S "$@"
             }
@@ -185,9 +187,8 @@ jobs:
             run_sudo docker stop hpcl-backend || true
             run_sudo docker rm hpcl-backend || true
 
-            # TODO: confirm the port your app actually listens on
-            # (Flask/FastAPI default is often 8000 or 5000 — check your
-            # Dockerfile's EXPOSE / CMD line) and adjust -p below.
+            # Adjust the port mapping (left side = host port) to match what
+            # your backend actually listens on.
             run_sudo docker run -d \
               --name hpcl-backend \
               --restart unless-stopped \
